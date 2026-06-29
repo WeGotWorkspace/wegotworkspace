@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, userEvent, within } from "storybook/test";
 import { EditorContent } from "@tiptap/react";
+import { DocsCollabCommentControl } from "@/text-editor-core/docs-collab/docs-collab-comment-control";
+import { docsLabels } from "@/docs-core/src/docs-labels";
 import {
   TextEditorFormatBar,
   TEXT_EDITOR_FORMAT_BAR_GROUPS,
@@ -113,5 +115,45 @@ export const ReadOnly: Story = {
     groups: [...TEXT_EDITOR_FORMAT_BAR_GROUPS],
     showPrint: false,
     editable: false,
+  },
+};
+
+function CommentControlDemo() {
+  const editor = useTextEditor({
+    format: "markdown",
+    editable: true,
+    content: "Select text to comment.",
+  });
+
+  return (
+    <div className="text-editor text-editor--format-bar-story flex h-[min(420px,70dvh)] w-full flex-col">
+      <TextEditorFormatBar
+        editor={editor}
+        groups={[...TEXT_EDITOR_FORMAT_BAR_GROUPS]}
+        showPrint={false}
+        commentControl={
+          <DocsCollabCommentControl
+            labels={docsLabels}
+            canAddFromSelection
+            onAddCommentFromSelection={() => {}}
+          />
+        }
+      />
+      <div className="text-editor-format-bar-story__body">
+        <EditorContent editor={editor} />
+      </div>
+    </div>
+  );
+}
+
+export const CommentControl: Story = {
+  name: "Comment control",
+  tags: ["vitest-ci"],
+  render: () => <CommentControlDemo />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(
+      canvas.getByRole("button", { name: docsLabels.commentsAddFromSelection }),
+    ).toBeInTheDocument();
   },
 };

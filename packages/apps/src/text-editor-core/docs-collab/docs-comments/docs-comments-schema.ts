@@ -3,7 +3,11 @@ import type { DocsCommentThread } from "../docs-comments-types";
 
 const docsCommentAuthorSchema = z.object({
   id: z.string(),
-  name: z.string(),
+  name: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((value) => value?.trim() || "Unknown"),
 });
 
 const docsCommentMessageSchema = z.object({

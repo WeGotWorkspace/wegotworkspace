@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { docsLabels } from "@/docs-core/src/docs-labels";
+import { TooltipProvider } from "@/ui/tooltip";
 import type { DocsCommentThread } from "../docs-comments-types";
 import { DocsCommentsPanel } from "./docs-comments-panel";
 
@@ -29,19 +30,20 @@ const noop = () => {};
 function renderPanel(overrides: Partial<ComponentProps<typeof DocsCommentsPanel>> = {}) {
   const onCloseMobile = vi.fn();
   render(
-    <DocsCommentsPanel
-      onCloseMobile={onCloseMobile}
-      labels={docsLabels}
-      threads={[thread]}
-      currentUserId="u-1"
-      activeThreadId={null}
-      onSelectThread={noop}
-      onAddReply={noop}
-      onToggleReaction={noop}
-      onResolveThread={noop}
-      onDeleteThread={noop}
-      {...overrides}
-    />,
+    <TooltipProvider>
+      <DocsCommentsPanel
+        onCloseMobile={onCloseMobile}
+        labels={docsLabels}
+        threads={[thread]}
+        currentUserId="u-1"
+        activeThreadId={null}
+        onSelectThread={noop}
+        onAddReply={noop}
+        onToggleReaction={noop}
+        onResolveThread={noop}
+        {...overrides}
+      />
+    </TooltipProvider>,
   );
   return { onCloseMobile };
 }

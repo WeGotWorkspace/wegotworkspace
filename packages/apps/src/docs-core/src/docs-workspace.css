@@ -17,7 +17,7 @@
   --docs-sheet-canvas-padding-block: 2.5rem;
   --docs-comments-column-width: 20rem;
   --docs-comments-column-gap: 1rem;
-  --docs-comments-centered-min-width: 1472px;
+  --workspace-panel-width: var(--docs-comments-column-width);
   --docs-stat-tag-bg: color-mix(in oklab, var(--docs-accent) 10%, transparent);
   --docs-stat-tag-color: color-mix(in oklab, var(--docs-accent) 88%, var(--color-ink));
   --docs-text: var(--color-ink);
@@ -184,18 +184,18 @@
   background-color: color-mix(in oklab, var(--docs-accent) 24%, transparent);
 }
 
-.docs-workspace__header-actions .docs-workspace__comments-toggle {
+.docs-workspace__header-actions .docs-workspace__review-toggle {
   @apply relative;
 }
 
-.docs-workspace__header-actions .docs-workspace__comments-toggle::after {
+.docs-workspace__header-actions .docs-workspace__review-toggle::after {
   content: attr(data-count);
   @apply absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold;
   background-color: var(--docs-accent);
   color: #ffffff;
 }
 
-.docs-workspace__header-actions .docs-workspace__comments-toggle:not([data-count])::after {
+.docs-workspace__header-actions .docs-workspace__review-toggle:not([data-count])::after {
   display: none;
 }
 
@@ -384,28 +384,11 @@
   padding: 0;
 }
 
-/*
- * Medium viewports (1160–1471px): nudge the sheet left so margin comments fit
- * beside the page without overlapping. Wide viewports (≥1472px) stay centered.
- */
-@media (min-width: 1160px) and (max-width: 1471px) {
-  .docs-workspace--comments-sheet-compact
-    .docs-workspace__editor
-    .text-editor:not(.text-editor--view-source)
-    .text-editor-sheet--fill
-    .text-editor-sheet__surface {
-    margin-inline-start: auto;
-    margin-inline-end: calc(var(--docs-comments-column-width) + var(--docs-comments-column-gap));
-  }
-
-  .docs-workspace--comments-sheet-compact
-    .docs-workspace__editor
-    .text-editor:not(.text-editor--view-source)
-    .text-editor-sheet--paginated.text-editor-sheet--fill
-    .text-editor-sheet__surface {
-    margin-inline-start: auto;
-    margin-inline-end: calc(var(--docs-comments-column-width) + var(--docs-comments-column-gap));
-  }
+.docs-workspace .workspace-app-layout__panel {
+  @apply flex min-h-0 flex-col border-l;
+  width: var(--docs-comments-column-width);
+  border-color: var(--docs-border);
+  background-color: var(--docs-surface);
 }
 
 .docs-workspace__editor .text-editor--view-source .text-editor__source {

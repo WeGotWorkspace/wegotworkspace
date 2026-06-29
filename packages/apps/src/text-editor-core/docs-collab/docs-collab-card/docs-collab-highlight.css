@@ -1,0 +1,89 @@
+@import "../../../styles.css" reference;
+
+.docs-collab-highlight {
+  @apply text-sm leading-relaxed;
+  background: var(--docs-collab-highlight-bg);
+  color: var(--docs-collab-highlight-fg, var(--docs-text, var(--color-ink)));
+}
+
+.docs-collab-highlight--insertion {
+  --docs-collab-highlight-bg: color-mix(
+    in oklab,
+    var(--text-editor-track-insertion, oklch(0.88 0.12 145)) 55%,
+    transparent
+  );
+  @apply border-b-2 border-solid no-underline;
+  border-bottom-color: color-mix(
+    in oklab,
+    var(--text-editor-track-insertion, oklch(0.88 0.12 145)) 80%,
+    transparent
+  );
+}
+
+.docs-collab-highlight--deletion {
+  --docs-collab-highlight-bg: color-mix(
+    in oklab,
+    var(--text-editor-track-deletion, oklch(0.88 0.12 25)) 45%,
+    transparent
+  );
+  --docs-collab-highlight-fg: color-mix(
+    in oklab,
+    var(--docs-text, var(--color-ink)) 55%,
+    transparent
+  );
+  @apply line-through;
+  text-decoration-color: color-mix(
+    in oklab,
+    var(--text-editor-track-deletion, oklch(0.88 0.12 25)) 85%,
+    transparent
+  );
+}
+
+.docs-collab-highlight--comment {
+  --docs-collab-highlight-bg: color-mix(
+    in oklab,
+    var(--highlight-amber, oklch(0.94 0.13 86)) 32%,
+    transparent
+  );
+}
+
+.docs-collab-highlight--format {
+  --docs-collab-highlight-bg: color-mix(
+    in oklab,
+    var(--text-editor-track-format, oklch(0.88 0.1 250)) 55%,
+    transparent
+  );
+  @apply border-b-2 border-solid;
+  border-bottom-color: color-mix(
+    in oklab,
+    var(--text-editor-track-format, oklch(0.88 0.1 250)) 80%,
+    transparent
+  );
+}
+
+/* Inline format preview inside format-change suggestion highlights (matches text-editor-prose marks). */
+.docs-collab-highlight__format-mark--bold {
+  @apply font-semibold;
+}
+
+.docs-collab-highlight__format-mark--italic {
+  @apply italic;
+}
+
+.docs-collab-highlight__format-mark--underline {
+  @apply underline underline-offset-2;
+}
+
+.docs-collab-highlight__format-mark--strike {
+  @apply line-through;
+}
+
+.docs-collab-highlight__format-mark--code {
+  @apply rounded px-[0.35rem] py-[0.1rem] font-mono text-[0.9em];
+  background: var(--muted);
+}
+
+.docs-collab-highlight__format-mark--highlight {
+  @apply rounded-sm px-0.5;
+  background: var(--text-editor-highlight);
+}

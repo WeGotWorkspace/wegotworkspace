@@ -19,6 +19,9 @@
   --text-editor-highlight: oklch(0.95 0.15 95);
   --text-editor-comment: oklch(0.9 0.12 80);
   --text-editor-suggestion: oklch(0.85 0.15 145);
+  --text-editor-track-insertion: oklch(0.88 0.12 145);
+  --text-editor-track-deletion: oklch(0.88 0.12 25);
+  --text-editor-track-format: oklch(0.88 0.1 250);
   --text-editor-shadow-sheet:
     0 0 0 1px rgba(15, 23, 42, 0.045), 0 0 48px -16px rgba(15, 23, 42, 0.08),
     0 -1px 1px rgba(15, 23, 42, 0.03), 0 -10px 24px -16px rgba(15, 23, 42, 0.1),
@@ -82,7 +85,8 @@
 .text-editor-format-bar__btn,
 .text-editor-format-bar__btn--active,
 .text-editor-format-bar__btn--active:hover:not(:disabled),
-.text-editor-format-bar__heading-trigger {
+.text-editor-format-bar__heading-trigger,
+.text-editor-format-bar__mode-trigger {
   box-sizing: border-box;
   display: inline-flex;
   align-items: center;
@@ -155,7 +159,8 @@
 }
 
 .text-editor-format-bar__btn:hover:not(:disabled),
-.text-editor-format-bar__heading-trigger:hover:not(:disabled) {
+.text-editor-format-bar__heading-trigger:hover:not(:disabled),
+.text-editor-format-bar__mode-trigger:hover:not(:disabled) {
   background: var(--text-editor-format-btn-hover-bg);
   color: var(--text-editor-format-btn-hover-color);
 }
@@ -191,8 +196,11 @@
   background: var(--border);
 }
 
+.text-editor-format-bar__end {
+  @apply ml-auto flex items-center gap-1.5;
+}
+
 .text-editor-format-bar__print {
-  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -237,6 +245,69 @@
   font-size: 0.8125rem;
   font-weight: 500;
   line-height: 1.25;
+}
+
+.text-editor-format-bar__mode-trigger {
+  @apply flex-row flex-nowrap justify-start gap-1 min-w-0 max-w-none w-auto px-2 whitespace-nowrap;
+}
+
+.text-editor-format-bar__mode-trigger-icon {
+  @apply block size-3.5 shrink-0;
+}
+
+.text-editor-format-bar__mode-trigger-label {
+  @apply inline-block min-w-[2.5ch] shrink grow basis-auto whitespace-nowrap text-xs font-medium;
+}
+
+.text-editor-format-bar__mode-trigger-chevron {
+  @apply block size-3 shrink-0 opacity-65;
+}
+
+.text-editor-format-bar__mode-trigger-badge {
+  @apply inline-flex items-center justify-center min-w-[1.125rem] h-[1.125rem] rounded-full px-1 text-[0.625rem] font-bold leading-none;
+  color: var(--accent-foreground);
+  background: var(--accent);
+}
+
+.text-editor-format-bar__mode-menu {
+  @apply min-w-56;
+}
+
+.text-editor-format-bar__mode-menu .text-editor-format-bar__mode-option {
+  @apply items-start min-h-10 py-1.5;
+}
+
+.text-editor-format-bar__mode-option-icon {
+  @apply size-3.5 shrink-0 mt-0.5;
+}
+
+.text-editor-format-bar__mode-option-text {
+  @apply flex min-w-0 flex-1 flex-col gap-0.5;
+}
+
+.text-editor-format-bar__mode-option-label {
+  @apply text-[0.8125rem] font-medium;
+}
+
+.text-editor-format-bar__mode-option-hint {
+  @apply text-[0.6875rem];
+  color: var(--muted-foreground);
+}
+
+.text-editor-format-bar__mode-option-badge {
+  @apply ml-auto inline-flex shrink-0 self-start items-center justify-center min-w-[1.125rem] h-[1.125rem] rounded-full px-1 text-[0.625rem] font-bold leading-none;
+  color: var(--accent-foreground);
+  background: var(--accent);
+}
+
+.text-editor-format-bar__mode-option--selected,
+.text-editor-format-bar__mode-option--selected:focus {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.text-editor-format-bar__mode-option--selected .text-editor-format-bar__mode-option-hint {
+  color: color-mix(in oklab, var(--accent-foreground) 75%, transparent);
 }
 
 .text-editor-sheet {
@@ -617,10 +688,74 @@
   color: inherit;
 }
 
-.text-editor-prose .suggestion-mark {
+.text-editor-prose .legacy-suggestion-mark {
+  @apply border-b-2 border-dashed;
   background: color-mix(in oklab, var(--text-editor-suggestion) 40%, transparent);
-  border-bottom: 2px dashed var(--text-editor-suggestion);
+  border-bottom-color: var(--text-editor-suggestion);
 }
+
+/* Live track-changes (tiptap-track-changes) — insertions, deletions, format changes. */
+.text-editor-prose ins[data-change-id],
+.text-editor-prose del[data-change-id],
+.text-editor-prose span[data-format-change][data-change-id] {
+  @apply transition-[background-color,color,border-color] duration-150;
+}
+
+.text-editor-prose ins[data-change-id] {
+  @apply border-b-2 border-solid no-underline;
+  background: color-mix(in oklab, var(--text-editor-track-insertion) 55%, transparent);
+  border-bottom-color: color-mix(
+    in oklab,
+    var(--author-color, var(--text-editor-track-insertion)) 80%,
+    transparent
+  );
+}
+
+.text-editor-prose del[data-change-id] {
+  @apply line-through;
+  background: color-mix(in oklab, var(--text-editor-track-deletion) 45%, transparent);
+  color: color-mix(in oklab, var(--foreground) 55%, transparent);
+  text-decoration-color: color-mix(
+    in oklab,
+    var(--author-color, var(--text-editor-track-deletion)) 85%,
+    transparent
+  );
+}
+
+.text-editor-prose span[data-format-change] {
+  @apply border-b-2 border-dotted;
+  background: color-mix(in oklab, var(--text-editor-track-format) 35%, transparent);
+  border-bottom-color: color-mix(
+    in oklab,
+    var(--author-color, var(--text-editor-track-format)) 80%,
+    transparent
+  );
+}
+
+/* Decoration wrapper from TrackChangeActiveExtension. */
+.text-editor-prose span.track-change-mark--active ins[data-change-id] {
+  background: color-mix(in oklab, var(--text-editor-track-insertion) 82%, transparent);
+  border-bottom-color: var(--author-color, var(--text-editor-track-insertion));
+}
+
+.text-editor-prose span.track-change-mark--active del[data-change-id] {
+  background: color-mix(in oklab, var(--text-editor-track-deletion) 72%, transparent);
+  color: color-mix(in oklab, var(--foreground) 72%, transparent);
+  text-decoration-color: var(--author-color, var(--text-editor-track-deletion));
+}
+
+.text-editor-prose span.track-change-mark--active span[data-format-change][data-change-id] {
+  background: color-mix(in oklab, var(--text-editor-track-format) 68%, transparent);
+  border-bottom-color: var(--author-color, var(--text-editor-track-format));
+}
+
+/* Active suggestion: mark highlight only — suppress native ::selection overlay. */
+.text-editor-prose .track-change-mark--active::selection,
+.text-editor-prose .track-change-mark--active *::selection {
+  @apply bg-transparent text-inherit;
+}
+
+/* Suggest-mode toolbar styles removed — mode control lives in the format bar dropdown. */
 
 .text-editor-prose table {
   width: 100%;
@@ -876,6 +1011,9 @@
   body.text-editor-print-active
     :is(
       .app-sidebar,
+      .workspace-app-layout__panel,
+      .docs-workspace__review-panel,
+      .docs-collab-review-panel-drawer,
       .workspace-app-layout__main-header,
       .view-header,
       .action-bar,
@@ -893,6 +1031,7 @@
       .workspace-app-layout__main,
       .workspace-app-layout__main-scroll,
       .workspace-app-layout__main-content,
+      .workspace-app-layout__panel,
       .docs-workspace__editor,
       .text-editor,
       .text-editor__body,

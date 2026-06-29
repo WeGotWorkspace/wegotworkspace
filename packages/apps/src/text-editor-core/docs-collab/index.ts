@@ -4,6 +4,27 @@ export { DocsCollabEditor } from "./docs-collab-editor";
 export type { DocsCollabEditorProps } from "./docs-collab-editor";
 export { DocsCollabPresence } from "./docs-collab-presence";
 export type { DocsCollabPresenceProps } from "./docs-collab-presence";
+export { DocsCollabCommentControl } from "./docs-collab-comment-control";
+export type { DocsCollabCommentControlProps } from "./docs-collab-comment-control";
+export { DocsCollabSuggestControls } from "./docs-collab-suggest-controls";
+export type { DocsCollabSuggestControlsProps } from "./docs-collab-suggest-controls";
+export { DocsCollabReviewPanel } from "./docs-collab-review";
+export type { DocsCollabReviewPanelProps } from "./docs-collab-review";
+export {
+  DocsSuggestionCard,
+  DocsSuggestionsFloatingLayer,
+  DocsSuggestionsPanel,
+} from "./docs-suggestions";
+export type {
+  DocsSuggestionCardProps,
+  DocsSuggestionsFloatingLayerProps,
+  DocsSuggestionsPanelProps,
+} from "./docs-suggestions";
+export { useDocsSuggestions } from "./use-docs-suggestions";
+export type { UseDocsSuggestionsOptions, UseDocsSuggestionsResult } from "./use-docs-suggestions";
+export { getDocsSuggestionThreadsMap } from "./docs-suggestions-map";
+export type { DocsSuggestionThread, DocsSuggestionWithThread } from "./docs-suggestions-types";
+export { DOCS_SUGGESTION_THREADS_MAP_KEY } from "./docs-suggestions-types";
 export { DocsCommentsPanel, DocsCommentsSidebar } from "./docs-comments";
 export type { DocsCommentsPanelProps, DocsCommentsSidebarProps } from "./docs-comments";
 export { DocsCommentsFloatingLayer } from "./docs-comments";

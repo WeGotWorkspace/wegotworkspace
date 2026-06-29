@@ -1,41 +1,26 @@
 import * as React from "react";
 
-/** Viewports below this width use the comments SideDrawer and hide the floating layer. */
+/** Viewports below this width use the review SideDrawer overlay; at/above use a pinned right panel. */
 export const DOCS_COMMENTS_COMPACT_MIN = 1160;
 
-/**
- * Minimum viewport width for a centered document sheet with margin comments.
- * Derived from A4 sheet (~794px) plus comment column (20rem) and gap on each side.
- */
-export const DOCS_COMMENTS_CENTERED_SHEET_MIN_WIDTH = 1472;
-
-export type DocsCommentsLayoutMode = "drawer" | "margin-compact" | "margin-wide";
+export type DocsCommentsLayoutMode = "drawer" | "sidebar";
 
 export function resolveDocsCommentsLayoutMode(width: number): DocsCommentsLayoutMode {
   if (width < DOCS_COMMENTS_COMPACT_MIN) return "drawer";
-  if (width < DOCS_COMMENTS_CENTERED_SHEET_MIN_WIDTH) return "margin-compact";
-  return "margin-wide";
+  return "sidebar";
 }
 
-/** Shift the document sheet left only when margin comments are visible in the compact tier. */
-export function shouldApplyCommentsSheetCompact(
-  layoutMode: DocsCommentsLayoutMode,
-  commentsOpen: boolean,
-): boolean {
-  return commentsOpen && layoutMode === "margin-compact";
+/** Review panel starts closed on all tiers; auto-open when threads/suggestions exist is handled separately. */
+export function shouldDefaultCommentsOpen(_layoutMode: DocsCommentsLayoutMode): boolean {
+  return false;
 }
 
-/** Margin tiers show comments on load; drawer tier keeps them closed until the user opens them. */
-export function shouldDefaultCommentsOpen(layoutMode: DocsCommentsLayoutMode): boolean {
-  return layoutMode !== "drawer";
-}
-
-/** Auto-open when threads appear applies only outside the drawer tier. */
+/** Auto-open when threads appear applies only on the pinned sidebar tier. */
 export function shouldAutoOpenCommentsForThreads(layoutMode: DocsCommentsLayoutMode): boolean {
-  return layoutMode !== "drawer";
+  return layoutMode === "sidebar";
 }
 
-/** Draft compose always opens the active comments surface (margin layer or drawer). */
+/** Draft compose always opens the active comments surface (sidebar or drawer). */
 export function shouldAutoOpenCommentsForDraft(
   draftThread: unknown,
 ): draftThread is NonNullable<typeof draftThread> {
@@ -45,34 +30,28 @@ export function shouldAutoOpenCommentsForDraft(
 export function docsCommentsLayoutMediaQueries() {
   return {
     drawer: `(max-width: ${DOCS_COMMENTS_COMPACT_MIN - 1}px)`,
-    marginCompact: `(min-width: ${DOCS_COMMENTS_COMPACT_MIN}px) and (max-width: ${DOCS_COMMENTS_CENTERED_SHEET_MIN_WIDTH - 1}px)`,
-    marginWide: `(min-width: ${DOCS_COMMENTS_CENTERED_SHEET_MIN_WIDTH}px)`,
+    sidebar: `(min-width: ${DOCS_COMMENTS_COMPACT_MIN}px)`,
   };
 }
 
 export function useDocsCommentsLayout(): DocsCommentsLayoutMode {
   const [layout, setLayout] = React.useState<DocsCommentsLayoutMode>(() =>
-    typeof window === "undefined"
-      ? "margin-wide"
-      : resolveDocsCommentsLayoutMode(window.innerWidth),
+    typeof window === "undefined" ? "sidebar" : resolveDocsCommentsLayoutMode(window.innerWidth),
   );
 
   React.useEffect(() => {
     const queries = docsCommentsLayoutMediaQueries();
     const mqlDrawer = window.matchMedia(queries.drawer);
-    const mqlCompact = window.matchMedia(queries.marginCompact);
 
     const sync = () => {
       setLayout(resolveDocsCommentsLayoutMode(window.innerWidth));
     };
 
     mqlDrawer.addEventListener("change", sync);
-    mqlCompact.addEventListener("change", sync);
     sync();
 
     return () => {
       mqlDrawer.removeEventListener("change", sync);
-      mqlCompact.removeEventListener("change", sync);
     };
   }, []);
 

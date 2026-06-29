@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { docsLabels } from "@/docs-core/src/docs-labels";
 import { useConnectivity } from "@/hooks/use-connectivity";
 import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
-import { getTextEditorContent } from "@/text-editor-core/src/text-editor-content";
+import { getAcceptedTextEditorContent } from "@/text-editor-core/src/text-editor-track-changes";
 import { TextEditorSheet } from "@/text-editor-core/src/text-editor-sheet";
 import { useTextEditor } from "@/text-editor-core/src/use-text-editor";
 import {
@@ -138,7 +138,7 @@ export function NoteCollabEditorSurface({ className }: { className?: string }) {
 
   const handleEditorReady = useCallback(
     (editor: Editor | null) => {
-      if (editor) registerMarkdownGetter(() => getTextEditorContent(editor, "markdown"));
+      if (editor) registerMarkdownGetter(() => getAcceptedTextEditorContent(editor, "markdown"));
     },
     [registerMarkdownGetter],
   );

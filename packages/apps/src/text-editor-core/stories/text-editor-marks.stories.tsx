@@ -29,21 +29,41 @@ function DocsCommentsCollabDemo() {
     currentUser: { id: "story-user", name: "Story User" },
     commentsVisible: commentsOpen,
   });
-  const { draftThread, canAddComment, createThreadFromSelection, ...commentActions } = comments;
+  const {
+    draftThread,
+    selectionQualifiesForComment,
+    createThreadFromSelection,
+    selectThread,
+    ...commentActions
+  } = comments;
 
   useEffect(() => {
     if (!editor) return;
     editor.commands.setTextSelection({ from: 8, to: 19 });
   }, [editor]);
 
-  useEffect(() => {
-    if (!commentsOpen || draftThread || !canAddComment) return;
-    createThreadFromSelection();
-  }, [canAddComment, commentsOpen, createThreadFromSelection, draftThread]);
+  const addCommentFromSelection = () => {
+    setCommentsOpen(true);
+    if (draftThread) {
+      selectThread(draftThread.id);
+      return;
+    }
+    if (selectionQualifiesForComment) {
+      createThreadFromSelection();
+    }
+  };
 
   return (
     <div className="docs-workspace flex min-h-[480px] flex-col border">
-      <div className="flex items-center justify-end border-b px-3 py-2">
+      <div className="flex items-center justify-end gap-2 border-b px-3 py-2">
+        <button
+          type="button"
+          className="rounded-md border px-2 py-1 text-sm"
+          disabled={!selectionQualifiesForComment}
+          onClick={addCommentFromSelection}
+        >
+          {docsLabels.commentsAddFromSelection}
+        </button>
         <button
           type="button"
           className="rounded-md border px-2 py-1 text-sm"
@@ -71,7 +91,6 @@ function DocsCommentsCollabDemo() {
               onAddReply={commentActions.addReply}
               onToggleReaction={commentActions.toggleReaction}
               onResolveThread={commentActions.resolveThread}
-              onDeleteThread={commentActions.deleteThread}
               onCancelDraft={commentActions.cancelDraft}
             />
           }
@@ -119,24 +138,31 @@ export const DocsCommentsCollab: Story = {
   render: () => <DocsCommentsCollabDemo />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    await userEvent.click(
+      canvas.getByRole("button", { name: docsLabels.commentsAddFromSelection }),
+    );
     const composeField = await canvas.findByPlaceholderText(docsLabels.commentsComposePlaceholder);
     await userEvent.type(composeField, "Looks good");
-    await userEvent.click(canvas.getByRole("button", { name: docsLabels.commentsAdd }));
+    const composer = composeField.closest(".docs-comments-thread-card__composer");
+    if (!composer) throw new Error("expected comment composer");
+    await userEvent.click(
+      within(composer as HTMLElement).getByRole("button", { name: docsLabels.commentsAdd }),
+    );
     await expect(
       canvas.getByPlaceholderText(docsLabels.commentsReplyPlaceholder),
     ).toBeInTheDocument();
   },
 };
 
-export const SuggestionMarkStory: Story = {
-  name: "SuggestionMark",
+export const LegacySuggestionMarkStory: Story = {
+  name: "LegacySuggestionMark",
   render: () => (
     <div className="text-editor p-6">
       <div
         className="text-editor-prose"
         dangerouslySetInnerHTML={{
           __html:
-            '<p>Accept this <span data-suggestion-id="s-1" class="suggestion-mark">suggested edit</span> before publishing.</p>',
+            '<p>Accept this <span data-suggestion-id="s-1" class="legacy-suggestion-mark">suggested edit</span> before publishing.</p>',
         }}
       />
     </div>
@@ -144,14 +170,14 @@ export const SuggestionMarkStory: Story = {
 };
 
 export const BothMarks: Story = {
-  name: "Comment and suggestion marks",
+  name: "Comment and legacy suggestion marks",
   render: () => (
     <div className="text-editor p-6">
       <div
         className="text-editor-prose"
         dangerouslySetInnerHTML={{
           __html:
-            '<p><span data-comment-id="c-1" class="comment-mark">Comment</span> and <span data-suggestion-id="s-1" class="suggestion-mark">suggestion</span> marks together.</p>',
+            '<p><span data-comment-id="c-1" class="comment-mark">Comment</span> and <span data-suggestion-id="s-1" class="legacy-suggestion-mark">suggestion</span> marks together.</p>',
         }}
       />
     </div>

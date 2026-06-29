@@ -5,10 +5,8 @@ import { useEditor } from "@tiptap/react";
 import type { Awareness } from "y-protocols/awareness";
 import type * as Y from "yjs";
 import { cn } from "@/lib/utils";
-import {
-  getTextEditorContent,
-  type TextEditorContentFormat,
-} from "@/text-editor-core/src/text-editor-content";
+import { type TextEditorContentFormat } from "@/text-editor-core/src/text-editor-content";
+import { getAcceptedTextEditorContent } from "@/text-editor-core/src/text-editor-track-changes";
 import {
   applyTextEditorPageFormat,
   DEFAULT_TEXT_EDITOR_PAGE_FORMAT,
@@ -22,16 +20,20 @@ import {
 } from "@/text-editor-core/src/text-editor-format-bar";
 import { createCollaborativeTextEditorExtensions } from "@/text-editor-core/src/text-editor-extensions";
 import { getCommentMarkIdFromTarget } from "@/text-editor-core/src/text-editor-comment-commands";
+import { getTrackChangeIdFromTarget } from "@/text-editor-core/src/text-editor-track-changes";
 import { TextEditorSheet } from "@/text-editor-core/src/text-editor-sheet";
 import { TextEditorSource } from "@/text-editor-core/src/text-editor-source";
 import { useTextEditorSourceSync } from "@/text-editor-core/src/use-text-editor-source-sync";
+import type { DocsUILabels } from "@/docs-core/src/docs-labels";
+import { DocsCollabCommentControl } from "./docs-collab-comment-control";
+import { DocsCollabSuggestControls } from "./docs-collab-suggest-controls";
 
 import "@/text-editor-core/src/text-editor.css";
 
 export type DocsCollabEditorProps = {
   ydoc: Y.Doc;
   awareness: Awareness;
-  user: { name: string; color: string };
+  user: { name: string; color: string; id?: string };
   format?: TextEditorContentFormat;
   formatBar?: boolean | TextEditorFormatBarConfig;
   sheetFill?: boolean;
@@ -46,7 +48,18 @@ export type DocsCollabEditorProps = {
   onContentChange?: (getContent: () => string) => void;
   onEditorReady?: (editor: Editor | null) => void;
   onCommentActivated?: (commentId: string, clickPos: number) => void;
+  onSuggestionActivated?: (changeId: string) => void;
+  onAddCommentFromSelection?: () => void;
+  canAddCommentFromSelection?: boolean;
+  commentsDisabled?: boolean;
+  commentControlLabels?: Pick<
+    DocsUILabels,
+    | "commentsAddFromSelection"
+    | "commentsAddFromSelectionDisabledNoSelection"
+    | "commentsAddFromSelectionDisabledViewSource"
+  >;
   commentsOverlay?: ReactNode;
+  suggestionsOverlay?: ReactNode;
 };
 
 export function DocsCollabEditor({
@@ -64,22 +77,37 @@ export function DocsCollabEditor({
   onContentChange,
   onEditorReady,
   onCommentActivated,
+  onSuggestionActivated,
+  onAddCommentFromSelection,
+  canAddCommentFromSelection = false,
+  commentsDisabled = false,
+  commentControlLabels,
   commentsOverlay,
+  suggestionsOverlay,
 }: DocsCollabEditorProps) {
   const effectiveOnContentChange = onContentChange ?? onMarkdownChange;
   const onContentChangeRef = useRef(effectiveOnContentChange);
   onContentChangeRef.current = effectiveOnContentChange;
   const onCommentActivatedRef = useRef(onCommentActivated);
   onCommentActivatedRef.current = onCommentActivated;
+  const onSuggestionActivatedRef = useRef(onSuggestionActivated);
+  onSuggestionActivatedRef.current = onSuggestionActivated;
 
   const editorProps = useMemo(
     () => ({
       attributes: { class: "text-editor-prose focus:outline-none" },
       handleClick: (_view: unknown, pos: number, event: MouseEvent) => {
         const commentId = getCommentMarkIdFromTarget(event.target);
-        if (!commentId) return false;
-        onCommentActivatedRef.current?.(commentId, pos);
-        return true;
+        if (commentId) {
+          onCommentActivatedRef.current?.(commentId, pos);
+          return true;
+        }
+        const changeId = getTrackChangeIdFromTarget(event.target);
+        if (changeId) {
+          onSuggestionActivatedRef.current?.(changeId);
+          return true;
+        }
+        return false;
       },
     }),
     [],
@@ -103,7 +131,7 @@ export function DocsCollabEditor({
       editorProps,
       onUpdate: ({ transaction, editor: ed }) => {
         if (isChangeOrigin(transaction)) return;
-        onContentChangeRef.current?.(() => getTextEditorContent(ed, format));
+        onContentChangeRef.current?.(() => getAcceptedTextEditorContent(ed, format));
       },
       onSelectionUpdate: ({ editor: ed }) => {
         ed.commands.updateUser(user);
@@ -152,6 +180,17 @@ export function DocsCollabEditor({
       groups={[...formatBarConfig.groups]}
       showPrint={formatBarConfig.showPrint}
       className={formatBarConfig.className}
+      commentControl={
+        !viewSource && commentControlLabels && onAddCommentFromSelection ? (
+          <DocsCollabCommentControl
+            labels={commentControlLabels}
+            canAddFromSelection={canAddCommentFromSelection}
+            commentsDisabled={commentsDisabled}
+            onAddCommentFromSelection={onAddCommentFromSelection}
+          />
+        ) : undefined
+      }
+      trailing={viewSource ? undefined : <DocsCollabSuggestControls editor={editor} />}
     />
   ) : null;
 
@@ -162,7 +201,14 @@ export function DocsCollabEditor({
       fill={sheetFill}
       paginated={pagination}
       slashMenu={format !== "text"}
-      overlay={commentsOverlay}
+      overlay={
+        commentsOverlay || suggestionsOverlay ? (
+          <>
+            {commentsOverlay}
+            {suggestionsOverlay}
+          </>
+        ) : null
+      }
       className="min-h-0 flex-1"
     />
   );

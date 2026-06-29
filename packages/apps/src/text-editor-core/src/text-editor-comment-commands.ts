@@ -5,9 +5,15 @@ import type { MarkType } from "@tiptap/pm/model";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
+import { trackChangesPluginKey } from "tiptap-track-changes";
 
 const COMMENT_MARK_CLASS = "comment-mark";
 const COMMENT_MARK_ACTIVE_CLASS = "comment-mark--active";
+
+function bypassTrackChangesForCommentTransaction(tr: Editor["state"]["tr"]): typeof tr {
+  tr.setMeta(trackChangesPluginKey, { handled: true });
+  return tr;
+}
 
 export const commentActiveIdPluginKey = new PluginKey<string | null>("commentActiveId");
 
@@ -82,8 +88,19 @@ export const CommentMark = Mark.create({
     return {
       setComment:
         (attributes: { id: string }) =>
-        ({ chain }: CommandProps) =>
-          chain().setMark(this.name, attributes).run(),
+        ({ state, dispatch }: CommandProps) => {
+          const markType = state.schema.marks[this.name];
+          if (!markType) return false;
+
+          const { from, to, empty } = state.selection;
+          if (empty) return false;
+
+          const tr = bypassTrackChangesForCommentTransaction(
+            state.tr.addMark(from, to, markType.create(attributes)),
+          );
+          if (dispatch) dispatch(tr);
+          return true;
+        },
       unsetComment:
         (id: string) =>
         ({ state, dispatch }: CommandProps) => {
@@ -103,7 +120,10 @@ export const CommentMark = Mark.create({
             }
           });
 
-          if (modified && dispatch) dispatch(tr);
+          if (modified) {
+            bypassTrackChangesForCommentTransaction(tr);
+            if (dispatch) dispatch(tr);
+          }
           return modified;
         },
       selectComment:
@@ -113,24 +133,24 @@ export const CommentMark = Mark.create({
           scrollCommentMarkIntoView(editor, id);
 
           if (options?.preserveSelection) {
-            applyCommentActiveId(editor, id);
+            setCommentActiveId(editor, id);
             return chain().focus().run();
           }
 
           if (range == null) {
             const fallbackPos = findCommentMarkPos(editor.state.doc, id);
             if (fallbackPos == null) {
-              applyCommentActiveId(editor, id);
+              setCommentActiveId(editor, id);
               return false;
             }
             const ok = chain().focus().setTextSelection(fallbackPos).run();
-            applyCommentActiveId(editor, id);
+            setCommentActiveId(editor, id);
             return ok;
           }
 
           const caretPos = resolveSelectCommentCaretPos(range, options);
           const ok = chain().focus().setTextSelection(caretPos).run();
-          applyCommentActiveId(editor, id);
+          setCommentActiveId(editor, id);
           return ok;
         },
     };
@@ -195,11 +215,6 @@ export function setCommentActiveId(editor: Editor | null, activeId: string | nul
   const tr = editor.state.tr.setMeta(commentActiveIdPluginKey, activeId);
   tr.setMeta("addToHistory", false);
   editor.view.dispatch(tr);
-}
-
-/** Apply active styling immediately; plugin view.update re-syncs after DOM rebuilds. */
-export function applyCommentActiveId(editor: Editor, activeId: string | null): void {
-  setCommentActiveId(editor, activeId);
 }
 
 export function readSelectedAnchorText(editor: Editor): string | null {
@@ -500,6 +515,7 @@ export function syncPersistedCommentMarks(
   if (!modified) return false;
 
   tr.setMeta("addToHistory", false);
+  bypassTrackChangesForCommentTransaction(tr);
   editor.view.dispatch(tr);
   return true;
 }

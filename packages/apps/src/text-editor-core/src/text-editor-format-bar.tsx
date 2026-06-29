@@ -73,6 +73,10 @@ export type TextEditorFormatBarProps = {
   groups?: readonly TextEditorFormatBarGroup[];
   /** Show a print action that calls `window.print()`. */
   showPrint?: boolean;
+  /** Optional control rendered inline after the link group (e.g. add comment). */
+  commentControl?: ReactNode;
+  /** Optional controls rendered at the trailing edge of the bar. */
+  trailing?: ReactNode;
   className?: string;
 };
 
@@ -80,6 +84,8 @@ export function TextEditorFormatBar({
   editor,
   groups = TEXT_EDITOR_FORMAT_BAR_FULL,
   showPrint = true,
+  commentControl,
+  trailing,
   className,
 }: TextEditorFormatBarProps) {
   const [linkOpen, setLinkOpen] = useState(false);
@@ -121,8 +127,19 @@ export function TextEditorFormatBar({
   const showBlocksExtra = enabled.has("blocksExtra");
   const showBlocks = showBlocksBasic || showBlocksExtra;
   const showLink = enabled.has("link");
+  const showComment = Boolean(commentControl);
+  const hasContentBeforeComment = showLink || showHistory || showHeading || showMarks || showBlocks;
 
-  if (!showHistory && !showHeading && !showMarks && !showBlocks && !showLink && !showPrint) {
+  if (
+    !showHistory &&
+    !showHeading &&
+    !showMarks &&
+    !showBlocks &&
+    !showLink &&
+    !showComment &&
+    !showPrint &&
+    !trailing
+  ) {
     return null;
   }
 
@@ -289,15 +306,23 @@ export function TextEditorFormatBar({
           <Link2 className="h-4 w-4" />
         </FormatBarButton>
       ) : null}
-      {showPrint ? (
-        <div className="text-editor-format-bar__print">
-          <button
-            type="button"
-            onClick={() => printTextEditorSheet(editor)}
-            className="text-editor-format-bar__print-btn"
-          >
-            <Printer className="h-3.5 w-3.5" /> Print
-          </button>
+      {showComment && hasContentBeforeComment ? <FormatBarSeparator /> : null}
+      {commentControl}
+      {showComment && (showPrint || trailing) ? <FormatBarSeparator /> : null}
+      {showPrint || trailing ? (
+        <div className="text-editor-format-bar__end">
+          {showPrint ? (
+            <div className="text-editor-format-bar__print">
+              <button
+                type="button"
+                onClick={() => printTextEditorSheet(editor)}
+                className="text-editor-format-bar__print-btn"
+              >
+                <Printer className="h-3.5 w-3.5" /> Print
+              </button>
+            </div>
+          ) : null}
+          {trailing}
         </div>
       ) : null}
 

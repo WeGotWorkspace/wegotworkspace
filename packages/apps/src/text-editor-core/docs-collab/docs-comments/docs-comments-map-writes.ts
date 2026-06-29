@@ -40,6 +40,11 @@ export function buildDraftThreadFromSelection(
   };
 }
 
+export function normalizeDocsCommentAuthor(author: DocsCommentAuthor): DocsCommentAuthor {
+  const name = author.name?.trim() || author.id?.trim() || "Unknown";
+  return name === author.name ? author : { ...author, name };
+}
+
 export function createCommentMessage(
   body: string,
   author: DocsCommentAuthor,
@@ -51,7 +56,7 @@ export function createCommentMessage(
     id: createDocsCommentId(),
     body: trimmed,
     createdAt: new Date().toISOString(),
-    author,
+    author: normalizeDocsCommentAuthor(author),
   };
 }
 

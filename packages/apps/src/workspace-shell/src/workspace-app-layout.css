@@ -42,6 +42,26 @@
   );
 }
 
+/* Right-hand panel slide (mirrors app-sidebar open/close on the opposite edge). */
+.workspace-app-layout__panel {
+  @apply shrink-0 overflow-hidden will-change-transform transition-[translate,margin,border-width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)];
+}
+
+.workspace-app-layout__panel[data-open="true"] {
+  @apply translate-x-0;
+}
+
+.workspace-app-layout__panel[data-open="false"] {
+  @apply translate-x-full border-l-0;
+  margin-right: calc(-1 * var(--workspace-panel-width, 0px));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-app-layout__panel {
+    transition: none;
+  }
+}
+
 .workspace-app-layout__user-footer .user-avatar {
   --user-avatar-bg: var(
     --workspace-user-footer-avatar-bg,
