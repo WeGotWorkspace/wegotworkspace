@@ -27,6 +27,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Modules commonly enabled on shared Apache + cPanel-style hosts.
+# Debian's default Alias /icons/ (FancyIndexes) shadows PWA manifest icons at /icons/*.png.
 RUN a2enmod \
         rewrite \
         headers \
@@ -41,7 +42,9 @@ RUN a2enmod \
         authz_core \
         authz_host \
         auth_basic \
-        ssl
+        ssl \
+    && sed -i '/^Alias \/icons\//d' /etc/apache2/mods-available/alias.conf \
+    && ! grep -q '^Alias /icons/' /etc/apache2/mods-available/alias.conf
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 

@@ -108,4 +108,17 @@ final class FrontRoutingTest extends TestCase
             ->assertOk()
             ->assertHeader('Content-Type', 'text/css; charset=utf-8');
     }
+
+    public function test_pwa_icon_path_serves_shell_asset(): void
+    {
+        $this->repoRoot = UiDistFixture::bootstrapMonorepoLayout();
+        $installRoot = $this->repoRoot.'/apps/wegotworkspace';
+        $data = $installRoot.'/wgw-content';
+        WgwInstallFixture::markInstalled($installRoot, $data);
+        WgwInstallFixture::syncDatabaseConnection();
+
+        $this->get('/icons/settings-512.png')
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/png');
+    }
 }
