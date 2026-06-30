@@ -39,7 +39,12 @@ export type {
   DocsCommentAuthor,
 } from "./docs-comments-types";
 export { DOCS_COMMENTS_MAP_KEY } from "./docs-comments-types";
-export { migrateCollabPersistence } from "./docs-collab-persistence";
+export {
+  docsCollabRoomKey,
+  hasDocsCollabPendingServerSave,
+  migrateCollabPersistence,
+  clearDocsCollabOfflinePersistence,
+} from "./docs-collab-persistence";
 export {
   useDocsCollab,
   DEFAULT_DOCS_COLLAB_URLS,
