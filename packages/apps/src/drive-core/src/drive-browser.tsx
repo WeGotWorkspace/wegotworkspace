@@ -72,6 +72,7 @@ export function DriveGridView({
   onTrash,
   searchActive: _searchActive = false,
   showLocationColumn = false,
+  offlineUnavailableIds,
 }: {
   items: DriveFile[];
   imagePreviewUrls: Record<string, string>;
@@ -81,6 +82,8 @@ export function DriveGridView({
   searchActive?: boolean;
   /** Show each file's drive location as a subtitle under the tile title. */
   showLocationColumn?: boolean;
+  /** Mute rows that cannot be opened offline. */
+  offlineUnavailableIds?: ReadonlySet<string>;
   inTrash: boolean;
   selectionMode: boolean;
   isTouch: boolean;
@@ -145,6 +148,7 @@ export function DriveGridView({
                 isDragging={isItemDragging(f.id)}
                 isTouch={isTouch}
                 showLocation={showLocationColumn}
+                isOfflineUnavailable={offlineUnavailableIds?.has(f.id) ?? false}
                 itemDragHandlers={itemDragHandlers(f.id)}
                 onSelect={(e) => onSelect(f.id, e)}
                 onOpen={() => onOpen(f)}
@@ -306,6 +310,7 @@ function FileTile({
   isDragging,
   isTouch,
   showLocation = false,
+  isOfflineUnavailable = false,
   onSelect,
   onOpen,
   onLongPress,
@@ -326,6 +331,7 @@ function FileTile({
   isDragging: boolean;
   isTouch: boolean;
   showLocation?: boolean;
+  isOfflineUnavailable?: boolean;
   itemDragHandlers: ItemDragHandlers;
   onSelect: (e: React.MouseEvent) => void;
   onOpen: () => void;
@@ -357,6 +363,7 @@ function FileTile({
         selectionMode && "drive-file-tile--selection-mode",
         isDragging && "drive-file-tile--dragging",
         isSelected && "drive-file-tile--selected",
+        isOfflineUnavailable && "drive-file-tile--offline-unavailable",
       )}
     >
       <button
@@ -484,6 +491,7 @@ export function DriveListView({
   showLocationColumn = false,
   locationColumnLabel = "Location",
   showKindColumn = true,
+  offlineUnavailableIds,
 }: {
   items: DriveFile[];
   activeId: string | null;
@@ -499,6 +507,8 @@ export function DriveListView({
   locationColumnLabel?: string;
   /** Show the "Kind" column. Defaults to `true`; Docs home hides it (all documents). */
   showKindColumn?: boolean;
+  /** Mute rows that cannot be opened offline. */
+  offlineUnavailableIds?: ReadonlySet<string>;
   inTrash: boolean;
   isItemDragging: (id: string) => boolean;
   itemDragHandlers: (id: string) => ItemDragHandlers;
@@ -543,6 +553,7 @@ export function DriveListView({
             const folderPath = isFolder ? driveFolderUiPath(f) : "";
             const isSelected = selectedIds.includes(f.id);
             const isActive = f.id === activeId;
+            const isOfflineUnavailable = offlineUnavailableIds?.has(f.id) ?? false;
             const dropZone = isFolder
               ? folderDropZoneProps(folderPath)
               : ({} as FolderDropZoneProps);
@@ -586,6 +597,7 @@ export function DriveListView({
                   isFolder && dropZone.isDropTarget && "drive-list-row--drop-target",
                   isSelected && "drive-list-row--selected",
                   isActive && !isSelected && "drive-list-row--active",
+                  isOfflineUnavailable && "drive-list-row--offline-unavailable",
                 )}
               >
                 <td className="drive-list-col-name py-2 min-w-0" {...(isFolder ? dropZone : {})}>

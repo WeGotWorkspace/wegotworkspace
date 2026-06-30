@@ -26,6 +26,8 @@ export type DocsHomePaneProps = {
   loadingMore: boolean;
   hasMore: boolean;
   error: string | null;
+  /** Row ids that cannot be opened while offline (muted styling). */
+  offlineUnavailableIds?: ReadonlySet<string>;
   query: string;
   onQueryChange: (query: string) => void;
   viewMode: ViewMode;
@@ -54,6 +56,7 @@ export function DocsHomePane({
   loadingMore,
   hasMore,
   error,
+  offlineUnavailableIds,
   query,
   onQueryChange,
   viewMode,
@@ -187,6 +190,7 @@ export function DocsHomePane({
     onRename: onRename ?? noop,
     onMove: onMove ?? noop,
     onTrash: onTrash ?? noop,
+    offlineUnavailableIds,
   };
 
   return (
@@ -230,6 +234,7 @@ export function DocsHomePane({
                 activeId={activeId}
                 showKindColumn={false}
                 locationColumnLabel={labels.homeLocationColumn}
+                offlineUnavailableIds={offlineUnavailableIds}
               />
             )}
             {hasMore ? (

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DOCS_VIEW_MODE_STORAGE_KEY } from "@/hooks/persisted-view-mode";
 import { usePersistedViewMode } from "@/hooks/use-persisted-view-mode";
+import { useAppToast } from "@/hooks/use-app-toast";
 import { Plus } from "lucide-react";
 import { TooltipProvider } from "@/ui/tooltip";
 import { Button } from "@/button/src/button";
@@ -16,6 +17,10 @@ import { mergeDocsLabels, type DocsUILabels } from "@/docs-core/src/docs-labels"
 import { useDocumentTitle } from "@/lib/document-title";
 import { DocsHomePane } from "@/docs-core/src/docs-home-pane";
 import { useDocsHomeList, type DocsHomeFetcher } from "@/docs-core/src/use-docs-home-list";
+import {
+  useDocsHomeOfflineAvailability,
+  useDocsHomeOpenGuard,
+} from "@/docs-core/src/use-docs-home-offline-availability";
 import {
   buildDocsHomeDrives,
   collectGroupRoots,
@@ -36,6 +41,8 @@ export type DocsHomeWorkspaceProps = {
   session: WorkspaceSession;
   /** Injectable browse fetcher (mock in Storybook/Vitest). */
   fetcher?: DocsHomeFetcher;
+  /** When set, enables Dexie cache read/write for offline home browse (live app only). */
+  offlineUsername?: string | null;
   /** Live drive operations powering row actions (star/download/rename/move/trash). */
   operations?: DriveAPIOperations;
   /** Called with the drive API path when a row is opened (route navigation lives in `*App`). */
@@ -53,6 +60,7 @@ export type DocsHomeWorkspaceProps = {
 export function DocsHomeWorkspace({
   session,
   fetcher,
+  offlineUsername: offlineUsernameProp = null,
   operations,
   onOpenFile,
   onCreateDocument,
@@ -63,6 +71,8 @@ export function DocsHomeWorkspace({
   const labels = mergeDocsLabels(labelOverrides);
   useDocumentTitle(labels.homeTitle);
   const username = session.user.username ?? "";
+  const { showError } = useAppToast();
+  const offlineUsername = offlineUsernameProp;
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [viewMode, setViewMode] = usePersistedViewMode({
@@ -75,11 +85,27 @@ export function DocsHomeWorkspace({
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [createDialogDefaultName, setCreateDialogDefaultName] = useState("Untitled.md");
 
-  const { files, loading, loadingMore, hasMore, error, loadMore, reload } = useDocsHomeList({
-    username,
-    query,
-    pathPrefix: selectedDrivePrefix ?? undefined,
-    fetcher,
+  const { files, loading, loadingMore, hasMore, error, loadMore, reload, isOfflineListing } =
+    useDocsHomeList({
+      username,
+      query,
+      pathPrefix: selectedDrivePrefix ?? undefined,
+      fetcher,
+      offlineUsername,
+    });
+
+  const { offlineAvailableIds } = useDocsHomeOfflineAvailability(files, isOfflineListing);
+  const offlineUnavailableIds = useMemo(() => {
+    if (!isOfflineListing) return undefined;
+    return new Set(
+      files.filter((file) => !offlineAvailableIds.has(file.id)).map((file) => file.id),
+    );
+  }, [files, isOfflineListing, offlineAvailableIds]);
+
+  const canOpenOffline = useDocsHomeOpenGuard({
+    isOfflineListing,
+    offlineAvailableIds,
+    onUnavailable: () => showError(labels.homeNotAvailableOffline),
   });
 
   const actions = useDocsHomeActions({
@@ -117,9 +143,10 @@ export function DocsHomeWorkspace({
 
   const handleOpenFile = useCallback(
     (file: DriveFile) => {
+      if (!canOpenOffline(file)) return;
       if (file.apiPath) onOpenFile?.(file.apiPath);
     },
-    [onOpenFile],
+    [canOpenOffline, onOpenFile],
   );
 
   const groupRootNames = useMemo(() => new Set(knownGroupRoots), [knownGroupRoots]);
@@ -206,6 +233,7 @@ export function DocsHomeWorkspace({
             loadingMore={loadingMore}
             hasMore={hasMore}
             error={error}
+            offlineUnavailableIds={offlineUnavailableIds}
             query={query}
             onQueryChange={setQuery}
             viewMode={viewMode}

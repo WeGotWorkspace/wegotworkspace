@@ -353,6 +353,16 @@
   @apply opacity-40;
 }
 
+.drive-workspace .drive-list-row--offline-unavailable,
+.drive-workspace .drive-file-tile--offline-unavailable {
+  opacity: 0.55;
+}
+
+.drive-workspace .drive-list-row--offline-unavailable .drive-list-row__name,
+.drive-workspace .drive-file-tile--offline-unavailable .drive-file-tile__title {
+  color: color-mix(in oklab, var(--color-ink) 45%, transparent);
+}
+
 .drive-workspace .drive-list-muted {
   color: color-mix(in oklab, var(--color-ink) 60%, transparent);
 }

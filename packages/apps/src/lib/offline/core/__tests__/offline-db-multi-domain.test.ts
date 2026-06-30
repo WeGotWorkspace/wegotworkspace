@@ -1,8 +1,14 @@
 import "fake-indexeddb/auto";
 import Dexie from "dexie";
 import { describe, expect, it } from "vitest";
+import "@/lib/offline/contacts/contacts-schema";
+import "@/lib/offline/docs/docs-schema";
+import "@/lib/offline/notes/notes-schema";
 import { registerOfflineDomainTables, WgwOfflineDatabase } from "@/lib/offline/core/offline-db";
-import { NOTES_OFFLINE_VERSION } from "@/lib/offline/core/offline-version-allocation";
+import {
+  DOCS_OFFLINE_VERSION,
+  NOTES_OFFLINE_VERSION,
+} from "@/lib/offline/core/offline-version-allocation";
 import { seedOfflineVersionOwnerForTests } from "@/lib/offline/core/offline-version-allocation";
 import { contactsCardsTable } from "@/lib/offline/contacts/contacts-schema";
 import {
@@ -13,15 +19,16 @@ import {
 const dbName = (key: string) => `wgw-offline-${key}`;
 
 describe("offline db multi-domain registry", () => {
-  it("opens fresh with core, contacts, and notes tables at the latest version", async () => {
+  it("opens fresh with core, contacts, notes, and docs tables at the latest version", async () => {
     const db = new WgwOfflineDatabase("multi-fresh");
     await db.open();
 
-    expect(db.verno).toBe(NOTES_OFFLINE_VERSION.updatedAtIndex);
+    expect(db.verno).toBe(DOCS_OFFLINE_VERSION.listingTables);
     expect(db.tables.map((t) => t.name).sort()).toEqual(
       expect.arrayContaining([
         "contacts_address_books",
         "contacts_cards",
+        "docs_listing_rows",
         "meta",
         "notes_notebooks",
         "notes_notes",
@@ -93,11 +100,12 @@ describe("offline db multi-domain registry", () => {
     const db = new WgwOfflineDatabase("multi-upgrade");
     await db.open();
 
-    expect(db.verno).toBe(NOTES_OFFLINE_VERSION.updatedAtIndex);
+    expect(db.verno).toBe(DOCS_OFFLINE_VERSION.listingTables);
     expect(await db.meta.get("shared:session")).toBeTruthy();
     expect(await db.outbox.get("legacy-op")).toBeTruthy();
     expect(db.tables.map((t) => t.name)).toContain("contacts_cards");
     expect(db.tables.map((t) => t.name)).toContain("notes_notes");
+    expect(db.tables.map((t) => t.name)).toContain("docs_listing_rows");
 
     await db.delete();
   });
