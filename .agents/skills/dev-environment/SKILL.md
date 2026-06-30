@@ -88,6 +88,7 @@ docker compose -f compose.dev.yml exec web php /var/www/packages/api/artisan wgw
 | UI edits never appear (HMR or reload) | Editing a **different git worktree** than the one running `pnpm dev` | Open the file under the same clone that started Vite (check `lsof -p $(lsof -t -iTCP:5173) \| grep cwd`). Each worktree has its own `packages/apps/src/` — not symlinked. |
 | UI edits on `/` not visible | Component only mounted on app routes (e.g. Contacts at `/contacts/all`) | Navigate to the route that renders the component; `/` is the home launcher only. |
 | Type errors after OpenAPI change | Types not regenerated | `pnpm --filter @wgw/api run openapi:build-json` + apps typegen |
+| Service worker version jumps every reload (`sw.js` #25104 → #25105) | DevTools **Update on reload** enabled, or `pnpm build` while preview is running | Application → Service Workers → **uncheck “Update on reload”** unless debugging SW updates; avoid rebuilding mid-session — restart `pnpm preview` after a build; optional: Unregister + clear site data to reset stale workers |
 
 ## API e2e (local, not default CI for apps)
 

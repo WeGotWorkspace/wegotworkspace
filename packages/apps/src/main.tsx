@@ -5,7 +5,23 @@ import "@/styles.css";
 
 if (import.meta.env.PROD && "serviceWorker" in navigator) {
   void import("virtual:pwa-register").then(({ registerSW }) => {
-    registerSW();
+    const isLocalPreview = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+
+    registerSW({
+      immediate: true,
+      /** Local preview: never auto-reload when a new worker activates (avoids reload loops). */
+      onNeedReload() {
+        if (!isLocalPreview) {
+          window.location.reload();
+        }
+      },
+      /** Local preview: leave waiting workers idle until all tabs close. */
+      onNeedRefresh() {
+        if (!isLocalPreview) {
+          window.location.reload();
+        }
+      },
+    });
   });
 }
 
