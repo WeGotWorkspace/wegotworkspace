@@ -223,6 +223,46 @@ export const Empty: Story = {
   },
 };
 
+/** Cached browse listing with the offline/stale banner (mock tier). */
+export const OfflineCachedListing: Story = {
+  name: "Offline (cached listing)",
+  render: () => <OfflineCachedListingHarness />,
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Docs home browse served from cached unified-search rows with the offline listing banner.",
+      },
+    },
+  },
+};
+
+function OfflineCachedListingHarness() {
+  const files = mapDocsHomeResults(FIXTURES, session.user.username ?? "alice");
+  return (
+    <div className="docs-workspace docs-home-workspace" style={{ height: "100dvh" }}>
+      <DocsHomePane
+        labels={docsLabels}
+        files={files}
+        loading={false}
+        loadingMore={false}
+        hasMore={false}
+        error={null}
+        isStaleListing
+        offlineUnavailableIds={new Set([String(files[1]?.id ?? "")])}
+        query=""
+        onQueryChange={() => {}}
+        viewMode="list"
+        onViewModeChange={() => {}}
+        onLoadMore={() => {}}
+        onOpenFile={() => {}}
+        sidebarOpen={false}
+        onToggleSidebar={() => {}}
+      />
+    </div>
+  );
+}
+
 /** Pane-only surface (header + list) with static mock data and grid/list toggle. */
 export const Pane: StoryObj<typeof DocsHomePane> = {
   render: () => <DocsHomePaneHarness />,
