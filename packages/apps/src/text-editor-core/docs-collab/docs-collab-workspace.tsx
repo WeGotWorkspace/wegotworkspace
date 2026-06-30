@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import type { Editor } from "@tiptap/react";
 import { Code2, MessageSquare, Printer } from "lucide-react";
+import { Button } from "@/button/src/button";
+import { Callout } from "@/callout/src/callout";
 import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { IconButton } from "@/button/src/button";
@@ -48,6 +50,16 @@ import { useDocsComments } from "./use-docs-comments";
 import { useDocsSuggestions } from "./use-docs-suggestions";
 import { useDocsCollab } from "./use-docs-collab";
 import type { DocsCollabUrls } from "./use-docs-collab";
+import { useDocsCollabFailedSync } from "./use-docs-collab-failed-sync";
+import { DocsConflictDialog } from "./docs-conflict-dialog";
+import {
+  resolveDocsConflictKeepLocal,
+  resolveDocsConflictUseServer,
+} from "@/lib/offline/docs/docs-conflict-resolution";
+import {
+  reportDocsSyncConflicts,
+  setDocsSyncConflictListener,
+} from "@/lib/offline/docs/docs-sync-conflicts";
 import {
   WorkspaceAppLayout,
   WorkspaceUserFooter,
@@ -168,6 +180,7 @@ function DocsCollabWorkspaceInner({
     docStatus,
     pendingSync,
     failedSync,
+    saveNow,
     onMarkdownChange,
     registerMarkdownGetter,
   } = useDocsCollab({
@@ -176,6 +189,20 @@ function DocsCollabWorkspaceInner({
     urls,
     wire,
   });
+  const showFailedSync = useDocsCollabFailedSync(urls?.room);
+  const [conflictOpen, setConflictOpen] = useState(false);
+  const [resolvingConflict, setResolvingConflict] = useState(false);
+
+  useEffect(() => {
+    setDocsSyncConflictListener((paths) => {
+      if (paths.includes(urls?.room ?? "")) setConflictOpen(true);
+    });
+    return () => setDocsSyncConflictListener(undefined);
+  }, [urls?.room]);
+
+  const handleRetrySync = useCallback(() => {
+    void saveNow().catch(() => undefined);
+  }, [saveNow]);
   const awarenessPresencePeers = useDocsCollabAwarenessPresence(collabSession?.awareness);
   const presencePeers = useMemo(
     () =>
@@ -461,6 +488,30 @@ function DocsCollabWorkspaceInner({
   const characterCount = markdown.length;
   const sourceLockedByCollab = Boolean(collabSession) && presencePeers.length > 0;
 
+  const handleConflictKeepLocal = useCallback(() => {
+    setResolvingConflict(true);
+    void resolveDocsConflictKeepLocal(saveNow)
+      .then(() => {
+        setConflictOpen(false);
+        reportDocsSyncConflicts([]);
+      })
+      .finally(() => setResolvingConflict(false));
+  }, [saveNow]);
+
+  const handleConflictUseServer = useCallback(() => {
+    const ydoc = collabSession?.ydoc;
+    if (!ydoc || !urls?.yjsUrl) return;
+    setResolvingConflict(true);
+    void resolveDocsConflictUseServer(ydoc, urls.yjsUrl, urls.authToken)
+      .then(() => {
+        setConflictOpen(false);
+        if (editor) {
+          setMarkdown(getAcceptedTextEditorContent(editor, editorFormat));
+        }
+      })
+      .finally(() => setResolvingConflict(false));
+  }, [collabSession?.ydoc, editor, editorFormat, urls?.authToken, urls?.yjsUrl]);
+
   useEffect(() => {
     if (!sourceLockedByCollab || !viewSource) return;
     setViewSource(false);
@@ -584,6 +635,22 @@ function DocsCollabWorkspaceInner({
           }
           main={
             <div className="docs-workspace__editor">
+              {showFailedSync ? (
+                <Callout
+                  className="docs-workspace__retry-callout"
+                  severity="error"
+                  title={labels.syncFailedTitle}
+                  message={labels.syncFailedMessage}
+                  action={
+                    <Button
+                      variant="subtle"
+                      size="sm"
+                      label={labels.retrySync}
+                      onClick={handleRetrySync}
+                    />
+                  }
+                />
+              ) : null}
               {collabSession ? (
                 <DocsCollabEditor
                   ydoc={collabSession.ydoc}
@@ -640,6 +707,15 @@ function DocsCollabWorkspaceInner({
           }
         />
         {reviewDrawer}
+        <DocsConflictDialog
+          open={conflictOpen}
+          documentTitle={resolvedDocumentTitle}
+          busy={resolvingConflict}
+          labels={labels}
+          onKeepLocal={handleConflictKeepLocal}
+          onUseServer={handleConflictUseServer}
+          onOpenChange={setConflictOpen}
+        />
         <AlertDialog open={sourceClosedDialogOpen} onOpenChange={setSourceClosedDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>

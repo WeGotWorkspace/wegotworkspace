@@ -1,10 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
+  ensureTrashFolder,
   mergeDriveFolderListing,
   resolveDriveFileApiPath,
+  resolveTrashName,
 } from "@/drive-core/src/drive-batch-utils";
+import { DRIVE_TRASH_DIR_NAME } from "@/drive-core/src/drive-path-utils";
 import type { DriveFile } from "@/drive-core/src/drive-models";
-import type { DriveUIData } from "@/drive-core/src/drive-types";
+import type { DriveAPIOperations, DriveUIData } from "@/drive-core/src/drive-types";
 
 const USER = "alice";
 const groupRoots = new Set<string>();
@@ -93,5 +96,60 @@ describe("mergeDriveFolderListing", () => {
       directory: { location: "/users/alice/Projects", files: [] },
     };
     expect(mergeDriveFolderListing(previous, nextData, USER)).toEqual([]);
+  });
+});
+
+describe("resolveTrashName", () => {
+  it("returns the original name when trash is empty", () => {
+    expect(resolveTrashName("Untitled.md", new Set())).toBe("Untitled.md");
+  });
+
+  it("increments the base name when the title already exists in trash", () => {
+    const taken = new Set(["Untitled.md"]);
+    expect(resolveTrashName("Untitled.md", taken)).toBe("Untitled 2.md");
+  });
+
+  it("keeps incrementing until a free trash name is found", () => {
+    const taken = new Set(["report.md", "report 2.md"]);
+    expect(resolveTrashName("report.md", taken)).toBe("report 3.md");
+  });
+
+  it("handles extensionless names", () => {
+    const taken = new Set(["README"]);
+    expect(resolveTrashName("README", taken)).toBe("README 2");
+  });
+});
+
+describe("ensureTrashFolder", () => {
+  const groupRoots = new Set<string>();
+  const data = {} as DriveUIData;
+
+  it("skips create when .Trash is already listed under the user root", async () => {
+    const createFolder = vi.fn(async () => data);
+    const operations = {
+      listAllDirectoryEntries: vi.fn(async () => [
+        { name: DRIVE_TRASH_DIR_NAME, path: "/users/alice/.Trash", type: "dir" },
+      ]),
+      createFolder,
+    } as unknown as DriveAPIOperations;
+
+    await ensureTrashFolder(operations, USER, groupRoots);
+
+    expect(createFolder).not.toHaveBeenCalled();
+  });
+
+  it("creates .Trash when it is missing from the user root listing", async () => {
+    const createFolder = vi.fn(async () => data);
+    const operations = {
+      listAllDirectoryEntries: vi.fn(async () => []),
+      createFolder,
+    } as unknown as DriveAPIOperations;
+
+    await ensureTrashFolder(operations, USER, groupRoots);
+
+    expect(createFolder).toHaveBeenCalledWith(
+      { cwd: "/users/alice", name: DRIVE_TRASH_DIR_NAME },
+      expect.objectContaining({ refreshState: false }),
+    );
   });
 });

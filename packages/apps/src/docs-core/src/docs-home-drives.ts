@@ -11,6 +11,7 @@
 import type { DriveFile } from "@/drive-core/src/drive-models";
 import type { DriveAPIOperations } from "@/drive-core/src/drive-types";
 import { suggestNewMarkdownFileName } from "@/drive-core/src/drive-file-utils";
+import { normalizeApiVirtualPath } from "@/drive-core/src/drive-path-utils";
 
 const NEW_DOCUMENT_BASE = "Untitled";
 
@@ -23,6 +24,43 @@ export type DocsHomeDrive = {
   /** Storage-key prefix passed to the browse API (e.g. `users/alice`, `groups/team`). */
   pathPrefix: string;
 };
+
+/** Extract sorted, unique group roots from a `/groups` directory listing. */
+export function collectGroupRootsFromDirectory(
+  entries: readonly { path: string; type?: string; name?: string }[],
+): string[] {
+  const roots = new Set<string>();
+  for (const entry of entries) {
+    if (entry.type && entry.type !== "dir") continue;
+    const apiPath = normalizeApiVirtualPath(entry.path);
+    if (apiPath === "/groups") {
+      const name = entry.name?.trim();
+      if (name) roots.add(name);
+      continue;
+    }
+    if (!apiPath.startsWith("/groups/")) continue;
+    const [root] = apiPath.slice("/groups/".length).split("/");
+    if (root) roots.add(root);
+  }
+  return Array.from(roots).sort((a, b) => a.localeCompare(b));
+}
+
+/**
+ * Load shared-drive roots from the live `/groups` listing (mirrors Drive bootstrap).
+ * Falls back to an empty list when operations are unavailable or the request fails.
+ */
+export async function fetchGroupRootsFromDrive(
+  operations: Pick<DriveAPIOperations, "listDirectory"> | undefined,
+  opts?: { signal?: AbortSignal },
+): Promise<string[]> {
+  if (!operations) return [];
+  try {
+    const state = await operations.listDirectory("/groups", opts);
+    return collectGroupRootsFromDirectory(state.directory.files);
+  } catch {
+    return [];
+  }
+}
 
 /** Extract sorted, unique group roots from loaded files' `/groups/{root}/…` api paths. */
 export function collectGroupRoots(files: readonly DriveFile[]): string[] {

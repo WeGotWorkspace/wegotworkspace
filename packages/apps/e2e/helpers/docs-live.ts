@@ -38,6 +38,14 @@ export function docsHomeRow(page: Page, fileName: string) {
   return page.locator(".drive-list-row", { hasText: fileName });
 }
 
+/** Open row actions and choose "Make available offline" on Docs home. */
+export async function makeDocAvailableOfflineFromHome(page: Page, fileName: string): Promise<void> {
+  const row = docsHomeRow(page, fileName);
+  await row.getByRole("button", { name: "More actions" }).click();
+  await page.getByRole("menuitem", { name: "Make available offline" }).click();
+  await expect(row.locator(".drive-offline-badge--pinned")).toBeVisible({ timeout: 30_000 });
+}
+
 /** Drop the docs offline IndexedDB so e2e starts from a clean cache. */
 export async function clearDocsOfflineStore(page: Page): Promise<void> {
   await page.evaluate(async () => {

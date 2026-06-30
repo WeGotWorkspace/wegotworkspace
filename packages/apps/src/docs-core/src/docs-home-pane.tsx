@@ -15,8 +15,9 @@ import { useDriveSelectionBar } from "@/drive-core/src/use-drive-selection-bar";
 import type { DriveAPIOperations } from "@/drive-core/src/drive-types";
 import type { DocsUILabels } from "@/docs-core/src/docs-labels";
 
-const noop = () => {};
 /** The home list is server-driven; the controller never mutates items locally. */
+const noop = () => {};
+const noopUndo = () => false;
 const noopSetItems: Dispatch<SetStateAction<DriveFile[]>> = () => {};
 
 export type DocsHomePaneProps = {
@@ -28,6 +29,17 @@ export type DocsHomePaneProps = {
   error: string | null;
   /** Row ids that cannot be opened while offline (muted styling). */
   offlineUnavailableIds?: ReadonlySet<string>;
+  /** Row ids explicitly pinned for offline use. */
+  offlinePinnedIds?: ReadonlySet<string>;
+  /** Row ids with pending offline sync (collab save or outbox). */
+  offlinePendingSyncIds?: ReadonlySet<string>;
+  /** Optional per-file menu actions (e.g. make/remove offline copy). */
+  extraFileActions?: (file: DriveFile) => import("@/action-bar/src/action-bar").ActionBarAction[];
+  pinLoadingId?: string | null;
+  offlineLabels?: Pick<
+    DocsUILabels,
+    "offlineAvailable" | "offlinePendingSync" | "makeAvailableOffline" | "removeOfflineCopy"
+  >;
   query: string;
   onQueryChange: (query: string) => void;
   viewMode: ViewMode;
@@ -47,6 +59,8 @@ export type DocsHomePaneProps = {
   batchStar?: (ids: string[]) => void;
   requestMoveSelected?: (ids: string[]) => void;
   requestDeleteSelected?: (ids: string[]) => void;
+  /** Undo the latest queued trash mutation (toast or Cmd+Z). */
+  onUndoQueuedAction?: () => boolean;
 };
 
 export function DocsHomePane({
@@ -57,6 +71,11 @@ export function DocsHomePane({
   hasMore,
   error,
   offlineUnavailableIds,
+  offlinePinnedIds,
+  offlinePendingSyncIds,
+  extraFileActions,
+  pinLoadingId,
+  offlineLabels,
   query,
   onQueryChange,
   viewMode,
@@ -75,6 +94,7 @@ export function DocsHomePane({
   batchStar,
   requestMoveSelected,
   requestDeleteSelected,
+  onUndoQueuedAction,
 }: DocsHomePaneProps) {
   const filesById = useMemo(() => {
     const map = new Map<string, DriveFile>();
@@ -99,7 +119,6 @@ export function DocsHomePane({
     isItemDragging,
     itemDragHandlers,
     navigateListByKeyboard,
-    undoLatest,
   } = useWorkspaceListController<DriveFile>({
     items: files,
     setItems: noopSetItems,
@@ -165,7 +184,7 @@ export function DocsHomePane({
     selectedCount: selectedIds.length,
     onRequestDeleteSelection: requestDeleteSelection,
     onNavigateList: navigateListByKeyboard,
-    onUndoQueuedAction: undoLatest,
+    onUndoQueuedAction: onUndoQueuedAction ?? noopUndo,
   });
 
   const browserProps = {
@@ -191,6 +210,11 @@ export function DocsHomePane({
     onMove: onMove ?? noop,
     onTrash: onTrash ?? noop,
     offlineUnavailableIds,
+    offlinePinnedIds,
+    offlinePendingSyncIds,
+    extraFileActions,
+    pinLoadingId,
+    offlineBadgeLabels: offlineLabels,
   };
 
   return (
@@ -234,7 +258,6 @@ export function DocsHomePane({
                 activeId={activeId}
                 showKindColumn={false}
                 locationColumnLabel={labels.homeLocationColumn}
-                offlineUnavailableIds={offlineUnavailableIds}
               />
             )}
             {hasMore ? (

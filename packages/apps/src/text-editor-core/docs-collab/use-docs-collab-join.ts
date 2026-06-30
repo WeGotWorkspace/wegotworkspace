@@ -5,6 +5,7 @@ import * as Y from "yjs";
 import { getConnectivitySnapshot, isFetchNetworkError } from "@/lib/offline/browser-online";
 import { applyContentSeedToYDoc } from "./docs-collab-editor-surface";
 import { clearDocsCollabSyncState } from "./docs-collab-sync-registry";
+import { clearDocsCollabPendingServerSave } from "./docs-collab-persistence";
 import { createTeardownResetState, isJoinGenerationCurrent } from "./docs-collab-join-lifecycle";
 import { encodeAwarenessBroadcast, encodeUpdateBroadcast } from "./docs-collab-mesh-sync";
 import {
@@ -375,6 +376,7 @@ export function useDocsCollabJoin({
   const leave = useCallback(async () => {
     const getMd = refs.getMarkdownRef.current;
     const ydoc = refs.ydocRef.current;
+    let saved = false;
     if (getMd && ydoc) {
       try {
         await saveDocument(
@@ -385,12 +387,16 @@ export function useDocsCollabJoin({
           refs.authTokenRef.current,
           urls.documentSaveMethod ?? "POST",
         );
+        saved = true;
       } catch {
         // ignore
       }
     }
+    if (saved) {
+      await clearDocsCollabPendingServerSave(room);
+    }
     await teardown();
-  }, [refs, teardown, urls.documentSaveMethod, urls.documentUrl, urls.room]);
+  }, [refs, room, teardown, urls.documentSaveMethod, urls.documentUrl, urls.room]);
 
   return {
     session,

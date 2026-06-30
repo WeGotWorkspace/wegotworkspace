@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { DOCS_VIEW_MODE_STORAGE_KEY } from "@/hooks/persisted-view-mode";
 import { usePersistedViewMode } from "@/hooks/use-persisted-view-mode";
 import { useAppToast } from "@/hooks/use-app-toast";
+import { useOnReconnect, useConnectivity } from "@/hooks/use-connectivity";
 import { Plus } from "lucide-react";
 import { TooltipProvider } from "@/ui/tooltip";
 import { Button } from "@/button/src/button";
@@ -24,16 +25,22 @@ import {
 import {
   buildDocsHomeDrives,
   collectGroupRoots,
+  fetchGroupRootsFromDrive,
   mergeGroupRoots,
   resolveDocsHomeCreateDialogBrowsePath,
   resolveNewDocumentName,
 } from "@/docs-core/src/docs-home-drives";
 import { useDocsHomeSidebarModel } from "@/docs-core/src/use-docs-home-sidebar-model";
 import { useDocsHomeActions } from "@/docs-core/src/use-docs-home-actions";
+import { useDocsHomePinActions } from "@/docs-core/src/use-docs-home-pin-actions";
 import { DocsHomeModals } from "@/docs-core/src/docs-home-modals";
 import type { DriveAPIOperations } from "@/drive-core/src/drive-types";
 import type { DriveFile } from "@/drive-core/src/drive-models";
 import { apiPathFromUiPath, normalizeApiVirtualPath } from "@/drive-core/src/drive-path-utils";
+import {
+  createHybridDocsDriveOperations,
+  getDocsSyncRunner,
+} from "@/lib/offline/docs/docs-hybrid-operations";
 import "@/docs-core/src/docs-workspace.css";
 import "@/docs-core/src/docs-home-workspace.css";
 
@@ -74,6 +81,13 @@ export function DocsHomeWorkspace({
   const { showError } = useAppToast();
   const offlineUsername = offlineUsernameProp;
 
+  const driveOperations = useMemo(() => {
+    if (!offlineUsername) return operations;
+    return createHybridDocsDriveOperations(offlineUsername);
+  }, [offlineUsername, operations]);
+
+  const { online } = useConnectivity();
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [viewMode, setViewMode] = usePersistedViewMode({
     storageKey: DOCS_VIEW_MODE_STORAGE_KEY,
@@ -94,7 +108,28 @@ export function DocsHomeWorkspace({
       offlineUsername,
     });
 
-  const { offlineAvailableIds } = useDocsHomeOfflineAvailability(files, isOfflineListing);
+  const { offlineAvailableIds, offlinePinnedIds, offlinePendingSyncIds, refresh } =
+    useDocsHomeOfflineAvailability(files, Boolean(offlineUsername), offlineUsername);
+
+  useOnReconnect(
+    useCallback(() => {
+      if (!offlineUsername) return;
+      void getDocsSyncRunner(offlineUsername)
+        .flush()
+        .finally(() => refresh());
+    }, [offlineUsername, refresh]),
+  );
+
+  useEffect(() => {
+    if (online && offlineUsername) refresh();
+  }, [online, offlineUsername, refresh]);
+
+  /** Row badge dots: green only while browsing offline; amber only when sync is pending. */
+  const offlineBadgePinnedIds = useMemo(() => {
+    if (!isOfflineListing) return new Set<string>();
+    return offlineAvailableIds;
+  }, [isOfflineListing, offlineAvailableIds]);
+
   const offlineUnavailableIds = useMemo(() => {
     if (!isOfflineListing) return undefined;
     return new Set(
@@ -108,13 +143,47 @@ export function DocsHomeWorkspace({
     onUnavailable: () => showError(labels.homeNotAvailableOffline),
   });
 
+  const pinnedApiPaths = useMemo(
+    () =>
+      new Set(
+        files
+          .filter((file) => file.apiPath && offlinePinnedIds.has(file.id))
+          .map((file) => file.apiPath!.trim().replace(/^\/+/, "")),
+      ),
+    [files, offlinePinnedIds],
+  );
+
+  const pinActions = useDocsHomePinActions({
+    username: offlineUsername ?? username,
+    labels,
+    pinnedApiPaths,
+    onAvailabilityChanged: refresh,
+  });
+
   const actions = useDocsHomeActions({
-    operations,
+    operations: driveOperations ?? operations,
     files,
     username,
     groupRoots: knownGroupRoots,
+    offlineUsername,
+    onAvailabilityChanged: refresh,
     reload,
   });
+
+  const visibleFiles = useMemo(
+    () => files.filter((file) => !actions.hiddenFileIds.has(file.id)),
+    [actions.hiddenFileIds, files],
+  );
+
+  useEffect(() => {
+    if (!operations || !online) return;
+    const controller = new AbortController();
+    void fetchGroupRootsFromDrive(operations, { signal: controller.signal }).then((discovered) => {
+      if (discovered.length === 0) return;
+      setKnownGroupRoots((prev) => mergeGroupRoots(prev, discovered));
+    });
+    return () => controller.abort();
+  }, [operations, online]);
 
   useEffect(() => {
     const discovered = collectGroupRoots(files);
@@ -165,11 +234,19 @@ export function DocsHomeWorkspace({
     const browsePath = resolveDocsHomeCreateDialogBrowsePath(selectedDrivePrefix);
     const apiRoot = apiPathFromUiPath(browsePath, username, groupRootNames);
     void (async () => {
-      const name = await resolveNewDocumentName(operations, apiRoot, files);
+      const name = await resolveNewDocumentName(driveOperations ?? operations, apiRoot, files);
       setCreateDialogDefaultName(name);
       setCreateDialogOpen(true);
     })();
-  }, [files, groupRootNames, onCreateDocument, operations, selectedDrivePrefix, username]);
+  }, [
+    driveOperations,
+    files,
+    groupRootNames,
+    onCreateDocument,
+    operations,
+    selectedDrivePrefix,
+    username,
+  ]);
 
   const closeCreateDialog = useCallback(() => {
     setCreateDialogOpen(false);
@@ -228,12 +305,17 @@ export function DocsHomeWorkspace({
         main={
           <DocsHomePane
             labels={labels}
-            files={files}
+            files={visibleFiles}
             loading={loading}
             loadingMore={loadingMore}
             hasMore={hasMore}
             error={error}
             offlineUnavailableIds={offlineUnavailableIds}
+            offlinePinnedIds={offlineBadgePinnedIds}
+            offlinePendingSyncIds={offlinePendingSyncIds}
+            extraFileActions={pinActions.extraFileActions}
+            pinLoadingId={pinActions.pinLoadingId}
+            offlineLabels={labels}
             query={query}
             onQueryChange={setQuery}
             viewMode={viewMode}
@@ -252,6 +334,7 @@ export function DocsHomeWorkspace({
             batchStar={actions.batchStar}
             requestMoveSelected={actions.requestMoveSelected}
             requestDeleteSelected={actions.requestDeleteSelected}
+            onUndoQueuedAction={actions.undoLatest}
           />
         }
       />

@@ -5,8 +5,10 @@ import type { DeferredApiWriteArgs } from "@/hooks/use-queued-mutation";
 import type { BeginOptimisticUpdateFn } from "@/hooks/use-entity-batch-actions";
 import {
   ensureTrashFolder,
+  listTrashEntryNames,
   reloadDriveFolderListing,
   resolveDriveFileApiPath,
+  resolveTrashName,
 } from "@/drive-core/src/drive-batch-utils";
 import { apiPathFromUiPath, DRIVE_TRASH_UI_PATH } from "@/drive-core/src/drive-path-utils";
 import type { DriveFile, ViewKey } from "@/drive-core/src/drive-models";
@@ -170,9 +172,12 @@ export function useDriveBatchActions({
             currentUsername,
             groupRootNames,
           );
+          const trashNames = await listTrashEntryNames(operations, destination, signal);
           for (const file of rows) {
             const from = resolveDriveFileApiPath(file, currentUsername, groupRootNames);
-            await operations.renameItem({ destination, from, to: file.title }, { signal });
+            const to = resolveTrashName(file.title, trashNames);
+            trashNames.add(to);
+            await operations.renameItem({ destination, from, to }, { signal });
           }
           await refreshOpenFolder(signal);
         },

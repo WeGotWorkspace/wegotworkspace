@@ -1,12 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Check } from "lucide-react";
-import { useAppToast } from "@/hooks/use-app-toast";
+import { useCallback, useRef, useState } from "react";
 import { WorkspaceLiveAppShell } from "@/lib/live/workspace-live-app-shell";
 import {
   resolveNotesConflictKeepLocal,
   resolveNotesConflictUseServer,
 } from "@/lib/offline/notes-conflict-resolution";
 import { resolveNotesOfflineUsername } from "@/lib/offline/offline-session";
+import { useOfflineSyncToast } from "@/lib/offline/use-offline-sync-toast";
 import type { Note } from "@/lib/models/note";
 import type { NotesApiSource } from "@/notes-core/src/notes-api-source";
 import { NotesConflictDialog } from "@/notes-core/src/notes-conflict-dialog";
@@ -27,8 +26,6 @@ export function NotesApp({ apiSource }: NotesAppProps = {}) {
   const notesRef = useRef<Note[]>([]);
   const [conflictQueue, setConflictQueue] = useState<string[]>([]);
   const [resolvingConflict, setResolvingConflict] = useState(false);
-  const wasSyncingRef = useRef(false);
-  const { show } = useAppToast();
 
   const handleSyncConflict = useCallback((noteIds: string[]) => {
     setConflictQueue((prev) => {
@@ -54,12 +51,7 @@ export function NotesApp({ apiSource }: NotesAppProps = {}) {
     operations,
   } = useNotesAPI(apiSource, { onSyncConflict: handleSyncConflict });
 
-  useEffect(() => {
-    if (wasSyncingRef.current && !syncing) {
-      show(defaultNotesLabels.toastSynced, { icon: <Check className="size-4" /> });
-    }
-    wasSyncingRef.current = syncing;
-  }, [show, syncing]);
+  useOfflineSyncToast(syncing, defaultNotesLabels.toastSynced);
 
   notesRef.current = data.notes;
 

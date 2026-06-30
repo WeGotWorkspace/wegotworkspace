@@ -1,9 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Download, Pencil, Star, StarOff, Trash2 } from "lucide-react";
+import { runQueuedBatchAction } from "@/hooks/use-batch-actions";
+import { useQueuedMutation } from "@/hooks/use-queued-mutation";
 import { useAppToast } from "@/hooks/use-app-toast";
+import { readBrowserOnline } from "@/lib/offline/core/browser-online";
+import {
+  captureOfflineDocsTrashSnapshot,
+  type DocsTrashUndoSnapshot,
+  undoOfflineDocsTrash,
+} from "@/lib/offline/docs/docs-hybrid-operations";
 import type { DriveAPIOperations } from "@/drive-core/src/drive-types";
 import type { DriveFile } from "@/drive-core/src/drive-models";
-import { ensureTrashFolder } from "@/drive-core/src/drive-batch-utils";
+import {
+  ensureTrashFolder,
+  listTrashEntryNames,
+  resolveTrashName,
+} from "@/drive-core/src/drive-batch-utils";
 import {
   apiPathFromUiPath,
   DRIVE_TRASH_UI_PATH,
@@ -11,6 +23,14 @@ import {
 } from "@/drive-core/src/drive-path-utils";
 import { parentAndName } from "@/lib/files/api-path";
 import { joinFileNameForRename, splitFileNameForRename } from "@/lib/files/filename-rename";
+
+const WRITE_QUEUE_DELAY_MS = 2500;
+
+type DocsTrashMoveSnapshot = {
+  file: DriveFile;
+  /** Actual server path under `.Trash` (may differ from title when names collide). */
+  trashPath: string;
+};
 
 export type DocsHomeRenameState = { id: string; extension: string };
 export type DocsHomeMoveState = { ids: string[] };
@@ -25,6 +45,10 @@ type UseDocsHomeActionsArgs = {
   username: string;
   /** Known group roots, so move destinations under `Groups/*` resolve correctly. */
   groupRoots: string[];
+  /** When set, enables offline trash undo (outbox + listing cache reversal). */
+  offlineUsername?: string | null;
+  /** Refresh offline pin/availability badges after trash or undo. */
+  onAvailabilityChanged?: () => void;
   /** Refresh the home list after a mutation that changes the listing. */
   reload: () => void;
 };
@@ -34,9 +58,20 @@ export function useDocsHomeActions({
   files,
   username,
   groupRoots,
+  offlineUsername = null,
+  onAvailabilityChanged,
   reload,
 }: UseDocsHomeActionsArgs) {
   const { show, showError } = useAppToast();
+  const showMutationError = useCallback(
+    (fallback = "Could not move this file to Trash.") => showError(fallback),
+    [showError],
+  );
+  const { queueMutation, undoLatest } = useQueuedMutation({
+    delayMs: WRITE_QUEUE_DELAY_MS,
+    onMutationError: showMutationError,
+  });
+  const [hiddenFileIds, setHiddenFileIds] = useState<Set<string>>(() => new Set());
 
   const filesById = useMemo(() => {
     const map = new Map<string, DriveFile>();
@@ -209,34 +244,100 @@ export function useDocsHomeActions({
       .map((id) => fileById(id))
       .filter((file): file is DriveFile => !!file?.apiPath);
     if (rows.length === 0) return;
-    void (async () => {
-      try {
-        await ensureTrashFolder(operations, username, groupRootNames);
+
+    const ids = rows.map((file) => file.id);
+    setHiddenFileIds((prev) => {
+      const next = new Set(prev);
+      for (const id of ids) next.add(id);
+      return next;
+    });
+
+    let completed = false;
+    let offlineSnapshots: DocsTrashUndoSnapshot[] = [];
+    let trashSnapshots: DocsTrashMoveSnapshot[] = [];
+
+    const rollbackUi = () => {
+      setHiddenFileIds((prev) => {
+        const next = new Set(prev);
+        for (const id of ids) next.delete(id);
+        return next;
+      });
+      reload();
+    };
+
+    const revertTrash = async () => {
+      if (offlineUsername && offlineSnapshots.length > 0) {
+        for (const snapshot of offlineSnapshots) {
+          await undoOfflineDocsTrash(offlineUsername, snapshot);
+        }
+      }
+      if (readBrowserOnline() && trashSnapshots.length > 0) {
+        for (const { file, trashPath } of trashSnapshots) {
+          try {
+            const destination = apiPathFromUiPath(file.parent, username, groupRootNames);
+            await operations.renameItem({ destination, from: trashPath, to: file.title });
+          } catch {
+            // Offline-only trash never reached server trash; local undo above is enough.
+          }
+        }
+      }
+      reload();
+      onAvailabilityChanged?.();
+    };
+
+    const undo = () => {
+      rollbackUi();
+      if (completed) {
+        void revertTrash().catch(() => undefined);
+      }
+    };
+
+    runQueuedBatchAction({
+      queueMutation,
+      key: `docs:trash:${ids.slice().sort().join(",")}`,
+      toastMessage:
+        rows.length === 1
+          ? `Moved “${rows[0]!.title}” to Trash`
+          : `Moved ${rows.length} files to Trash`,
+      icon: <Trash2 className="size-4" />,
+      undoToastMessage: "Move to trash undone.",
+      rollback: undo,
+      executeImmediately: true,
+      execute: async (signal) => {
+        if (offlineUsername) {
+          offlineSnapshots = await Promise.all(
+            rows.map((file) => captureOfflineDocsTrashSnapshot(offlineUsername, file.apiPath!)),
+          );
+        }
+        await ensureTrashFolder(operations, username, groupRootNames, signal);
         const destination = apiPathFromUiPath(DRIVE_TRASH_UI_PATH, username, groupRootNames);
+        const trashNames = await listTrashEntryNames(operations, destination, signal);
+        trashSnapshots = [];
         for (const file of rows) {
           const apiPath = normalizeApiVirtualPath(file.apiPath!);
-          await operations.renameItem({ destination, from: apiPath, to: file.title });
+          const to = resolveTrashName(file.title, trashNames);
+          trashNames.add(to);
+          await operations.renameItem({ destination, from: apiPath, to }, { signal });
+          trashSnapshots.push({
+            file,
+            trashPath: normalizeApiVirtualPath(`${destination}/${to}`),
+          });
         }
-        show(
-          rows.length === 1
-            ? `Moved “${rows[0]!.title}” to Trash`
-            : `Moved ${rows.length} files to Trash`,
-          { icon: <Trash2 className="size-4" /> },
-        );
+        completed = true;
         reload();
-      } catch (error) {
-        showError(error instanceof Error ? error.message : "Could not move this file to Trash.");
-      }
-    })();
+        onAvailabilityChanged?.();
+      },
+    });
   }, [
     closeDelete,
     deleteState,
     fileById,
     groupRootNames,
+    offlineUsername,
+    onAvailabilityChanged,
     operations,
+    queueMutation,
     reload,
-    show,
-    showError,
     username,
   ]);
 
@@ -301,6 +402,8 @@ export function useDocsHomeActions({
   return {
     starred,
     fileById,
+    hiddenFileIds,
+    undoLatest,
     onStar,
     onDownload,
     onRename,

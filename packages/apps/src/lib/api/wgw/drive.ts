@@ -1,4 +1,5 @@
 import {
+  wgwErrorMessageFromBody,
   wgwFetch,
   wgwFetchPrincipal,
   wgwEnsurePluginSession,
@@ -16,6 +17,7 @@ import type {
 import type {
   DriveAPIOperations,
   DriveAppBootstrap,
+  DriveMutationOpts,
   DriveUploadProgress,
   DriveUIData,
 } from "@/drive-core/src/drive-types";
@@ -52,6 +54,13 @@ async function fetchListing(dir: string, opts?: { signal?: AbortSignal }) {
     ...payload.data,
     files: payload.data.files.filter(isVisibleDriveEntry),
   };
+}
+
+async function fetchAllDirectoryEntries(dir: string, opts?: { signal?: AbortSignal }) {
+  const res = await wgwFetch(`/files/children?${pathQuery(dir)}`, { signal: opts?.signal });
+  if (!res.ok) throw new Error(`GET /files/children failed (${res.status})`);
+  const payload = (await wgwReadJson(res)) as WgwDriveListingResponse;
+  return payload.data.files;
 }
 
 async function fetchState(
@@ -102,6 +111,12 @@ export async function fetchDriveLiveBootstrap(): Promise<DriveAppBootstrap> {
   };
 }
 
+function isDuplicateItemError(message: string | undefined): boolean {
+  if (!message) return false;
+  const normalized = message.toLowerCase();
+  return normalized.includes("already exists");
+}
+
 async function postJson(path: string, body: object, opts?: { signal?: AbortSignal }) {
   const res = await wgwFetch(path, {
     method: "POST",
@@ -109,17 +124,29 @@ async function postJson(path: string, body: object, opts?: { signal?: AbortSigna
     body: JSON.stringify(body),
     signal: opts?.signal,
   });
-  if (!res.ok) throw new Error(`POST ${path} failed (${res.status})`);
+  if (res.ok) return;
+  if (res.status === 400) {
+    try {
+      const payload = (await wgwReadJson(res)) as { error?: string; message?: string };
+      if (isDuplicateItemError(payload.error ?? payload.message)) return;
+    } catch {
+      // fall through
+    }
+  }
+  throw new Error(`POST ${path} failed (${res.status})`);
 }
 
-async function patchJson(path: string, body: object, opts?: { signal?: AbortSignal }) {
+async function patchJson(path: string, body: object, opts?: DriveMutationOpts) {
   const res = await wgwFetch(path, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
     signal: opts?.signal,
   });
-  if (!res.ok) throw new Error(`PATCH ${path} failed (${res.status})`);
+  if (!res.ok) {
+    const detail = wgwErrorMessageFromBody(await res.text(), res.status, res.statusText);
+    throw new Error(`PATCH ${path} failed (${res.status}): ${detail}`);
+  }
 }
 
 async function deleteJson(path: string, body: object, opts?: { signal?: AbortSignal }) {
@@ -152,6 +179,9 @@ export function createWgwDriveOperations(
     async listDirectory(at, opts) {
       return fetchState(normalizePath(at), opts, plugins);
     },
+    async listAllDirectoryEntries(at, opts) {
+      return fetchAllDirectoryEntries(normalizePath(at), opts);
+    },
     async search(query, opts) {
       const params = new URLSearchParams();
       params.set("search", query.trim());
@@ -165,12 +195,28 @@ export function createWgwDriveOperations(
       const parent = normalizePath(input.cwd);
       const name = input.name.trim();
       await postJson(`/files/directories?${pathQuery(parent)}`, { name }, opts);
+      if (opts?.refreshState === false) {
+        return {
+          user: { username: "", name: "", role: "user", roots: [] },
+          cwd,
+          directory: { location: parent, files: [] },
+          plugins,
+        };
+      }
       return fetchState(cwd, opts, plugins);
     },
     async createFile(input, opts) {
       const parent = normalizePath(input.cwd);
       const name = input.name.trim();
       await postJson(`/files/directories?${pathQuery(parent)}`, { name, type: "file" }, opts);
+      if (opts?.refreshState === false) {
+        return {
+          user: { username: "", name: "", role: "user", roots: [] },
+          cwd,
+          directory: { location: parent, files: [] },
+          plugins,
+        };
+      }
       return fetchState(cwd, opts, plugins);
     },
     async renameItem(input, opts) {
@@ -186,6 +232,14 @@ export function createWgwDriveOperations(
         body.destination = destination;
       }
       await patchJson(`/files?${pathQuery(fromPath)}`, body, opts);
+      if (opts?.refreshState === false) {
+        return {
+          user: { username: "", name: "", role: "user", roots: [] },
+          cwd,
+          directory: { location: cwd, files: [] },
+          plugins,
+        };
+      }
       return fetchState(cwd, opts, plugins);
     },
     async deleteItems(paths, opts) {

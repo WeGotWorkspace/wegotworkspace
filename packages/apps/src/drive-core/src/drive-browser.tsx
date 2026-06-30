@@ -10,9 +10,41 @@ import { DriveDetailActionBar } from "@/drive-core/src/drive-detail-action-bar";
 import { buildDriveFileActions } from "@/drive-core/src/drive-file-action-builders";
 import { DriveFileItemActionsMenu } from "@/drive-core/src/drive-file-actions";
 import { DriveMediaPreview } from "@/drive-core/src/drive-media-preview";
+import type { ActionBarAction } from "@/action-bar/src/action-bar";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
 import { driveFolderUiPath } from "@/drive-core/src/drive-item-path";
 import "@/drive-core/src/drive-browser.css";
+
+type DriveOfflineBadgeLabels = {
+  offlineAvailable: string;
+  offlinePendingSync: string;
+};
+
+function DriveOfflineBadge({
+  pinned,
+  pending,
+  labels,
+}: {
+  pinned: boolean;
+  pending: boolean;
+  labels?: DriveOfflineBadgeLabels;
+}) {
+  if (!pinned && !pending) return null;
+  const label = pending
+    ? (labels?.offlinePendingSync ?? "Pending sync")
+    : (labels?.offlineAvailable ?? "Available offline");
+  return (
+    <span
+      className={cn(
+        "drive-offline-badge",
+        pending && "drive-offline-badge--pending",
+        pinned && !pending && "drive-offline-badge--pinned",
+      )}
+      aria-label={label}
+      title={label}
+    />
+  );
+}
 
 function DriveSelectionCheckbox({
   isSelected,
@@ -73,6 +105,11 @@ export function DriveGridView({
   searchActive: _searchActive = false,
   showLocationColumn = false,
   offlineUnavailableIds,
+  offlinePinnedIds,
+  offlinePendingSyncIds,
+  extraFileActions,
+  pinLoadingId,
+  offlineBadgeLabels,
 }: {
   items: DriveFile[];
   imagePreviewUrls: Record<string, string>;
@@ -84,6 +121,11 @@ export function DriveGridView({
   showLocationColumn?: boolean;
   /** Mute rows that cannot be opened offline. */
   offlineUnavailableIds?: ReadonlySet<string>;
+  offlinePinnedIds?: ReadonlySet<string>;
+  offlinePendingSyncIds?: ReadonlySet<string>;
+  extraFileActions?: (file: DriveFile) => ActionBarAction[];
+  pinLoadingId?: string | null;
+  offlineBadgeLabels?: DriveOfflineBadgeLabels;
   inTrash: boolean;
   selectionMode: boolean;
   isTouch: boolean;
@@ -149,6 +191,11 @@ export function DriveGridView({
                 isTouch={isTouch}
                 showLocation={showLocationColumn}
                 isOfflineUnavailable={offlineUnavailableIds?.has(f.id) ?? false}
+                isOfflinePinned={offlinePinnedIds?.has(f.id) ?? false}
+                isOfflinePendingSync={offlinePendingSyncIds?.has(f.id) ?? false}
+                extraActions={extraFileActions?.(f)}
+                actionsDisabled={pinLoadingId === f.apiPath}
+                offlineBadgeLabels={offlineBadgeLabels}
                 itemDragHandlers={itemDragHandlers(f.id)}
                 onSelect={(e) => onSelect(f.id, e)}
                 onOpen={() => onOpen(f)}
@@ -311,6 +358,11 @@ function FileTile({
   isTouch,
   showLocation = false,
   isOfflineUnavailable = false,
+  isOfflinePinned = false,
+  isOfflinePendingSync = false,
+  extraActions,
+  actionsDisabled = false,
+  offlineBadgeLabels,
   onSelect,
   onOpen,
   onLongPress,
@@ -332,6 +384,11 @@ function FileTile({
   isTouch: boolean;
   showLocation?: boolean;
   isOfflineUnavailable?: boolean;
+  isOfflinePinned?: boolean;
+  isOfflinePendingSync?: boolean;
+  extraActions?: ActionBarAction[];
+  actionsDisabled?: boolean;
+  offlineBadgeLabels?: DriveOfflineBadgeLabels;
   itemDragHandlers: ItemDragHandlers;
   onSelect: (e: React.MouseEvent) => void;
   onOpen: () => void;
@@ -400,6 +457,11 @@ function FileTile({
         <span className="drive-file-tile__kind-icon shrink-0">{kindIcon[file.kind]}</span>
         <div className="drive-file-tile__text min-w-0 flex-1">
           <span className="drive-file-tile__title">{file.title}</span>
+          <DriveOfflineBadge
+            pinned={isOfflinePinned}
+            pending={isOfflinePendingSync}
+            labels={offlineBadgeLabels}
+          />
           {showLocation && file.location ? (
             <span className="drive-file-tile__location">{file.location}</span>
           ) : null}
@@ -414,6 +476,8 @@ function FileTile({
           onRename={onRename}
           onMove={onMove}
           onDelete={onTrash}
+          extraActions={extraActions}
+          disabled={actionsDisabled}
         />
       </div>
     </div>
@@ -430,6 +494,8 @@ function DriveFileItemActions({
   onRename,
   onMove,
   onDelete,
+  extraActions,
+  disabled = false,
 }: {
   labels: DriveUILabels;
   file: DriveFile;
@@ -440,6 +506,8 @@ function DriveFileItemActions({
   onRename?: () => void;
   onMove?: () => void;
   onDelete: () => void;
+  extraActions?: ActionBarAction[];
+  disabled?: boolean;
 }) {
   const actions = buildDriveFileActions(
     labels,
@@ -452,7 +520,8 @@ function DriveFileItemActions({
       onDelete,
     },
   );
-  return <DriveFileItemActionsMenu actions={actions} />;
+  const merged = extraActions?.length ? [...actions, ...extraActions] : actions;
+  return <DriveFileItemActionsMenu actions={merged} disabled={disabled} />;
 }
 
 /* ---------------- List view (OS-style table) ---------------- */
@@ -492,6 +561,11 @@ export function DriveListView({
   locationColumnLabel = "Location",
   showKindColumn = true,
   offlineUnavailableIds,
+  offlinePinnedIds,
+  offlinePendingSyncIds,
+  extraFileActions,
+  pinLoadingId,
+  offlineBadgeLabels,
 }: {
   items: DriveFile[];
   activeId: string | null;
@@ -509,6 +583,11 @@ export function DriveListView({
   showKindColumn?: boolean;
   /** Mute rows that cannot be opened offline. */
   offlineUnavailableIds?: ReadonlySet<string>;
+  offlinePinnedIds?: ReadonlySet<string>;
+  offlinePendingSyncIds?: ReadonlySet<string>;
+  extraFileActions?: (file: DriveFile) => ActionBarAction[];
+  pinLoadingId?: string | null;
+  offlineBadgeLabels?: DriveOfflineBadgeLabels;
   inTrash: boolean;
   isItemDragging: (id: string) => boolean;
   itemDragHandlers: (id: string) => ItemDragHandlers;
@@ -627,6 +706,11 @@ export function DriveListView({
                           fill="currentColor"
                         />
                       ) : null}
+                      <DriveOfflineBadge
+                        pinned={offlinePinnedIds?.has(f.id) ?? false}
+                        pending={offlinePendingSyncIds?.has(f.id) ?? false}
+                        labels={offlineBadgeLabels}
+                      />
                     </div>
                   </div>
                 </td>
@@ -661,6 +745,8 @@ export function DriveListView({
                       onRename={() => onRename(f)}
                       onMove={() => onMove(f)}
                       onDelete={() => onTrash(f)}
+                      extraActions={extraFileActions?.(f)}
+                      disabled={pinLoadingId === f.apiPath}
                     />
                   </div>
                 </td>

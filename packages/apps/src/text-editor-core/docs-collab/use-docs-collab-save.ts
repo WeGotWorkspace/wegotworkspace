@@ -1,8 +1,10 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { getConnectivitySnapshot } from "@/lib/offline/browser-online";
+import { reportDocsSyncConflicts } from "@/lib/offline/docs/docs-sync-conflicts";
 import { setDocsCollabSyncState } from "./docs-collab-sync-registry";
+import { clearDocsCollabPendingServerSave } from "./docs-collab-persistence";
 import { markRoomServerFailure, markRoomServerSuccess } from "./docs-collab-room-backoff";
-import { saveDocument } from "./docs-collab-server-io";
+import { loadYjsSnapshot, saveDocument } from "./docs-collab-server-io";
 import {
   computeSaveDelayMs,
   computeShouldPersist,
@@ -13,7 +15,12 @@ import {
 } from "./docs-collab-save-queue";
 import { formatSavedDocStatus } from "./docs-collab-status";
 import type { DocsCollabSessionRefs, DocsCollabUrls } from "./docs-collab-types";
-import { docSignature } from "./docs-collab-utils";
+import { docSignature, SERVER_ORIGIN } from "./docs-collab-utils";
+
+function isServerDivergenceError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /\((409|412)\)/.test(message) || /precondition failed/i.test(message);
+}
 
 export const PENDING_SERVER_SAVE_KEY = "pendingServerSave";
 
@@ -34,6 +41,8 @@ export function useDocsCollabSave({
   setPendingSync,
   setFailedSync,
 }: UseDocsCollabSaveOptions) {
+  const conflictRemergeAttemptedRef = useRef(false);
+
   const updatePendingState = useCallback(
     async (pending: boolean, failed = false) => {
       setPendingSync(pending);
@@ -44,9 +53,13 @@ export function useDocsCollabSave({
         failedSync: pending && failed && getConnectivitySnapshot(),
       });
       const persistence = refs.persistenceRef.current;
-      if (!persistence) return;
-      if (pending) await persistence.set(PENDING_SERVER_SAVE_KEY, 1);
-      else await persistence.del(PENDING_SERVER_SAVE_KEY);
+      if (pending) {
+        if (persistence) await persistence.set(PENDING_SERVER_SAVE_KEY, 1);
+      } else if (persistence) {
+        await persistence.del(PENDING_SERVER_SAVE_KEY);
+      } else {
+        await clearDocsCollabPendingServerSave(room);
+      }
     },
     [refs, room, setFailedSync, setPendingSync],
   );
@@ -96,14 +109,51 @@ export function useDocsCollabSave({
     }
     refs.saveInFlightRef.current = true;
     try {
-      await saveDocument(
-        urls.documentUrl,
-        markdown,
-        ydoc,
-        urls.room,
-        refs.authTokenRef.current,
-        urls.documentSaveMethod ?? "POST",
-      );
+      const attemptSave = async () => {
+        await saveDocument(
+          urls.documentUrl,
+          markdown,
+          ydoc,
+          urls.room,
+          refs.authTokenRef.current,
+          urls.documentSaveMethod ?? "POST",
+        );
+      };
+
+      try {
+        await attemptSave();
+      } catch (firstError) {
+        if (
+          isServerDivergenceError(firstError) &&
+          !conflictRemergeAttemptedRef.current &&
+          getConnectivitySnapshot()
+        ) {
+          conflictRemergeAttemptedRef.current = true;
+          const merged = await loadYjsSnapshot(
+            urls.yjsUrl,
+            ydoc,
+            refs.authTokenRef.current,
+            SERVER_ORIGIN,
+          );
+          if (merged) {
+            const remergedMarkdown = getMd();
+            await saveDocument(
+              urls.documentUrl,
+              remergedMarkdown,
+              ydoc,
+              urls.room,
+              refs.authTokenRef.current,
+              urls.documentSaveMethod ?? "POST",
+            );
+          } else {
+            throw firstError;
+          }
+        } else {
+          throw firstError;
+        }
+      }
+
+      conflictRemergeAttemptedRef.current = false;
       markRoomServerSuccess(room);
       refs.saveFailedRef.current = false;
       const success = saveSuccessState(signature);
@@ -115,6 +165,9 @@ export function useDocsCollabSave({
       setDocStatus(formatSavedDocStatus());
     } catch (err) {
       refs.saveFailedRef.current = true;
+      if (isServerDivergenceError(err) && getConnectivitySnapshot()) {
+        reportDocsSyncConflicts([room]);
+      }
       const failure = saveFailureState(refs.saveRetryMsRef.current);
       refs.saveRetryMsRef.current = failure.saveRetryMs ?? refs.saveRetryMsRef.current;
       refs.nextSaveAttemptAtRef.current =

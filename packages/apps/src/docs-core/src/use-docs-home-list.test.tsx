@@ -1,8 +1,9 @@
 import "fake-indexeddb/auto";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { WgwUnifiedSearchData, WgwUnifiedSearchResult } from "@/lib/api/wgw/search";
 import {
+  fetchAllDocsHomeListingPages,
   mapDocsHomeResults,
   sortDocsHomeResults,
   useDocsHomeList,
@@ -11,6 +12,7 @@ import {
 import { writeDocsListingToCache } from "@/lib/offline/docs-listing-offline-store";
 
 vi.mock("@/lib/offline/core/browser-online", () => ({
+  getConnectivitySnapshot: vi.fn(() => true),
   readBrowserOnline: vi.fn(() => true),
 }));
 
@@ -22,7 +24,7 @@ vi.mock("@/hooks/use-connectivity", async (importOriginal) => {
   };
 });
 
-import { readBrowserOnline } from "@/lib/offline/core/browser-online";
+import { getConnectivitySnapshot } from "@/lib/offline/core/browser-online";
 
 function result(
   id: number,
@@ -106,29 +108,65 @@ describe("mapDocsHomeResults", () => {
   });
 });
 
+describe("fetchAllDocsHomeListingPages", () => {
+  it("walks offset pagination until hasMore is false", async () => {
+    const fetcher = createFetcher(FIXTURES, 2);
+    const controller = new AbortController();
+    const data = await fetchAllDocsHomeListingPages(
+      fetcher,
+      { sources: ["file"], extensions: ["md"], categories: ["document"], limit: 2 },
+      "",
+      controller.signal,
+    );
+    expect(data.results.map((row) => row.title)).toEqual(["A", "B", "C", "D", "E"]);
+    expect(data.hasMore).toBe(false);
+    expect(fetcher).toHaveBeenCalledTimes(3);
+  });
+});
+
 describe("useDocsHomeList", () => {
   beforeEach(() => {
-    vi.mocked(readBrowserOnline).mockReturnValue(true);
+    vi.mocked(getConnectivitySnapshot).mockReturnValue(true);
   });
 
-  it("loads the first page and paginates with loadMore", async () => {
+  it("loads the full browse listing across paginated API pages", async () => {
     const fetcher = createFetcher(FIXTURES, 2);
     const { result: hook } = renderHook(() =>
       useDocsHomeList({ username: "alice", fetcher, debounceMs: 0 }),
     );
 
     await waitFor(() => expect(hook.current.loading).toBe(false));
+    expect(hook.current.files.map((f) => f.title)).toEqual(["A", "B", "C", "D", "E"]);
+    expect(hook.current.hasMore).toBe(false);
+    expect(fetcher).toHaveBeenCalledTimes(3);
+  });
+
+  it("restores cached hasMore when serving an offline listing", async () => {
+    vi.mocked(getConnectivitySnapshot).mockReturnValue(false);
+    await writeDocsListingToCache(
+      "alice",
+      { query: "" },
+      {
+        results: FIXTURES.slice(0, 2),
+        hasMore: true,
+      },
+    );
+
+    const fetcher = vi.fn(createFetcher(FIXTURES, 2));
+    const { result: hook } = renderHook(() =>
+      useDocsHomeList({
+        username: "alice",
+        fetcher,
+        debounceMs: 0,
+        offlineUsername: "alice",
+      }),
+    );
+
+    await waitFor(() => expect(hook.current.loading).toBe(false));
+    expect(fetcher).not.toHaveBeenCalled();
     expect(hook.current.files.map((f) => f.title)).toEqual(["A", "B"]);
     expect(hook.current.hasMore).toBe(true);
-
-    act(() => hook.current.loadMore());
-    await waitFor(() => expect(hook.current.files).toHaveLength(4));
-    expect(hook.current.files.map((f) => f.title)).toEqual(["A", "B", "C", "D"]);
-    expect(hook.current.hasMore).toBe(true);
-
-    act(() => hook.current.loadMore());
-    await waitFor(() => expect(hook.current.hasMore).toBe(false));
-    expect(hook.current.files).toHaveLength(5);
+    expect(hook.current.isOfflineListing).toBe(true);
   });
 
   it("re-sorts appended pages modified-desc as a safety net", async () => {
@@ -142,8 +180,6 @@ describe("useDocsHomeList", () => {
     );
 
     await waitFor(() => expect(hook.current.loading).toBe(false));
-    act(() => hook.current.loadMore());
-    await waitFor(() => expect(hook.current.files).toHaveLength(2));
     expect(hook.current.files.map((f) => f.title)).toEqual(["New", "Old"]);
   });
 
@@ -154,7 +190,8 @@ describe("useDocsHomeList", () => {
       { initialProps: { q: "" } },
     );
 
-    await waitFor(() => expect(hook.current.files).toHaveLength(2));
+    await waitFor(() => expect(hook.current.loading).toBe(false));
+    expect(hook.current.files).toHaveLength(5);
 
     rerender({ q: "d" });
     await waitFor(() => expect(hook.current.files.map((f) => f.title)).toEqual(["D"]));
@@ -185,13 +222,13 @@ describe("useDocsHomeList", () => {
   });
 
   it("falls back to cached listing when offline", async () => {
-    vi.mocked(readBrowserOnline).mockReturnValue(false);
+    vi.mocked(getConnectivitySnapshot).mockReturnValue(false);
     await writeDocsListingToCache(
       "alice",
       { query: "" },
       {
         results: FIXTURES.slice(0, 2),
-        hasMore: true,
+        hasMore: false,
       },
     );
 

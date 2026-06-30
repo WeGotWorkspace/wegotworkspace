@@ -24,6 +24,24 @@ final class FilesTrashTest extends WgwDatabaseTestCase
         parent::tearDown();
     }
 
+    public function test_move_to_trash_accepts_post_with_method_override(): void
+    {
+        $token = $this->userBearerToken();
+        $this->createDriveFile($token, '/users/bob', 'report.md');
+        $this->ensureTrashDirectory($token, 'bob');
+
+        $this->withBearer($token)
+            ->withHeader('X-HTTP-Method-Override', 'PATCH')
+            ->postJson('/api/v1/files?path=/users/bob/report.md', [
+                'name' => 'report.md',
+                'destination' => '/users/bob/.Trash',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data', 'Renamed');
+
+        $this->assertTrue(Storage::disk('wgw_files')->exists('users/bob/.Trash/report.md'));
+    }
+
     public function test_move_to_trash_retains_blob_and_updates_listings(): void
     {
         $token = $this->userBearerToken();
@@ -42,6 +60,23 @@ final class FilesTrashTest extends WgwDatabaseTestCase
 
         $trash = $this->withBearer($token)->getJson('/api/v1/files/children?path=/users/bob/.Trash');
         $trash->assertOk()->assertJsonFragment(['name' => 'report.md', 'type' => 'file']);
+    }
+
+    public function test_move_to_trash_picks_unique_name_when_collision(): void
+    {
+        $token = $this->userBearerToken();
+        $this->ensureTrashDirectory($token, 'bob');
+        Storage::disk('wgw_files')->put('users/bob/.Trash/Untitled.md', 'trashed');
+        $this->createDriveFile($token, '/users/bob', 'Untitled.md');
+
+        $this->withBearer($token)->patchJson('/api/v1/files?path=/users/bob/Untitled.md', [
+            'name' => 'Untitled.md',
+            'destination' => '/users/bob/.Trash',
+        ])->assertOk();
+
+        $this->assertTrue(Storage::disk('wgw_files')->exists('users/bob/.Trash/Untitled.md'));
+        $this->assertTrue(Storage::disk('wgw_files')->exists('users/bob/.Trash/Untitled 2.md'));
+        $this->assertFalse(Storage::disk('wgw_files')->exists('users/bob/Untitled.md'));
     }
 
     public function test_permanent_delete_from_trash_removes_file_and_index(): void

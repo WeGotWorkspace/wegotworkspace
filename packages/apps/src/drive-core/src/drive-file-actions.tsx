@@ -3,7 +3,13 @@ import type { ActionBarAction } from "@/action-bar/src/action-bar";
 import { IconButton } from "@/button/src/button";
 import { DropdownMenu } from "@/menu-dropdown/src/dropdown-menu";
 
-export function DriveFileItemActionsMenu({ actions }: { actions: ActionBarAction[] }) {
+export function DriveFileItemActionsMenu({
+  actions,
+  disabled = false,
+}: {
+  actions: ActionBarAction[];
+  disabled?: boolean;
+}) {
   return (
     <DropdownMenu
       align="end"
@@ -15,6 +21,7 @@ export function DriveFileItemActionsMenu({ actions }: { actions: ActionBarAction
         icon: action.icon,
         onClick: action.onClick,
         checked: action.active,
+        disabled: disabled || action.disabled,
         className:
           action.id === "delete"
             ? "cursor-pointer gap-2.5 text-red-600 focus:text-red-600"
@@ -27,6 +34,7 @@ export function DriveFileItemActionsMenu({ actions }: { actions: ActionBarAction
           size="sm"
           variant="subtle"
           showTooltip={false}
+          disabled={disabled}
           onClick={(event) => event.stopPropagation()}
         />
       }

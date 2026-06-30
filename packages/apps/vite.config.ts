@@ -58,6 +58,9 @@ export default defineConfig(({ mode }) => {
         injectRegister: false,
         devOptions: { enabled: false },
         workbox: {
+          // Wait for tabs to close before activating a new worker (safer for local preview).
+          skipWaiting: false,
+          clientsClaim: false,
           navigateFallback: "index.html",
           navigateFallbackDenylist: [/^\/api\//],
           globPatterns: ["**/*.{js,css,html,ico,png,woff2,webmanifest}"],

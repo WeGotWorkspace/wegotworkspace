@@ -13,6 +13,7 @@ import { useDocsCollabReconnect } from "./use-docs-collab-reconnect";
 import { useDocsCollabSave } from "./use-docs-collab-save";
 import { useDocsCollabSessionRefs } from "./use-docs-collab-session-refs";
 import { useDocsCollabTabSync } from "./use-docs-collab-tab-sync";
+import { docsCollabRoomKey } from "./docs-collab-persistence";
 
 export {
   DEFAULT_DOCS_COLLAB_URLS,
@@ -40,7 +41,7 @@ export function useDocsCollab({
     ...DEFAULT_DOCS_COLLAB_URLS,
     ...(inputUrls ?? {}),
   };
-  const room = urls.room ?? "docs/test-together.md";
+  const room = docsCollabRoomKey(urls.room ?? "docs/test-together.md");
 
   const refs = useDocsCollabSessionRefs(wire, seedContent);
   const [docStatus, setDocStatus] = useState("");
