@@ -9,6 +9,10 @@ use App\Models\SearchTerm;
 
 final class SearchDocumentStore
 {
+    public function __construct(
+        private SearchTokenService $tokens,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $document
      * @param  array<string, list<string>>  $tokensByField
@@ -249,14 +253,18 @@ final class SearchDocumentStore
         foreach ($tokensByField as $field => $tokens) {
             $weight = $field === 'title' ? 8 : ($field === 'meta' ? 4 : 2);
             foreach ($tokens as $token) {
-                $dedupeKey = $field."\0".$token;
+                $normalizedToken = $this->tokens->normalizeToken($token);
+                if ($normalizedToken === '' || mb_strlen($normalizedToken) < 2) {
+                    continue;
+                }
+                $dedupeKey = $field."\0".$normalizedToken;
                 if (isset($seen[$dedupeKey])) {
                     continue;
                 }
                 $seen[$dedupeKey] = true;
                 $rows[] = [
                     'document_id' => $documentId,
-                    'token' => $token,
+                    'token' => $normalizedToken,
                     'field' => $field,
                     'weight' => $weight,
                     'created_at' => $now,

@@ -272,6 +272,30 @@ export async function wgwFetch(path: string, init: RequestInit = {}): Promise<Re
   return res;
 }
 
+/** Read a short error message from a WGW API error response body. */
+export function wgwErrorMessageFromBody(body: string, status: number, statusText = ""): string {
+  const fallback = statusText.trim() || `HTTP ${status}`;
+  const trimmed = body.trim();
+  if (!trimmed) {
+    return fallback;
+  }
+  try {
+    const json = JSON.parse(trimmed) as { error?: unknown; message?: unknown };
+    const candidate =
+      typeof json.error === "string"
+        ? json.error
+        : typeof json.message === "string"
+          ? json.message
+          : null;
+    if (candidate?.trim()) {
+      return candidate.trim();
+    }
+  } catch {
+    // Non-JSON bodies are ignored; /api/v1 routes should always return JSON.
+  }
+  return fallback;
+}
+
 export async function wgwReadJson(res: Response): Promise<unknown> {
   const text = await res.text();
   if (!text) return {};
