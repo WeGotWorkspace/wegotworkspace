@@ -126,8 +126,12 @@ export function syncRuntimeAppBuilds() {
     writeFileSync(resolve(targetDist, "index.html"), html, "utf8");
   }
 
-  // Apache serves existing docroot files directly; copy SW beside index.php so /sw.js
-  // works even when the install-tree packages/api copy is stale.
+  // Apache serves existing docroot files directly; copy PWA root assets beside index.php
+  // so /index.html and /sw.js work even when the install-tree packages/api copy is stale.
+  cpSync(
+    resolve(runtimeAppsRoot, "shell", "dist", "index.html"),
+    resolve(installRoot, "index.html"),
+  );
   for (const file of pwaServiceWorkerFiles) {
     cpSync(resolve(distRoot, file), resolve(installRoot, file));
   }

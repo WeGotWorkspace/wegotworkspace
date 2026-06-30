@@ -256,7 +256,8 @@ final class UiStaticServer
 
     private function isPwaRootAssetFile(string $basename): bool
     {
-        return $basename === 'sw.js'
+        return $basename === 'index.html'
+            || $basename === 'sw.js'
             || (str_starts_with($basename, 'workbox-') && str_ends_with($basename, '.js'));
     }
 

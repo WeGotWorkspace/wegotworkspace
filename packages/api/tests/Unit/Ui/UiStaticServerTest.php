@@ -45,6 +45,22 @@ final class UiStaticServerTest extends TestCase
         $this->assertNull($server->resolveRoutePrefix('', '/mail/inbox', $prefixes));
     }
 
+    public function test_serves_index_html_at_site_root(): void
+    {
+        $dist = sys_get_temp_dir().'/wgw-static-index-'.uniqid('', true);
+        mkdir($dist, 0775, true);
+        file_put_contents($dist.'/index.html', '<!doctype html><title>App</title>');
+
+        $server = new UiStaticServer;
+        $this->assertTrue($server->matchesShellPath('', '/index.html'));
+
+        $response = $server->tryServe($dist, '', '/index.html', false);
+
+        $this->assertNotNull($response);
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('text/html; charset=utf-8', $response->headers->get('Content-Type'));
+    }
+
     public function test_serves_service_worker_at_site_root(): void
     {
         $dist = sys_get_temp_dir().'/wgw-static-sw-'.uniqid('', true);

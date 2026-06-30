@@ -121,4 +121,17 @@ final class FrontRoutingTest extends TestCase
             ->assertOk()
             ->assertHeader('Content-Type', 'image/png');
     }
+
+    public function test_index_html_path_serves_shell_asset(): void
+    {
+        $this->repoRoot = UiDistFixture::bootstrapMonorepoLayout();
+        $installRoot = $this->repoRoot.'/apps/wegotworkspace';
+        $data = $installRoot.'/wgw-content';
+        WgwInstallFixture::markInstalled($installRoot, $data);
+        WgwInstallFixture::syncDatabaseConnection();
+
+        $this->get('/index.html')
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/html; charset=utf-8');
+    }
 }
