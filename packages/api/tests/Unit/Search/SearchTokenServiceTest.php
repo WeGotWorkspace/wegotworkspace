@@ -28,4 +28,14 @@ final class SearchTokenServiceTest extends TestCase
 
         $this->assertSame([], $service->tokenize('a b c'));
     }
+
+    public function test_keeps_numeric_tokens_as_strings(): void
+    {
+        $service = new SearchTokenService;
+
+        $tokens = $service->tokenize('Roadmap 2026 release');
+
+        $this->assertContains('2026', $tokens);
+        $this->assertSame('string', gettype($tokens[array_search('2026', $tokens, true)]));
+    }
 }

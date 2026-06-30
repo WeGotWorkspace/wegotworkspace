@@ -18,15 +18,21 @@ final class SearchTokenService
 
         $parts = preg_split('/[^\\pL\\pN]+/u', $normalized) ?: [];
         $tokens = [];
+        $seen = [];
         foreach ($parts as $part) {
             $token = $this->normalizeToken(trim($part));
             if ($token === '' || mb_strlen($token) < 2) {
                 continue;
             }
-            $tokens[$token] = true;
+            // Avoid $tokens[$token] — PHP casts numeric strings to int array keys.
+            if (isset($seen[$token])) {
+                continue;
+            }
+            $seen[$token] = true;
+            $tokens[] = $token;
         }
 
-        return array_keys($tokens);
+        return $tokens;
     }
 
     public function normalizeToken(string $value): string
