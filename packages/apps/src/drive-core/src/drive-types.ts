@@ -77,7 +77,7 @@ export type DriveAPIOperations = {
   ) => Promise<DriveUIData>;
   renameItem: (
     input: { destination: string; from: string; to: string },
-    opts?: { signal?: AbortSignal },
+    opts?: DriveMutationOpts,
   ) => Promise<DriveUIData>;
   deleteItems: (paths: string[], opts?: { signal?: AbortSignal }) => Promise<DriveUIData>;
   downloadFile: (path: string, opts?: { signal?: AbortSignal }) => Promise<void>;

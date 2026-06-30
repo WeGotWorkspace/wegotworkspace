@@ -24,6 +24,24 @@ final class FilesTrashTest extends WgwDatabaseTestCase
         parent::tearDown();
     }
 
+    public function test_move_to_trash_accepts_post_with_method_override(): void
+    {
+        $token = $this->userBearerToken();
+        $this->createDriveFile($token, '/users/bob', 'report.md');
+        $this->ensureTrashDirectory($token, 'bob');
+
+        $this->withBearer($token)
+            ->withHeader('X-HTTP-Method-Override', 'PATCH')
+            ->postJson('/api/v1/files?path=/users/bob/report.md', [
+                'name' => 'report.md',
+                'destination' => '/users/bob/.Trash',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data', 'Renamed');
+
+        $this->assertTrue(Storage::disk('wgw_files')->exists('users/bob/.Trash/report.md'));
+    }
+
     public function test_move_to_trash_retains_blob_and_updates_listings(): void
     {
         $token = $this->userBearerToken();

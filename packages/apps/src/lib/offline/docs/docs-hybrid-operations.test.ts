@@ -15,6 +15,7 @@ import {
   createHybridDocsDriveOperations,
   undoOfflineDocsTrash,
 } from "@/lib/offline/docs/docs-hybrid-operations";
+import { createWgwDriveOperations } from "@/lib/api/wgw/drive";
 import { hasDocsCollabOfflinePersistence } from "@/lib/offline/docs/docs-collab-offline-availability";
 import { docsAvailabilityTable, docsListingRowsTable } from "@/lib/offline/docs/docs-schema";
 import {
@@ -34,15 +35,13 @@ vi.mock("@/lib/offline/core/browser-online", async (importOriginal) => {
 vi.mock("@/lib/api/wgw/drive", () => ({
   createWgwDriveOperations: vi.fn(() => ({
     renameItem: vi.fn(),
+    createFolder: vi.fn(),
+    listAllDirectoryEntries: vi.fn(async () => []),
     uploadFiles: vi.fn(),
   })),
 }));
 
-vi.mock("@/text-editor-core/docs-collab/docs-collab-persistence", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@/text-editor-core/docs-collab/docs-collab-persistence")>();
-  return { ...actual };
-});
+import * as docsCollabPersistence from "@/text-editor-core/docs-collab/docs-collab-persistence";
 
 const username = "alice";
 
@@ -67,6 +66,101 @@ function result(id: number, sourceKey: string, modifiedAt: number): WgwUnifiedSe
     modifiedAt,
   };
 }
+
+describe("createHybridDocsDriveOperations online trash", () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    vi.mocked(readBrowserOnline).mockReturnValue(true);
+    const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
+    await db.outbox.clear();
+    await docsListingRowsTable(db).clear();
+    await docsAvailabilityTable(db).clear();
+  });
+
+  it("bootstraps trash, moves via live rename without listing refresh, and clears local caches", async () => {
+    const apiPath = "/users/alice/note.md";
+    const filters = { pathPrefix: "users/alice" };
+    await writeDocsListingToCache(username, filters, {
+      results: [result(1, "users/alice/note.md", 100), result(2, "users/alice/other.md", 50)],
+      hasMore: false,
+    });
+    await writeDocsAvailability(username, { id: "users/alice/note.md", location: "" });
+
+    const live = {
+      renameItem: vi.fn(async () => ({
+        user: { username: "", name: "", role: "user", roots: [] },
+        cwd: "/",
+        directory: { location: "/", files: [] },
+        plugins: [],
+      })),
+      createFolder: vi.fn(),
+      listAllDirectoryEntries: vi.fn(async () => []),
+    };
+    vi.mocked(createWgwDriveOperations).mockReturnValue(live as never);
+
+    const operations = createHybridDocsDriveOperations(username);
+    await operations.renameItem({
+      from: apiPath,
+      destination: driveUserTrashApiPath(username),
+      to: "note.md",
+    });
+
+    expect(live.createFolder).toHaveBeenCalledWith(
+      { cwd: "/users/alice", name: ".Trash" },
+      expect.objectContaining({ refreshState: false }),
+    );
+    expect(live.renameItem).toHaveBeenCalledWith(
+      {
+        from: apiPath,
+        destination: driveUserTrashApiPath(username),
+        to: "note.md",
+      },
+      expect.objectContaining({ refreshState: false }),
+    );
+    expect(await listOutboxMutations(username)).toHaveLength(0);
+    const cached = await readDocsListingFromCache(username, filters);
+    expect(cached?.results.map((row) => row.sourceKey)).toEqual(["users/alice/other.md"]);
+    expect(await readDocsAvailability(username, apiPath)).toBeUndefined();
+  });
+
+  it("still completes when local trash cleanup fails after a successful live rename", async () => {
+    const apiPath = "/users/alice/note.md";
+    const filters = { pathPrefix: "users/alice" };
+    await writeDocsListingToCache(username, filters, {
+      results: [result(1, "users/alice/note.md", 100)],
+      hasMore: false,
+    });
+
+    const live = {
+      renameItem: vi.fn(async () => ({
+        user: { username: "", name: "", role: "user", roots: [] },
+        cwd: "/",
+        directory: { location: "/", files: [] },
+        plugins: [],
+      })),
+      createFolder: vi.fn(),
+      listAllDirectoryEntries: vi.fn(async () => []),
+    };
+    vi.mocked(createWgwDriveOperations).mockReturnValue(live as never);
+
+    const clearSpy = vi
+      .spyOn(docsCollabPersistence, "clearDocsCollabOfflinePersistence")
+      .mockRejectedValueOnce(new Error("idb blocked"));
+
+    const operations = createHybridDocsDriveOperations(username);
+    await expect(
+      operations.renameItem({
+        from: apiPath,
+        destination: driveUserTrashApiPath(username),
+        to: "note.md",
+      }),
+    ).resolves.toBeDefined();
+
+    expect(live.renameItem).toHaveBeenCalledTimes(1);
+    expect(await listOutboxMutations(username)).toHaveLength(0);
+    clearSpy.mockRestore();
+  });
+});
 
 describe("createHybridDocsDriveOperations offline trash", () => {
   beforeEach(async () => {

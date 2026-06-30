@@ -80,6 +80,15 @@ async function applyOfflineTrashSideEffects(username: string, from: string): Pro
   await removeDocsAvailability(username, room);
 }
 
+/** Best-effort local cleanup after server trash; must not fail the user action. */
+async function applyOfflineTrashSideEffectsSafely(username: string, from: string): Promise<void> {
+  try {
+    await applyOfflineTrashSideEffects(username, from);
+  } catch (error) {
+    console.warn("[docs-hybrid] local trash cleanup failed", error);
+  }
+}
+
 export type DocsTrashUndoSnapshot = {
   apiPath: string;
   listingResult: WgwUnifiedSearchResult;
@@ -170,9 +179,12 @@ export function createHybridDocsDriveOperations(username: string): DriveAPIOpera
           if (isTrash) {
             await ensureTrashFolder(live, username, new Set(), opts?.signal);
           }
-          const data = await live.renameItem(input, opts);
+          const data = await live.renameItem(input, {
+            ...opts,
+            refreshState: isTrash ? false : opts?.refreshState,
+          });
           if (isTrash) {
-            await applyOfflineTrashSideEffects(username, input.from);
+            await applyOfflineTrashSideEffectsSafely(username, input.from);
           } else {
             await applyOnlineRenameSideEffects(username, input.from, input.destination, input.to);
           }
