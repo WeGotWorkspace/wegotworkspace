@@ -11,25 +11,31 @@ final class SearchTokenService
      */
     public function tokenize(string $text): array
     {
-        $normalized = $this->normalizeUnicode(mb_strtolower(trim($text)));
+        $normalized = $this->normalizeToken(mb_strtolower(trim($text)));
         if ($normalized === '') {
             return [];
         }
 
         $parts = preg_split('/[^\\pL\\pN]+/u', $normalized) ?: [];
         $tokens = [];
+        $seen = [];
         foreach ($parts as $part) {
-            $token = $this->normalizeUnicode(trim($part));
+            $token = $this->normalizeToken(trim($part));
             if ($token === '' || mb_strlen($token) < 2) {
                 continue;
             }
-            $tokens[$token] = true;
+            // Avoid $tokens[$token] — PHP casts numeric strings to int array keys.
+            if (isset($seen[$token])) {
+                continue;
+            }
+            $seen[$token] = true;
+            $tokens[] = $token;
         }
 
-        return array_keys($tokens);
+        return $tokens;
     }
 
-    private function normalizeUnicode(string $value): string
+    public function normalizeToken(string $value): string
     {
         if ($value === '' || ! class_exists(\Normalizer::class)) {
             return $value;

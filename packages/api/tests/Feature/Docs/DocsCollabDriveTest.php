@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Docs;
 
 use App\Storage\WgwStorage;
+use Illuminate\Support\Facades\DB;
 use Tests\Support\DocsTestFixtures;
 use Tests\Support\WgwDatabaseTestCase;
 
@@ -129,5 +130,36 @@ final class DocsCollabDriveTest extends WgwDatabaseTestCase
             ])
             ->assertStatus(413)
             ->assertJsonPath('error', 'markdown_too_large');
+    }
+
+    public function test_collaboration_save_indexes_mixed_unicode_tokens_without_duplicate_error(): void
+    {
+        if (! class_exists(\Normalizer::class)) {
+            $this->markTestSkipped('intl Normalizer extension is required for Unicode search token normalization.');
+        }
+
+        $token = $this->userBearerToken();
+        $precomposed = 'één';
+        $decomposed = "e\u{0301}én";
+        $markdown = "# Roadmap\n\nMulti-tenancy voor {$precomposed} en ook {$decomposed} providers.\n";
+
+        $this->withBearer($token)
+            ->putJson('/api/v1/files/collaboration?path='.urlencode(self::GROUP_PLAN), [
+                'markdown' => $markdown,
+            ])
+            ->assertOk()
+            ->assertJsonPath('ok', true);
+
+        $documentId = DB::connection('wgw')->table('search_documents')
+            ->where('source_key', 'groups/team/plan.md')
+            ->value('id');
+        $this->assertNotNull($documentId);
+
+        $termCount = DB::connection('wgw')->table('search_terms')
+            ->where('document_id', $documentId)
+            ->where('field', 'body')
+            ->where('token', 'één')
+            ->count();
+        $this->assertSame(1, $termCount);
     }
 }

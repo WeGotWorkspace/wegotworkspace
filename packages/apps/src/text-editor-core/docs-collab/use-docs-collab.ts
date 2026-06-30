@@ -7,6 +7,7 @@ import * as syncProtocol from "y-protocols/sync";
 import * as Y from "yjs";
 import { useOnReconnect } from "@/hooks/use-connectivity";
 import { getConnectivitySnapshot, isFetchNetworkError } from "@/lib/offline/browser-online";
+import { wgwErrorMessageFromBody } from "@/lib/api/wgw/http";
 import { applyRtcDebugOverrides } from "@/lib/rtc/force-relay";
 import { DEFAULT_RTC_SETTINGS } from "@/lib/rtc/types";
 import { docsEditorFormatFromFileName } from "@/docs-core/src/docs-editor-format";
@@ -206,18 +207,15 @@ async function saveDocument(
 
   const res = await fetch(documentUrl, {
     method,
-    headers: withBearerAuth({ "Content-Type": "application/json" }, authToken),
+    headers: withBearerAuth(
+      { "Content-Type": "application/json", Accept: "application/json" },
+      authToken,
+    ),
     body: JSON.stringify(body),
   });
   const text = await res.text();
   if (!res.ok) {
-    let err = text;
-    try {
-      err = (JSON.parse(text) as { error?: string }).error ?? text;
-    } catch {
-      // ignore
-    }
-    throw new Error(err || res.statusText);
+    throw new Error(wgwErrorMessageFromBody(text, res.status, res.statusText));
   }
 }
 
