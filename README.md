@@ -72,6 +72,8 @@ Then use **https://wegotworkspace.localhost/** (see [`docker/README.md`](docker/
 | `pnpm dev:api`             | PHP API only on `:9080`                                |
 | `pnpm dev:storybook`       | Storybook only on `:6006`                              |
 | `pnpm preview`             | Built UI (`vite preview`) + PHP API (no HMR)           |
+| `pnpm preview:apache`      | Built install tree via host Apache (no Docker)         |
+| `pnpm preview:nginx`       | Built install tree via host nginx (no Docker)          |
 | `pnpm build`               | Production build + runtime sync (CI/release)           |
 | `pnpm test:api-e2e:docker` | Playwright against Docker stack                        |
 

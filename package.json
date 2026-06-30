@@ -10,6 +10,8 @@
     "dev:ui": "pnpm run dev",
     "dev:storybook": "tools/with-root-env.sh -- turbo run dev:storybook --filter=@wgw/apps",
     "preview": "tools/with-root-env.sh run 'export WGW_PROXY_TARGET=http://127.0.0.1:9080 && pnpm run preview:bootstrap && turbo run preview --filter=@wgw/api --filter=@wgw/apps --concurrency=20'",
+    "preview:apache": "tools/with-root-env.sh run 'pnpm run preview:bootstrap && bash tools/preview-apache.sh'",
+    "preview:nginx": "tools/with-root-env.sh run 'pnpm run preview:bootstrap && bash tools/preview-nginx.sh'",
     "preview:bootstrap": "composer --working-dir packages/api install --no-interaction --prefer-dist && php packages/api/artisan wgw:dev-install && pnpm --filter @wgw/apps run build",
     "setup:storybook-live-api": "bash tools/setup-storybook-live-api.sh --set-password",
     "test:collab-api": "bash tools/test-collab-api.sh",
