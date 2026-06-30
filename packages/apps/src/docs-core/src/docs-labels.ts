@@ -9,6 +9,8 @@ export const docsLabels = {
   homeLoading: "Loading documents…",
   homeLoadMore: "Load more",
   homeLoadError: "Could not load documents.",
+  homeOfflineListing: "Showing your most recent documents — offline",
+  homeNotAvailableOffline: "This document is not available offline.",
   homeLocationColumn: "Location",
   homeNewDocument: "New document",
   homeCreateError: "Could not create a new document.",

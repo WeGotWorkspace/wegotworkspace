@@ -21,6 +21,7 @@ import { DocsCollabWorkspace, useDocsCollabPendingSync } from "@/text-editor-cor
 import { createWgwDocsCollabWire } from "@/docs-core/src/docs-collab-wgw-wire";
 import { useDocsAPI } from "@/docs-core/src/use-docs-api";
 import { createWgwDriveOperations } from "@/lib/api/wgw/drive";
+import { resolveDocsOfflineUsername } from "@/lib/offline/offline-session";
 
 function DocsCollabDocumentTitle({ fileName }: { fileName: string }) {
   useDocumentTitle(fileNameToBrowserTitle(fileName));
@@ -131,6 +132,7 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
           {filePath === null ? (
             <DocsHomeWorkspace
               session={session}
+              offlineUsername={resolveDocsOfflineUsername(session.user.username)}
               operations={driveOperations}
               onOpenFile={handleOpenHomeFile}
               onCreateDocument={handleCreateHomeDocument}
