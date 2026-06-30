@@ -165,6 +165,7 @@ export function DocsHomeWorkspace({
     username,
     groupRoots: knownGroupRoots,
     offlineUsername,
+    onAvailabilityChanged: refresh,
     reload,
   });
 

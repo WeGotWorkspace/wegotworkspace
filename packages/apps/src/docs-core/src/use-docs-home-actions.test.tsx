@@ -2,6 +2,11 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { DriveFile } from "@/drive-core/src/drive-models";
 import type { DriveAPIOperations, DriveUIData } from "@/drive-core/src/drive-types";
+import { readBrowserOnline } from "@/lib/offline/core/browser-online";
+import {
+  captureOfflineDocsTrashSnapshot,
+  undoOfflineDocsTrash,
+} from "@/lib/offline/docs/docs-hybrid-operations";
 import { useDocsHomeActions } from "@/docs-core/src/use-docs-home-actions";
 
 const queueMutation = vi.fn();
@@ -19,6 +24,33 @@ vi.mock("@/hooks/use-app-toast", () => ({
     showError: vi.fn(),
   }),
 }));
+
+vi.mock("@/lib/offline/core/browser-online", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/offline/core/browser-online")>();
+  return {
+    ...actual,
+    readBrowserOnline: vi.fn(() => true),
+  };
+});
+
+vi.mock("@/lib/offline/docs/docs-hybrid-operations", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/offline/docs/docs-hybrid-operations")>();
+  return {
+    ...actual,
+    captureOfflineDocsTrashSnapshot: vi.fn(async (_username: string, apiPath: string) => ({
+      apiPath,
+      listingResult: {
+        id: 1,
+        sourceType: "file",
+        sourceKey: apiPath.replace(/^\/+/, ""),
+        title: apiPath.split("/").pop() ?? apiPath,
+        size: 1,
+      },
+      availability: { id: apiPath.replace(/^\/+/, ""), location: "My Drive" },
+    })),
+    undoOfflineDocsTrash: vi.fn(async () => undefined),
+  };
+});
 
 function file(partial: Partial<DriveFile> & { id: string; apiPath: string }): DriveFile {
   return {
@@ -63,20 +95,29 @@ function createMockOperations(starredPaths: string[] = []): MockOperations {
   } as unknown as MockOperations;
 }
 
-function renderActions(operations: MockOperations, reload = vi.fn()) {
+function renderActions(
+  operations: MockOperations,
+  reload = vi.fn(),
+  options?: { offlineUsername?: string; onAvailabilityChanged?: () => void },
+) {
   return renderHook(() =>
     useDocsHomeActions({
       operations,
       files: FILES,
       username: "alice",
       groupRoots: [],
+      offlineUsername: options?.offlineUsername ?? null,
+      onAvailabilityChanged: options?.onAvailabilityChanged,
       reload,
     }),
   );
 }
 
 describe("useDocsHomeActions", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(readBrowserOnline).mockReturnValue(true);
+  });
 
   it("derives the starred map from listStars keyed by file id", async () => {
     const operations = createMockOperations(["/users/alice/A.md"]);
@@ -177,7 +218,7 @@ describe("useDocsHomeActions", () => {
     );
     expect(operations.createFolder).toHaveBeenCalledWith(
       { cwd: "/users/alice", name: ".Trash" },
-      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      expect.objectContaining({ signal: expect.any(AbortSignal), refreshState: false }),
     );
     expect(reload).toHaveBeenCalled();
   });
@@ -255,5 +296,41 @@ describe("useDocsHomeActions", () => {
 
     expect(operations.renameItem).toHaveBeenCalledTimes(2);
     expect(reload).toHaveBeenCalled();
+  });
+
+  it("undo while online restores local offline caches captured before trash", async () => {
+    const operations = createMockOperations();
+    const data = {} as DriveUIData;
+    operations.renameItem
+      .mockResolvedValueOnce(data)
+      .mockRejectedValueOnce(new Error("Source not found."));
+    const reload = vi.fn();
+    const onAvailabilityChanged = vi.fn();
+    const { result } = renderActions(operations, reload, {
+      offlineUsername: "alice",
+      onAvailabilityChanged,
+    });
+
+    act(() => result.current.onTrash(FILES[1]!));
+    act(() => result.current.confirmTrash());
+
+    const queued = queueMutation.mock.calls[0]?.[0];
+    await act(async () => {
+      await queued?.execute(new AbortController().signal);
+    });
+
+    expect(captureOfflineDocsTrashSnapshot).toHaveBeenCalledWith("alice", "/users/alice/B.md");
+
+    act(() => {
+      queued?.undo();
+    });
+    await waitFor(() => expect(undoOfflineDocsTrash).toHaveBeenCalled());
+
+    expect(undoOfflineDocsTrash).toHaveBeenCalledWith(
+      "alice",
+      expect.objectContaining({ apiPath: "/users/alice/B.md" }),
+    );
+    expect(reload).toHaveBeenCalled();
+    expect(onAvailabilityChanged).toHaveBeenCalled();
   });
 });

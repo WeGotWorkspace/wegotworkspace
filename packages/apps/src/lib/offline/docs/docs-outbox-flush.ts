@@ -1,4 +1,5 @@
 import { createWgwDriveOperations } from "@/lib/api/wgw/drive";
+import { ensureTrashFolder } from "@/drive-core/src/drive-batch-utils";
 import { parentAndName } from "@/lib/files/api-path";
 import { normalizeApiVirtualPath } from "@/drive-core/src/drive-path-utils";
 import {
@@ -72,6 +73,9 @@ export async function flushDocsOutbox(username: string): Promise<OutboxFlushResu
 
     try {
       if (payload.op === "rename" || payload.op === "trash") {
+        if (payload.op === "trash") {
+          await ensureTrashFolder(drive, username, new Set());
+        }
         await drive.renameItem({
           destination: payload.destination,
           from: payload.from,

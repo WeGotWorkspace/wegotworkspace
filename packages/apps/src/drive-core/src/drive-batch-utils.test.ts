@@ -106,7 +106,7 @@ describe("ensureTrashFolder", () => {
     const createFolder = vi.fn(async () => data);
     const operations = {
       listAllDirectoryEntries: vi.fn(async () => [
-        { name: DRIVE_TRASH_DIR_NAME, path: "/users/alice/.Trash" },
+        { name: DRIVE_TRASH_DIR_NAME, path: "/users/alice/.Trash", type: "dir" },
       ]),
       createFolder,
     } as unknown as DriveAPIOperations;
@@ -127,7 +127,7 @@ describe("ensureTrashFolder", () => {
 
     expect(createFolder).toHaveBeenCalledWith(
       { cwd: "/users/alice", name: DRIVE_TRASH_DIR_NAME },
-      expect.objectContaining({ signal: undefined }),
+      expect.objectContaining({ refreshState: false }),
     );
   });
 });

@@ -109,6 +109,12 @@ export async function fetchDriveLiveBootstrap(): Promise<DriveAppBootstrap> {
   };
 }
 
+function isDuplicateItemError(message: string | undefined): boolean {
+  if (!message) return false;
+  const normalized = message.toLowerCase();
+  return normalized.includes("already exists");
+}
+
 async function postJson(path: string, body: object, opts?: { signal?: AbortSignal }) {
   const res = await wgwFetch(path, {
     method: "POST",
@@ -119,8 +125,8 @@ async function postJson(path: string, body: object, opts?: { signal?: AbortSigna
   if (res.ok) return;
   if (res.status === 400) {
     try {
-      const payload = (await wgwReadJson(res)) as { error?: string };
-      if (payload.error === "Item already exists.") return;
+      const payload = (await wgwReadJson(res)) as { error?: string; message?: string };
+      if (isDuplicateItemError(payload.error ?? payload.message)) return;
     } catch {
       // fall through
     }
@@ -184,12 +190,28 @@ export function createWgwDriveOperations(
       const parent = normalizePath(input.cwd);
       const name = input.name.trim();
       await postJson(`/files/directories?${pathQuery(parent)}`, { name }, opts);
+      if (opts?.refreshState === false) {
+        return {
+          user: { username: "", name: "", role: "user", roots: [] },
+          cwd,
+          directory: { location: parent, files: [] },
+          plugins,
+        };
+      }
       return fetchState(cwd, opts, plugins);
     },
     async createFile(input, opts) {
       const parent = normalizePath(input.cwd);
       const name = input.name.trim();
       await postJson(`/files/directories?${pathQuery(parent)}`, { name, type: "file" }, opts);
+      if (opts?.refreshState === false) {
+        return {
+          user: { username: "", name: "", role: "user", roots: [] },
+          cwd,
+          directory: { location: parent, files: [] },
+          plugins,
+        };
+      }
       return fetchState(cwd, opts, plugins);
     },
     async renameItem(input, opts) {

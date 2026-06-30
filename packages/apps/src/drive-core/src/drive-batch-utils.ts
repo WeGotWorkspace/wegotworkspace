@@ -73,13 +73,18 @@ export async function ensureTrashFolder(
   if (operations.listAllDirectoryEntries) {
     try {
       const entries = await operations.listAllDirectoryEntries(userRoot, { signal });
-      if (entries.some((entry) => entry.name === DRIVE_TRASH_DIR_NAME)) return;
+      if (entries.some((entry) => entry.name === DRIVE_TRASH_DIR_NAME && entry.type === "dir")) {
+        return;
+      }
     } catch {
       // fall through to create
     }
   }
   try {
-    await operations.createFolder({ cwd: userRoot, name: DRIVE_TRASH_DIR_NAME }, { signal });
+    await operations.createFolder(
+      { cwd: userRoot, name: DRIVE_TRASH_DIR_NAME },
+      { signal, refreshState: false },
+    );
   } catch {
     // Folder may already exist.
   }

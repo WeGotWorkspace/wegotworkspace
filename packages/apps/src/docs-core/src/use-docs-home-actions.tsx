@@ -37,6 +37,8 @@ type UseDocsHomeActionsArgs = {
   groupRoots: string[];
   /** When set, enables offline trash undo (outbox + listing cache reversal). */
   offlineUsername?: string | null;
+  /** Refresh offline pin/availability badges after trash or undo. */
+  onAvailabilityChanged?: () => void;
   /** Refresh the home list after a mutation that changes the listing. */
   reload: () => void;
 };
@@ -47,6 +49,7 @@ export function useDocsHomeActions({
   username,
   groupRoots,
   offlineUsername = null,
+  onAvailabilityChanged,
   reload,
 }: UseDocsHomeActionsArgs) {
   const { show, showError } = useAppToast();
@@ -252,23 +255,28 @@ export function useDocsHomeActions({
     };
 
     const revertTrash = async () => {
-      if (offlineUsername && !readBrowserOnline()) {
+      if (offlineUsername && offlineSnapshots.length > 0) {
         for (const snapshot of offlineSnapshots) {
           await undoOfflineDocsTrash(offlineUsername, snapshot);
         }
-        reload();
-        return;
       }
-      for (const file of rows) {
-        const from = resolveDriveFileApiPath(
-          { ...file, parent: DRIVE_TRASH_UI_PATH },
-          username,
-          groupRootNames,
-        );
-        const destination = apiPathFromUiPath(file.parent, username, groupRootNames);
-        await operations.renameItem({ destination, from, to: file.title });
+      if (readBrowserOnline()) {
+        for (const file of rows) {
+          try {
+            const from = resolveDriveFileApiPath(
+              { ...file, parent: DRIVE_TRASH_UI_PATH },
+              username,
+              groupRootNames,
+            );
+            const destination = apiPathFromUiPath(file.parent, username, groupRootNames);
+            await operations.renameItem({ destination, from, to: file.title });
+          } catch {
+            // Offline-only trash never reached server trash; local undo above is enough.
+          }
+        }
       }
       reload();
+      onAvailabilityChanged?.();
     };
 
     const undo = () => {
@@ -303,6 +311,7 @@ export function useDocsHomeActions({
         }
         completed = true;
         reload();
+        onAvailabilityChanged?.();
       },
     });
   }, [
@@ -311,6 +320,7 @@ export function useDocsHomeActions({
     fileById,
     groupRootNames,
     offlineUsername,
+    onAvailabilityChanged,
     operations,
     queueMutation,
     reload,

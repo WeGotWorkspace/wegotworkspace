@@ -19,6 +19,12 @@ export type DriveAppBootstrap = {
   session: WorkspaceSession;
 };
 
+export type DriveMutationOpts = {
+  signal?: AbortSignal;
+  /** When false, skip listing refresh after create (e.g. hidden `.Trash` bootstrap). */
+  refreshState?: boolean;
+};
+
 export type DriveUploadProgress = {
   uploadedBytes: number;
   totalBytes: number;
@@ -63,11 +69,11 @@ export type DriveAPIOperations = {
   ) => Promise<WgwDriveDirectoryEntry[]>;
   createFolder: (
     input: { cwd: string; name: string },
-    opts?: { signal?: AbortSignal },
+    opts?: DriveMutationOpts,
   ) => Promise<DriveUIData>;
   createFile: (
     input: { cwd: string; name: string },
-    opts?: { signal?: AbortSignal },
+    opts?: DriveMutationOpts,
   ) => Promise<DriveUIData>;
   renameItem: (
     input: { destination: string; from: string; to: string },
