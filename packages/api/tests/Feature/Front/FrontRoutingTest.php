@@ -117,7 +117,7 @@ final class FrontRoutingTest extends TestCase
         WgwInstallFixture::markInstalled($installRoot, $data);
         WgwInstallFixture::syncDatabaseConnection();
 
-        $this->get('/icons/settings-512.png')
+        $this->get('/pwa-icons/settings-512.png')
             ->assertOk()
             ->assertHeader('Content-Type', 'image/png');
     }

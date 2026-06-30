@@ -27,7 +27,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Modules commonly enabled on shared Apache + cPanel-style hosts.
-# Debian's default Alias /icons/ (FancyIndexes) shadows PWA manifest icons at /icons/*.png.
+# Debian Apache ships a default `Alias /icons/ \"/usr/share/apache2/icons/\"` that intercepts PWA manifest icon precache URLs before `.htaccess`/PHP can serve shell dist assets.
+# App icons are published under /pwa-icons/ to avoid that conflict on shared hosts; this sed is defense-in-depth for Docker dev.
 RUN a2enmod \
         rewrite \
         headers \
