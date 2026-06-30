@@ -129,8 +129,6 @@ export function DocsHomeWorkspace({
     return offlineAvailableIds;
   }, [isOfflineListing, offlineAvailableIds]);
 
-  const showOfflineBadgeLegend = isOfflineListing || offlinePendingSyncIds.size > 0;
-
   const offlineUnavailableIds = useMemo(() => {
     if (!isOfflineListing) return undefined;
     return new Set(
@@ -297,7 +295,6 @@ export function DocsHomeWorkspace({
             offlineUnavailableIds={offlineUnavailableIds}
             offlinePinnedIds={offlineBadgePinnedIds}
             offlinePendingSyncIds={offlinePendingSyncIds}
-            showOfflineBadgeLegend={showOfflineBadgeLegend}
             extraFileActions={pinActions.extraFileActions}
             pinLoadingId={pinActions.pinLoadingId}
             offlineLabels={labels}

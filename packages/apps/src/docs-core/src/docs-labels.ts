@@ -14,7 +14,6 @@ export const docsLabels = {
   removeOfflineCopy: "Remove offline copy",
   offlineAvailable: "Available offline",
   offlinePendingSync: "Pending sync",
-  homeOfflineBadgeLegend: "Green dot — available offline. Amber dot — changes waiting to sync.",
   syncFailedTitle: "Some changes could not sync",
   syncFailedMessage: "Your edits are saved locally. Retry when you are back online.",
   retrySync: "Retry sync",

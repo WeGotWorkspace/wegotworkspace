@@ -32,8 +32,6 @@ export type DocsHomePaneProps = {
   offlinePinnedIds?: ReadonlySet<string>;
   /** Row ids with pending offline sync (collab save or outbox). */
   offlinePendingSyncIds?: ReadonlySet<string>;
-  /** Show dot legend under the home header. */
-  showOfflineBadgeLegend?: boolean;
   /** Optional per-file menu actions (e.g. make/remove offline copy). */
   extraFileActions?: (file: DriveFile) => import("@/action-bar/src/action-bar").ActionBarAction[];
   pinLoadingId?: string | null;
@@ -72,7 +70,6 @@ export function DocsHomePane({
   offlineUnavailableIds,
   offlinePinnedIds,
   offlinePendingSyncIds,
-  showOfflineBadgeLegend = false,
   extraFileActions,
   pinLoadingId,
   offlineLabels,
@@ -238,12 +235,6 @@ export function DocsHomePane({
           }
         />
       </div>
-
-      {showOfflineBadgeLegend ? (
-        <p className="docs-home-pane__badge-legend" role="note">
-          {labels.homeOfflineBadgeLegend}
-        </p>
-      ) : null}
 
       <div className="docs-home-pane__body drive-workspace">
         {loading ? (
