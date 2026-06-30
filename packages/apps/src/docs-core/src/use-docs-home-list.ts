@@ -265,7 +265,7 @@ export function useDocsHomeList({
         await persistListingCache(merged, Boolean(data.hasMore));
       } catch (_err) {
         if (controller.signal.aborted) return;
-        setError(err instanceof Error ? err.message : "Failed to load documents");
+        setError(_err instanceof Error ? _err.message : "Failed to load documents");
       } finally {
         if (!controller.signal.aborted) setLoadingMore(false);
       }
