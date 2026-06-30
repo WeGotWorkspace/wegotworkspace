@@ -20,10 +20,21 @@ export type OfflineDocsListingRow = {
   sortIndex: number;
 };
 
+/** User-pinned document available for offline open (apiPath registry). */
+export type OfflineDocsAvailabilityRow = {
+  /** Drive API path (normalized, no leading slash). */
+  id: string;
+  pinnedAt: number;
+  lastSyncedAt: number | null;
+  /** Display location from the home listing (e.g. "My Drive"). */
+  location: string;
+};
+
 /**
  * Docs Dexie tables, registered as additive versions on top of the core baseline:
  *
  * - **v20** introduces `docs_listing_rows` for offline home browse snapshots.
+ * - **v21** introduces `docs_availability` for explicit offline pin registry.
  */
 registerOfflineDomainTables({
   domain: DOCS_DOMAIN,
@@ -34,6 +45,12 @@ registerOfflineDomainTables({
         docs_listing_rows: "id, cacheKey, modifiedAt, sortIndex",
       },
     },
+    {
+      version: DOCS_OFFLINE_VERSION.availabilityTables,
+      stores: {
+        docs_availability: "id, pinnedAt, lastSyncedAt, location",
+      },
+    },
   ],
 });
 
@@ -42,6 +59,15 @@ export function docsListingRowsTable(
 ): EntityTable<OfflineDocsListingRow, "id"> {
   return db.table<OfflineDocsListingRow, string>("docs_listing_rows") as EntityTable<
     OfflineDocsListingRow,
+    "id"
+  >;
+}
+
+export function docsAvailabilityTable(
+  db: WgwOfflineDatabase,
+): EntityTable<OfflineDocsAvailabilityRow, "id"> {
+  return db.table<OfflineDocsAvailabilityRow, string>("docs_availability") as EntityTable<
+    OfflineDocsAvailabilityRow,
     "id"
   >;
 }

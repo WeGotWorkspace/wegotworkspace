@@ -34,6 +34,7 @@ export const NOTES_OFFLINE_VERSION = {
 /** Docs version steps within the docs block (20–29). */
 export const DOCS_OFFLINE_VERSION = {
   listingTables: 20,
+  availabilityTables: 21,
 } as const;
 
 const versionOwners = new Map<number, string>();

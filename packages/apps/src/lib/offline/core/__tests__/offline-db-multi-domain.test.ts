@@ -23,11 +23,12 @@ describe("offline db multi-domain registry", () => {
     const db = new WgwOfflineDatabase("multi-fresh");
     await db.open();
 
-    expect(db.verno).toBe(DOCS_OFFLINE_VERSION.listingTables);
+    expect(db.verno).toBe(DOCS_OFFLINE_VERSION.availabilityTables);
     expect(db.tables.map((t) => t.name).sort()).toEqual(
       expect.arrayContaining([
         "contacts_address_books",
         "contacts_cards",
+        "docs_availability",
         "docs_listing_rows",
         "meta",
         "notes_notebooks",
@@ -100,12 +101,13 @@ describe("offline db multi-domain registry", () => {
     const db = new WgwOfflineDatabase("multi-upgrade");
     await db.open();
 
-    expect(db.verno).toBe(DOCS_OFFLINE_VERSION.listingTables);
+    expect(db.verno).toBe(DOCS_OFFLINE_VERSION.availabilityTables);
     expect(await db.meta.get("shared:session")).toBeTruthy();
     expect(await db.outbox.get("legacy-op")).toBeTruthy();
     expect(db.tables.map((t) => t.name)).toContain("contacts_cards");
     expect(db.tables.map((t) => t.name)).toContain("notes_notes");
     expect(db.tables.map((t) => t.name)).toContain("docs_listing_rows");
+    expect(db.tables.map((t) => t.name)).toContain("docs_availability");
 
     await db.delete();
   });

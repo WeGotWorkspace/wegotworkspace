@@ -1,4 +1,9 @@
 import type { WgwUnifiedSearchResult } from "@/lib/api/wgw/search";
+import {
+  DOCS_HOME_CATEGORIES,
+  DOCS_HOME_EXTENSIONS,
+  DOCS_HOME_SOURCES,
+} from "@/docs-core/src/docs-home-constants";
 import { sortDocsHomeResults } from "@/docs-core/src/use-docs-home-list";
 import { rememberOfflineDocsUsername } from "@/lib/offline/offline-session";
 import { offlineAccountKeyFromUsername, offlineDbForAccount } from "@/lib/offline/core/offline-db";
@@ -8,6 +13,7 @@ import {
   type DocsListingBrowseFilters,
 } from "@/lib/offline/docs/docs-listing-cache-key";
 import { docsListingRowsTable, type OfflineDocsListingRow } from "@/lib/offline/docs/docs-schema";
+import { normalizeApiVirtualPath } from "@/drive-core/src/drive-path-utils";
 
 export type DocsListingCacheSnapshot = {
   results: WgwUnifiedSearchResult[];
@@ -77,4 +83,67 @@ export async function writeDocsListingToCache(
   }
   await writeMeta(username, metaSyncedAtKey(cacheKey), String(syncedAt));
   rememberOfflineDocsUsername(username);
+}
+
+/** Browse filter sets that should include a file at `apiPath` on Docs home. */
+export function docsHomeBrowseFiltersForApiPath(apiPath: string): DocsListingBrowseFilters[] {
+  const sourceKey = normalizeApiVirtualPath(apiPath).replace(/^\/+/, "");
+  const seen = new Set<string>();
+  const filters: DocsListingBrowseFilters[] = [];
+
+  const add = (pathPrefix?: string) => {
+    const entry: DocsListingBrowseFilters = {
+      pathPrefix: pathPrefix || undefined,
+      sources: [...DOCS_HOME_SOURCES],
+      extensions: [...DOCS_HOME_EXTENSIONS],
+      categories: [...DOCS_HOME_CATEGORIES],
+    };
+    const key = docsListingCacheKey(entry);
+    if (seen.has(key)) return;
+    seen.add(key);
+    filters.push(entry);
+  };
+
+  add();
+  const segments = sourceKey.split("/").filter(Boolean);
+  if (segments[0] === "users" && segments[1]) {
+    add(`users/${segments[1]}`);
+  } else if (segments[0] === "groups" && segments[1]) {
+    add(`groups/${segments[1]}`);
+  }
+  return filters;
+}
+
+/** Synthetic unified-search row for a locally created offline document. */
+export function buildOfflineDocsSearchResult(apiPath: string): WgwUnifiedSearchResult {
+  const sourceKey = normalizeApiVirtualPath(apiPath).replace(/^\/+/, "");
+  const title = sourceKey.split("/").pop() ?? sourceKey;
+  const dot = title.lastIndexOf(".");
+  const extension = dot >= 0 ? title.slice(dot + 1).toLowerCase() : "md";
+  return {
+    id: -Math.floor(Date.now() / 1000),
+    sourceType: "file",
+    sourceKey,
+    title,
+    extension,
+    category: "document",
+    size: 0,
+    modifiedAt: Math.floor(Date.now() / 1000),
+    snippet: "",
+  };
+}
+
+/** Merge a locally created document into relevant Docs home listing caches. */
+export async function upsertDocsListingResult(username: string, apiPath: string): Promise<void> {
+  const result = buildOfflineDocsSearchResult(apiPath);
+  for (const filters of docsHomeBrowseFiltersForApiPath(apiPath)) {
+    const cached = await readDocsListingFromCache(username, filters);
+    const withoutDuplicate = (cached?.results ?? []).filter(
+      (row) => row.sourceKey !== result.sourceKey,
+    );
+    await writeDocsListingToCache(username, filters, {
+      results: [result, ...withoutDuplicate],
+      hasMore: false,
+    });
+  }
 }

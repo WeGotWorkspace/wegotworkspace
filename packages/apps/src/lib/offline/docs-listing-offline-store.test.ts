@@ -5,6 +5,7 @@ import type { WgwUnifiedSearchResult } from "@/lib/api/wgw/search";
 import { docsListingCacheKey } from "@/lib/offline/docs/docs-listing-cache-key";
 import {
   readDocsListingFromCache,
+  upsertDocsListingResult,
   writeDocsListingToCache,
 } from "@/lib/offline/docs-listing-offline-store";
 
@@ -80,5 +81,35 @@ describe("docs listing offline store", () => {
     const cached = await readDocsListingFromCache(username, filters);
     expect(cached?.results).toHaveLength(1);
     expect(cached?.results[0]?.sourceKey).toBe("users/alice/b.md");
+  });
+
+  it("upserts an offline-created document into all-docs and drive-scoped caches", async () => {
+    const allDocsFilters = {
+      sources: ["file"] as const,
+      extensions: ["md", "markdown", "txt"] as const,
+      categories: ["document"] as const,
+    };
+    await writeDocsListingToCache(username, allDocsFilters, {
+      results: [result(1, "users/alice/existing.md", 100)],
+      hasMore: false,
+    });
+    await writeDocsListingToCache(username, filters, {
+      results: [result(1, "users/alice/existing.md", 100)],
+      hasMore: false,
+    });
+
+    await upsertDocsListingResult(username, "/users/alice/new-offline.md");
+
+    const allDocs = await readDocsListingFromCache(username, allDocsFilters);
+    expect(allDocs?.results.map((row) => row.sourceKey)).toEqual([
+      "users/alice/new-offline.md",
+      "users/alice/existing.md",
+    ]);
+
+    const scoped = await readDocsListingFromCache(username, filters);
+    expect(scoped?.results.map((row) => row.sourceKey)).toEqual([
+      "users/alice/new-offline.md",
+      "users/alice/existing.md",
+    ]);
   });
 });
