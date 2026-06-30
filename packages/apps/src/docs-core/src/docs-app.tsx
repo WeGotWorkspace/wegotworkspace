@@ -146,6 +146,7 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
                 documentTitle={collabDocumentTitle}
                 urls={collabUrls}
                 wire={collabWire}
+                onLogout={handleLogout}
               />
             </>
           ) : (

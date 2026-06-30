@@ -67,6 +67,8 @@ export type DocsCollabWorkspaceProps = {
   urls?: DocsCollabUrls;
   /** Auth + RTC fetch for live API; defaults to offline mesh. */
   wire?: DocsCollabWireOperations;
+  /** Logout handler for the sidebar user footer. */
+  onLogout?: () => void;
 };
 
 function countWords(text: string): number {
@@ -95,6 +97,7 @@ export function DocsCollabWorkspace({
   documentTitle,
   urls,
   wire,
+  onLogout,
 }: DocsCollabWorkspaceProps = {}) {
   const [userName, setUserName] = useState<string | null>(() => userNameProp?.trim() || null);
   const [promptDismissed, setPromptDismissed] = useState(false);
@@ -126,6 +129,7 @@ export function DocsCollabWorkspace({
       documentTitle={documentTitle}
       urls={urls}
       wire={wire}
+      onLogout={onLogout}
     />
   );
 }
@@ -135,11 +139,13 @@ function DocsCollabWorkspaceInner({
   documentTitle,
   urls,
   wire,
+  onLogout,
 }: {
   userName: string;
   documentTitle?: string;
   urls?: DocsCollabUrls;
   wire?: DocsCollabWireOperations;
+  onLogout?: () => void;
 }) {
   const labels = docsLabels;
   const session = useMemo(
@@ -477,6 +483,7 @@ function DocsCollabWorkspaceInner({
                   name={session.user.displayName}
                   initials={workspaceUserInitials(session.user)}
                   detailLine={session.user.username}
+                  onLogoutClick={onLogout}
                 />
               }
             >
