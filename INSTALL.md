@@ -65,6 +65,10 @@ After setup, sign in with your new account and connect clients using the same si
 
 If your install is in a subfolder, set `RewriteBase` in `.htaccess` to that subfolder path.
 
+### Apache PWA icons (Debian/Ubuntu)
+
+Debian and Ubuntu Apache enable `Alias /icons/` to Apache’s built-in icon directory (`alias.conf`). That path shadows PWA manifest icons if the app serves them at `/icons/`. WeGotWorkspace publishes PWA icons under **`/pwa-icons/`** instead so offline/PWA works on shared Apache hosts without server config changes.
+
 For local smoke tests with PHP’s built-in server (no Apache rewrites):
 
 ```bash
