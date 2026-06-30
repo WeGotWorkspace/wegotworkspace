@@ -223,7 +223,7 @@ export const Empty: Story = {
   },
 };
 
-/** Cached browse listing with the offline/stale banner (mock tier). */
+/** Cached browse listing with muted unavailable rows (mock tier). */
 export const OfflineCachedListing: Story = {
   name: "Offline (cached listing)",
   render: () => <OfflineCachedListingHarness />,
@@ -231,7 +231,7 @@ export const OfflineCachedListing: Story = {
     docs: {
       description: {
         story:
-          "Docs home browse served from cached unified-search rows with the offline listing banner.",
+          "Docs home browse served from cached unified-search rows with muted rows for docs not available offline.",
       },
     },
   },
@@ -248,7 +248,6 @@ function OfflineCachedListingHarness() {
         loadingMore={false}
         hasMore={false}
         error={null}
-        isStaleListing
         offlineUnavailableIds={new Set([String(files[1]?.id ?? "")])}
         query=""
         onQueryChange={() => {}}

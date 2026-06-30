@@ -60,8 +60,6 @@ export type UseDocsHomeListResult = {
   reload: () => void;
   /** True when the visible list is served from the offline cache (no live fetch). */
   isOfflineListing: boolean;
-  /** True when showing cached data while offline or after a failed live refresh. */
-  isStaleListing: boolean;
 };
 
 /** Sort raw browse results newest-first (client-side safety net over server order). */
@@ -120,7 +118,6 @@ export function useDocsHomeList({
   const [reloadToken, setReloadToken] = useState(0);
   const [debouncedQuery, setDebouncedQuery] = useState(() => query.trim());
   const [isOfflineListing, setIsOfflineListing] = useState(false);
-  const [isStaleListing, setIsStaleListing] = useState(false);
   const resultsRef = useRef(results);
   resultsRef.current = results;
 
@@ -167,7 +164,6 @@ export function useDocsHomeList({
       setHasMore(false);
       setError(null);
       setIsOfflineListing(!online);
-      setIsStaleListing(!online);
       setLoading(false);
       return true;
     },
@@ -183,7 +179,6 @@ export function useDocsHomeList({
       setLoadingMore(false);
       setError(null);
       setIsOfflineListing(false);
-      setIsStaleListing(false);
 
       const online = readBrowserOnline();
       const hadCache = await applyCachedListing(online);
@@ -195,7 +190,6 @@ export function useDocsHomeList({
           setHasMore(false);
           setError(null);
           setIsOfflineListing(true);
-          setIsStaleListing(false);
         }
         setLoading(false);
         return;
@@ -213,13 +207,10 @@ export function useDocsHomeList({
         setResults(nextResults);
         setHasMore(Boolean(data.hasMore));
         setIsOfflineListing(false);
-        setIsStaleListing(false);
         await persistListingCache(nextResults, Boolean(data.hasMore));
       } catch (err) {
         if (controller.signal.aborted || cancelled) return;
         if (hadCache) {
-          setIsStaleListing(true);
-          setIsOfflineListing(false);
           setError(null);
         } else {
           setError(err instanceof Error ? err.message : "Failed to load documents");
@@ -292,6 +283,5 @@ export function useDocsHomeList({
     loadMore,
     reload,
     isOfflineListing,
-    isStaleListing,
   };
 }

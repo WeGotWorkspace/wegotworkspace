@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { Dispatch, MouseEvent as ReactMouseEvent, SetStateAction } from "react";
 import { FileText } from "lucide-react";
-import { Callout } from "@/callout/src/callout";
 import { Button } from "@/button/src/button";
 import { CollectionState } from "@/collection-state/src/collection-state";
 import { ViewHeader } from "@/view-header/src/view-header";
@@ -27,8 +26,6 @@ export type DocsHomePaneProps = {
   loadingMore: boolean;
   hasMore: boolean;
   error: string | null;
-  /** When true, show the offline/stale listing banner above the browse results. */
-  isStaleListing?: boolean;
   /** Row ids that cannot be opened while offline (muted styling). */
   offlineUnavailableIds?: ReadonlySet<string>;
   query: string;
@@ -59,7 +56,6 @@ export function DocsHomePane({
   loadingMore,
   hasMore,
   error,
-  isStaleListing = false,
   offlineUnavailableIds,
   query,
   onQueryChange,
@@ -220,11 +216,6 @@ export function DocsHomePane({
       </div>
 
       <div className="docs-home-pane__body drive-workspace">
-        {isStaleListing ? (
-          <div className="docs-home-pane__offline-banner">
-            <Callout severity="info" title={labels.homeOfflineListing} />
-          </div>
-        ) : null}
         {loading ? (
           <CollectionState variant="loading">{labels.homeLoading}</CollectionState>
         ) : error ? (

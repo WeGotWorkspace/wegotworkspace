@@ -32,10 +32,6 @@
   color: var(--color-cream, #ffffff) !important;
 }
 
-.docs-home-workspace .docs-home-pane__offline-banner {
-  @apply px-4 pt-4 md:px-6;
-}
-
 .docs-home-workspace .docs-home-pane__load-more {
   @apply flex justify-center px-4 pb-8 md:px-6;
 }

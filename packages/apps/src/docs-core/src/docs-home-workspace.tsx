@@ -85,23 +85,14 @@ export function DocsHomeWorkspace({
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [createDialogDefaultName, setCreateDialogDefaultName] = useState("Untitled.md");
 
-  const {
-    files,
-    loading,
-    loadingMore,
-    hasMore,
-    error,
-    loadMore,
-    reload,
-    isOfflineListing,
-    isStaleListing,
-  } = useDocsHomeList({
-    username,
-    query,
-    pathPrefix: selectedDrivePrefix ?? undefined,
-    fetcher,
-    offlineUsername,
-  });
+  const { files, loading, loadingMore, hasMore, error, loadMore, reload, isOfflineListing } =
+    useDocsHomeList({
+      username,
+      query,
+      pathPrefix: selectedDrivePrefix ?? undefined,
+      fetcher,
+      offlineUsername,
+    });
 
   const { offlineAvailableIds } = useDocsHomeOfflineAvailability(files, isOfflineListing);
   const offlineUnavailableIds = useMemo(() => {
@@ -242,7 +233,6 @@ export function DocsHomeWorkspace({
             loadingMore={loadingMore}
             hasMore={hasMore}
             error={error}
-            isStaleListing={isStaleListing}
             offlineUnavailableIds={offlineUnavailableIds}
             query={query}
             onQueryChange={setQuery}

@@ -209,7 +209,6 @@ describe("useDocsHomeList", () => {
     expect(fetcher).not.toHaveBeenCalled();
     expect(hook.current.files.map((f) => f.title)).toEqual(["A", "B"]);
     expect(hook.current.isOfflineListing).toBe(true);
-    expect(hook.current.isStaleListing).toBe(true);
   });
 });
 
