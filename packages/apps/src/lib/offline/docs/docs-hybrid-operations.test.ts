@@ -8,7 +8,10 @@ import {
   readDocsAvailability,
   writeDocsAvailability,
 } from "@/lib/offline/docs/docs-availability-store";
-import { createHybridDocsDriveOperations } from "@/lib/offline/docs/docs-hybrid-operations";
+import {
+  createHybridDocsDriveOperations,
+  undoOfflineDocsTrash,
+} from "@/lib/offline/docs/docs-hybrid-operations";
 import { docsAvailabilityTable, docsListingRowsTable } from "@/lib/offline/docs/docs-schema";
 import {
   readDocsListingFromCache,
@@ -90,6 +93,48 @@ describe("createHybridDocsDriveOperations offline trash", () => {
     expect(cached?.results.map((row) => row.sourceKey)).toEqual(["users/alice/other.md"]);
 
     expect(await readDocsAvailability(username, apiPath)).toBeUndefined();
+  });
+
+  it("undo restores listing, availability, and removes the queued trash mutation", async () => {
+    const apiPath = "/users/alice/note.md";
+    const filters = { pathPrefix: "users/alice" };
+    const listingRow = result(1, "users/alice/note.md", 100);
+    await writeDocsListingToCache(username, filters, {
+      results: [listingRow, result(2, "users/alice/other.md", 50)],
+      hasMore: false,
+    });
+    await writeDocsAvailability(username, { id: "users/alice/note.md", location: "My Drive" });
+
+    const operations = createHybridDocsDriveOperations(username);
+    await operations.renameItem({
+      from: apiPath,
+      destination: driveUserTrashApiPath(username),
+      to: "note.md",
+    });
+
+    expect(await listOutboxMutations(username)).toHaveLength(1);
+
+    await undoOfflineDocsTrash(username, {
+      apiPath,
+      listingResult: listingRow,
+      availability: {
+        id: "users/alice/note.md",
+        location: "My Drive",
+        pinnedAt: Date.now(),
+        lastSyncedAt: null,
+      },
+    });
+
+    expect(await listOutboxMutations(username)).toHaveLength(0);
+    const cached = await readDocsListingFromCache(username, filters);
+    expect(cached?.results.map((row) => row.sourceKey)).toEqual([
+      "users/alice/note.md",
+      "users/alice/other.md",
+    ]);
+    expect(await readDocsAvailability(username, apiPath)).toMatchObject({
+      id: "users/alice/note.md",
+      location: "My Drive",
+    });
   });
 });
 

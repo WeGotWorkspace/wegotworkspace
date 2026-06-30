@@ -158,7 +158,15 @@ function docsListingBrowseFilterSets(apiPath: string): Map<string, DocsListingBr
 
 /** Merge a locally created document into relevant Docs home listing caches. */
 export async function upsertDocsListingResult(username: string, apiPath: string): Promise<void> {
-  const result = buildOfflineDocsSearchResult(apiPath);
+  await restoreDocsListingResult(username, buildOfflineDocsSearchResult(apiPath));
+}
+
+/** Restore a specific browse row into relevant Docs home listing caches (e.g. undo trash). */
+export async function restoreDocsListingResult(
+  username: string,
+  result: WgwUnifiedSearchResult,
+): Promise<void> {
+  const apiPath = `/${result.sourceKey}`;
   for (const filters of docsHomeBrowseFiltersForApiPath(apiPath)) {
     const cached = await readDocsListingFromCache(username, filters);
     const withoutDuplicate = (cached?.results ?? []).filter(

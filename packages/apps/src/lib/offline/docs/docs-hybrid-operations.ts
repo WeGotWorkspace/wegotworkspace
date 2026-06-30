@@ -11,16 +11,23 @@ import { enqueueOutboxMutation } from "@/lib/offline/core/outbox-store";
 import {
   migrateDocsAvailabilityPath,
   normalizeDocsAvailabilityPath,
+  readDocsAvailability,
   removeDocsAvailability,
+  writeDocsAvailability,
 } from "@/lib/offline/docs/docs-availability-store";
-import { DOCS_DOMAIN } from "@/lib/offline/docs/docs-schema";
+import { DOCS_DOMAIN, type OfflineDocsAvailabilityRow } from "@/lib/offline/docs/docs-schema";
 import type { DocsOutboxPayload } from "@/lib/offline/docs/docs-outbox-flush";
 import {
   flushDocsOutbox,
   removeOutboxMutationsForDocsPath,
   type OutboxFlushResult,
 } from "@/lib/offline/docs/docs-outbox-flush";
+import type { WgwUnifiedSearchResult } from "@/lib/api/wgw/search";
 import {
+  buildOfflineDocsSearchResult,
+  docsHomeBrowseFiltersForApiPath,
+  readDocsListingFromCache,
+  restoreDocsListingResult,
   removeDocsListingResult,
   renameDocsListingResult,
 } from "@/lib/offline/docs-listing-offline-store";
@@ -67,6 +74,45 @@ async function applyOfflineTrashSideEffects(username: string, from: string): Pro
   await removeDocsListingResult(username, apiPath);
   await clearDocsCollabOfflinePersistence(room);
   await removeDocsAvailability(username, room);
+}
+
+export type DocsTrashUndoSnapshot = {
+  apiPath: string;
+  listingResult: WgwUnifiedSearchResult;
+  availability?: OfflineDocsAvailabilityRow;
+};
+
+/** Capture listing + availability state before an offline trash (for undo). */
+export async function captureOfflineDocsTrashSnapshot(
+  username: string,
+  apiPath: string,
+): Promise<DocsTrashUndoSnapshot> {
+  const normalized = normalizeApiVirtualPath(apiPath);
+  const sourceKey = normalized.replace(/^\/+/, "");
+  let listingResult: WgwUnifiedSearchResult | undefined;
+  for (const filters of docsHomeBrowseFiltersForApiPath(normalized)) {
+    const cached = await readDocsListingFromCache(username, filters);
+    listingResult = cached?.results.find((row) => row.sourceKey === sourceKey);
+    if (listingResult) break;
+  }
+  const availability = await readDocsAvailability(username, normalized);
+  return {
+    apiPath: normalized,
+    listingResult: listingResult ?? buildOfflineDocsSearchResult(normalized),
+    availability,
+  };
+}
+
+/** Reverse a queued offline trash: drop outbox entry and restore local caches. */
+export async function undoOfflineDocsTrash(
+  username: string,
+  snapshot: DocsTrashUndoSnapshot,
+): Promise<void> {
+  await removeOutboxMutationsForDocsPath(username, snapshot.apiPath);
+  await restoreDocsListingResult(username, snapshot.listingResult);
+  if (snapshot.availability) {
+    await writeDocsAvailability(username, snapshot.availability);
+  }
 }
 
 async function applyOfflineRenameSideEffects(

@@ -164,8 +164,14 @@ export function DocsHomeWorkspace({
     files,
     username,
     groupRoots: knownGroupRoots,
+    offlineUsername,
     reload,
   });
+
+  const visibleFiles = useMemo(
+    () => files.filter((file) => !actions.hiddenFileIds.has(file.id)),
+    [actions.hiddenFileIds, files],
+  );
 
   useEffect(() => {
     const discovered = collectGroupRoots(files);
@@ -287,7 +293,7 @@ export function DocsHomeWorkspace({
         main={
           <DocsHomePane
             labels={labels}
-            files={files}
+            files={visibleFiles}
             loading={loading}
             loadingMore={loadingMore}
             hasMore={hasMore}
@@ -316,6 +322,7 @@ export function DocsHomeWorkspace({
             batchStar={actions.batchStar}
             requestMoveSelected={actions.requestMoveSelected}
             requestDeleteSelected={actions.requestDeleteSelected}
+            onUndoQueuedAction={actions.undoLatest}
           />
         }
       />

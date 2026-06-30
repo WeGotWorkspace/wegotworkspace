@@ -4,6 +4,13 @@ import type { DriveFile } from "@/drive-core/src/drive-models";
 import type { DriveAPIOperations, DriveUIData } from "@/drive-core/src/drive-types";
 import { useDocsHomeActions } from "@/docs-core/src/use-docs-home-actions";
 
+const queueMutation = vi.fn();
+const undoLatest = vi.fn(() => false);
+
+vi.mock("@/hooks/use-queued-mutation", () => ({
+  useQueuedMutation: () => ({ queueMutation, undoLatest }),
+}));
+
 vi.mock("@/hooks/use-app-toast", () => ({
   useAppToast: () => ({
     show: vi.fn(),
@@ -137,7 +144,7 @@ describe("useDocsHomeActions", () => {
     await waitFor(() => expect(reload).toHaveBeenCalled());
   });
 
-  it("moves a file to Trash and refreshes", async () => {
+  it("moves a file to Trash via queued mutation with undo", async () => {
     const operations = createMockOperations();
     const reload = vi.fn();
     const { result } = renderActions(operations, reload);
@@ -145,14 +152,30 @@ describe("useDocsHomeActions", () => {
     act(() => result.current.onTrash(FILES[1]!));
     act(() => result.current.confirmTrash());
 
-    await waitFor(() =>
-      expect(operations.renameItem).toHaveBeenCalledWith({
+    expect(result.current.hiddenFileIds.has("search:file:users/alice/B.md")).toBe(true);
+    expect(queueMutation).toHaveBeenCalledTimes(1);
+    expect(queueMutation.mock.calls[0]?.[0]).toMatchObject({
+      key: "docs:trash:search:file:users/alice/B.md",
+      undoToastMessage: "Move to trash undone.",
+      executeImmediately: true,
+    });
+
+    const execute = queueMutation.mock.calls[0]?.[0]?.execute as (
+      signal: AbortSignal,
+    ) => Promise<void>;
+    await act(async () => {
+      await execute(new AbortController().signal);
+    });
+
+    expect(operations.renameItem).toHaveBeenCalledWith(
+      {
         destination: "/users/alice/.Trash",
         from: "/users/alice/B.md",
         to: "B.md",
-      }),
+      },
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
-    await waitFor(() => expect(reload).toHaveBeenCalled());
+    expect(reload).toHaveBeenCalled();
   });
 
   it("batch-stars all selected files", async () => {
@@ -181,7 +204,7 @@ describe("useDocsHomeActions", () => {
     await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
   });
 
-  it("trashes all selected files and refreshes once", async () => {
+  it("trashes all selected files via one queued mutation", async () => {
     const operations = createMockOperations();
     const reload = vi.fn();
     const { result } = renderActions(operations, reload);
@@ -189,7 +212,15 @@ describe("useDocsHomeActions", () => {
     act(() => result.current.requestDeleteSelected(FILES.map((file) => file.id)));
     act(() => result.current.confirmTrash());
 
-    await waitFor(() => expect(operations.renameItem).toHaveBeenCalledTimes(2));
-    await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
+    expect(queueMutation).toHaveBeenCalledTimes(1);
+    const execute = queueMutation.mock.calls[0]?.[0]?.execute as (
+      signal: AbortSignal,
+    ) => Promise<void>;
+    await act(async () => {
+      await execute(new AbortController().signal);
+    });
+
+    expect(operations.renameItem).toHaveBeenCalledTimes(2);
+    expect(reload).toHaveBeenCalled();
   });
 });

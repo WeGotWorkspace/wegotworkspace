@@ -15,8 +15,9 @@ import { useDriveSelectionBar } from "@/drive-core/src/use-drive-selection-bar";
 import type { DriveAPIOperations } from "@/drive-core/src/drive-types";
 import type { DocsUILabels } from "@/docs-core/src/docs-labels";
 
-const noop = () => {};
 /** The home list is server-driven; the controller never mutates items locally. */
+const noop = () => {};
+const noopUndo = () => false;
 const noopSetItems: Dispatch<SetStateAction<DriveFile[]>> = () => {};
 
 export type DocsHomePaneProps = {
@@ -58,6 +59,8 @@ export type DocsHomePaneProps = {
   batchStar?: (ids: string[]) => void;
   requestMoveSelected?: (ids: string[]) => void;
   requestDeleteSelected?: (ids: string[]) => void;
+  /** Undo the latest queued trash mutation (toast or Cmd+Z). */
+  onUndoQueuedAction?: () => boolean;
 };
 
 export function DocsHomePane({
@@ -91,6 +94,7 @@ export function DocsHomePane({
   batchStar,
   requestMoveSelected,
   requestDeleteSelected,
+  onUndoQueuedAction,
 }: DocsHomePaneProps) {
   const filesById = useMemo(() => {
     const map = new Map<string, DriveFile>();
@@ -115,7 +119,6 @@ export function DocsHomePane({
     isItemDragging,
     itemDragHandlers,
     navigateListByKeyboard,
-    undoLatest,
   } = useWorkspaceListController<DriveFile>({
     items: files,
     setItems: noopSetItems,
@@ -181,7 +184,7 @@ export function DocsHomePane({
     selectedCount: selectedIds.length,
     onRequestDeleteSelection: requestDeleteSelection,
     onNavigateList: navigateListByKeyboard,
-    onUndoQueuedAction: undoLatest,
+    onUndoQueuedAction: onUndoQueuedAction ?? noopUndo,
   });
 
   const browserProps = {
