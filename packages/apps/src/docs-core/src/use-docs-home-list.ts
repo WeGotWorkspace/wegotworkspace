@@ -18,7 +18,7 @@ import {
   DOCS_HOME_PAGE_SIZE,
   DOCS_HOME_SOURCES,
 } from "@/docs-core/src/docs-home-constants";
-import { readBrowserOnline } from "@/lib/offline/core/browser-online";
+import { getConnectivitySnapshot } from "@/lib/offline/core/browser-online";
 import type { DocsListingBrowseFilters } from "@/lib/offline/docs/docs-listing-cache-key";
 import {
   readDocsListingFromCache,
@@ -164,10 +164,35 @@ export function useDocsHomeList({
       setHasMore(false);
       setError(null);
       setIsOfflineListing(!online);
-      setLoading(false);
       return true;
     },
     [filters, offlineUsername],
+  );
+
+  const fetchLiveListing = useCallback(
+    async (signal: AbortSignal): Promise<boolean> => {
+      if (!getConnectivitySnapshot()) return false;
+      try {
+        const data = await fetcher({
+          ...baseParams,
+          q: debouncedQuery || undefined,
+          offset: 0,
+          signal,
+        });
+        if (signal.aborted) return false;
+        const nextResults = data.results ?? [];
+        setResults(nextResults);
+        setHasMore(Boolean(data.hasMore));
+        setIsOfflineListing(false);
+        setError(null);
+        await persistListingCache(nextResults, Boolean(data.hasMore));
+        return true;
+      } catch (_err) {
+        if (signal.aborted) return false;
+        return false;
+      }
+    },
+    [baseParams, debouncedQuery, fetcher, persistListingCache],
   );
 
   useEffect(() => {
@@ -175,12 +200,10 @@ export function useDocsHomeList({
     let cancelled = false;
 
     void (async () => {
-      setLoading(true);
       setLoadingMore(false);
       setError(null);
-      setIsOfflineListing(false);
 
-      const online = readBrowserOnline();
+      const online = getConnectivitySnapshot();
       const hadCache = await applyCachedListing(online);
       if (cancelled) return;
 
@@ -195,38 +218,33 @@ export function useDocsHomeList({
         return;
       }
 
-      try {
-        const data = await fetcher({
-          ...baseParams,
-          q: debouncedQuery || undefined,
-          offset: 0,
-          signal: controller.signal,
-        });
-        if (controller.signal.aborted || cancelled) return;
-        const nextResults = data.results ?? [];
-        setResults(nextResults);
-        setHasMore(Boolean(data.hasMore));
+      if (!hadCache) {
+        setLoading(true);
         setIsOfflineListing(false);
-        await persistListingCache(nextResults, Boolean(data.hasMore));
-      } catch (err) {
-        if (controller.signal.aborted || cancelled) return;
+      }
+
+      const liveLoaded = await fetchLiveListing(controller.signal);
+      if (controller.signal.aborted || cancelled) return;
+
+      if (!liveLoaded) {
         if (hadCache) {
           setError(null);
+          setIsOfflineListing(true);
         } else {
-          setError(err instanceof Error ? err.message : "Failed to load documents");
+          setError("Failed to load documents");
           setResults([]);
           setHasMore(false);
         }
-      } finally {
-        if (!controller.signal.aborted && !cancelled) setLoading(false);
       }
+
+      if (!controller.signal.aborted && !cancelled) setLoading(false);
     })();
 
     return () => {
       cancelled = true;
       controller.abort();
     };
-  }, [applyCachedListing, baseParams, debouncedQuery, fetcher, persistListingCache, reloadToken]);
+  }, [applyCachedListing, fetchLiveListing, reloadToken]);
 
   const loadMore = useCallback(() => {
     if (loading || loadingMore || !hasMore || isOfflineListing) return;
@@ -245,7 +263,7 @@ export function useDocsHomeList({
         setResults(merged);
         setHasMore(Boolean(data.hasMore));
         await persistListingCache(merged, Boolean(data.hasMore));
-      } catch (err) {
+      } catch (_err) {
         if (controller.signal.aborted) return;
         setError(err instanceof Error ? err.message : "Failed to load documents");
       } finally {
@@ -268,8 +286,13 @@ export function useDocsHomeList({
   useOnReconnect(
     useCallback(() => {
       if (!offlineUsername) return;
-      reload();
-    }, [offlineUsername, reload]),
+      void (async () => {
+        await new Promise((resolve) => window.setTimeout(resolve, 400));
+        if (!getConnectivitySnapshot()) return;
+        const controller = new AbortController();
+        await fetchLiveListing(controller.signal);
+      })();
+    }, [fetchLiveListing, offlineUsername]),
   );
 
   const files = useMemo(() => mapDocsHomeResults(results, username), [results, username]);

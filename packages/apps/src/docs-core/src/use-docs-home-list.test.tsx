@@ -11,6 +11,7 @@ import {
 import { writeDocsListingToCache } from "@/lib/offline/docs-listing-offline-store";
 
 vi.mock("@/lib/offline/core/browser-online", () => ({
+  getConnectivitySnapshot: vi.fn(() => true),
   readBrowserOnline: vi.fn(() => true),
 }));
 
@@ -22,7 +23,7 @@ vi.mock("@/hooks/use-connectivity", async (importOriginal) => {
   };
 });
 
-import { readBrowserOnline } from "@/lib/offline/core/browser-online";
+import { getConnectivitySnapshot } from "@/lib/offline/core/browser-online";
 
 function result(
   id: number,
@@ -108,7 +109,7 @@ describe("mapDocsHomeResults", () => {
 
 describe("useDocsHomeList", () => {
   beforeEach(() => {
-    vi.mocked(readBrowserOnline).mockReturnValue(true);
+    vi.mocked(getConnectivitySnapshot).mockReturnValue(true);
   });
 
   it("loads the first page and paginates with loadMore", async () => {
@@ -185,7 +186,7 @@ describe("useDocsHomeList", () => {
   });
 
   it("falls back to cached listing when offline", async () => {
-    vi.mocked(readBrowserOnline).mockReturnValue(false);
+    vi.mocked(getConnectivitySnapshot).mockReturnValue(false);
     await writeDocsListingToCache(
       "alice",
       { query: "" },
