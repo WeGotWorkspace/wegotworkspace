@@ -1,4 +1,5 @@
 import { createWgwDriveOperations } from "@/lib/api/wgw/drive";
+import { ensureTrashFolder } from "@/drive-core/src/drive-batch-utils";
 import { parentAndName } from "@/lib/files/api-path";
 import type { DriveAPIOperations, DriveUIData } from "@/drive-core/src/drive-types";
 import { isDriveTrashApiPath, normalizeApiVirtualPath } from "@/drive-core/src/drive-path-utils";
@@ -162,18 +163,25 @@ export function createHybridDocsDriveOperations(username: string): DriveAPIOpera
   return {
     ...live,
     renameItem: async (input, opts) => {
+      const destination = normalizeApiVirtualPath(input.destination);
+      const isTrash = isDriveTrashApiPath(destination, username);
       if (readBrowserOnline()) {
         try {
+          if (isTrash) {
+            await ensureTrashFolder(live, username, new Set(), opts?.signal);
+          }
           const data = await live.renameItem(input, opts);
-          await applyOnlineRenameSideEffects(username, input.from, input.destination, input.to);
+          if (isTrash) {
+            await applyOfflineTrashSideEffects(username, input.from);
+          } else {
+            await applyOnlineRenameSideEffects(username, input.from, input.destination, input.to);
+          }
           return data;
         } catch (error) {
           rethrowUnlessOfflineQueue(error, opts?.signal);
         }
       }
       const from = normalizeApiVirtualPath(input.from);
-      const destination = normalizeApiVirtualPath(input.destination);
-      const isTrash = isDriveTrashApiPath(destination, username);
       if (isTrash) {
         await applyOfflineTrashSideEffects(username, from);
       } else {

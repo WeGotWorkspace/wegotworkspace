@@ -1,10 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
+  ensureTrashFolder,
   mergeDriveFolderListing,
   resolveDriveFileApiPath,
 } from "@/drive-core/src/drive-batch-utils";
+import { DRIVE_TRASH_DIR_NAME } from "@/drive-core/src/drive-path-utils";
 import type { DriveFile } from "@/drive-core/src/drive-models";
-import type { DriveUIData } from "@/drive-core/src/drive-types";
+import type { DriveAPIOperations, DriveUIData } from "@/drive-core/src/drive-types";
 
 const USER = "alice";
 const groupRoots = new Set<string>();
@@ -93,5 +95,39 @@ describe("mergeDriveFolderListing", () => {
       directory: { location: "/users/alice/Projects", files: [] },
     };
     expect(mergeDriveFolderListing(previous, nextData, USER)).toEqual([]);
+  });
+});
+
+describe("ensureTrashFolder", () => {
+  const groupRoots = new Set<string>();
+  const data = {} as DriveUIData;
+
+  it("skips create when .Trash is already listed under the user root", async () => {
+    const createFolder = vi.fn(async () => data);
+    const operations = {
+      listAllDirectoryEntries: vi.fn(async () => [
+        { name: DRIVE_TRASH_DIR_NAME, path: "/users/alice/.Trash" },
+      ]),
+      createFolder,
+    } as unknown as DriveAPIOperations;
+
+    await ensureTrashFolder(operations, USER, groupRoots);
+
+    expect(createFolder).not.toHaveBeenCalled();
+  });
+
+  it("creates .Trash when it is missing from the user root listing", async () => {
+    const createFolder = vi.fn(async () => data);
+    const operations = {
+      listAllDirectoryEntries: vi.fn(async () => []),
+      createFolder,
+    } as unknown as DriveAPIOperations;
+
+    await ensureTrashFolder(operations, USER, groupRoots);
+
+    expect(createFolder).toHaveBeenCalledWith(
+      { cwd: "/users/alice", name: DRIVE_TRASH_DIR_NAME },
+      expect.objectContaining({ signal: undefined }),
+    );
   });
 });

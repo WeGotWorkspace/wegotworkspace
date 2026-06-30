@@ -70,6 +70,14 @@ export async function ensureTrashFolder(
   signal?: AbortSignal,
 ) {
   const userRoot = apiPathFromUiPath("My Drive", username, groupRoots);
+  if (operations.listAllDirectoryEntries) {
+    try {
+      const entries = await operations.listAllDirectoryEntries(userRoot, { signal });
+      if (entries.some((entry) => entry.name === DRIVE_TRASH_DIR_NAME)) return;
+    } catch {
+      // fall through to create
+    }
+  }
   try {
     await operations.createFolder({ cwd: userRoot, name: DRIVE_TRASH_DIR_NAME }, { signal });
   } catch {

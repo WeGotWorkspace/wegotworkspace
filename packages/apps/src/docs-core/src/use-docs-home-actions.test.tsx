@@ -175,6 +175,39 @@ describe("useDocsHomeActions", () => {
       },
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
+    expect(operations.createFolder).toHaveBeenCalledWith(
+      { cwd: "/users/alice", name: ".Trash" },
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+    expect(reload).toHaveBeenCalled();
+  });
+
+  it("still trashes when createFolder reports the trash folder already exists", async () => {
+    const operations = createMockOperations();
+    operations.createFolder.mockRejectedValueOnce(
+      new Error("POST /files/directories failed (400)"),
+    );
+    const reload = vi.fn();
+    const { result } = renderActions(operations, reload);
+
+    act(() => result.current.onTrash(FILES[1]!));
+    act(() => result.current.confirmTrash());
+
+    const execute = queueMutation.mock.calls[0]?.[0]?.execute as (
+      signal: AbortSignal,
+    ) => Promise<void>;
+    await act(async () => {
+      await execute(new AbortController().signal);
+    });
+
+    expect(operations.renameItem).toHaveBeenCalledWith(
+      {
+        destination: "/users/alice/.Trash",
+        from: "/users/alice/B.md",
+        to: "B.md",
+      },
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
     expect(reload).toHaveBeenCalled();
   });
 

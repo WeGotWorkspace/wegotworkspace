@@ -54,6 +54,13 @@ async function fetchListing(dir: string, opts?: { signal?: AbortSignal }) {
   };
 }
 
+async function fetchAllDirectoryEntries(dir: string, opts?: { signal?: AbortSignal }) {
+  const res = await wgwFetch(`/files/children?${pathQuery(dir)}`, { signal: opts?.signal });
+  if (!res.ok) throw new Error(`GET /files/children failed (${res.status})`);
+  const payload = (await wgwReadJson(res)) as WgwDriveListingResponse;
+  return payload.data.files;
+}
+
 async function fetchState(
   dir: string,
   opts?: { signal?: AbortSignal },
@@ -109,7 +116,16 @@ async function postJson(path: string, body: object, opts?: { signal?: AbortSigna
     body: JSON.stringify(body),
     signal: opts?.signal,
   });
-  if (!res.ok) throw new Error(`POST ${path} failed (${res.status})`);
+  if (res.ok) return;
+  if (res.status === 400) {
+    try {
+      const payload = (await wgwReadJson(res)) as { error?: string };
+      if (payload.error === "Item already exists.") return;
+    } catch {
+      // fall through
+    }
+  }
+  throw new Error(`POST ${path} failed (${res.status})`);
 }
 
 async function patchJson(path: string, body: object, opts?: { signal?: AbortSignal }) {
@@ -151,6 +167,9 @@ export function createWgwDriveOperations(
     },
     async listDirectory(at, opts) {
       return fetchState(normalizePath(at), opts, plugins);
+    },
+    async listAllDirectoryEntries(at, opts) {
+      return fetchAllDirectoryEntries(normalizePath(at), opts);
     },
     async search(query, opts) {
       const params = new URLSearchParams();

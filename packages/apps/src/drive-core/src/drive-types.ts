@@ -52,6 +52,11 @@ export type DriveAPIOperations = {
   changeDir: (to: string, opts?: { signal?: AbortSignal }) => Promise<DriveUIData>;
   /** List a directory without updating the session working directory. */
   listDirectory: (at: string, opts?: { signal?: AbortSignal }) => Promise<DriveUIData>;
+  /** List raw directory children, including dot-prefixed names such as `.Trash`. */
+  listAllDirectoryEntries?: (
+    at: string,
+    opts?: { signal?: AbortSignal },
+  ) => Promise<WgwDriveDirectoryEntry[]>;
   search: (
     query: string,
     opts?: { limit?: number; signal?: AbortSignal },
