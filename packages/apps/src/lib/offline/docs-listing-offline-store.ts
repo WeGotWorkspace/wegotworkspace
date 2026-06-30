@@ -133,6 +133,29 @@ export function buildOfflineDocsSearchResult(apiPath: string): WgwUnifiedSearchR
   };
 }
 
+function renamedDocsSearchResult(
+  existing: WgwUnifiedSearchResult | undefined,
+  toApiPath: string,
+): WgwUnifiedSearchResult {
+  const built = buildOfflineDocsSearchResult(toApiPath);
+  if (!existing) return built;
+  return {
+    ...existing,
+    sourceKey: built.sourceKey,
+    title: built.title,
+    extension: built.extension,
+    modifiedAt: built.modifiedAt,
+  };
+}
+
+function docsListingBrowseFilterSets(apiPath: string): Map<string, DocsListingBrowseFilters> {
+  const sets = new Map<string, DocsListingBrowseFilters>();
+  for (const filters of docsHomeBrowseFiltersForApiPath(apiPath)) {
+    sets.set(docsListingCacheKey(filters), filters);
+  }
+  return sets;
+}
+
 /** Merge a locally created document into relevant Docs home listing caches. */
 export async function upsertDocsListingResult(username: string, apiPath: string): Promise<void> {
   const result = buildOfflineDocsSearchResult(apiPath);
@@ -143,6 +166,58 @@ export async function upsertDocsListingResult(username: string, apiPath: string)
     );
     await writeDocsListingToCache(username, filters, {
       results: [result, ...withoutDuplicate],
+      hasMore: false,
+    });
+  }
+}
+
+/** Remove a trashed or deleted document from relevant Docs home listing caches. */
+export async function removeDocsListingResult(username: string, apiPath: string): Promise<void> {
+  const sourceKey = normalizeApiVirtualPath(apiPath).replace(/^\/+/, "");
+  for (const filters of docsHomeBrowseFiltersForApiPath(apiPath)) {
+    const cached = await readDocsListingFromCache(username, filters);
+    if (!cached) continue;
+    const remaining = cached.results.filter((row) => row.sourceKey !== sourceKey);
+    if (remaining.length === cached.results.length) continue;
+    await writeDocsListingToCache(username, filters, {
+      results: remaining,
+      hasMore: false,
+    });
+  }
+}
+
+/** Reflect an offline rename/move in relevant Docs home listing caches. */
+export async function renameDocsListingResult(
+  username: string,
+  fromApiPath: string,
+  toApiPath: string,
+): Promise<void> {
+  const oldSourceKey = normalizeApiVirtualPath(fromApiPath).replace(/^\/+/, "");
+  const newSourceKey = normalizeApiVirtualPath(toApiPath).replace(/^\/+/, "");
+  if (oldSourceKey === newSourceKey) return;
+
+  const filterSets = docsListingBrowseFilterSets(fromApiPath);
+  for (const [key, filters] of docsListingBrowseFilterSets(toApiPath)) {
+    filterSets.set(key, filters);
+  }
+  const newPathFilterKeys = new Set(docsListingBrowseFilterSets(toApiPath).keys());
+
+  for (const [cacheKey, filters] of filterSets) {
+    const cached = await readDocsListingFromCache(username, filters);
+    const oldRow = cached?.results.find((row) => row.sourceKey === oldSourceKey);
+    const hadOld = Boolean(oldRow);
+    const includeNew = newPathFilterKeys.has(cacheKey);
+    if (!hadOld && !includeNew) continue;
+
+    const withoutBoth = (cached?.results ?? []).filter(
+      (row) => row.sourceKey !== oldSourceKey && row.sourceKey !== newSourceKey,
+    );
+    const results = includeNew
+      ? [renamedDocsSearchResult(oldRow, toApiPath), ...withoutBoth]
+      : withoutBoth;
+
+    await writeDocsListingToCache(username, filters, {
+      results,
       hasMore: false,
     });
   }

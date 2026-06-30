@@ -1,7 +1,7 @@
 import { createWgwDriveOperations } from "@/lib/api/wgw/drive";
 import { parentAndName } from "@/lib/files/api-path";
 import type { DriveAPIOperations, DriveUIData } from "@/drive-core/src/drive-types";
-import { normalizeApiVirtualPath } from "@/drive-core/src/drive-path-utils";
+import { isDriveTrashApiPath, normalizeApiVirtualPath } from "@/drive-core/src/drive-path-utils";
 import { isFetchNetworkError, readBrowserOnline } from "@/lib/offline/core/browser-online";
 import {
   ConnectivitySyncRunner,
@@ -11,13 +11,25 @@ import { enqueueOutboxMutation } from "@/lib/offline/core/outbox-store";
 import {
   migrateDocsAvailabilityPath,
   normalizeDocsAvailabilityPath,
+  removeDocsAvailability,
 } from "@/lib/offline/docs/docs-availability-store";
 import { DOCS_DOMAIN } from "@/lib/offline/docs/docs-schema";
 import type { DocsOutboxPayload } from "@/lib/offline/docs/docs-outbox-flush";
-import { flushDocsOutbox, type OutboxFlushResult } from "@/lib/offline/docs/docs-outbox-flush";
+import {
+  flushDocsOutbox,
+  removeOutboxMutationsForDocsPath,
+  type OutboxFlushResult,
+} from "@/lib/offline/docs/docs-outbox-flush";
+import {
+  removeDocsListingResult,
+  renameDocsListingResult,
+} from "@/lib/offline/docs-listing-offline-store";
 import { readOfflineDocsUsername } from "@/lib/offline/offline-session";
 import { isDocsCollabEditablePath } from "@/docs-core/src/docs-collab-text-files";
-import { migrateCollabPersistence } from "@/text-editor-core/docs-collab/docs-collab-persistence";
+import {
+  clearDocsCollabOfflinePersistence,
+  migrateCollabPersistence,
+} from "@/text-editor-core/docs-collab/docs-collab-persistence";
 
 function rethrowUnlessOfflineQueue(error: unknown, signal?: AbortSignal): void {
   if (signal?.aborted) throw error;
@@ -46,6 +58,26 @@ async function queueDocsOutbox(username: string, payload: DocsOutboxPayload): Pr
     op: payload.op,
     payload: JSON.stringify(payload),
   });
+}
+
+async function applyOfflineTrashSideEffects(username: string, from: string): Promise<void> {
+  const apiPath = normalizeApiVirtualPath(from);
+  const room = normalizeDocsAvailabilityPath(apiPath);
+  await removeOutboxMutationsForDocsPath(username, apiPath);
+  await removeDocsListingResult(username, apiPath);
+  await clearDocsCollabOfflinePersistence(room);
+  await removeDocsAvailability(username, room);
+}
+
+async function applyOfflineRenameSideEffects(
+  username: string,
+  from: string,
+  destination: string,
+  to: string,
+): Promise<void> {
+  const newApiPath = docsOutboxPathFromRename(from, destination, to);
+  await renameDocsListingResult(username, from, newApiPath);
+  await applyOnlineRenameSideEffects(username, from, destination, to);
 }
 
 async function applyOnlineRenameSideEffects(
@@ -84,14 +116,19 @@ export function createHybridDocsDriveOperations(username: string): DriveAPIOpera
           rethrowUnlessOfflineQueue(error, opts?.signal);
         }
       }
-      const payload: DocsOutboxPayload = {
-        op: "rename",
-        from: normalizeApiVirtualPath(input.from),
-        destination: normalizeApiVirtualPath(input.destination),
-        to: input.to,
-      };
+      const from = normalizeApiVirtualPath(input.from);
+      const destination = normalizeApiVirtualPath(input.destination);
+      const isTrash = isDriveTrashApiPath(destination, username);
+      if (isTrash) {
+        await applyOfflineTrashSideEffects(username, from);
+      } else {
+        await applyOfflineRenameSideEffects(username, from, destination, input.to);
+      }
+      const payload: DocsOutboxPayload = isTrash
+        ? { op: "trash", from, destination, to: input.to }
+        : { op: "rename", from, destination, to: input.to };
       await queueDocsOutbox(username, payload);
-      return offlineQueuedDriveData(normalizeApiVirtualPath(input.destination));
+      return offlineQueuedDriveData(destination);
     },
     uploadFiles: async (input, opts) => {
       if (readBrowserOnline()) {

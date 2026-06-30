@@ -112,3 +112,18 @@ export function docsOutboxApiPath(row: OfflineOutboxRow): string | null {
   if (payload.op === "create") return normalizeDocsAvailabilityPath(payload.apiPath);
   return normalizeDocsAvailabilityPath(payload.from);
 }
+
+/** Drop queued docs mutations for a path (e.g. cancel a pending create before trash). */
+export async function removeOutboxMutationsForDocsPath(
+  username: string,
+  apiPath: string,
+): Promise<void> {
+  const normalized = normalizeDocsAvailabilityPath(apiPath);
+  const rows = await listOutboxMutationsForDomain(username, DOCS_DOMAIN);
+  for (const row of rows) {
+    const path = docsOutboxApiPath(row);
+    if (path === normalized) {
+      await removeOutboxMutation(username, row.id);
+    }
+  }
+}

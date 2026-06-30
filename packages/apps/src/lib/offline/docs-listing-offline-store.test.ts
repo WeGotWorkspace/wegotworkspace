@@ -1,10 +1,11 @@
 import "fake-indexeddb/auto";
-import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { WgwUnifiedSearchResult } from "@/lib/api/wgw/search";
 import { docsListingCacheKey } from "@/lib/offline/docs/docs-listing-cache-key";
 import {
   readDocsListingFromCache,
+  removeDocsListingResult,
+  renameDocsListingResult,
   upsertDocsListingResult,
   writeDocsListingToCache,
 } from "@/lib/offline/docs-listing-offline-store";
@@ -110,6 +111,63 @@ describe("docs listing offline store", () => {
     expect(scoped?.results.map((row) => row.sourceKey)).toEqual([
       "users/alice/new-offline.md",
       "users/alice/existing.md",
+    ]);
+  });
+
+  it("removes a trashed document from all-docs and drive-scoped caches", async () => {
+    const allDocsFilters = {
+      sources: ["file"] as const,
+      extensions: ["md", "markdown", "txt"] as const,
+      categories: ["document"] as const,
+    };
+    await writeDocsListingToCache(username, allDocsFilters, {
+      results: [result(1, "users/alice/keep.md", 100), result(2, "users/alice/remove.md", 200)],
+      hasMore: false,
+    });
+    await writeDocsListingToCache(username, filters, {
+      results: [result(1, "users/alice/keep.md", 100), result(2, "users/alice/remove.md", 200)],
+      hasMore: false,
+    });
+
+    await removeDocsListingResult(username, "/users/alice/remove.md");
+
+    const allDocs = await readDocsListingFromCache(username, allDocsFilters);
+    expect(allDocs?.results.map((row) => row.sourceKey)).toEqual(["users/alice/keep.md"]);
+
+    const scoped = await readDocsListingFromCache(username, filters);
+    expect(scoped?.results.map((row) => row.sourceKey)).toEqual(["users/alice/keep.md"]);
+  });
+
+  it("renames a document in all-docs and drive-scoped caches", async () => {
+    const allDocsFilters = {
+      sources: ["file"] as const,
+      extensions: ["md", "markdown", "txt"] as const,
+      categories: ["document"] as const,
+    };
+    await writeDocsListingToCache(username, allDocsFilters, {
+      results: [result(1, "users/alice/keep.md", 100), result(2, "users/alice/old-name.md", 200)],
+      hasMore: false,
+    });
+    await writeDocsListingToCache(username, filters, {
+      results: [result(1, "users/alice/keep.md", 100), result(2, "users/alice/old-name.md", 200)],
+      hasMore: false,
+    });
+
+    await renameDocsListingResult(username, "/users/alice/old-name.md", "/users/alice/new-name.md");
+
+    const allDocs = await readDocsListingFromCache(username, allDocsFilters);
+    expect(allDocs?.results.map((row) => row.sourceKey)).toEqual([
+      "users/alice/new-name.md",
+      "users/alice/keep.md",
+    ]);
+    expect(allDocs?.results.find((row) => row.sourceKey === "users/alice/new-name.md")?.title).toBe(
+      "new-name.md",
+    );
+
+    const scoped = await readDocsListingFromCache(username, filters);
+    expect(scoped?.results.map((row) => row.sourceKey)).toEqual([
+      "users/alice/new-name.md",
+      "users/alice/keep.md",
     ]);
   });
 });
