@@ -39,9 +39,11 @@ import { getAcceptedTextEditorContent } from "@/text-editor-core/src/text-editor
 import { TEXT_EDITOR_FORMAT_BAR_FULL } from "@/text-editor-core/src/text-editor-format-bar-config";
 import { printTextEditorSheet } from "@/text-editor-core/src/text-editor-print";
 import { DocsCollabEditor } from "./docs-collab-editor";
+import { mergeCollabPresencePeers } from "./docs-collab-presence-peers";
 import { DocsCollabPresence } from "./docs-collab-presence";
 import { DocsCollabReviewPanel } from "./docs-collab-review/docs-collab-review-panel";
 import type { DocsCollabWireOperations } from "./docs-collab-wire";
+import { useDocsCollabAwarenessPresence } from "./use-docs-collab-awareness-presence";
 import { useDocsComments } from "./use-docs-comments";
 import { useDocsSuggestions } from "./use-docs-suggestions";
 import { useDocsCollab } from "./use-docs-collab";
@@ -168,6 +170,14 @@ function DocsCollabWorkspaceInner({
     urls,
     wire,
   });
+  const awarenessPresencePeers = useDocsCollabAwarenessPresence(collabSession?.awareness);
+  const presencePeers = useMemo(
+    () =>
+      collabSession
+        ? mergeCollabPresencePeers(awarenessPresencePeers, peers, collabSession.user.name)
+        : [],
+    [awarenessPresencePeers, collabSession, peers],
+  );
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [reviewPanelOpen, setReviewPanelOpen] = useState(false);
@@ -443,7 +453,7 @@ function DocsCollabWorkspaceInner({
 
   const wordCount = useMemo(() => countWords(markdown), [markdown]);
   const characterCount = markdown.length;
-  const sourceLockedByCollab = Boolean(collabSession) && peers.length > 0;
+  const sourceLockedByCollab = Boolean(collabSession) && presencePeers.length > 0;
 
   useEffect(() => {
     if (!sourceLockedByCollab || !viewSource) return;
@@ -506,9 +516,9 @@ function DocsCollabWorkspaceInner({
                   {collabSession ? (
                     <DocsCollabPresence
                       localUser={{
-                        displayName: session.user.displayName,
+                        displayName: collabSession.user.name,
                       }}
-                      peers={peers}
+                      peers={presencePeers}
                       connectingPeers={connectingPeers}
                       warningPeers={warningPeers}
                       className="mr-1"

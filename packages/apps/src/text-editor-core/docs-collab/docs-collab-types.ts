@@ -22,6 +22,14 @@ export type DocsCollabMeshMessage =
   | { type: "dc-open"; from: string }
   | { type: "link" };
 
+export type DocsCollabTabSyncApi = {
+  onLocalSync: (encoded: number[]) => void;
+  onLocalAwareness: (encoded: number[]) => void;
+  relayMeshMessage: (msg: DocsCollabMeshMessage) => void;
+  publishMeshState: (state: import("./docs-collab-tab-sync").TabMeshStateSnapshot) => void;
+  isMeshLeader: () => boolean;
+};
+
 export type DocsCollabUrls = {
   signalUrl: string;
   collabApiBaseUrl?: string;
@@ -94,4 +102,5 @@ export type DocsCollabSessionRefs = {
   lastKnownMarkdownRef: MutableRefObject<string>;
   lastSuccessfulSaveSignatureRef: MutableRefObject<string | null>;
   sessionRef: MutableRefObject<DocsCollabSession | null>;
+  tabSyncRef: MutableRefObject<DocsCollabTabSyncApi | null>;
 };

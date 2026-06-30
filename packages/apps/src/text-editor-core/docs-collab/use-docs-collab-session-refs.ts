@@ -32,6 +32,7 @@ export function useDocsCollabSessionRefs(
   const lastKnownMarkdownRef = useRef("");
   const lastSuccessfulSaveSignatureRef = useRef<string | null>(null);
   const sessionRef = useRef<DocsCollabSession | null>(null);
+  const tabSyncRef = useRef<import("./docs-collab-types").DocsCollabTabSyncApi | null>(null);
 
   const refsBag = useRef<DocsCollabSessionRefs | null>(null);
   if (!refsBag.current) {
@@ -62,6 +63,7 @@ export function useDocsCollabSessionRefs(
       lastKnownMarkdownRef,
       lastSuccessfulSaveSignatureRef,
       sessionRef,
+      tabSyncRef,
     };
   }
 

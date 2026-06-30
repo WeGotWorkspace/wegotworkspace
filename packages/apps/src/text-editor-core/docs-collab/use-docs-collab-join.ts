@@ -24,6 +24,7 @@ import {
 } from "./docs-collab-status";
 import type { DocsCollabSession, DocsCollabSessionRefs, DocsCollabUrls } from "./docs-collab-types";
 import {
+  BC_TAB_ORIGIN,
   collabDocumentFormat,
   colorForName,
   docSignature,
@@ -208,6 +209,7 @@ export function useDocsCollabJoin({
     async (generation: number, name: string, authToken: string) => {
       setDocStatus((prev) => prev || "Connecting to collaborators…");
       setStatus("Connecting to mesh…");
+      if (refs.meshRef.current) return;
       try {
         const meshPeers = await joinMesh(name, authToken);
         if (!isJoinGenerationCurrent(generation, refs.joinGenerationRef)) return;
@@ -287,6 +289,11 @@ export function useDocsCollabJoin({
       if (isRemoteUpdateOrigin(origin, refs.persistenceRef.current)) return;
       refs.localDirtySinceLastSaveRef.current = true;
       const encoded = encodeUpdateBroadcast(update);
+      const tabSync = refs.tabSyncRef.current;
+      if (tabSync) {
+        tabSync.onLocalSync(encoded);
+        return;
+      }
       refs.meshRef.current?.broadcast({ type: "sync", u: encoded });
     });
 
@@ -296,9 +303,14 @@ export function useDocsCollabJoin({
         { added, updated, removed }: { added: number[]; updated: number[]; removed: number[] },
         origin: unknown,
       ) => {
-        if (origin === MESH_ORIGIN) return;
+        if (origin === MESH_ORIGIN || origin === BC_TAB_ORIGIN) return;
         const changed = added.concat(updated, removed);
         const encoded = encodeAwarenessBroadcast(awareness, changed);
+        const tabSync = refs.tabSyncRef.current;
+        if (tabSync) {
+          tabSync.onLocalAwareness(encoded);
+          return;
+        }
         refs.meshRef.current?.broadcast({ type: "awareness", u: encoded });
       },
     );
@@ -333,12 +345,11 @@ export function useDocsCollabJoin({
       if (!isJoinGenerationCurrent(generation, refs.joinGenerationRef)) return;
       refs.authTokenRef.current = authToken;
 
-      const tasks: Promise<void>[] = [applyServerBootstrap(generation, authToken)];
-      if (authToken) {
-        tasks.push(connectMeshInBackground(generation, name, authToken));
-      }
-      await Promise.all(tasks);
+      await applyServerBootstrap(generation, authToken);
       if (!isJoinGenerationCurrent(generation, refs.joinGenerationRef)) return;
+      if (authToken && refs.tabSyncRef.current?.isMeshLeader()) {
+        await connectMeshInBackground(generation, name, authToken);
+      }
       flushPendingSaveIfReady();
     })();
   }, [
