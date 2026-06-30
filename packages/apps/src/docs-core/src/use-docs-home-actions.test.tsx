@@ -81,6 +81,7 @@ type MockOperations = DriveAPIOperations & {
   renameItem: ReturnType<typeof vi.fn>;
   deleteItems: ReturnType<typeof vi.fn>;
   createFolder: ReturnType<typeof vi.fn>;
+  listAllDirectoryEntries: ReturnType<typeof vi.fn>;
 };
 
 function createMockOperations(starredPaths: string[] = []): MockOperations {
@@ -92,6 +93,7 @@ function createMockOperations(starredPaths: string[] = []): MockOperations {
     renameItem: vi.fn(async () => data),
     deleteItems: vi.fn(async () => data),
     createFolder: vi.fn(async () => data),
+    listAllDirectoryEntries: vi.fn(async () => []),
   } as unknown as MockOperations;
 }
 
@@ -303,7 +305,7 @@ describe("useDocsHomeActions", () => {
     const data = {} as DriveUIData;
     operations.renameItem
       .mockResolvedValueOnce(data)
-      .mockRejectedValueOnce(new Error("Source not found."));
+      .mockResolvedValueOnce(data);
     const reload = vi.fn();
     const onAvailabilityChanged = vi.fn();
     const { result } = renderActions(operations, reload, {
@@ -330,7 +332,114 @@ describe("useDocsHomeActions", () => {
       "alice",
       expect.objectContaining({ apiPath: "/users/alice/B.md" }),
     );
+    await waitFor(() =>
+      expect(operations.renameItem).toHaveBeenCalledWith({
+        destination: "/users/alice",
+        from: "/users/alice/.Trash/B.md",
+        to: "B.md",
+      }),
+    );
     expect(reload).toHaveBeenCalled();
+    expect(onAvailabilityChanged).toHaveBeenCalled();
+  });
+
+  it("undo while online reverts from actual trash path, not original api path", async () => {
+    const operations = createMockOperations();
+    const data = {} as DriveUIData;
+    operations.renameItem
+      .mockResolvedValueOnce(data)
+      .mockResolvedValueOnce(data);
+    const reload = vi.fn();
+    const { result } = renderActions(operations, reload);
+
+    act(() => result.current.onTrash(FILES[1]!));
+    act(() => result.current.confirmTrash());
+
+    const queued = queueMutation.mock.calls[0]?.[0];
+    await act(async () => {
+      await queued?.execute(new AbortController().signal);
+    });
+
+    act(() => {
+      queued?.undo();
+    });
+
+    await waitFor(() =>
+      expect(operations.renameItem).toHaveBeenLastCalledWith({
+        destination: "/users/alice",
+        from: "/users/alice/.Trash/B.md",
+        to: "B.md",
+      }),
+    );
+    expect(reload).toHaveBeenCalled();
+  });
+
+  it("undo uses unique trash path when a same-named file already exists in Trash", async () => {
+    const operations = createMockOperations();
+    operations.listAllDirectoryEntries = vi.fn(async () => [{ name: "B.md", type: "file" }]);
+    const data = {} as DriveUIData;
+    operations.renameItem
+      .mockResolvedValueOnce(data)
+      .mockResolvedValueOnce(data);
+    const reload = vi.fn();
+    const { result } = renderActions(operations, reload);
+
+    act(() => result.current.onTrash(FILES[1]!));
+    act(() => result.current.confirmTrash());
+
+    const queued = queueMutation.mock.calls[0]?.[0];
+    await act(async () => {
+      await queued?.execute(new AbortController().signal);
+    });
+
+    expect(operations.renameItem).toHaveBeenCalledWith(
+      {
+        destination: "/users/alice/.Trash",
+        from: "/users/alice/B.md",
+        to: "B 2.md",
+      },
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+
+    act(() => {
+      queued?.undo();
+    });
+
+    await waitFor(() =>
+      expect(operations.renameItem).toHaveBeenLastCalledWith({
+        destination: "/users/alice",
+        from: "/users/alice/.Trash/B 2.md",
+        to: "B.md",
+      }),
+    );
+  });
+
+  it("skips server revert on undo when offline-only trash never reached the server", async () => {
+    vi.mocked(readBrowserOnline).mockReturnValue(false);
+    const operations = createMockOperations();
+    const reload = vi.fn();
+    const onAvailabilityChanged = vi.fn();
+    const { result } = renderActions(operations, reload, {
+      offlineUsername: "alice",
+      onAvailabilityChanged,
+    });
+
+    act(() => result.current.onTrash(FILES[1]!));
+    act(() => result.current.confirmTrash());
+
+    const queued = queueMutation.mock.calls[0]?.[0];
+    await act(async () => {
+      await queued?.execute(new AbortController().signal);
+    });
+
+    const trashCalls = operations.renameItem.mock.calls.length;
+
+    act(() => {
+      queued?.undo();
+    });
+    await waitFor(() => expect(undoOfflineDocsTrash).toHaveBeenCalled());
+
+    expect(operations.renameItem).toHaveBeenCalledTimes(trashCalls);
     expect(onAvailabilityChanged).toHaveBeenCalled();
   });
 });

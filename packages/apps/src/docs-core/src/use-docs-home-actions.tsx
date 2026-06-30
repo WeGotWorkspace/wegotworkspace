@@ -14,7 +14,6 @@ import type { DriveFile } from "@/drive-core/src/drive-models";
 import {
   ensureTrashFolder,
   listTrashEntryNames,
-  resolveDriveFileApiPath,
   resolveTrashName,
 } from "@/drive-core/src/drive-batch-utils";
 import {
@@ -26,6 +25,12 @@ import { parentAndName } from "@/lib/files/api-path";
 import { joinFileNameForRename, splitFileNameForRename } from "@/lib/files/filename-rename";
 
 const WRITE_QUEUE_DELAY_MS = 2500;
+
+type DocsTrashMoveSnapshot = {
+  file: DriveFile;
+  /** Actual server path under `.Trash` (may differ from title when names collide). */
+  trashPath: string;
+};
 
 export type DocsHomeRenameState = { id: string; extension: string };
 export type DocsHomeMoveState = { ids: string[] };
@@ -249,6 +254,7 @@ export function useDocsHomeActions({
 
     let completed = false;
     let offlineSnapshots: DocsTrashUndoSnapshot[] = [];
+    let trashSnapshots: DocsTrashMoveSnapshot[] = [];
 
     const rollbackUi = () => {
       setHiddenFileIds((prev) => {
@@ -265,16 +271,11 @@ export function useDocsHomeActions({
           await undoOfflineDocsTrash(offlineUsername, snapshot);
         }
       }
-      if (readBrowserOnline()) {
-        for (const file of rows) {
+      if (readBrowserOnline() && trashSnapshots.length > 0) {
+        for (const { file, trashPath } of trashSnapshots) {
           try {
-            const from = resolveDriveFileApiPath(
-              { ...file, parent: DRIVE_TRASH_UI_PATH },
-              username,
-              groupRootNames,
-            );
             const destination = apiPathFromUiPath(file.parent, username, groupRootNames);
-            await operations.renameItem({ destination, from, to: file.title });
+            await operations.renameItem({ destination, from: trashPath, to: file.title });
           } catch {
             // Offline-only trash never reached server trash; local undo above is enough.
           }
@@ -311,11 +312,16 @@ export function useDocsHomeActions({
         await ensureTrashFolder(operations, username, groupRootNames, signal);
         const destination = apiPathFromUiPath(DRIVE_TRASH_UI_PATH, username, groupRootNames);
         const trashNames = await listTrashEntryNames(operations, destination, signal);
+        trashSnapshots = [];
         for (const file of rows) {
           const apiPath = normalizeApiVirtualPath(file.apiPath!);
           const to = resolveTrashName(file.title, trashNames);
           trashNames.add(to);
           await operations.renameItem({ destination, from: apiPath, to }, { signal });
+          trashSnapshots.push({
+            file,
+            trashPath: normalizeApiVirtualPath(`${destination}/${to}`),
+          });
         }
         completed = true;
         reload();
