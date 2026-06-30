@@ -303,9 +303,7 @@ describe("useDocsHomeActions", () => {
   it("undo while online restores local offline caches captured before trash", async () => {
     const operations = createMockOperations();
     const data = {} as DriveUIData;
-    operations.renameItem
-      .mockResolvedValueOnce(data)
-      .mockResolvedValueOnce(data);
+    operations.renameItem.mockResolvedValueOnce(data).mockResolvedValueOnce(data);
     const reload = vi.fn();
     const onAvailabilityChanged = vi.fn();
     const { result } = renderActions(operations, reload, {
@@ -346,9 +344,7 @@ describe("useDocsHomeActions", () => {
   it("undo while online reverts from actual trash path, not original api path", async () => {
     const operations = createMockOperations();
     const data = {} as DriveUIData;
-    operations.renameItem
-      .mockResolvedValueOnce(data)
-      .mockResolvedValueOnce(data);
+    operations.renameItem.mockResolvedValueOnce(data).mockResolvedValueOnce(data);
     const reload = vi.fn();
     const { result } = renderActions(operations, reload);
 
@@ -376,11 +372,18 @@ describe("useDocsHomeActions", () => {
 
   it("undo uses unique trash path when a same-named file already exists in Trash", async () => {
     const operations = createMockOperations();
-    operations.listAllDirectoryEntries = vi.fn(async () => [{ name: "B.md", type: "file" }]);
+    operations.listAllDirectoryEntries = vi.fn(async () => [
+      {
+        name: "B.md",
+        path: "/users/alice/.Trash/B.md",
+        type: "file" as const,
+        size: 1,
+        time: 0,
+        permissions: 0,
+      },
+    ]);
     const data = {} as DriveUIData;
-    operations.renameItem
-      .mockResolvedValueOnce(data)
-      .mockResolvedValueOnce(data);
+    operations.renameItem.mockResolvedValueOnce(data).mockResolvedValueOnce(data);
     const reload = vi.fn();
     const { result } = renderActions(operations, reload);
 
