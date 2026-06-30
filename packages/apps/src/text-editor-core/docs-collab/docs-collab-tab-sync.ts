@@ -94,6 +94,9 @@ export function routeTabSyncMessage(
   myTabId: string,
   handlers: Pick<TabSyncHandlers, "onSyncFromTab" | "onAwarenessFromTab" | "onMeshStateFromLeader">,
 ): void {
+  if (msg.type === "tab-ping" || msg.type === "tab-leave" || msg.type === "leader-resign") {
+    return;
+  }
   if (msg.fromTab === myTabId) return;
 
   if (msg.type === "sync") {
