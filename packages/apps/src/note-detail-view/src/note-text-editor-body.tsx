@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
 import type { Editor } from "@tiptap/react";
 import { cn } from "@/lib/utils";
 import { docsLabels } from "@/docs-core/src/docs-labels";
@@ -10,7 +10,9 @@ import { useTextEditor } from "@/text-editor-core/src/use-text-editor";
 import {
   DocsCollabEditor,
   DocsCollabPresence,
+  mergeCollabPresencePeers,
   useDocsCollab,
+  useDocsCollabAwarenessPresence,
 } from "@/text-editor-core/docs-collab";
 import type { DocsCollabUrls } from "@/text-editor-core/docs-collab";
 import type { DocsCollabWireOperations } from "@/text-editor-core/docs-collab/docs-collab-wire";
@@ -91,15 +93,14 @@ export function NoteCollabSession({
 
 /** Docs-style peer avatars + pending-sync spinner for the note detail meta row. */
 export function NoteCollabChrome({ className }: { className?: string }) {
-  const {
-    session,
-    peers,
-    connectingPeers,
-    warningPeers,
-    pendingSync,
-    failedSync,
-    localDisplayName,
-  } = useNoteCollabContext();
+  const { session, peers, connectingPeers, warningPeers, pendingSync, failedSync } =
+    useNoteCollabContext();
+  const awarenessPresencePeers = useDocsCollabAwarenessPresence(session?.awareness);
+  const presencePeers = useMemo(
+    () =>
+      session ? mergeCollabPresencePeers(awarenessPresencePeers, peers, session.user.name) : [],
+    [awarenessPresencePeers, peers, session],
+  );
   const { online } = useConnectivity();
   const labels = docsLabels;
   const showPendingSyncIndicator = pendingSync && (!online || failedSync);
@@ -123,8 +124,8 @@ export function NoteCollabChrome({ className }: { className?: string }) {
       ) : null}
       {session ? (
         <DocsCollabPresence
-          localUser={{ displayName: localDisplayName }}
-          peers={peers}
+          localUser={{ displayName: session.user.name }}
+          peers={presencePeers}
           connectingPeers={connectingPeers}
           warningPeers={warningPeers}
         />

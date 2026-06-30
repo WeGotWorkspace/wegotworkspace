@@ -1,0 +1,192 @@
+import { useCallback } from "react";
+import { getConnectivitySnapshot } from "@/lib/offline/browser-online";
+import { setDocsCollabSyncState } from "./docs-collab-sync-registry";
+import { markRoomServerFailure, markRoomServerSuccess } from "./docs-collab-room-backoff";
+import { saveDocument } from "./docs-collab-server-io";
+import {
+  computeSaveDelayMs,
+  computeShouldPersist,
+  SAVE_DELAY_MS,
+  saveFailureState,
+  saveSuccessState,
+  shouldMarkPendingWhenUnsaved,
+} from "./docs-collab-save-queue";
+import { formatSavedDocStatus } from "./docs-collab-status";
+import type { DocsCollabSessionRefs, DocsCollabUrls } from "./docs-collab-types";
+import { docSignature } from "./docs-collab-utils";
+
+export const PENDING_SERVER_SAVE_KEY = "pendingServerSave";
+
+type UseDocsCollabSaveOptions = {
+  refs: DocsCollabSessionRefs;
+  room: string;
+  urls: DocsCollabUrls;
+  setDocStatus: (status: string | ((prev: string) => string)) => void;
+  setPendingSync: (pending: boolean) => void;
+  setFailedSync: (failed: boolean) => void;
+};
+
+export function useDocsCollabSave({
+  refs,
+  room,
+  urls,
+  setDocStatus,
+  setPendingSync,
+  setFailedSync,
+}: UseDocsCollabSaveOptions) {
+  const updatePendingState = useCallback(
+    async (pending: boolean, failed = false) => {
+      setPendingSync(pending);
+      setFailedSync(pending && failed && getConnectivitySnapshot());
+      refs.pendingServerSaveRef.current = pending;
+      setDocsCollabSyncState(room, {
+        pendingServerSave: pending,
+        failedSync: pending && failed && getConnectivitySnapshot(),
+      });
+      const persistence = refs.persistenceRef.current;
+      if (!persistence) return;
+      if (pending) await persistence.set(PENDING_SERVER_SAVE_KEY, 1);
+      else await persistence.del(PENDING_SERVER_SAVE_KEY);
+    },
+    [refs, room, setFailedSync, setPendingSync],
+  );
+
+  const markPendingWhenUnsaved = useCallback(async (): Promise<void> => {
+    const ydoc = refs.ydocRef.current;
+    const getMd = refs.getMarkdownRef.current;
+    if (!ydoc || !getMd || !refs.localDirtySinceLastSaveRef.current) return;
+    const signature = docSignature(getMd(), ydoc);
+    if (
+      !shouldMarkPendingWhenUnsaved(
+        refs.localDirtySinceLastSaveRef.current,
+        signature,
+        refs.lastSuccessfulSaveSignatureRef.current,
+      )
+    ) {
+      return;
+    }
+    await updatePendingState(true, false);
+  }, [refs, updatePendingState]);
+
+  const persistToServer = useCallback(async (): Promise<void> => {
+    if (refs.saveInFlightRef.current) return;
+    if (!getConnectivitySnapshot()) {
+      await markPendingWhenUnsaved();
+      return;
+    }
+    const ydoc = refs.ydocRef.current;
+    const getMd = refs.getMarkdownRef.current;
+    if (!ydoc || !getMd) return;
+    const markdown = getMd();
+    const signature = docSignature(markdown, ydoc);
+    const decision = computeShouldPersist(markdown, signature, {
+      localDirtySinceLastSave: refs.localDirtySinceLastSaveRef.current,
+      pendingServerSave: refs.pendingServerSaveRef.current,
+      lastSuccessfulSaveSignature: refs.lastSuccessfulSaveSignatureRef.current,
+    });
+    if (!decision.shouldPersist) {
+      refs.localDirtySinceLastSaveRef.current = decision.clearLocalDirty
+        ? false
+        : refs.localDirtySinceLastSaveRef.current;
+      if (decision.clearPendingWhenUnchanged) {
+        await updatePendingState(false, false);
+        setDocStatus("");
+      }
+      return;
+    }
+    refs.saveInFlightRef.current = true;
+    try {
+      await saveDocument(
+        urls.documentUrl,
+        markdown,
+        ydoc,
+        urls.room,
+        refs.authTokenRef.current,
+        urls.documentSaveMethod ?? "POST",
+      );
+      markRoomServerSuccess(room);
+      refs.saveFailedRef.current = false;
+      const success = saveSuccessState(signature);
+      refs.localDirtySinceLastSaveRef.current = success.localDirtySinceLastSave ?? false;
+      refs.lastSuccessfulSaveSignatureRef.current = success.lastSuccessfulSaveSignature ?? null;
+      refs.saveRetryMsRef.current = success.saveRetryMs ?? 0;
+      refs.nextSaveAttemptAtRef.current = success.nextSaveAttemptAt ?? 0;
+      await updatePendingState(false, false);
+      setDocStatus(formatSavedDocStatus());
+    } catch (err) {
+      refs.saveFailedRef.current = true;
+      const failure = saveFailureState(refs.saveRetryMsRef.current);
+      refs.saveRetryMsRef.current = failure.saveRetryMs ?? refs.saveRetryMsRef.current;
+      refs.nextSaveAttemptAtRef.current =
+        failure.nextSaveAttemptAt ?? refs.nextSaveAttemptAtRef.current;
+      if (getConnectivitySnapshot()) {
+        markRoomServerFailure(room);
+      }
+      await updatePendingState(true, true);
+      setDocStatus(`Save failed: ${err instanceof Error ? err.message : String(err)}`);
+      throw err;
+    } finally {
+      refs.saveInFlightRef.current = false;
+    }
+  }, [markPendingWhenUnsaved, refs, room, setDocStatus, updatePendingState, urls]);
+
+  const scheduleSave = useCallback(() => {
+    if (!refs.localDirtySinceLastSaveRef.current && !refs.pendingServerSaveRef.current) return;
+    if (refs.saveTimerRef.current) clearTimeout(refs.saveTimerRef.current);
+    const delayMs = computeSaveDelayMs(refs.nextSaveAttemptAtRef.current);
+    refs.saveTimerRef.current = setTimeout(() => {
+      refs.saveTimerRef.current = null;
+      void persistToServer().catch(() => undefined);
+    }, delayMs);
+  }, [persistToServer, refs]);
+
+  const flushPendingSaveIfReady = useCallback(() => {
+    if (!refs.pendingServerSaveRef.current || !getConnectivitySnapshot()) return;
+    if (refs.saveTimerRef.current) clearTimeout(refs.saveTimerRef.current);
+    refs.saveTimerRef.current = setTimeout(() => {
+      refs.saveTimerRef.current = null;
+      void persistToServer().catch(() => undefined);
+    }, 0);
+  }, [persistToServer, refs]);
+
+  const registerMarkdownGetter = useCallback(
+    (getMarkdown: () => string) => {
+      refs.getMarkdownRef.current = getMarkdown;
+      flushPendingSaveIfReady();
+    },
+    [flushPendingSaveIfReady, refs],
+  );
+
+  const saveNow = useCallback(async () => {
+    if (refs.saveTimerRef.current) clearTimeout(refs.saveTimerRef.current);
+    await persistToServer();
+  }, [persistToServer, refs]);
+
+  const onMarkdownChange = useCallback(
+    (getMarkdown: () => string) => {
+      refs.getMarkdownRef.current = getMarkdown;
+      const nextMarkdown = getMarkdown();
+      if (nextMarkdown === refs.lastKnownMarkdownRef.current) return;
+      refs.lastKnownMarkdownRef.current = nextMarkdown;
+      refs.localDirtySinceLastSaveRef.current = true;
+      if (!getConnectivitySnapshot()) {
+        void markPendingWhenUnsaved();
+      }
+      scheduleSave();
+    },
+    [markPendingWhenUnsaved, refs, scheduleSave],
+  );
+
+  return {
+    updatePendingState,
+    markPendingWhenUnsaved,
+    persistToServer,
+    scheduleSave,
+    flushPendingSaveIfReady,
+    registerMarkdownGetter,
+    saveNow,
+    onMarkdownChange,
+  };
+}
+
+export { SAVE_DELAY_MS };

@@ -39,9 +39,11 @@ import { getAcceptedTextEditorContent } from "@/text-editor-core/src/text-editor
 import { TEXT_EDITOR_FORMAT_BAR_FULL } from "@/text-editor-core/src/text-editor-format-bar-config";
 import { printTextEditorSheet } from "@/text-editor-core/src/text-editor-print";
 import { DocsCollabEditor } from "./docs-collab-editor";
+import { mergeCollabPresencePeers } from "./docs-collab-presence-peers";
 import { DocsCollabPresence } from "./docs-collab-presence";
 import { DocsCollabReviewPanel } from "./docs-collab-review/docs-collab-review-panel";
 import type { DocsCollabWireOperations } from "./docs-collab-wire";
+import { useDocsCollabAwarenessPresence } from "./use-docs-collab-awareness-presence";
 import { useDocsComments } from "./use-docs-comments";
 import { useDocsSuggestions } from "./use-docs-suggestions";
 import { useDocsCollab } from "./use-docs-collab";
@@ -65,6 +67,8 @@ export type DocsCollabWorkspaceProps = {
   urls?: DocsCollabUrls;
   /** Auth + RTC fetch for live API; defaults to offline mesh. */
   wire?: DocsCollabWireOperations;
+  /** Logout handler for the sidebar user footer. */
+  onLogout?: () => void;
 };
 
 function countWords(text: string): number {
@@ -93,6 +97,7 @@ export function DocsCollabWorkspace({
   documentTitle,
   urls,
   wire,
+  onLogout,
 }: DocsCollabWorkspaceProps = {}) {
   const [userName, setUserName] = useState<string | null>(() => userNameProp?.trim() || null);
   const [promptDismissed, setPromptDismissed] = useState(false);
@@ -124,6 +129,7 @@ export function DocsCollabWorkspace({
       documentTitle={documentTitle}
       urls={urls}
       wire={wire}
+      onLogout={onLogout}
     />
   );
 }
@@ -133,11 +139,13 @@ function DocsCollabWorkspaceInner({
   documentTitle,
   urls,
   wire,
+  onLogout,
 }: {
   userName: string;
   documentTitle?: string;
   urls?: DocsCollabUrls;
   wire?: DocsCollabWireOperations;
+  onLogout?: () => void;
 }) {
   const labels = docsLabels;
   const session = useMemo(
@@ -168,6 +176,14 @@ function DocsCollabWorkspaceInner({
     urls,
     wire,
   });
+  const awarenessPresencePeers = useDocsCollabAwarenessPresence(collabSession?.awareness);
+  const presencePeers = useMemo(
+    () =>
+      collabSession
+        ? mergeCollabPresencePeers(awarenessPresencePeers, peers, collabSession.user.name)
+        : [],
+    [awarenessPresencePeers, collabSession, peers],
+  );
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [reviewPanelOpen, setReviewPanelOpen] = useState(false);
@@ -443,7 +459,7 @@ function DocsCollabWorkspaceInner({
 
   const wordCount = useMemo(() => countWords(markdown), [markdown]);
   const characterCount = markdown.length;
-  const sourceLockedByCollab = Boolean(collabSession) && peers.length > 0;
+  const sourceLockedByCollab = Boolean(collabSession) && presencePeers.length > 0;
 
   useEffect(() => {
     if (!sourceLockedByCollab || !viewSource) return;
@@ -467,6 +483,7 @@ function DocsCollabWorkspaceInner({
                   name={session.user.displayName}
                   initials={workspaceUserInitials(session.user)}
                   detailLine={session.user.username}
+                  onLogoutClick={onLogout}
                 />
               }
             >
@@ -506,9 +523,9 @@ function DocsCollabWorkspaceInner({
                   {collabSession ? (
                     <DocsCollabPresence
                       localUser={{
-                        displayName: session.user.displayName,
+                        displayName: collabSession.user.name,
                       }}
-                      peers={peers}
+                      peers={presencePeers}
                       connectingPeers={connectingPeers}
                       warningPeers={warningPeers}
                       className="mr-1"

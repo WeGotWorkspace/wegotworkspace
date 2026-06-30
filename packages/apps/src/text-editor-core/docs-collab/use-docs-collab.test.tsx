@@ -42,6 +42,27 @@ vi.mock("./docs-rtc-session", () => ({
 
 const { mockJoin } = rtcMocks;
 
+class MockBroadcastChannel {
+  static peers: MockBroadcastChannel[] = [];
+
+  onmessage: ((event: MessageEvent) => void) | null = null;
+
+  constructor(_name: string) {
+    MockBroadcastChannel.peers.push(this);
+  }
+
+  postMessage(data: unknown): void {
+    for (const peer of MockBroadcastChannel.peers) {
+      if (peer !== this) peer.onmessage?.({ data } as MessageEvent);
+    }
+  }
+
+  close(): void {
+    const index = MockBroadcastChannel.peers.indexOf(this);
+    if (index >= 0) MockBroadcastChannel.peers.splice(index, 1);
+  }
+}
+
 const wire: DocsCollabWireOperations = {
   fetchAuthToken: vi.fn(async () => "test-token"),
   fetchRtcSettings: vi.fn(async () => DEFAULT_RTC_SETTINGS),
@@ -84,6 +105,9 @@ function mockFetchResponses(options: {
 describe("useDocsCollab offline lifecycle", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
+    MockBroadcastChannel.peers = [];
+    Reflect.deleteProperty(globalThis, "BroadcastChannel");
+    vi.stubGlobal("BroadcastChannel", MockBroadcastChannel);
     resetConnectivityHubForTests();
     resetDocsCollabBackoffForTests();
     mockJoin.mockResolvedValue({ peers: [] });

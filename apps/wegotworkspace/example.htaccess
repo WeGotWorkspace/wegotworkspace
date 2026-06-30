@@ -1,5 +1,8 @@
 Options -Indexes -MultiViews
 
+# PWA manifest icons are served from /pwa-icons/ (not /icons/) because Debian/Ubuntu Apache
+# ships Alias /icons/ -> /usr/share/apache2/icons/ in alias.conf, which shadows app assets.
+
 # WebAssembly assets: ensure correct Content-Type when host mime.types omits .wasm.
 <IfModule mod_mime.c>
     AddType application/wasm .wasm

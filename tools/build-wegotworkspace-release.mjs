@@ -52,7 +52,11 @@ for (const entry of appReleaseEntries) {
 }
 
 for (const file of readdirSync(appRoot)) {
-  if (file === "sw.js" || (file.startsWith("workbox-") && file.endsWith(".js"))) {
+  if (
+    file === "index.html" ||
+    file === "sw.js" ||
+    (file.startsWith("workbox-") && file.endsWith(".js"))
+  ) {
     cpSync(resolve(appRoot, file), resolve(stagingRoot, file));
   }
 }
