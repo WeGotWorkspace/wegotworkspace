@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { applyRtcDebugOverrides } from "@/lib/rtc/force-relay";
 import { DEFAULT_RTC_SETTINGS } from "@/lib/rtc/types";
 import { applyAwarenessUpdate, encodeSyncStep1, handleSyncMessage } from "./docs-collab-mesh-sync";
+import type { TabMeshStateSnapshot } from "./docs-collab-tab-sync";
 import { DEFAULT_DOCS_COLLAB_WIRE } from "./docs-collab-wire";
 import { DocsRtcSession } from "./docs-rtc-session";
 import type {
@@ -34,6 +35,70 @@ export function useDocsCollabMesh({
   const [warningPeers, setWarningPeers] = useState<DocsCollabMeshPeer[]>([]);
   const [linkCount, setLinkCount] = useState(0);
   const [status, setStatus] = useState("Disconnected");
+
+  const resetMeshUi = useCallback(() => {
+    setPeers([]);
+    setConnectingPeers([]);
+    setWarningPeers([]);
+    refs.failedSinceRef.current.clear();
+    setLinkCount(0);
+    setStatus("Disconnected");
+  }, [refs]);
+
+  const buildMeshStateSnapshot = useCallback((): TabMeshStateSnapshot | null => {
+    const mesh = refs.meshRef.current;
+    if (!mesh) return null;
+    const roomPeerStatuses = mesh.getRoomPeerStatuses();
+    const connectedPeers = roomPeerStatuses
+      .filter((peer) => peer.link === "connected")
+      .map(({ id, name }) => ({ id, name }));
+    const pendingPeers = roomPeerStatuses
+      .filter((peer) => peer.link !== "connected")
+      .map(({ id, name }) => ({ id, name }));
+    const now = Date.now();
+    const warning: DocsCollabMeshPeer[] = [];
+    for (const peer of roomPeerStatuses) {
+      if (peer.link === "failed" || peer.link === "disconnected" || peer.link === "closed") {
+        const failedSince = refs.failedSinceRef.current.get(peer.id) ?? now;
+        if (now - failedSince >= PEER_FAILURE_WARNING_DELAY_MS) {
+          warning.push({ id: peer.id, name: peer.name });
+        }
+      }
+    }
+    return {
+      peers: connectedPeers,
+      connectingPeers: pendingPeers,
+      warningPeers: warning,
+      linkCount: mesh.linkCount(),
+      status: `Mesh · ${mesh.getMyName()} · ${mesh.getMyId()?.slice(0, 8) ?? "—"}… · ${roomPeerStatuses.length} peer(s) in room · ${mesh.linkCount()} link(s)`,
+    };
+  }, [refs]);
+
+  const publishMeshStateToTabs = useCallback(() => {
+    const tabSync = refs.tabSyncRef.current;
+    if (!tabSync?.isMeshLeader()) return;
+    const state = buildMeshStateSnapshot();
+    if (state) tabSync.publishMeshState(state);
+  }, [buildMeshStateSnapshot, refs]);
+
+  const applyRelayedMeshState = useCallback(
+    (state: TabMeshStateSnapshot) => {
+      if (refs.tabSyncRef.current?.isMeshLeader()) return;
+      setLinkCount(state.linkCount);
+      setPeers(state.peers);
+      setConnectingPeers(state.connectingPeers);
+      setWarningPeers(state.warningPeers);
+      setStatus(state.status);
+    },
+    [refs],
+  );
+
+  const leaveMeshAsFollower = useCallback(async () => {
+    const meshSession = refs.meshRef.current;
+    refs.meshRef.current = null;
+    if (meshSession) await meshSession.leave();
+    resetMeshUi();
+  }, [refs, resetMeshUi]);
 
   const refreshMeshUi = useCallback(() => {
     const mesh = refs.meshRef.current;
@@ -107,9 +172,11 @@ export function useDocsCollabMesh({
         sendSyncStep1(msg.from);
         trySeedFromFile();
       }
+      refs.tabSyncRef.current?.relayMeshMessage(msg);
       refreshMeshUi();
+      publishMeshStateToTabs();
     },
-    [markDocReady, refs, refreshMeshUi, sendSyncStep1, trySeedFromFile],
+    [markDocReady, publishMeshStateToTabs, refs, refreshMeshUi, sendSyncStep1, trySeedFromFile],
   );
 
   const joinMesh = useCallback(
@@ -137,19 +204,19 @@ export function useDocsCollabMesh({
       mesh.onMessage(handleMeshMessage);
       const joinedData = await mesh.join(name);
       refreshMeshUi();
+      publishMeshStateToTabs();
       return joinedData.peers;
     },
-    [handleMeshMessage, refs, refreshMeshUi, room, urls.collabApiBaseUrl, urls.collabRtcUrl],
+    [
+      handleMeshMessage,
+      publishMeshStateToTabs,
+      refs,
+      refreshMeshUi,
+      room,
+      urls.collabApiBaseUrl,
+      urls.collabRtcUrl,
+    ],
   );
-
-  const resetMeshUi = useCallback(() => {
-    setPeers([]);
-    setConnectingPeers([]);
-    setWarningPeers([]);
-    refs.failedSinceRef.current.clear();
-    setLinkCount(0);
-    setStatus("Disconnected");
-  }, [refs]);
 
   return {
     peers,
@@ -164,5 +231,8 @@ export function useDocsCollabMesh({
     handleMeshMessage,
     joinMesh,
     resetMeshUi,
+    leaveMeshAsFollower,
+    applyRelayedMeshState,
+    publishMeshStateToTabs,
   };
 }

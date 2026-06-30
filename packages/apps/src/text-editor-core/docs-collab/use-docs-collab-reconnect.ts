@@ -74,6 +74,8 @@ export function useDocsCollabReconnect({
 
   const restartMeshAfterReconnect = useCallback(
     async (generation: number, authToken: string): Promise<void> => {
+      const tabSync = refs.tabSyncRef.current;
+      if (tabSync && !tabSync.isMeshLeader()) return;
       const name = userName.trim();
       if (!name) return;
 

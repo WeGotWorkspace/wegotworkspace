@@ -12,6 +12,7 @@ import { useDocsCollabMesh } from "./use-docs-collab-mesh";
 import { useDocsCollabReconnect } from "./use-docs-collab-reconnect";
 import { useDocsCollabSave } from "./use-docs-collab-save";
 import { useDocsCollabSessionRefs } from "./use-docs-collab-session-refs";
+import { useDocsCollabTabSync } from "./use-docs-collab-tab-sync";
 
 export {
   DEFAULT_DOCS_COLLAB_URLS,
@@ -19,7 +20,13 @@ export {
   type DocsCollabUrls,
   type UseDocsCollabOptions,
 } from "./docs-collab-types";
-export { MESH_ORIGIN, SEED_ORIGIN, SERVER_ORIGIN, IDB_ORIGIN } from "./docs-collab-utils";
+export {
+  MESH_ORIGIN,
+  BC_TAB_ORIGIN,
+  SEED_ORIGIN,
+  SERVER_ORIGIN,
+  IDB_ORIGIN,
+} from "./docs-collab-utils";
 export { resetDocsCollabBackoffForTests };
 
 export function useDocsCollab({
@@ -80,6 +87,16 @@ export function useDocsCollab({
 
   markDocReadyRef.current = joinHook.markDocReady;
   trySeedFromFileRef.current = joinHook.trySeedFromFile;
+
+  useDocsCollabTabSync({
+    refs,
+    room,
+    userName,
+    joined: joinHook.joined,
+    mesh,
+    join: joinHook,
+    tabSyncRef: refs.tabSyncRef,
+  });
 
   const { join, leave, teardown, session, joined } = joinHook;
   const { saveNow, registerMarkdownGetter, onMarkdownChange } = save;

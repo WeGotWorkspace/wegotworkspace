@@ -2,7 +2,9 @@ import type { IndexeddbPersistence } from "y-indexeddb";
 import * as Y from "yjs";
 import { docsEditorFormatFromFileName } from "@/docs-core/src/docs-editor-format";
 import type { TextEditorContentFormat } from "@/text-editor-core/src/text-editor-content";
+import { BC_TAB_ORIGIN } from "./docs-collab-tab-sync";
 
+export { BC_TAB_ORIGIN };
 export const MESH_ORIGIN = "mesh";
 export const SEED_ORIGIN = "seed";
 export const SERVER_ORIGIN = "server";
@@ -10,6 +12,7 @@ export const IDB_ORIGIN = "idb";
 
 const REMOTE_UPDATE_ORIGINS = new Set<string>([
   MESH_ORIGIN,
+  BC_TAB_ORIGIN,
   SEED_ORIGIN,
   SERVER_ORIGIN,
   IDB_ORIGIN,

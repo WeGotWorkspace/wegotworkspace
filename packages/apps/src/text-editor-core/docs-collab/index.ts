@@ -4,6 +4,8 @@ export { DocsCollabEditor } from "./docs-collab-editor";
 export type { DocsCollabEditorProps } from "./docs-collab-editor";
 export { DocsCollabPresence } from "./docs-collab-presence";
 export type { DocsCollabPresenceProps } from "./docs-collab-presence";
+export { listAwarenessPresencePeers, mergeCollabPresencePeers } from "./docs-collab-presence-peers";
+export { useDocsCollabAwarenessPresence } from "./use-docs-collab-awareness-presence";
 export { DocsCollabCommentControl } from "./docs-collab-comment-control";
 export type { DocsCollabCommentControlProps } from "./docs-collab-comment-control";
 export { DocsCollabSuggestControls } from "./docs-collab-suggest-controls";
@@ -42,6 +44,7 @@ export {
   useDocsCollab,
   DEFAULT_DOCS_COLLAB_URLS,
   MESH_ORIGIN,
+  BC_TAB_ORIGIN,
   SEED_ORIGIN,
   SERVER_ORIGIN,
   IDB_ORIGIN,
