@@ -101,6 +101,40 @@ function browseFilters(scopePrefix: string, debouncedQuery: string): DocsListing
   };
 }
 
+/** Fetch every browse page so offline cache and UI match the full server listing. */
+export async function fetchAllDocsHomeListingPages(
+  fetcher: DocsHomeFetcher,
+  baseParams: Omit<WgwUnifiedSearchParams, "signal" | "q" | "offset"> & { limit: number },
+  query: string,
+  signal: AbortSignal,
+): Promise<{ results: WgwUnifiedSearchResult[]; hasMore: boolean }> {
+  const merged: WgwUnifiedSearchResult[] = [];
+  let offset = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const data = await fetcher({
+      ...baseParams,
+      q: query || undefined,
+      offset,
+      signal,
+    });
+    if (signal.aborted) {
+      return { results: merged, hasMore: merged.length > 0 ? hasMore : false };
+    }
+    const page = data.results ?? [];
+    merged.push(...page);
+    hasMore = Boolean(data.hasMore);
+    offset = merged.length;
+    if (page.length === 0) {
+      hasMore = false;
+      break;
+    }
+  }
+
+  return { results: merged, hasMore: false };
+}
+
 export function useDocsHomeList({
   username,
   query = "",
@@ -161,7 +195,7 @@ export function useDocsHomeList({
       const cached = await readDocsListingFromCache(offlineUsername, filters);
       if (!cached || cached.results.length === 0) return false;
       setResults(cached.results);
-      setHasMore(false);
+      setHasMore(cached.hasMore);
       setError(null);
       setIsOfflineListing(!online);
       return true;
@@ -173,19 +207,18 @@ export function useDocsHomeList({
     async (signal: AbortSignal): Promise<boolean> => {
       if (!getConnectivitySnapshot()) return false;
       try {
-        const data = await fetcher({
-          ...baseParams,
-          q: debouncedQuery || undefined,
-          offset: 0,
+        const { results: nextResults, hasMore: nextHasMore } = await fetchAllDocsHomeListingPages(
+          fetcher,
+          baseParams,
+          debouncedQuery,
           signal,
-        });
+        );
         if (signal.aborted) return false;
-        const nextResults = data.results ?? [];
         setResults(nextResults);
-        setHasMore(Boolean(data.hasMore));
+        setHasMore(nextHasMore);
         setIsOfflineListing(false);
         setError(null);
-        await persistListingCache(nextResults, Boolean(data.hasMore));
+        await persistListingCache(nextResults, nextHasMore);
         return true;
       } catch (_err) {
         if (signal.aborted) return false;

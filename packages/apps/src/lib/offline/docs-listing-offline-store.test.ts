@@ -69,6 +69,26 @@ describe("docs listing offline store", () => {
     expect(docsListingCacheKey(filters)).not.toBe(docsListingCacheKey({ ...filters, query: "b" }));
   });
 
+  it("persists hasMore in listing cache metadata", async () => {
+    await writeDocsListingToCache(username, filters, {
+      results: [result(1, "users/alice/a.md", 100)],
+      hasMore: true,
+    });
+
+    expect(await readDocsListingFromCache(username, filters)).toMatchObject({
+      hasMore: true,
+    });
+
+    await writeDocsListingToCache(username, filters, {
+      results: [result(1, "users/alice/a.md", 100), result(2, "users/alice/b.md", 200)],
+      hasMore: false,
+    });
+
+    expect(await readDocsListingFromCache(username, filters)).toMatchObject({
+      hasMore: false,
+    });
+  });
+
   it("replaces prior rows for the same cache key on rewrite", async () => {
     await writeDocsListingToCache(username, filters, {
       results: [result(1, "users/alice/a.md", 100)],

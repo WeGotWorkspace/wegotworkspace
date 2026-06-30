@@ -25,6 +25,10 @@ function metaSyncedAtKey(cacheKey: string): string {
   return `docs:listing:${cacheKey}:syncedAt`;
 }
 
+function metaHasMoreKey(cacheKey: string): string {
+  return `docs:listing:${cacheKey}:hasMore`;
+}
+
 function rowId(cacheKey: string, sourceKey: string): string {
   return `${cacheKey}::${sourceKey}`;
 }
@@ -50,10 +54,11 @@ export async function readDocsListingFromCache(
   const results = ordered.map((row) => deserializeResult(row.data));
   const syncedAtRaw = await readMeta(username, metaSyncedAtKey(cacheKey));
   const syncedAt = syncedAtRaw ? Number.parseInt(syncedAtRaw, 10) : 0;
+  const hasMoreRaw = await readMeta(username, metaHasMoreKey(cacheKey));
 
   return {
     results: sortDocsHomeResults(results),
-    hasMore: false,
+    hasMore: hasMoreRaw === "1",
     syncedAt: Number.isFinite(syncedAt) ? syncedAt : 0,
   };
 }
@@ -82,6 +87,7 @@ export async function writeDocsListingToCache(
     await table.bulkPut(rows);
   }
   await writeMeta(username, metaSyncedAtKey(cacheKey), String(syncedAt));
+  await writeMeta(username, metaHasMoreKey(cacheKey), snapshot.hasMore ? "1" : "0");
   rememberOfflineDocsUsername(username);
 }
 
