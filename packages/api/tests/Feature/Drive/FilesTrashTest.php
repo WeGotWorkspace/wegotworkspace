@@ -62,6 +62,23 @@ final class FilesTrashTest extends WgwDatabaseTestCase
         $trash->assertOk()->assertJsonFragment(['name' => 'report.md', 'type' => 'file']);
     }
 
+    public function test_move_to_trash_picks_unique_name_when_collision(): void
+    {
+        $token = $this->userBearerToken();
+        $this->ensureTrashDirectory($token, 'bob');
+        Storage::disk('wgw_files')->put('users/bob/.Trash/Untitled.md', 'trashed');
+        $this->createDriveFile($token, '/users/bob', 'Untitled.md');
+
+        $this->withBearer($token)->patchJson('/api/v1/files?path=/users/bob/Untitled.md', [
+            'name' => 'Untitled.md',
+            'destination' => '/users/bob/.Trash',
+        ])->assertOk();
+
+        $this->assertTrue(Storage::disk('wgw_files')->exists('users/bob/.Trash/Untitled.md'));
+        $this->assertTrue(Storage::disk('wgw_files')->exists('users/bob/.Trash/Untitled 2.md'));
+        $this->assertFalse(Storage::disk('wgw_files')->exists('users/bob/Untitled.md'));
+    }
+
     public function test_permanent_delete_from_trash_removes_file_and_index(): void
     {
         $token = $this->userBearerToken();

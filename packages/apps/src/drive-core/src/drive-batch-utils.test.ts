@@ -3,6 +3,7 @@ import {
   ensureTrashFolder,
   mergeDriveFolderListing,
   resolveDriveFileApiPath,
+  resolveTrashName,
 } from "@/drive-core/src/drive-batch-utils";
 import { DRIVE_TRASH_DIR_NAME } from "@/drive-core/src/drive-path-utils";
 import type { DriveFile } from "@/drive-core/src/drive-models";
@@ -95,6 +96,27 @@ describe("mergeDriveFolderListing", () => {
       directory: { location: "/users/alice/Projects", files: [] },
     };
     expect(mergeDriveFolderListing(previous, nextData, USER)).toEqual([]);
+  });
+});
+
+describe("resolveTrashName", () => {
+  it("returns the original name when trash is empty", () => {
+    expect(resolveTrashName("Untitled.md", new Set())).toBe("Untitled.md");
+  });
+
+  it("increments the base name when the title already exists in trash", () => {
+    const taken = new Set(["Untitled.md"]);
+    expect(resolveTrashName("Untitled.md", taken)).toBe("Untitled 2.md");
+  });
+
+  it("keeps incrementing until a free trash name is found", () => {
+    const taken = new Set(["report.md", "report 2.md"]);
+    expect(resolveTrashName("report.md", taken)).toBe("report 3.md");
+  });
+
+  it("handles extensionless names", () => {
+    const taken = new Set(["README"]);
+    expect(resolveTrashName("README", taken)).toBe("README 2");
   });
 });
 

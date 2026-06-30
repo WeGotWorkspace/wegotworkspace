@@ -63,6 +63,39 @@ export async function reloadDriveFolderListing(
   setFiles((previous) => mergeDriveFolderListing(previous, nextData, username));
 }
 
+/** Pick a unique trash item name when the same title is already in `.Trash`. */
+export function resolveTrashName(fileName: string, taken: ReadonlySet<string>): string {
+  const takenLower = new Set(Array.from(taken, (name) => name.toLowerCase()));
+  const dot = fileName.lastIndexOf(".");
+  const hasExt = dot > 0;
+  const base = hasExt ? fileName.slice(0, dot) : fileName;
+  const ext = hasExt ? fileName.slice(dot) : "";
+
+  let candidate = fileName;
+  let index = 2;
+  while (takenLower.has(candidate.toLowerCase())) {
+    candidate = `${base} ${index}${ext}`;
+    index += 1;
+  }
+  return candidate;
+}
+
+export async function listTrashEntryNames(
+  operations: DriveAPIOperations,
+  trashApiPath: string,
+  signal?: AbortSignal,
+): Promise<Set<string>> {
+  const taken = new Set<string>();
+  if (!operations.listAllDirectoryEntries) return taken;
+  try {
+    const entries = await operations.listAllDirectoryEntries(trashApiPath, { signal });
+    for (const entry of entries) taken.add(entry.name);
+  } catch {
+    // Trash folder may not exist yet; ensureTrashFolder handles creation.
+  }
+  return taken;
+}
+
 export async function ensureTrashFolder(
   operations: DriveAPIOperations,
   username: string,

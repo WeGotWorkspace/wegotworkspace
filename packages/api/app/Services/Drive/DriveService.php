@@ -166,7 +166,13 @@ final class DriveService
             throw new \InvalidArgumentException('Source not found.');
         }
         if ($disk->exists($toKey)) {
-            throw new \InvalidArgumentException('Destination already exists.');
+            if ($this->isTrashDestination($destination)) {
+                $toName = $this->resolveUniqueTrashName($disk, $destination, $toName);
+                $toPath = $this->paths->normalizeVirtualPath($destination.'/'.$toName);
+                $toKey = $this->paths->virtualToStorageKey($toPath);
+            } else {
+                throw new \InvalidArgumentException('Destination already exists.');
+            }
         }
         if (! $disk->move($fromKey, $toKey)) {
             throw new \RuntimeException('Rename failed.');
@@ -546,6 +552,40 @@ final class DriveService
     private function isHiddenNotesPath(string $virtualPath): bool
     {
         return preg_match('#/(?:users|groups)/[^/]+/\.notes(?:/|$)#', $virtualPath) === 1;
+    }
+
+    private function isTrashDestination(string $destination): bool
+    {
+        return preg_match('#/\.Trash$#', $destination) === 1
+            || preg_match('#/Trash$#', $destination) === 1;
+    }
+
+    private function resolveUniqueTrashName(Filesystem $disk, string $trashVirtualPath, string $name): string
+    {
+        $name = $this->validateItemName($name);
+        $prefix = $this->paths->virtualToStorageKey($trashVirtualPath);
+        $taken = [];
+        foreach ($disk->files($prefix) as $key) {
+            $taken[] = basename($key);
+        }
+        foreach ($disk->directories($prefix) as $key) {
+            $taken[] = basename($key);
+        }
+        $takenLower = array_map(static fn (string $entry): string => mb_strtolower($entry), $taken);
+
+        $dot = strrpos($name, '.');
+        $hasExt = $dot !== false && $dot > 0;
+        $base = $hasExt ? substr($name, 0, $dot) : $name;
+        $ext = $hasExt ? substr($name, $dot) : '';
+
+        $candidate = $name;
+        $index = 2;
+        while (in_array(mb_strtolower($candidate), $takenLower, true)) {
+            $candidate = $base.' '.$index.$ext;
+            $index++;
+        }
+
+        return $candidate;
     }
 
     private function disk(): Filesystem

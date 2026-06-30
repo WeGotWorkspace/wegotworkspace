@@ -11,7 +11,12 @@ import {
 } from "@/lib/offline/docs/docs-hybrid-operations";
 import type { DriveAPIOperations } from "@/drive-core/src/drive-types";
 import type { DriveFile } from "@/drive-core/src/drive-models";
-import { ensureTrashFolder, resolveDriveFileApiPath } from "@/drive-core/src/drive-batch-utils";
+import {
+  ensureTrashFolder,
+  listTrashEntryNames,
+  resolveDriveFileApiPath,
+  resolveTrashName,
+} from "@/drive-core/src/drive-batch-utils";
 import {
   apiPathFromUiPath,
   DRIVE_TRASH_UI_PATH,
@@ -305,9 +310,12 @@ export function useDocsHomeActions({
         }
         await ensureTrashFolder(operations, username, groupRootNames, signal);
         const destination = apiPathFromUiPath(DRIVE_TRASH_UI_PATH, username, groupRootNames);
+        const trashNames = await listTrashEntryNames(operations, destination, signal);
         for (const file of rows) {
           const apiPath = normalizeApiVirtualPath(file.apiPath!);
-          await operations.renameItem({ destination, from: apiPath, to: file.title }, { signal });
+          const to = resolveTrashName(file.title, trashNames);
+          trashNames.add(to);
+          await operations.renameItem({ destination, from: apiPath, to }, { signal });
         }
         completed = true;
         reload();

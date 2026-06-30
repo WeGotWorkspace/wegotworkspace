@@ -1,5 +1,9 @@
 import { createWgwDriveOperations } from "@/lib/api/wgw/drive";
-import { ensureTrashFolder } from "@/drive-core/src/drive-batch-utils";
+import {
+  ensureTrashFolder,
+  listTrashEntryNames,
+  resolveTrashName,
+} from "@/drive-core/src/drive-batch-utils";
 import { parentAndName } from "@/lib/files/api-path";
 import type { DriveAPIOperations, DriveUIData } from "@/drive-core/src/drive-types";
 import { isDriveTrashApiPath, normalizeApiVirtualPath } from "@/drive-core/src/drive-path-utils";
@@ -179,10 +183,18 @@ export function createHybridDocsDriveOperations(username: string): DriveAPIOpera
           if (isTrash) {
             await ensureTrashFolder(live, username, new Set(), opts?.signal);
           }
-          const data = await live.renameItem(input, {
-            ...opts,
-            refreshState: isTrash ? false : opts?.refreshState,
-          });
+          let to = input.to;
+          if (isTrash) {
+            const trashNames = await listTrashEntryNames(live, destination, opts?.signal);
+            to = resolveTrashName(input.to, trashNames);
+          }
+          const data = await live.renameItem(
+            { ...input, to },
+            {
+              ...opts,
+              refreshState: isTrash ? false : opts?.refreshState,
+            },
+          );
           if (isTrash) {
             await applyOfflineTrashSideEffectsSafely(username, input.from);
           } else {
@@ -194,13 +206,16 @@ export function createHybridDocsDriveOperations(username: string): DriveAPIOpera
         }
       }
       const from = normalizeApiVirtualPath(input.from);
+      let to = input.to;
       if (isTrash) {
+        const trashNames = await listTrashEntryNames(live, destination, opts?.signal);
+        to = resolveTrashName(input.to, trashNames);
         await applyOfflineTrashSideEffects(username, from);
       } else {
         await applyOfflineRenameSideEffects(username, from, destination, input.to);
       }
       const payload: DocsOutboxPayload = isTrash
-        ? { op: "trash", from, destination, to: input.to }
+        ? { op: "trash", from, destination, to }
         : { op: "rename", from, destination, to: input.to };
       await queueDocsOutbox(username, payload);
       return offlineQueuedDriveData(destination);
