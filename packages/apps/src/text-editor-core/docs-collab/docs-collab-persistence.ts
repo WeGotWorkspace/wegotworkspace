@@ -69,6 +69,71 @@ export async function clearDocsCollabPendingServerSave(
   }
 }
 
+export type DocsCollabOfflinePersistenceSnapshot = {
+  yjsUpdate: Uint8Array;
+  pendingServerSave: boolean;
+};
+
+async function captureRoomPersistence(
+  roomKey: string,
+): Promise<DocsCollabOfflinePersistenceSnapshot | undefined> {
+  const ydoc = new Y.Doc();
+  const persistence = new IndexeddbPersistence(roomKey, ydoc);
+  try {
+    await persistence.whenSynced;
+    const yjsUpdate = Y.encodeStateAsUpdate(ydoc);
+    if (yjsUpdate.length === 0) return undefined;
+    const pendingServerSave = Boolean(await persistence.get(PENDING_SERVER_SAVE_KEY));
+    return { yjsUpdate, pendingServerSave };
+  } finally {
+    await persistence.destroy();
+    ydoc.destroy();
+  }
+}
+
+/** Captures y-indexeddb collab state before offline trash side effects clear it. */
+export async function captureDocsCollabOfflinePersistence(
+  apiPath: string,
+): Promise<DocsCollabOfflinePersistenceSnapshot | undefined> {
+  const room = docsCollabRoomKey(apiPath);
+  if (!room || !isDocsCollabEditablePath(room)) return undefined;
+
+  const snapshot = await captureRoomPersistence(room);
+  if (snapshot) return snapshot;
+
+  const legacy = apiPath.trim().startsWith("/") ? room : `/${room}`;
+  if (legacy !== room) {
+    return captureRoomPersistence(legacy);
+  }
+  return undefined;
+}
+
+/** Restores y-indexeddb collab state captured before offline trash. */
+export async function restoreDocsCollabOfflinePersistence(
+  apiPath: string,
+  snapshot: DocsCollabOfflinePersistenceSnapshot,
+): Promise<void> {
+  const room = docsCollabRoomKey(apiPath);
+  if (!room || !isDocsCollabEditablePath(room)) return;
+
+  const ydoc = new Y.Doc();
+  const persistence = new IndexeddbPersistence(room, ydoc);
+  try {
+    await persistence.whenSynced;
+    if (snapshot.yjsUpdate.length > 0) {
+      Y.applyUpdate(ydoc, snapshot.yjsUpdate);
+    }
+    if (snapshot.pendingServerSave) {
+      await persistence.set(PENDING_SERVER_SAVE_KEY, 1);
+    } else {
+      await persistence.del(PENDING_SERVER_SAVE_KEY);
+    }
+  } finally {
+    await persistence.destroy();
+    ydoc.destroy();
+  }
+}
+
 /** Clears y-indexeddb persistence for a collab room (e.g. remove offline copy). */
 export async function clearDocsCollabOfflinePersistence(apiPath: string): Promise<void> {
   const room = docsCollabRoomKey(apiPath);

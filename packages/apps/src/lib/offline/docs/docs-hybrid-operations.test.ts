@@ -1,5 +1,7 @@
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import * as Y from "yjs";
+import { IndexeddbPersistence } from "y-indexeddb";
 import { driveUserTrashApiPath } from "@/drive-core/src/drive-path-utils";
 import { readBrowserOnline } from "@/lib/offline/core/browser-online";
 import { listOutboxMutations } from "@/lib/offline/core/outbox-store";
@@ -9,9 +11,11 @@ import {
   writeDocsAvailability,
 } from "@/lib/offline/docs/docs-availability-store";
 import {
+  captureOfflineDocsTrashSnapshot,
   createHybridDocsDriveOperations,
   undoOfflineDocsTrash,
 } from "@/lib/offline/docs/docs-hybrid-operations";
+import { hasDocsCollabOfflinePersistence } from "@/lib/offline/docs/docs-collab-offline-availability";
 import { docsAvailabilityTable, docsListingRowsTable } from "@/lib/offline/docs/docs-schema";
 import {
   readDocsListingFromCache,
@@ -34,12 +38,22 @@ vi.mock("@/lib/api/wgw/drive", () => ({
   })),
 }));
 
-vi.mock("@/text-editor-core/docs-collab/docs-collab-persistence", () => ({
-  clearDocsCollabOfflinePersistence: vi.fn(async () => undefined),
-  migrateCollabPersistence: vi.fn(async () => undefined),
-}));
+vi.mock("@/text-editor-core/docs-collab/docs-collab-persistence", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/text-editor-core/docs-collab/docs-collab-persistence")>();
+  return { ...actual };
+});
 
 const username = "alice";
+
+async function seedCollabRoom(room: string): Promise<void> {
+  const ydoc = new Y.Doc();
+  ydoc.getXmlFragment("default").insert(0, [new Y.XmlElement("paragraph")]);
+  const persistence = new IndexeddbPersistence(room, ydoc);
+  await persistence.whenSynced;
+  await persistence.destroy();
+  ydoc.destroy();
+}
 
 function result(id: number, sourceKey: string, modifiedAt: number): WgwUnifiedSearchResult {
   return {
@@ -95,15 +109,22 @@ describe("createHybridDocsDriveOperations offline trash", () => {
     expect(await readDocsAvailability(username, apiPath)).toBeUndefined();
   });
 
-  it("undo restores listing, availability, and removes the queued trash mutation", async () => {
+  it("undo via captured snapshot restores listing, availability, and collab persistence", async () => {
     const apiPath = "/users/alice/note.md";
     const filters = { pathPrefix: "users/alice" };
-    const listingRow = result(1, "users/alice/note.md", 100);
     await writeDocsListingToCache(username, filters, {
-      results: [listingRow, result(2, "users/alice/other.md", 50)],
+      results: [result(1, "users/alice/note.md", 100), result(2, "users/alice/other.md", 50)],
       hasMore: false,
     });
     await writeDocsAvailability(username, { id: "users/alice/note.md", location: "My Drive" });
+    await seedCollabRoom("users/alice/note.md");
+
+    const snapshot = await captureOfflineDocsTrashSnapshot(username, apiPath);
+    expect(snapshot.availability).toMatchObject({
+      id: "users/alice/note.md",
+      location: "My Drive",
+    });
+    expect(snapshot.collabPersistence?.yjsUpdate.length).toBeGreaterThan(0);
 
     const operations = createHybridDocsDriveOperations(username);
     await operations.renameItem({
@@ -113,17 +134,10 @@ describe("createHybridDocsDriveOperations offline trash", () => {
     });
 
     expect(await listOutboxMutations(username)).toHaveLength(1);
+    expect(await readDocsAvailability(username, apiPath)).toBeUndefined();
+    expect(await hasDocsCollabOfflinePersistence(apiPath)).toBe(false);
 
-    await undoOfflineDocsTrash(username, {
-      apiPath,
-      listingResult: listingRow,
-      availability: {
-        id: "users/alice/note.md",
-        location: "My Drive",
-        pinnedAt: Date.now(),
-        lastSyncedAt: null,
-      },
-    });
+    await undoOfflineDocsTrash(username, snapshot);
 
     expect(await listOutboxMutations(username)).toHaveLength(0);
     const cached = await readDocsListingFromCache(username, filters);
@@ -135,6 +149,7 @@ describe("createHybridDocsDriveOperations offline trash", () => {
       id: "users/alice/note.md",
       location: "My Drive",
     });
+    expect(await hasDocsCollabOfflinePersistence(apiPath)).toBe(true);
   });
 });
 

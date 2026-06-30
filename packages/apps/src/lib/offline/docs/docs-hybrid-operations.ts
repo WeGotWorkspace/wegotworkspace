@@ -34,8 +34,11 @@ import {
 import { readOfflineDocsUsername } from "@/lib/offline/offline-session";
 import { isDocsCollabEditablePath } from "@/docs-core/src/docs-collab-text-files";
 import {
+  captureDocsCollabOfflinePersistence,
   clearDocsCollabOfflinePersistence,
   migrateCollabPersistence,
+  restoreDocsCollabOfflinePersistence,
+  type DocsCollabOfflinePersistenceSnapshot,
 } from "@/text-editor-core/docs-collab/docs-collab-persistence";
 
 function rethrowUnlessOfflineQueue(error: unknown, signal?: AbortSignal): void {
@@ -80,6 +83,7 @@ export type DocsTrashUndoSnapshot = {
   apiPath: string;
   listingResult: WgwUnifiedSearchResult;
   availability?: OfflineDocsAvailabilityRow;
+  collabPersistence?: DocsCollabOfflinePersistenceSnapshot;
 };
 
 /** Capture listing + availability state before an offline trash (for undo). */
@@ -96,10 +100,12 @@ export async function captureOfflineDocsTrashSnapshot(
     if (listingResult) break;
   }
   const availability = await readDocsAvailability(username, normalized);
+  const collabPersistence = await captureDocsCollabOfflinePersistence(normalized);
   return {
     apiPath: normalized,
     listingResult: listingResult ?? buildOfflineDocsSearchResult(normalized),
     availability,
+    collabPersistence,
   };
 }
 
@@ -112,6 +118,9 @@ export async function undoOfflineDocsTrash(
   await restoreDocsListingResult(username, snapshot.listingResult);
   if (snapshot.availability) {
     await writeDocsAvailability(username, snapshot.availability);
+  }
+  if (snapshot.collabPersistence) {
+    await restoreDocsCollabOfflinePersistence(snapshot.apiPath, snapshot.collabPersistence);
   }
 }
 
