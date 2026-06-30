@@ -4,7 +4,9 @@ import type { DriveAPIOperations, DriveUIData } from "@/drive-core/src/drive-typ
 import {
   buildDocsHomeDrives,
   collectGroupRoots,
+  collectGroupRootsFromDirectory,
   fallbackUntitledMarkdownName,
+  fetchGroupRootsFromDrive,
   mergeGroupRoots,
   newDocumentApiPath,
   nextUntitledMarkdownName,
@@ -28,6 +30,35 @@ function file(partial: Partial<DriveFile> & { id: string }): DriveFile {
     ...partial,
   };
 }
+
+describe("collectGroupRootsFromDirectory", () => {
+  it("extracts group folder names from a /groups listing", () => {
+    const entries = [
+      { type: "dir", path: "/groups/Engineering", name: "Engineering" },
+      { type: "dir", path: "/groups/design", name: "design" },
+      { type: "file", path: "/groups/readme.txt", name: "readme.txt" },
+    ];
+    expect(collectGroupRootsFromDirectory(entries)).toEqual(["design", "Engineering"]);
+  });
+});
+
+describe("fetchGroupRootsFromDrive", () => {
+  it("lists /groups via drive operations", async () => {
+    const operations = {
+      listDirectory: vi.fn(async () => ({
+        directory: {
+          files: [{ type: "dir", path: "/groups/Engineering", name: "Engineering" }],
+        },
+      })),
+    } as unknown as DriveAPIOperations;
+    await expect(fetchGroupRootsFromDrive(operations)).resolves.toEqual(["Engineering"]);
+    expect(operations.listDirectory).toHaveBeenCalledWith("/groups", undefined);
+  });
+
+  it("returns an empty list when operations are unavailable", async () => {
+    await expect(fetchGroupRootsFromDrive(undefined)).resolves.toEqual([]);
+  });
+});
 
 describe("collectGroupRoots", () => {
   it("extracts sorted, unique group roots from /groups/{root} api paths", () => {

@@ -25,6 +25,7 @@ import {
 import {
   buildDocsHomeDrives,
   collectGroupRoots,
+  fetchGroupRootsFromDrive,
   mergeGroupRoots,
   resolveDocsHomeCreateDialogBrowsePath,
   resolveNewDocumentName,
@@ -173,6 +174,16 @@ export function DocsHomeWorkspace({
     () => files.filter((file) => !actions.hiddenFileIds.has(file.id)),
     [actions.hiddenFileIds, files],
   );
+
+  useEffect(() => {
+    if (!operations || !online) return;
+    const controller = new AbortController();
+    void fetchGroupRootsFromDrive(operations, { signal: controller.signal }).then((discovered) => {
+      if (discovered.length === 0) return;
+      setKnownGroupRoots((prev) => mergeGroupRoots(prev, discovered));
+    });
+    return () => controller.abort();
+  }, [operations, online]);
 
   useEffect(() => {
     const discovered = collectGroupRoots(files);
