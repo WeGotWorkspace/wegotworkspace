@@ -42,6 +42,7 @@ export { DOCS_COMMENTS_MAP_KEY } from "./docs-comments-types";
 export {
   docsCollabRoomKey,
   hasDocsCollabPendingServerSave,
+  clearDocsCollabPendingServerSave,
   migrateCollabPersistence,
   clearDocsCollabOfflinePersistence,
 } from "./docs-collab-persistence";

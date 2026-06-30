@@ -2,6 +2,7 @@ import { useCallback, useRef } from "react";
 import { getConnectivitySnapshot } from "@/lib/offline/browser-online";
 import { reportDocsSyncConflicts } from "@/lib/offline/docs/docs-sync-conflicts";
 import { setDocsCollabSyncState } from "./docs-collab-sync-registry";
+import { clearDocsCollabPendingServerSave } from "./docs-collab-persistence";
 import { markRoomServerFailure, markRoomServerSuccess } from "./docs-collab-room-backoff";
 import { loadYjsSnapshot, saveDocument } from "./docs-collab-server-io";
 import {
@@ -52,9 +53,13 @@ export function useDocsCollabSave({
         failedSync: pending && failed && getConnectivitySnapshot(),
       });
       const persistence = refs.persistenceRef.current;
-      if (!persistence) return;
-      if (pending) await persistence.set(PENDING_SERVER_SAVE_KEY, 1);
-      else await persistence.del(PENDING_SERVER_SAVE_KEY);
+      if (pending) {
+        if (persistence) await persistence.set(PENDING_SERVER_SAVE_KEY, 1);
+      } else if (persistence) {
+        await persistence.del(PENDING_SERVER_SAVE_KEY);
+      } else {
+        await clearDocsCollabPendingServerSave(room);
+      }
     },
     [refs, room, setFailedSync, setPendingSync],
   );

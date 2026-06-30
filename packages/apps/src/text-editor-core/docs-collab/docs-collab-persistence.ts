@@ -8,19 +8,34 @@ export function docsCollabRoomKey(path: string): string {
   return path.trim().replace(/^\/+/, "");
 }
 
-async function persistenceHasPendingSave(roomKey: string): Promise<boolean> {
+async function withCollabPersistence<T>(
+  roomKey: string,
+  run: (persistence: IndexeddbPersistence) => Promise<T>,
+): Promise<T | undefined> {
   const ydoc = new Y.Doc();
   const persistence = new IndexeddbPersistence(roomKey, ydoc);
   try {
     await persistence.whenSynced;
-    const pending = await persistence.get(PENDING_SERVER_SAVE_KEY);
-    return Boolean(pending);
+    return await run(persistence);
   } catch {
-    return false;
+    return undefined;
   } finally {
     await persistence.destroy();
     ydoc.destroy();
   }
+}
+
+async function persistenceHasPendingSave(roomKey: string): Promise<boolean> {
+  const pending = await withCollabPersistence(roomKey, (persistence) =>
+    persistence.get(PENDING_SERVER_SAVE_KEY),
+  );
+  return Boolean(pending);
+}
+
+async function clearPendingSaveInRoom(roomKey: string): Promise<void> {
+  await withCollabPersistence(roomKey, async (persistence) => {
+    await persistence.del(PENDING_SERVER_SAVE_KEY);
+  });
 }
 
 /** Whether a collab room has a deferred server save recorded in y-indexeddb. */
@@ -37,6 +52,21 @@ export async function hasDocsCollabPendingServerSave(
     return persistenceHasPendingSave(legacy);
   }
   return false;
+}
+
+/** Clears deferred server-save metadata for a collab room in y-indexeddb. */
+export async function clearDocsCollabPendingServerSave(
+  apiPath: string | null | undefined,
+): Promise<void> {
+  const room = docsCollabRoomKey(apiPath ?? "");
+  if (!room || !isDocsCollabEditablePath(room)) return;
+
+  await clearPendingSaveInRoom(room);
+
+  const legacy = apiPath?.trim().startsWith("/") ? room : `/${room}`;
+  if (legacy !== room) {
+    await clearPendingSaveInRoom(legacy);
+  }
 }
 
 /** Clears y-indexeddb persistence for a collab room (e.g. remove offline copy). */
