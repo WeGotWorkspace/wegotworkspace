@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useOnReconnect } from "@/hooks/use-connectivity";
 import {
   fetchWgwUnifiedSearch,
   type WgwUnifiedSearchData,
@@ -17,6 +18,12 @@ import {
   DOCS_HOME_PAGE_SIZE,
   DOCS_HOME_SOURCES,
 } from "@/docs-core/src/docs-home-constants";
+import { readBrowserOnline } from "@/lib/offline/core/browser-online";
+import type { DocsListingBrowseFilters } from "@/lib/offline/docs/docs-listing-cache-key";
+import {
+  readDocsListingFromCache,
+  writeDocsListingToCache,
+} from "@/lib/offline/docs-listing-offline-store";
 
 export type DocsHomeFetcher = (
   params: Omit<WgwUnifiedSearchParams, "signal"> & { signal?: AbortSignal },
@@ -37,6 +44,8 @@ export type UseDocsHomeListOptions = {
   fetcher?: DocsHomeFetcher;
   pageSize?: number;
   debounceMs?: number;
+  /** When set, enables Dexie cache read/write for offline home browse. */
+  offlineUsername?: string | null;
 };
 
 export type UseDocsHomeListResult = {
@@ -49,6 +58,10 @@ export type UseDocsHomeListResult = {
   hasMore: boolean;
   loadMore: () => void;
   reload: () => void;
+  /** True when the visible list is served from the offline cache (no live fetch). */
+  isOfflineListing: boolean;
+  /** True when showing cached data while offline or after a failed live refresh. */
+  isStaleListing: boolean;
 };
 
 /** Sort raw browse results newest-first (client-side safety net over server order). */
@@ -80,6 +93,16 @@ export function mapDocsHomeResults(
   return files;
 }
 
+function browseFilters(scopePrefix: string, debouncedQuery: string): DocsListingBrowseFilters {
+  return {
+    pathPrefix: scopePrefix || undefined,
+    query: debouncedQuery || undefined,
+    sources: DOCS_HOME_SOURCES,
+    extensions: DOCS_HOME_EXTENSIONS,
+    categories: DOCS_HOME_CATEGORIES,
+  };
+}
+
 export function useDocsHomeList({
   username,
   query = "",
@@ -87,6 +110,7 @@ export function useDocsHomeList({
   fetcher = fetchWgwUnifiedSearch,
   pageSize = DOCS_HOME_PAGE_SIZE,
   debounceMs = 300,
+  offlineUsername = null,
 }: UseDocsHomeListOptions): UseDocsHomeListResult {
   const [results, setResults] = useState<WgwUnifiedSearchResult[]>([]);
   const [hasMore, setHasMore] = useState(false);
@@ -95,6 +119,10 @@ export function useDocsHomeList({
   const [error, setError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
   const [debouncedQuery, setDebouncedQuery] = useState(() => query.trim());
+  const [isOfflineListing, setIsOfflineListing] = useState(false);
+  const [isStaleListing, setIsStaleListing] = useState(false);
+  const resultsRef = useRef(results);
+  resultsRef.current = results;
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -103,6 +131,11 @@ export function useDocsHomeList({
   }, [query, debounceMs]);
 
   const scopePrefix = pathPrefix?.trim() ?? "";
+  const filters = useMemo(
+    () => browseFilters(scopePrefix, debouncedQuery),
+    [scopePrefix, debouncedQuery],
+  );
+
   const baseParams = useMemo(
     () => ({
       sources: [...DOCS_HOME_SOURCES],
@@ -114,12 +147,60 @@ export function useDocsHomeList({
     [pageSize, scopePrefix],
   );
 
+  const persistListingCache = useCallback(
+    async (nextResults: WgwUnifiedSearchResult[], nextHasMore: boolean) => {
+      if (!offlineUsername) return;
+      await writeDocsListingToCache(offlineUsername, filters, {
+        results: nextResults,
+        hasMore: nextHasMore,
+      });
+    },
+    [filters, offlineUsername],
+  );
+
+  const applyCachedListing = useCallback(
+    async (online: boolean): Promise<boolean> => {
+      if (!offlineUsername) return false;
+      const cached = await readDocsListingFromCache(offlineUsername, filters);
+      if (!cached || cached.results.length === 0) return false;
+      setResults(cached.results);
+      setHasMore(false);
+      setError(null);
+      setIsOfflineListing(!online);
+      setIsStaleListing(!online);
+      setLoading(false);
+      return true;
+    },
+    [filters, offlineUsername],
+  );
+
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true);
-    setLoadingMore(false);
-    setError(null);
+    let cancelled = false;
+
     void (async () => {
+      setLoading(true);
+      setLoadingMore(false);
+      setError(null);
+      setIsOfflineListing(false);
+      setIsStaleListing(false);
+
+      const online = readBrowserOnline();
+      const hadCache = await applyCachedListing(online);
+      if (cancelled) return;
+
+      if (!online) {
+        if (!hadCache) {
+          setResults([]);
+          setHasMore(false);
+          setError(null);
+          setIsOfflineListing(true);
+          setIsStaleListing(false);
+        }
+        setLoading(false);
+        return;
+      }
+
       try {
         const data = await fetcher({
           ...baseParams,
@@ -127,23 +208,37 @@ export function useDocsHomeList({
           offset: 0,
           signal: controller.signal,
         });
-        if (controller.signal.aborted) return;
-        setResults(data.results ?? []);
+        if (controller.signal.aborted || cancelled) return;
+        const nextResults = data.results ?? [];
+        setResults(nextResults);
         setHasMore(Boolean(data.hasMore));
+        setIsOfflineListing(false);
+        setIsStaleListing(false);
+        await persistListingCache(nextResults, Boolean(data.hasMore));
       } catch (err) {
-        if (controller.signal.aborted) return;
-        setError(err instanceof Error ? err.message : "Failed to load documents");
-        setResults([]);
-        setHasMore(false);
+        if (controller.signal.aborted || cancelled) return;
+        if (hadCache) {
+          setIsStaleListing(true);
+          setIsOfflineListing(false);
+          setError(null);
+        } else {
+          setError(err instanceof Error ? err.message : "Failed to load documents");
+          setResults([]);
+          setHasMore(false);
+        }
       } finally {
-        if (!controller.signal.aborted) setLoading(false);
+        if (!controller.signal.aborted && !cancelled) setLoading(false);
       }
     })();
-    return () => controller.abort();
-  }, [debouncedQuery, baseParams, fetcher, reloadToken]);
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [applyCachedListing, baseParams, debouncedQuery, fetcher, persistListingCache, reloadToken]);
 
   const loadMore = useCallback(() => {
-    if (loading || loadingMore || !hasMore) return;
+    if (loading || loadingMore || !hasMore || isOfflineListing) return;
     const controller = new AbortController();
     setLoadingMore(true);
     void (async () => {
@@ -151,12 +246,14 @@ export function useDocsHomeList({
         const data = await fetcher({
           ...baseParams,
           q: debouncedQuery || undefined,
-          offset: results.length,
+          offset: resultsRef.current.length,
           signal: controller.signal,
         });
         if (controller.signal.aborted) return;
-        setResults((prev) => [...prev, ...(data.results ?? [])]);
+        const merged = [...resultsRef.current, ...(data.results ?? [])];
+        setResults(merged);
         setHasMore(Boolean(data.hasMore));
+        await persistListingCache(merged, Boolean(data.hasMore));
       } catch (err) {
         if (controller.signal.aborted) return;
         setError(err instanceof Error ? err.message : "Failed to load documents");
@@ -164,11 +261,37 @@ export function useDocsHomeList({
         if (!controller.signal.aborted) setLoadingMore(false);
       }
     })();
-  }, [loading, loadingMore, hasMore, fetcher, baseParams, debouncedQuery, results.length]);
+  }, [
+    baseParams,
+    debouncedQuery,
+    fetcher,
+    hasMore,
+    isOfflineListing,
+    loading,
+    loadingMore,
+    persistListingCache,
+  ]);
 
   const reload = useCallback(() => setReloadToken((token) => token + 1), []);
 
+  useOnReconnect(
+    useCallback(() => {
+      if (!offlineUsername) return;
+      reload();
+    }, [offlineUsername, reload]),
+  );
+
   const files = useMemo(() => mapDocsHomeResults(results, username), [results, username]);
 
-  return { files, loading, loadingMore, error, hasMore, loadMore, reload };
+  return {
+    files,
+    loading,
+    loadingMore,
+    error,
+    hasMore,
+    loadMore,
+    reload,
+    isOfflineListing,
+    isStaleListing,
+  };
 }

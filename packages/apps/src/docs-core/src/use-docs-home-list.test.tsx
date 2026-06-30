@@ -1,5 +1,6 @@
+import "fake-indexeddb/auto";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { WgwUnifiedSearchData, WgwUnifiedSearchResult } from "@/lib/api/wgw/search";
 import {
   mapDocsHomeResults,
@@ -7,6 +8,21 @@ import {
   useDocsHomeList,
   type DocsHomeFetcher,
 } from "@/docs-core/src/use-docs-home-list";
+import { writeDocsListingToCache } from "@/lib/offline/docs-listing-offline-store";
+
+vi.mock("@/lib/offline/core/browser-online", () => ({
+  readBrowserOnline: vi.fn(() => true),
+}));
+
+vi.mock("@/hooks/use-connectivity", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/hooks/use-connectivity")>();
+  return {
+    ...actual,
+    useOnReconnect: () => undefined,
+  };
+});
+
+import { readBrowserOnline } from "@/lib/offline/core/browser-online";
 
 function result(
   id: number,
@@ -91,6 +107,10 @@ describe("mapDocsHomeResults", () => {
 });
 
 describe("useDocsHomeList", () => {
+  beforeEach(() => {
+    vi.mocked(readBrowserOnline).mockReturnValue(true);
+  });
+
   it("loads the first page and paginates with loadMore", async () => {
     const fetcher = createFetcher(FIXTURES, 2);
     const { result: hook } = renderHook(() =>
@@ -162,6 +182,34 @@ describe("useDocsHomeList", () => {
 
     rerender({ prefix: "users/alice" });
     await waitFor(() => expect(hook.current.files.map((f) => f.title)).toEqual(["A", "C", "E"]));
+  });
+
+  it("falls back to cached listing when offline", async () => {
+    vi.mocked(readBrowserOnline).mockReturnValue(false);
+    await writeDocsListingToCache(
+      "alice",
+      { query: "" },
+      {
+        results: FIXTURES.slice(0, 2),
+        hasMore: true,
+      },
+    );
+
+    const fetcher = vi.fn(createFetcher(FIXTURES, 2));
+    const { result: hook } = renderHook(() =>
+      useDocsHomeList({
+        username: "alice",
+        fetcher,
+        debounceMs: 0,
+        offlineUsername: "alice",
+      }),
+    );
+
+    await waitFor(() => expect(hook.current.loading).toBe(false));
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(hook.current.files.map((f) => f.title)).toEqual(["A", "B"]);
+    expect(hook.current.isOfflineListing).toBe(true);
+    expect(hook.current.isStaleListing).toBe(true);
   });
 });
 
