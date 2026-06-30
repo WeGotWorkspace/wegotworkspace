@@ -363,6 +363,15 @@
   color: color-mix(in oklab, var(--color-ink) 45%, transparent);
 }
 
+.drive-workspace .drive-offline-badge {
+  @apply inline-block size-2 shrink-0 rounded-full;
+  background-color: var(--color-emerald);
+}
+
+.drive-workspace .drive-offline-badge--pending {
+  background-color: var(--color-amber, #d97706);
+}
+
 .drive-workspace .drive-list-muted {
   color: color-mix(in oklab, var(--color-ink) 60%, transparent);
 }

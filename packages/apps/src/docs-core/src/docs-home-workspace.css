@@ -15,6 +15,11 @@
     var(--docs-border, color-mix(in oklab, var(--color-ink) 12%, transparent));
 }
 
+.docs-home-workspace .docs-home-pane__badge-legend {
+  @apply mx-4 mb-0 mt-0 px-0 pb-2 text-xs md:mx-6;
+  color: color-mix(in oklab, var(--color-ink) 55%, transparent);
+}
+
 .docs-home-workspace .docs-home-pane__body {
   @apply relative flex min-h-0 flex-1 flex-col;
 }

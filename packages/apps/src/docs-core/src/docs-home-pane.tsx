@@ -28,6 +28,19 @@ export type DocsHomePaneProps = {
   error: string | null;
   /** Row ids that cannot be opened while offline (muted styling). */
   offlineUnavailableIds?: ReadonlySet<string>;
+  /** Row ids explicitly pinned for offline use. */
+  offlinePinnedIds?: ReadonlySet<string>;
+  /** Row ids with pending offline sync (collab save or outbox). */
+  offlinePendingSyncIds?: ReadonlySet<string>;
+  /** Show dot legend under the home header. */
+  showOfflineBadgeLegend?: boolean;
+  /** Optional per-file menu actions (e.g. make/remove offline copy). */
+  extraFileActions?: (file: DriveFile) => import("@/action-bar/src/action-bar").ActionBarAction[];
+  pinLoadingId?: string | null;
+  offlineLabels?: Pick<
+    DocsUILabels,
+    "offlineAvailable" | "offlinePendingSync" | "makeAvailableOffline" | "removeOfflineCopy"
+  >;
   query: string;
   onQueryChange: (query: string) => void;
   viewMode: ViewMode;
@@ -57,6 +70,12 @@ export function DocsHomePane({
   hasMore,
   error,
   offlineUnavailableIds,
+  offlinePinnedIds,
+  offlinePendingSyncIds,
+  showOfflineBadgeLegend = false,
+  extraFileActions,
+  pinLoadingId,
+  offlineLabels,
   query,
   onQueryChange,
   viewMode,
@@ -191,6 +210,11 @@ export function DocsHomePane({
     onMove: onMove ?? noop,
     onTrash: onTrash ?? noop,
     offlineUnavailableIds,
+    offlinePinnedIds,
+    offlinePendingSyncIds,
+    extraFileActions,
+    pinLoadingId,
+    offlineBadgeLabels: offlineLabels,
   };
 
   return (
@@ -215,6 +239,12 @@ export function DocsHomePane({
         />
       </div>
 
+      {showOfflineBadgeLegend ? (
+        <p className="docs-home-pane__badge-legend" role="note">
+          {labels.homeOfflineBadgeLegend}
+        </p>
+      ) : null}
+
       <div className="docs-home-pane__body drive-workspace">
         {loading ? (
           <CollectionState variant="loading">{labels.homeLoading}</CollectionState>
@@ -234,7 +264,6 @@ export function DocsHomePane({
                 activeId={activeId}
                 showKindColumn={false}
                 locationColumnLabel={labels.homeLocationColumn}
-                offlineUnavailableIds={offlineUnavailableIds}
               />
             )}
             {hasMore ? (

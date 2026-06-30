@@ -247,6 +247,10 @@
   @apply flex min-h-0 flex-1 flex-col overflow-hidden;
 }
 
+.docs-workspace__retry-callout {
+  @apply mx-4 mt-4 shrink-0 md:mx-6;
+}
+
 .docs-workspace .docs-comments-floating-layer {
   --docs-accent: #3b82f6;
 }
