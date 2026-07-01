@@ -456,12 +456,14 @@ function FileTile({
         />
         <span className="drive-file-tile__kind-icon shrink-0">{kindIcon[file.kind]}</span>
         <div className="drive-file-tile__text min-w-0 flex-1">
-          <span className="drive-file-tile__title">{file.title}</span>
-          <DriveOfflineBadge
-            pinned={isOfflinePinned}
-            pending={isOfflinePendingSync}
-            labels={offlineBadgeLabels}
-          />
+          <div className="drive-file-tile__title-row">
+            <span className="drive-file-tile__title">{file.title}</span>
+            <DriveOfflineBadge
+              pinned={isOfflinePinned}
+              pending={isOfflinePendingSync}
+              labels={offlineBadgeLabels}
+            />
+          </div>
           {showLocation && file.location ? (
             <span className="drive-file-tile__location">{file.location}</span>
           ) : null}
