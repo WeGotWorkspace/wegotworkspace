@@ -1,9 +1,12 @@
 /** @vitest-environment jsdom */
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { AppToastShowOptions } from "@/hooks/use-app-toast";
 import { useSyncRetryToast } from "@/hooks/use-sync-retry-toast";
 
-const show = vi.fn(() => "toast-1");
+const show = vi.fn<(title: string, options?: AppToastShowOptions) => string | number>(
+  () => "toast-1",
+);
 const dismiss = vi.fn();
 
 vi.mock("@/hooks/use-app-toast", () => ({

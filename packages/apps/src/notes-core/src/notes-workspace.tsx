@@ -158,9 +158,9 @@ export function NotesWorkspace({
 
   useSyncRetryToast({
     active: failedSyncCount > 0,
-    title: labels.syncFailedTitle,
-    message: labels.syncFailedMessage,
-    retryLabel: labels.retrySync,
+    title: L.syncFailedTitle,
+    message: L.syncFailedMessage,
+    retryLabel: L.retrySync,
     onRetry: handleRetrySync,
   });
 
