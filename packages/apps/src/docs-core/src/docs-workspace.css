@@ -230,19 +230,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-.docs-page-size-select {
-  @apply flex items-center;
-}
-
-.docs-page-size-select__trigger {
-  --input-height: 2rem;
-  --input-font-size: 0.8125rem;
-  --input-padding-x: 0.625rem;
-  width: auto;
-  min-width: 6.5rem;
-  color: var(--docs-text);
-}
-
 .docs-workspace__editor {
   @apply flex min-h-0 flex-1 flex-col overflow-hidden;
 }
@@ -266,9 +253,6 @@
   @apply min-h-0 flex-1;
   --text-editor-comment: var(--docs-accent);
   --text-editor-shadow-sheet: 0 1px 2px #0000000a, 0 10px 30px -10px #0f172a1f;
-  /* Pagination chrome: cream gutter between pages + subtle page border */
-  --text-editor-page-gap: var(--docs-canvas);
-  --text-editor-page-gap-border: var(--docs-border);
   --text-editor-format-btn-color: color-mix(in oklab, var(--docs-text) 70%, transparent);
   --text-editor-format-btn-hover-bg: color-mix(in oklab, var(--docs-accent) 10%, transparent);
   --text-editor-format-btn-hover-color: var(--docs-accent);
@@ -367,25 +351,6 @@
   .ProseMirror {
   min-height: 0;
   height: auto;
-}
-
-/*
- * Paginated Docs: the pagination plugin owns the Letter-sized page column, so
- * drop the A4 sheet sizing/chrome above and let the plugin's page boxes center
- * on the cream canvas. (Higher specificity than the `--fill` surface rule via
- * the extra `--paginated` class.)
- */
-.docs-workspace__editor
-  .text-editor:not(.text-editor--view-source)
-  .text-editor-sheet--paginated.text-editor-sheet--fill
-  .text-editor-sheet__surface {
-  width: var(--text-editor-page-width, fit-content);
-  max-width: var(--text-editor-page-width, none);
-  min-height: 0;
-  margin-inline: auto;
-  background: transparent;
-  box-shadow: none;
-  padding: 0;
 }
 
 .docs-workspace .workspace-app-layout__panel {

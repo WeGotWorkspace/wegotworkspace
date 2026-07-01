@@ -80,7 +80,6 @@ export const docsLabels = {
   suggestionsToggleHide: "Hide suggestions",
   suggestionsAccept: "Accept suggestion",
   suggestionsReject: "Reject suggestion",
-  pageSizeLabel: "Page size",
 } as const;
 
 export type DocsUILabels = typeof docsLabels;
