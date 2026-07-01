@@ -1,7 +1,6 @@
 import type { MouseEvent as ReactMouseEvent, ReactNode, RefObject } from "react";
 import { Circle, Pencil, RefreshCw, Trash2, UserMinus } from "lucide-react";
-import { Button, IconButton } from "@/button/src/button";
-import { Callout } from "@/callout/src/callout";
+import { IconButton } from "@/button/src/button";
 import { ListItem } from "@/list-item/src/list-item";
 import { ViewHeader } from "@/view-header/src/view-header";
 import { ContactUserAvatar } from "./contact-user-avatar";
@@ -47,10 +46,6 @@ type ContactsListPanelProps = {
   onRefreshList?: () => void;
   /** Card ids with unsynced local changes; rendered with a subtle pending-sync dot. */
   pendingCardIds?: ReadonlySet<string>;
-  /** Number of outbox rows that failed to sync for a transient reason. */
-  failedSyncCount?: number;
-  /** Retry handler for failed outbox rows (triggers a sync flush). */
-  onRetrySync?: () => void;
 };
 
 export function ContactsListPanel({
@@ -82,20 +77,7 @@ export function ContactsListPanel({
   selectionBar,
   onRefreshList,
   pendingCardIds,
-  failedSyncCount = 0,
-  onRetrySync,
 }: ContactsListPanelProps) {
-  const retryCallout =
-    failedSyncCount > 0 && onRetrySync ? (
-      <Callout
-        className="contacts-list-panel__retry-callout"
-        severity="error"
-        title={L.syncFailedTitle}
-        message={L.syncFailedMessage}
-        action={<Button variant="subtle" size="sm" label={L.retrySync} onClick={onRetrySync} />}
-      />
-    ) : null;
-
   return {
     header: (
       <ViewHeader
@@ -153,7 +135,6 @@ export function ContactsListPanel({
     ),
     listContent: (
       <>
-        {retryCallout}
         {listLoading ? (
           <div className="contacts-list-panel__loading" aria-busy>
             <LoadingSpinner size="lg" label={L.listLoading} />

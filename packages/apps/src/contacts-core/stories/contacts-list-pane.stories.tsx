@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { expect, userEvent, within } from "storybook/test";
 import { CollectionListWorkspace } from "@/collection-layout/src/collection-layout";
 import { ContactsListPanel } from "@/contacts-core/src/contacts-list-panel";
+import { useSyncRetryToast } from "@/hooks/use-sync-retry-toast";
 import { contactsGroupViewKey } from "@/contacts-core/src/contacts-group-utils";
 import { useContactsPaneStoryController } from "./contacts-pane-stories.harness";
 import { ContactsStoryScope } from "./contacts-story-scope";
@@ -30,6 +31,14 @@ function ContactsListPaneHarness({
         ? { listLoading: true }
         : undefined,
   );
+
+  useSyncRetryToast({
+    active: (failedSyncCount ?? 0) > 0,
+    title: controller.L.syncFailedTitle,
+    message: controller.L.syncFailedMessage,
+    retryLabel: controller.L.retrySync,
+    onRetry: () => {},
+  });
 
   useEffect(() => {
     if (preset === "inGroup") {
@@ -68,8 +77,6 @@ function ContactsListPaneHarness({
     selectionBar: controller.selectionBar,
     onRefreshList: () => {},
     pendingCardIds: pendingCardIds ? new Set(pendingCardIds) : undefined,
-    failedSyncCount,
-    onRetrySync: () => {},
   });
 
   return (
@@ -124,10 +131,10 @@ export const PendingSync: Story = {
 export const RetrySync: Story = {
   tags: ["vitest-ci"],
   args: { preset: "default", failedSyncCount: 2 },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await expect(canvas.getByText("Some changes couldn’t sync")).toBeInTheDocument();
-    await expect(canvas.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+  play: async () => {
+    const body = within(document.body);
+    await expect(body.getByText("Some changes couldn’t sync")).toBeInTheDocument();
+    await expect(body.getByRole("button", { name: "Retry" })).toBeInTheDocument();
   },
 };
 
