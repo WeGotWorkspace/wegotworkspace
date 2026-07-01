@@ -33,9 +33,8 @@ function cssLengthToPx(length: string, rootFontSizePx = 16): number {
 }
 
 /**
- * Resolve `--text-editor-sheet-padding` on `scope` (or `:root`) to px for plugin
- * layout maths. Screen pagination and print `@page` margins both derive from the
- * same CSS token — this helper keeps JS page-height calculations in sync.
+ * Resolve `--text-editor-sheet-padding` on `scope` (or `:root`) to px for layout
+ * maths. Print `@page` margins derive from the same CSS token.
  */
 export function resolveTextEditorSheetMarginPx(scope: Element | null = null): number {
   if (typeof document === "undefined") {

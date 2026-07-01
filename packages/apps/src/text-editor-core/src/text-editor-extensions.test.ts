@@ -62,31 +62,4 @@ describe("text editor extensions", () => {
       console.warn = originalWarn;
     }
   });
-
-  it("excludes the pagination extension by default", () => {
-    const names = createTextEditorExtensions({ format: "markdown" }).map((ext) => ext.name);
-    expect(names).not.toContain("PaginationPlus");
-  });
-
-  it("includes the pagination extension when pagination is enabled", () => {
-    const names = createTextEditorExtensions({ format: "markdown", pagination: true }).map(
-      (ext) => ext.name,
-    );
-    expect(names).toContain("PaginationPlus");
-    expect(duplicateExtensionNames(names)).toEqual([]);
-  });
-
-  it("threads pagination through the collaborative editor without duplicating extensions", () => {
-    const ydoc = new Y.Doc();
-    const awareness = new Awareness(ydoc);
-    const names = createCollaborativeTextEditorExtensions({
-      document: ydoc,
-      awareness,
-      user: { name: "Alex", color: "#2563eb" },
-      format: "markdown",
-      pagination: true,
-    }).map((ext) => ext.name);
-    expect(names).toContain("PaginationPlus");
-    expect(duplicateExtensionNames(names)).toEqual([]);
-  });
 });

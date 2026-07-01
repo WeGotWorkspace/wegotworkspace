@@ -34,8 +34,7 @@ function cssLengthToPx(length: string, rootFontSizePx = 16): number {
 
 /**
  * Resolve `--text-editor-prose-font-size` on `scope` (or `:root`) to px for layout
- * maths. Screen pagination and print typography both derive from the same CSS
- * token — this helper keeps JS calculations in sync when needed.
+ * maths. Print typography derives from the same CSS token.
  */
 export function resolveTextEditorProseFontSizePx(scope: Element | null = null): number {
   const host = scope ?? document.documentElement;

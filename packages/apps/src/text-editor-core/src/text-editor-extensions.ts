@@ -21,10 +21,6 @@ import { Markdown } from "tiptap-markdown";
 import type { Awareness } from "y-protocols/awareness";
 import type * as Y from "yjs";
 import type { TextEditorContentFormat } from "@/text-editor-core/src/text-editor-content";
-import {
-  createTextEditorPaginationExtension,
-  type TextEditorPageFormat,
-} from "@/text-editor-core/src/text-editor-pagination";
 import { PlainTextPaste } from "@/text-editor-core/src/text-editor-plain-paste";
 
 export { CommentMark };
@@ -61,13 +57,6 @@ export const LegacySuggestionMark = Mark.create({
 export type CreateTextEditorExtensionsOptions = {
   placeholder?: string;
   format?: TextEditorContentFormat;
-  /**
-   * Visual multi-page pagination. Off by default; Docs opts in.
-   * Decoration-only — never changes the stored content.
-   */
-  pagination?: boolean;
-  /** Page size for visual pagination (defaults to A4). Ignored unless `pagination`. */
-  pageFormat?: TextEditorPageFormat;
 };
 
 export function createTextEditorExtensions(
@@ -110,10 +99,6 @@ export function createTextEditorExtensions(
 
   if (format === "text") {
     extensions.push(PlainTextPaste);
-  }
-
-  if (options.pagination) {
-    extensions.push(createTextEditorPaginationExtension(options.pageFormat));
   }
 
   return extensions;
