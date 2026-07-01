@@ -11,7 +11,7 @@ export type DriveFile = Note & {
   kind: FileKind;
   size: string;
   apiPath?: string;
-  /** Top-level drive location label (e.g. `My Drive`, `Groups/{name}`) for cross-drive listings. */
+  /** Top-level drive location label (e.g. `My Drive`, shared drive name) for cross-drive listings. */
   location?: string;
 };
 

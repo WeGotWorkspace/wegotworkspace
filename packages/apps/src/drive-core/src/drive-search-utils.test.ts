@@ -3,6 +3,7 @@ import {
   apiPathFromSearchSourceKey,
   driveFileFromSearchResult,
   driveLocationLabel,
+  isSharedDriveApiPath,
   parentVirtualPath,
 } from "@/drive-core/src/drive-search-utils";
 import type { DriveUnifiedSearchResult } from "@/drive-core/src/drive-types";
@@ -34,12 +35,24 @@ describe("driveLocationLabel", () => {
     expect(driveLocationLabel("users/alice/notes.md")).toBe("My Drive");
   });
 
-  it("labels group drives as Groups/{name}", () => {
-    expect(driveLocationLabel("groups/engineering/rfc.md")).toBe("Groups/engineering");
+  it("labels group drives with the drive name only", () => {
+    expect(driveLocationLabel("groups/engineering/rfc.md")).toBe("engineering");
   });
 
   it("returns null for unrecognized keys", () => {
     expect(driveLocationLabel("misc/file.md")).toBeNull();
+  });
+});
+
+describe("isSharedDriveApiPath", () => {
+  it("detects group storage paths", () => {
+    expect(isSharedDriveApiPath("/groups/team/Documents/ROADMAP.md")).toBe(true);
+    expect(isSharedDriveApiPath("groups/team/file.md")).toBe(true);
+  });
+
+  it("returns false for personal drive paths", () => {
+    expect(isSharedDriveApiPath("/users/alice/notes.md")).toBe(false);
+    expect(isSharedDriveApiPath(undefined)).toBe(false);
   });
 });
 

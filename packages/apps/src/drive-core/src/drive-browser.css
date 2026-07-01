@@ -262,6 +262,19 @@
   color: color-mix(in oklab, var(--color-ink) 55%, transparent);
 }
 
+.drive-workspace .drive-location-label {
+  @apply flex min-w-0 items-center gap-1.5 text-xs;
+  color: color-mix(in oklab, var(--color-ink) 55%, transparent);
+}
+
+.drive-workspace .drive-location-label__icon {
+  @apply size-3.5 shrink-0;
+}
+
+.drive-workspace .drive-location-label__text {
+  @apply min-w-0 truncate;
+}
+
 .drive-workspace .drive-list-view {
   @apply min-w-0 max-w-full;
 }

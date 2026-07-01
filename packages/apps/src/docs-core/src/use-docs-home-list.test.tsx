@@ -91,7 +91,7 @@ describe("mapDocsHomeResults", () => {
       kind: "doc",
       apiPath: "/users/alice/A.md",
     });
-    expect(files[1].location).toBe("Groups/eng");
+    expect(files[1].location).toBe("eng");
   });
 
   it("dedupes repeated source keys", () => {
