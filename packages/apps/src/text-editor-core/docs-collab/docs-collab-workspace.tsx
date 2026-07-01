@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import type { Editor } from "@tiptap/react";
 import { Code2, MessageSquare, Printer } from "lucide-react";
-import { Button } from "@/button/src/button";
-import { Callout } from "@/callout/src/callout";
 import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { IconButton } from "@/button/src/button";
@@ -20,6 +18,7 @@ import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import { cn } from "@/lib/utils";
 import { useConnectivity } from "@/hooks/use-connectivity";
+import { useSyncRetryToast } from "@/hooks/use-sync-retry-toast";
 import {
   shouldAutoOpenCommentsForDraft,
   shouldAutoOpenCommentsForThreads,
@@ -203,6 +202,13 @@ function DocsCollabWorkspaceInner({
   const handleRetrySync = useCallback(() => {
     void saveNow().catch(() => undefined);
   }, [saveNow]);
+  useSyncRetryToast({
+    active: showFailedSync,
+    title: labels.syncFailedTitle,
+    message: labels.syncFailedMessage,
+    retryLabel: labels.retrySync,
+    onRetry: handleRetrySync,
+  });
   const awarenessPresencePeers = useDocsCollabAwarenessPresence(collabSession?.awareness);
   const presencePeers = useMemo(
     () =>
@@ -635,22 +641,6 @@ function DocsCollabWorkspaceInner({
           }
           main={
             <div className="docs-workspace__editor">
-              {showFailedSync ? (
-                <Callout
-                  className="docs-workspace__retry-callout"
-                  severity="error"
-                  title={labels.syncFailedTitle}
-                  message={labels.syncFailedMessage}
-                  action={
-                    <Button
-                      variant="subtle"
-                      size="sm"
-                      label={labels.retrySync}
-                      onClick={handleRetrySync}
-                    />
-                  }
-                />
-              ) : null}
               {collabSession ? (
                 <DocsCollabEditor
                   ydoc={collabSession.ydoc}

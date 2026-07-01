@@ -15,6 +15,7 @@ import type { ContactsWorkspaceProps } from "@/contacts-core/src/contacts-worksp
 import { useCallback } from "react";
 import { useContactsController } from "@/contacts-core/src/use-contacts-controller";
 import { useDocumentTitle } from "@/lib/document-title";
+import { useSyncRetryToast } from "@/hooks/use-sync-retry-toast";
 import { useContactsFailedSync } from "@/contacts-core/src/use-contacts-failed-sync";
 import { useContactsPendingSync } from "@/contacts-core/src/use-contacts-pending-sync";
 import { useContactsSidebarModel } from "@/contacts-core/src/use-contacts-sidebar-model";
@@ -139,6 +140,14 @@ export function ContactsWorkspace({
       .finally(() => onRefreshList?.());
   }, [offlineUsername, onRefreshList]);
 
+  useSyncRetryToast({
+    active: failedSyncCount > 0,
+    title: labels.syncFailedTitle,
+    message: labels.syncFailedMessage,
+    retryLabel: labels.retrySync,
+    onRetry: handleRetrySync,
+  });
+
   const { primarySidebarItems, groupSidebarItems } = useContactsSidebarModel({
     labels: L,
     view,
@@ -223,8 +232,6 @@ export function ContactsWorkspace({
             selectionBar,
             onRefreshList,
             pendingCardIds,
-            failedSyncCount,
-            onRetrySync: handleRetrySync,
           });
 
           return {

@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, userEvent, within } from "storybook/test";
 import { CollectionListWorkspace } from "@/collection-layout/src/collection-layout";
 import { NotesListPanel } from "@/notes-core/src/notes-list-panel";
+import { useSyncRetryToast } from "@/hooks/use-sync-retry-toast";
 import { useNotesPaneStoryController } from "./notes-pane-stories.harness";
 import { NotesStoryScope } from "./notes-story-scope";
 
@@ -31,6 +32,14 @@ export function NotesListPaneHarness({
   );
 
   const firstNotebook = controller.notes[0]?.notebook ?? "";
+
+  useSyncRetryToast({
+    active: (failedSyncCount ?? 0) > 0,
+    title: controller.L.syncFailedTitle,
+    message: controller.L.syncFailedMessage,
+    retryLabel: controller.L.retrySync,
+    onRetry: () => {},
+  });
 
   useEffect(() => {
     if (preset === "inNotebook" && firstNotebook) {
@@ -72,8 +81,6 @@ export function NotesListPaneHarness({
     selectionBar: controller.selectionBar,
     onRefreshList: () => {},
     pendingNoteIds: pendingNoteIds ? new Set(pendingNoteIds) : undefined,
-    failedSyncCount,
-    onRetrySync: () => {},
   });
 
   return (
@@ -126,10 +133,10 @@ export const PendingSync: Story = {
 export const RetrySync: Story = {
   tags: ["vitest-ci"],
   args: { preset: "default", failedSyncCount: 2 },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await expect(canvas.getByText("Some changes could not sync")).toBeInTheDocument();
-    await expect(canvas.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+  play: async () => {
+    const body = within(document.body);
+    await expect(body.getByText("Some changes could not sync")).toBeInTheDocument();
+    await expect(body.getByRole("button", { name: "Retry" })).toBeInTheDocument();
   },
 };
 

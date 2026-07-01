@@ -19,6 +19,10 @@ export type AppToastShowOptions = {
   canUndo?: boolean;
   onUndo?: () => void;
   undoLabel?: string;
+  /** When true with `onRetry`, renders a Retry control in the callout. */
+  canRetry?: boolean;
+  onRetry?: () => void;
+  retryLabel?: string;
 };
 
 export type AppToastApi = {
@@ -42,9 +46,13 @@ export function useAppToast(): AppToastApi {
       canUndo = false,
       onUndo,
       undoLabel,
+      canRetry = false,
+      onRetry,
+      retryLabel,
     } = options ?? {};
 
     const showUndo = Boolean(canUndo && onUndo);
+    const showRetry = Boolean(canRetry && onRetry);
 
     return sonnerToast.custom(
       (id) =>
@@ -57,6 +65,9 @@ export function useAppToast(): AppToastApi {
           showUndo,
           onUndo,
           undoLabel,
+          showRetry,
+          onRetry,
+          retryLabel,
         }),
       {
         duration,

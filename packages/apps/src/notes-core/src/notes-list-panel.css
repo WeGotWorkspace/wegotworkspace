@@ -32,7 +32,3 @@
 .notes-list-panel__pending-dot {
   color: var(--color-emerald);
 }
-
-.notes-list-panel__retry-callout {
-  margin: 0.75rem 1rem 0;
-}

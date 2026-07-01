@@ -1,7 +1,6 @@
 import type { MouseEvent as ReactMouseEvent, ReactNode, RefObject } from "react";
 import { Archive, Circle, Pencil, RefreshCw, Star, Trash2 } from "lucide-react";
-import { Button, IconButton } from "@/button/src/button";
-import { Callout } from "@/callout/src/callout";
+import { IconButton } from "@/button/src/button";
 import { ListItem } from "@/list-item/src/list-item";
 import { ViewHeader } from "@/view-header/src/view-header";
 import type { Note } from "@/lib/models/note";
@@ -45,8 +44,6 @@ type NotesListPanelProps = {
   selectionBar: ReactNode;
   onRefreshList?: () => void;
   pendingNoteIds?: ReadonlySet<string>;
-  failedSyncCount?: number;
-  onRetrySync?: () => void;
 };
 
 export function NotesListPanel({
@@ -81,20 +78,7 @@ export function NotesListPanel({
   selectionBar,
   onRefreshList,
   pendingNoteIds,
-  failedSyncCount = 0,
-  onRetrySync,
 }: NotesListPanelProps) {
-  const retryCallout =
-    failedSyncCount > 0 && onRetrySync ? (
-      <Callout
-        className="notes-list-panel__retry-callout"
-        severity="error"
-        title={L.syncFailedTitle}
-        message={L.syncFailedMessage}
-        action={<Button variant="subtle" size="sm" label={L.retrySync} onClick={onRetrySync} />}
-      />
-    ) : null;
-
   return {
     header: (
       <ViewHeader
@@ -178,7 +162,6 @@ export function NotesListPanel({
       </div>
     ) : (
       <>
-        {retryCallout}
         <WorkspaceSwipeList isTouch={isTouch}>
           {visibleNotes.map((note) => {
             const dragHandlers = itemDragHandlers(note.id) as {

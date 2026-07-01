@@ -12,6 +12,9 @@ export type AppToastCalloutProps = {
   showUndo?: boolean;
   onUndo?: () => void;
   undoLabel?: string;
+  showRetry?: boolean;
+  onRetry?: () => void;
+  retryLabel?: string;
 };
 
 export function AppToastCallout({
@@ -23,7 +26,14 @@ export function AppToastCallout({
   showUndo = false,
   onUndo,
   undoLabel = "Undo",
+  showRetry = false,
+  onRetry,
+  retryLabel = "Retry",
 }: AppToastCalloutProps) {
+  const showAction = showUndo || showRetry;
+  const actionLabel = showUndo ? undoLabel : retryLabel;
+  const onAction = showUndo ? onUndo : onRetry;
+
   return (
     <Callout
       className="w-full min-w-0"
@@ -32,14 +42,14 @@ export function AppToastCallout({
       message={message}
       icon={icon}
       action={
-        showUndo ? (
+        showAction ? (
           <Button
             type="button"
             variant="outline"
             size="sm"
-            label={undoLabel}
+            label={actionLabel}
             onClick={() => {
-              onUndo?.();
+              onAction?.();
               toast.dismiss(toastId);
             }}
           />
