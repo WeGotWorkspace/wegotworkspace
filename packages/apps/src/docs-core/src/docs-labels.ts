@@ -10,7 +10,6 @@ export const docsLabels = {
   homeLoadMore: "Load more",
   homeLoadError: "Could not load documents.",
   homeNotAvailableOffline: "This document is not available offline.",
-  makeAvailableOffline: "Make available offline",
   offlineAvailable: "Available offline",
   offlinePendingSync: "Pending sync",
   syncFailedTitle: "Some changes could not sync",

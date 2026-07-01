@@ -2,7 +2,6 @@ import { expect, test } from "@playwright/test";
 import {
   appendToActiveDocBody,
   blockReachabilityAndApi,
-  clearDocsOfflineStore,
   currentEditorText,
   docTokenOnServer,
   docsUrlForFile,
@@ -10,15 +9,11 @@ import {
   expectOfflineIndicator,
   expectPendingDotVisible,
   expectSyncCompleted,
-  gotoDocsHome,
   loginToDocs,
-  makeDocAvailableOfflineFromHome,
-  myDriveDocSearchPath,
   prepareDocsForOfflineSync,
   prepareGroupDocForOfflineSync,
   reloadDocsOffline,
   restoreNetwork,
-  seedDocAtPath,
   waitForDocSaved,
 } from "./helpers/docs-live";
 
@@ -154,22 +149,13 @@ test.describe("Docs offline sync (live app)", () => {
     await expect(page.locator(".ProseMirror")).toContainText(token);
   });
 
-  test("My Drive .md: pin from home, offline edit, reconnect persists", async ({ page }) => {
+  test("My Drive .md: open doc caches offline, edit reconnect persists", async ({ page }) => {
     const token = `e2e-pin-home-${Date.now()}`;
     const fileName = `e2e-pin-home-${Date.now()}.md`;
-    const searchPath = myDriveDocSearchPath(fileName);
-    const apiPath = `/${searchPath}`;
-
-    await loginToDocs(page);
-    await clearDocsOfflineStore(page);
-    await seedDocAtPath(page, apiPath, "# E2E pin-from-home\n");
-    await gotoDocsHome(page);
-    await makeDocAvailableOfflineFromHome(page, fileName);
+    const apiPath = await prepareDocsForOfflineSync(page, fileName);
 
     await page.context().setOffline(true);
     await expectOfflineIndicator(page);
-    await page.locator(".drive-list-row", { hasText: fileName }).click();
-    await expect(page.locator(".ProseMirror")).toBeVisible({ timeout: 30_000 });
 
     await appendToActiveDocBody(page, token);
     await expectPendingDotVisible(page);
@@ -179,21 +165,15 @@ test.describe("Docs offline sync (live app)", () => {
     await waitForDocSaved(page, apiPath, token);
   });
 
-  test("Group .md: pin from home, offline edit, reconnect persists", async ({ page }) => {
+  test("Group .md: open doc caches offline, edit reconnect persists", async ({ page }) => {
     const token = `e2e-pin-group-${Date.now()}`;
     const fileName = `e2e-pin-group-${Date.now()}.md`;
     const apiPath = `/groups/Engineering/${fileName}`;
 
-    await loginToDocs(page);
-    await clearDocsOfflineStore(page);
-    await seedDocAtPath(page, apiPath, "# E2E group pin\n");
-    await gotoDocsHome(page);
-    await makeDocAvailableOfflineFromHome(page, fileName);
+    await prepareGroupDocForOfflineSync(page, apiPath);
 
     await page.context().setOffline(true);
     await expectOfflineIndicator(page);
-    await page.locator(".drive-list-row", { hasText: fileName }).click();
-    await expect(page.locator(".ProseMirror")).toBeVisible({ timeout: 30_000 });
 
     await appendToActiveDocBody(page, token);
     await expectPendingDotVisible(page);
