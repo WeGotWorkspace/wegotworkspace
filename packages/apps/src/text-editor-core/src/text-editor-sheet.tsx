@@ -12,11 +12,6 @@ export type TextEditorSheetProps = {
   variant?: TextEditorSheetVariant;
   /** Grow the sheet to fill a flex parent (e.g. mail compose). Shadow and radius stay on the surface. */
   fill?: boolean;
-  /**
-   * Visual multi-page pagination is active: the plugin owns the page boxes, so
-   * the sheet surface drops its duplicate padding / shadow (`sheet` variant only).
-   */
-  paginated?: boolean;
   /** Slash command menu (off for plain `.txt` mode). */
   slashMenu?: boolean;
   /** Absolutely positioned overlays (e.g. margin comment cards). */
@@ -31,7 +26,6 @@ export function TextEditorSheet({
   editor,
   variant = "sheet",
   fill = false,
-  paginated = false,
   slashMenu = true,
   overlay,
   className,
@@ -46,7 +40,6 @@ export function TextEditorSheet({
         "text-editor-sheet",
         variant === "inline" && "text-editor-sheet--inline",
         fill && variant === "sheet" && "text-editor-sheet--fill",
-        paginated && variant === "sheet" && "text-editor-sheet--paginated",
         className,
       )}
     >

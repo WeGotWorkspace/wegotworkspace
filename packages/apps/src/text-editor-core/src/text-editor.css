@@ -379,59 +379,6 @@
   min-height: 0;
 }
 
-/*
- * Visual pagination (tiptap-pagination-plus): the plugin draws fixed-width
- * Letter page boxes inside `.ProseMirror` (border + per-page gaps/footer), so
- * the sheet surface drops its own padding / shadow / max-width and just
- * centers the page column. Gutter + border colors are parent-owned tokens.
- */
-.text-editor-sheet--paginated .text-editor-sheet__surface {
-  /* Screen gap height (tiptap `pageGap` / PAGE_GAP in pagination.ts). Color is
-   * `--text-editor-page-gap` (parent-owned, e.g. docs `--docs-canvas`). */
-  --text-editor-page-gap-size: 32px;
-  /* Track the selected page format (set by the editor root); the plugin also
-   * sizes the inner page box, so `fit-content` is a safe fallback. */
-  width: var(--text-editor-page-width, fit-content);
-  max-width: var(--text-editor-page-width, none);
-  margin-inline: auto;
-  padding: 0;
-  background: transparent;
-  box-shadow: none;
-  border-radius: 0;
-}
-
-@media screen {
-  .text-editor-sheet--paginated .text-editor-sheet__surface .ProseMirror.rm-with-pagination {
-    background: var(--text-editor-sheet);
-    /* Screen-only: the plugin renders one continuous bordered column with cream
-     * page gaps; the sheet shadow frames that column as a distinct stack. */
-    box-shadow: var(--text-editor-shadow-sheet);
-    /* Override plugin inline `--rm-margin-*` px so screen inset tracks the token. */
-    --rm-margin-top: var(--text-editor-sheet-padding) !important;
-    --rm-margin-bottom: var(--text-editor-sheet-padding) !important;
-    --rm-margin-left: var(--text-editor-sheet-padding) !important;
-    --rm-margin-right: var(--text-editor-sheet-padding) !important;
-  }
-}
-
-/*
- * Source-view split shows a flat WYSIWYG pane, so neutralize the plugin's
- * fixed-width page chrome (inline styles → needs `!important`) and let content
- * flow continuously.
- */
-.text-editor--view-source .text-editor__formatted .ProseMirror.rm-with-pagination {
-  width: 100% !important;
-  min-height: 0 !important;
-  border: 0 !important;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-}
-
-.text-editor--view-source .text-editor__formatted .rm-with-pagination #pages,
-.text-editor--view-source .text-editor__formatted .rm-with-pagination .rm-first-page-header {
-  display: none !important;
-}
-
 .text-editor-prose {
   --highlight-amber: oklch(0.94 0.13 86);
   --highlight-amber-active: oklch(0.86 0.17 78);
@@ -931,63 +878,6 @@
     margin: var(--text-editor-print-page-margin, var(--text-editor-sheet-padding));
   }
 
-  /*
-   * Docs paginated print: named `@page` rules per footer selection. The print
-   * helper sets `data-text-editor-page-format` on `html`/`body`; the `page`
-   * property selects the matching rule. Margins use `--text-editor-print-page-margin`
-   * (mirrored from `--text-editor-sheet-padding` during print) so each printed
-   * page gets the same inset as the on-screen page box.
-   */
-  @page text-editor-a4 {
-    size: A4;
-    margin: var(--text-editor-print-page-margin, var(--text-editor-sheet-padding));
-  }
-
-  @page text-editor-letter {
-    size: letter;
-    margin: var(--text-editor-print-page-margin, var(--text-editor-sheet-padding));
-  }
-
-  @page text-editor-legal {
-    size: legal;
-    margin: var(--text-editor-print-page-margin, var(--text-editor-sheet-padding));
-  }
-
-  @page text-editor-a3 {
-    size: A3;
-    margin: var(--text-editor-print-page-margin, var(--text-editor-sheet-padding));
-  }
-
-  @page text-editor-a5 {
-    size: A5;
-    margin: var(--text-editor-print-page-margin, var(--text-editor-sheet-padding));
-  }
-
-  html.text-editor-print-active[data-text-editor-page-format="a4"],
-  html.text-editor-print-active[data-text-editor-page-format="a4"] body {
-    page: text-editor-a4;
-  }
-
-  html.text-editor-print-active[data-text-editor-page-format="letter"],
-  html.text-editor-print-active[data-text-editor-page-format="letter"] body {
-    page: text-editor-letter;
-  }
-
-  html.text-editor-print-active[data-text-editor-page-format="legal"],
-  html.text-editor-print-active[data-text-editor-page-format="legal"] body {
-    page: text-editor-legal;
-  }
-
-  html.text-editor-print-active[data-text-editor-page-format="a3"],
-  html.text-editor-print-active[data-text-editor-page-format="a3"] body {
-    page: text-editor-a3;
-  }
-
-  html.text-editor-print-active[data-text-editor-page-format="a5"],
-  html.text-editor-print-active[data-text-editor-page-format="a5"] body {
-    page: text-editor-a5;
-  }
-
   html.text-editor-print-active,
   body.text-editor-print-active {
     height: auto !important;
@@ -1070,6 +960,7 @@
   body.text-editor-print-active .text-editor-sheet__surface--print .ProseMirror {
     box-sizing: border-box !important;
     max-width: none !important;
+    width: 100% !important;
     height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
@@ -1082,29 +973,6 @@
     background: transparent !important;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
-  }
-
-  /*
-   * Paginated print: match the plugin's inner content column (page width minus
-   * sheet inset). Plain `width: 100%` reflows at the full page width (~794px)
-   * instead of the on-screen band (~650px), packing more text per printed page.
-   */
-  body.text-editor-print-active.text-editor-print-paginated
-    .text-editor-sheet__surface--print
-    .ProseMirror {
-    width: calc(
-      var(--rm-page-width, 794px) - var(--rm-margin-left, 72px) - var(--rm-margin-right, 72px)
-    ) !important;
-    max-width: calc(
-      var(--rm-page-width, 794px) - var(--rm-margin-left, 72px) - var(--rm-margin-right, 72px)
-    ) !important;
-    margin-inline: auto !important;
-  }
-
-  body.text-editor-print-active:not(.text-editor-print-paginated)
-    .text-editor-sheet__surface--print
-    .ProseMirror {
-    width: 100% !important;
   }
 
   body.text-editor-print-active .text-editor-sheet__surface--print .text-editor-prose {
@@ -1131,34 +999,8 @@
     display: none !important;
   }
 
-  /*
-   * Pagination is screen-only. Strip the plugin's page boxes, gaps, headers,
-   * footers, and inline chrome so the printed document flows continuously and
-   * the browser's `@page` margins drive per-page inset and breaks.
-   */
-  body.text-editor-print-active .rm-with-pagination #pages,
-  body.text-editor-print-active .rm-with-pagination [data-rm-pagination],
-  body.text-editor-print-active .rm-with-pagination .rm-first-page-header,
-  body.text-editor-print-active .rm-with-pagination .rm-page-header,
-  body.text-editor-print-active .rm-with-pagination .rm-page-footer,
-  body.text-editor-print-active .rm-with-pagination .rm-page-break,
-  body.text-editor-print-active .rm-with-pagination .rm-pagination-gap {
-    display: none !important;
-  }
-
-  body.text-editor-print-active .text-editor-print-page-start {
-    break-before: page !important;
-    page-break-before: always !important;
-  }
-
   body.text-editor-print-active
-    :is(
-      .text-editor__source,
-      .text-editor-source,
-      .text-editor-format-bar,
-      .docs-page-size-select,
-      .no-print
-    ) {
+    :is(.text-editor__source, .text-editor-source, .text-editor-format-bar, .no-print) {
     display: none !important;
   }
 
