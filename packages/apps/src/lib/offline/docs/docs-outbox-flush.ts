@@ -117,6 +117,7 @@ export function docsOutboxApiPath(row: OfflineOutboxRow): string | null {
   const payload = parsePayload(row);
   if (!payload) return null;
   if (payload.op === "create") return normalizeDocsAvailabilityPath(payload.apiPath);
+  if (payload.op === "star") return normalizeDocsAvailabilityPath(payload.path);
   return normalizeDocsAvailabilityPath(payload.from);
 }
 
