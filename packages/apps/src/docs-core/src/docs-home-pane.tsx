@@ -33,13 +33,7 @@ export type DocsHomePaneProps = {
   offlinePinnedIds?: ReadonlySet<string>;
   /** Row ids with pending offline sync (collab save or outbox). */
   offlinePendingSyncIds?: ReadonlySet<string>;
-  /** Optional per-file menu actions (e.g. make available offline). */
-  extraFileActions?: (file: DriveFile) => import("@/action-bar/src/action-bar").ActionBarAction[];
-  pinLoadingId?: string | null;
-  offlineLabels?: Pick<
-    DocsUILabels,
-    "offlineAvailable" | "offlinePendingSync" | "makeAvailableOffline"
-  >;
+  offlineLabels?: Pick<DocsUILabels, "offlineAvailable" | "offlinePendingSync">;
   query: string;
   onQueryChange: (query: string) => void;
   viewMode: ViewMode;
@@ -73,8 +67,6 @@ export function DocsHomePane({
   offlineUnavailableIds,
   offlinePinnedIds,
   offlinePendingSyncIds,
-  extraFileActions,
-  pinLoadingId,
   offlineLabels,
   query,
   onQueryChange,
@@ -212,8 +204,6 @@ export function DocsHomePane({
     offlineUnavailableIds,
     offlinePinnedIds,
     offlinePendingSyncIds,
-    extraFileActions,
-    pinLoadingId,
     offlineBadgeLabels: offlineLabels,
   };
 
