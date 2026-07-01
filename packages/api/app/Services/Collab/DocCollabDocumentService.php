@@ -6,6 +6,7 @@ namespace App\Services\Collab;
 
 use App\Services\Drive\DriveGroupResolver;
 use App\Services\Notes\NoteMarkdownCodec;
+use App\Services\Search\BestEffortSearchIndexSync;
 use App\Services\Search\SearchIndexerService;
 use App\Storage\StoragePaths;
 use App\Storage\WgwStorage;
@@ -34,6 +35,7 @@ final class DocCollabDocumentService
         private DriveGroupResolver $groups,
         private NoteMarkdownCodec $noteCodec,
         private SearchIndexerService $search,
+        private BestEffortSearchIndexSync $searchSync,
     ) {}
 
     public function getMarkdown(Request $request, mixed $room): string
@@ -133,7 +135,11 @@ final class DocCollabDocumentService
             $disk->put($documentKey, $markdown);
             // Keep the unified search index in sync with the written content so size and
             // body reflect the latest save without waiting for a later rename/upload.
-            $this->search->indexFileStorageKey($documentKey);
+            $this->searchSync->sync(
+                'collab',
+                fn () => $this->search->indexFileStorageKey($documentKey),
+                'files/'.$documentKey,
+            );
         }
 
         if ($hasYjs) {
