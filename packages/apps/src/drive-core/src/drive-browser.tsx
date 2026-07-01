@@ -351,6 +351,8 @@ function FolderTile({
         file={file}
         isStarred={isStarred}
         inTrash={inTrash}
+        canOpen={!selectionMode}
+        onOpen={onOpen}
         onDownload={onDownload}
         onStar={onStar}
         onRename={onRename}
@@ -484,6 +486,8 @@ function FileTile({
           file={file}
           isStarred={isStarred}
           inTrash={inTrash}
+          canOpen={!selectionMode}
+          onOpen={onOpen}
           onDownload={onDownload}
           onStar={onStar}
           onRename={onRename}
@@ -502,6 +506,8 @@ function DriveFileItemActions({
   file,
   isStarred,
   inTrash,
+  canOpen = true,
+  onOpen,
   onDownload,
   onStar,
   onRename,
@@ -514,6 +520,9 @@ function DriveFileItemActions({
   file: DriveFile;
   isStarred: boolean;
   inTrash: boolean;
+  /** When false, hide Open (matches double-click disabled in selection mode). */
+  canOpen?: boolean;
+  onOpen?: () => void;
   onDownload: (file: DriveFile) => void;
   onStar: () => void;
   onRename?: () => void;
@@ -524,8 +533,15 @@ function DriveFileItemActions({
 }) {
   const actions = buildDriveFileActions(
     labels,
-    { isStarred, inTrash, canDownload: file.kind !== "folder" },
     {
+      isStarred,
+      inTrash,
+      isFolder: file.kind === "folder",
+      canOpen,
+      canDownload: file.kind !== "folder",
+    },
+    {
+      onOpen,
       onDownload: () => onDownload(file),
       onStar,
       onRename,
@@ -753,6 +769,8 @@ export function DriveListView({
                       file={f}
                       isStarred={!!starred[f.id]}
                       inTrash={inTrash}
+                      canOpen={!selectionMode}
+                      onOpen={() => onOpen(f)}
                       onDownload={onDownload}
                       onStar={() => onStar(f.id)}
                       onRename={() => onRename(f)}
