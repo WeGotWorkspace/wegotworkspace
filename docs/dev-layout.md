@@ -103,6 +103,34 @@ See [`packages/api/docs/api-auth.md`](../packages/api/docs/api-auth.md) for env 
 
 If the API is down, the preview proxy returns **502** with `code: proxy_backend_down` (not a Laravel 500). When the API is up but JWT keys are missing, `/auth/token` returns **503** `config_error`.
 
+### Preview via host Apache or nginx (no Docker)
+
+Use these to exercise the **install-tree** layout (`apps/wegotworkspace`) behind a real web server — closer to shared hosting than `vite preview` (which serves `packages/apps/dist` only).
+
+```bash
+pnpm preview:apache   # http://127.0.0.1:4173 — Apache + mod_php when available
+pnpm preview:nginx    # http://127.0.0.1:4173 — nginx → PHP built-in on :9080
+```
+
+Both run `preview:bootstrap` first (same as `pnpm preview`). Default port is **4173** (`WGW_VITE_PREVIEW_PORT` in `.env.local`).
+
+**Prerequisites** — install via your package manager and ensure `httpd`/`apache2` or `nginx` is on `PATH`:
+
+```bash
+# macOS (Homebrew)
+brew install httpd php   # preview:apache (mod_php via libphp.so when present)
+brew install nginx       # preview:nginx
+
+# Debian/Ubuntu
+sudo apt install apache2 libapache2-mod-php nginx
+```
+
+Optional overrides when auto-detection fails: `WGW_HTTPD`, `WGW_NGINX`, `WGW_PHP_MODULE`, `WGW_HTTPD_PREFIX`, `WGW_HTTPD_MODULE_DIR`, `WGW_NGINX_PREFIX`, `WGW_NGINX_MIME_TYPES`.
+
+If `libphp.so` is missing, `preview:apache` falls back to Apache reverse-proxying to the PHP built-in server on `:9080` (`.htaccess` rewrite rules are not exercised in that mode).
+
+Configs are generated under `.wgw-preview/` (gitignored), adapted from [`docker/apache/vhost.conf`](../docker/apache/vhost.conf). Stop with Ctrl+C.
+
 ## Environment files
 
 See [`env.md`](env.md) — root `.env` (tooling), `packages/api/.env` (Laravel), `.env.local` (Vite / Storybook proxy).
