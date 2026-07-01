@@ -18,13 +18,19 @@ export function apiPathFromSearchSourceKey(sourceKey: string): string | null {
 
 /**
  * Top-level drive location label for a unified-search source key.
- * `users/...` → `My Drive`; `groups/{name}/...` → `Groups/{name}`; otherwise `null`.
+ * `users/...` → `My Drive`; `groups/{name}/...` → `{name}` (matches sidebar drive labels).
  */
 export function driveLocationLabel(sourceKey: string): string | null {
   const segments = sourceKey.split("/").filter(Boolean);
   if (segments[0] === "users") return "My Drive";
-  if (segments[0] === "groups" && segments[1]) return `Groups/${segments[1]}`;
+  if (segments[0] === "groups" && segments[1]) return segments[1];
   return null;
+}
+
+/** Whether a file's API path lives under a shared (group) drive. */
+export function isSharedDriveApiPath(apiPath: string | undefined): boolean {
+  const normalized = apiPath?.trim().replace(/^\/+/, "") ?? "";
+  return normalized.startsWith("groups/");
 }
 
 function fileKindFromCategory(category: string | null | undefined): FileKind {

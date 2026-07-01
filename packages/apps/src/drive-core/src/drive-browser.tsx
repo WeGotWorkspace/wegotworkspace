@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Check, Star, Download, Folder, HardDrive } from "lucide-react";
+import { Check, Star, Download, Folder, HardDrive, Users } from "lucide-react";
 import { Tag } from "@/tag/src/tag";
 import { useAppToast } from "@/hooks/use-app-toast";
 import type { DriveFile, FileKind } from "@/drive-core/src/drive-models";
@@ -13,12 +13,25 @@ import { DriveMediaPreview } from "@/drive-core/src/drive-media-preview";
 import type { ActionBarAction } from "@/action-bar/src/action-bar";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
 import { driveFolderUiPath } from "@/drive-core/src/drive-item-path";
+import { isSharedDriveApiPath } from "@/drive-core/src/drive-search-utils";
 import "@/drive-core/src/drive-browser.css";
 
 type DriveOfflineBadgeLabels = {
   offlineAvailable: string;
   offlinePendingSync: string;
 };
+
+function DriveLocationLabel({ file }: { file: DriveFile }) {
+  if (!file.location) return <>—</>;
+  const shared = isSharedDriveApiPath(file.apiPath);
+  const Icon = shared ? Users : HardDrive;
+  return (
+    <span className="drive-location-label">
+      <Icon className="drive-location-label__icon" aria-hidden />
+      <span className="drive-location-label__text">{file.location}</span>
+    </span>
+  );
+}
 
 function DriveOfflineBadge({
   pinned,
@@ -338,6 +351,8 @@ function FolderTile({
         file={file}
         isStarred={isStarred}
         inTrash={inTrash}
+        canOpen={!selectionMode}
+        onOpen={onOpen}
         onDownload={onDownload}
         onStar={onStar}
         onRename={onRename}
@@ -464,15 +479,15 @@ function FileTile({
               labels={offlineBadgeLabels}
             />
           </div>
-          {showLocation && file.location ? (
-            <span className="drive-file-tile__location">{file.location}</span>
-          ) : null}
+          {showLocation && file.location ? <DriveLocationLabel file={file} /> : null}
         </div>
         <DriveFileItemActions
           labels={labels}
           file={file}
           isStarred={isStarred}
           inTrash={inTrash}
+          canOpen={!selectionMode}
+          onOpen={onOpen}
           onDownload={onDownload}
           onStar={onStar}
           onRename={onRename}
@@ -491,6 +506,8 @@ function DriveFileItemActions({
   file,
   isStarred,
   inTrash,
+  canOpen = true,
+  onOpen,
   onDownload,
   onStar,
   onRename,
@@ -503,6 +520,9 @@ function DriveFileItemActions({
   file: DriveFile;
   isStarred: boolean;
   inTrash: boolean;
+  /** When false, hide Open (matches double-click disabled in selection mode). */
+  canOpen?: boolean;
+  onOpen?: () => void;
   onDownload: (file: DriveFile) => void;
   onStar: () => void;
   onRename?: () => void;
@@ -513,8 +533,15 @@ function DriveFileItemActions({
 }) {
   const actions = buildDriveFileActions(
     labels,
-    { isStarred, inTrash, canDownload: file.kind !== "folder" },
     {
+      isStarred,
+      inTrash,
+      isFolder: file.kind === "folder",
+      canOpen,
+      canDownload: file.kind !== "folder",
+    },
+    {
+      onOpen,
       onDownload: () => onDownload(file),
       onStar,
       onRename,
@@ -718,7 +745,7 @@ export function DriveListView({
                 </td>
                 {showLocationColumn ? (
                   <td className="drive-list-col-location py-2 hidden sm:table-cell drive-list-muted min-w-0">
-                    <span className="block truncate">{f.location ?? "—"}</span>
+                    <DriveLocationLabel file={f} />
                   </td>
                 ) : null}
                 <td className="py-2 hidden sm:table-cell tabular-nums drive-list-muted">
@@ -742,6 +769,8 @@ export function DriveListView({
                       file={f}
                       isStarred={!!starred[f.id]}
                       inTrash={inTrash}
+                      canOpen={!selectionMode}
+                      onOpen={() => onOpen(f)}
                       onDownload={onDownload}
                       onStar={() => onStar(f.id)}
                       onRename={() => onRename(f)}

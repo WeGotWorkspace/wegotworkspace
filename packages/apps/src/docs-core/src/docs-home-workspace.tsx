@@ -32,7 +32,6 @@ import {
 } from "@/docs-core/src/docs-home-drives";
 import { useDocsHomeSidebarModel } from "@/docs-core/src/use-docs-home-sidebar-model";
 import { useDocsHomeActions } from "@/docs-core/src/use-docs-home-actions";
-import { useDocsHomePinActions } from "@/docs-core/src/use-docs-home-pin-actions";
 import { DocsHomeModals } from "@/docs-core/src/docs-home-modals";
 import type { DriveAPIOperations } from "@/drive-core/src/drive-types";
 import type { DriveFile } from "@/drive-core/src/drive-models";
@@ -108,8 +107,11 @@ export function DocsHomeWorkspace({
       offlineUsername,
     });
 
-  const { offlineAvailableIds, offlinePinnedIds, offlinePendingSyncIds, refresh } =
-    useDocsHomeOfflineAvailability(files, Boolean(offlineUsername), offlineUsername);
+  const { offlineAvailableIds, offlinePendingSyncIds, refresh } = useDocsHomeOfflineAvailability(
+    files,
+    Boolean(offlineUsername),
+    offlineUsername,
+  );
 
   useOnReconnect(
     useCallback(() => {
@@ -141,23 +143,6 @@ export function DocsHomeWorkspace({
     isOfflineListing,
     offlineAvailableIds,
     onUnavailable: () => showError(labels.homeNotAvailableOffline),
-  });
-
-  const pinnedApiPaths = useMemo(
-    () =>
-      new Set(
-        files
-          .filter((file) => file.apiPath && offlinePinnedIds.has(file.id))
-          .map((file) => file.apiPath!.trim().replace(/^\/+/, "")),
-      ),
-    [files, offlinePinnedIds],
-  );
-
-  const pinActions = useDocsHomePinActions({
-    username: offlineUsername ?? username,
-    labels,
-    pinnedApiPaths,
-    onAvailabilityChanged: refresh,
   });
 
   const actions = useDocsHomeActions({
@@ -313,8 +298,6 @@ export function DocsHomeWorkspace({
             offlineUnavailableIds={offlineUnavailableIds}
             offlinePinnedIds={offlineBadgePinnedIds}
             offlinePendingSyncIds={offlinePendingSyncIds}
-            extraFileActions={pinActions.extraFileActions}
-            pinLoadingId={pinActions.pinLoadingId}
             offlineLabels={labels}
             query={query}
             onQueryChange={setQuery}
