@@ -55,7 +55,7 @@ final class CollabDocumentEndpointsTest extends WgwDatabaseTestCase
             ->get('/api/v1/files/collaboration?path='.urlencode(self::ROOM))
             ->assertOk()
             ->assertHeader('Content-Type', 'text/markdown; charset=utf-8');
-        $this->assertSame("# Collaborative document\n\nStart typing…\n", $freshDocument->getContent());
+        $this->assertSame('', $freshDocument->getContent());
 
         $this->withBearer($token)
             ->get('/api/v1/files/collaboration?path='.urlencode(self::ROOM).'&format=yjs')
