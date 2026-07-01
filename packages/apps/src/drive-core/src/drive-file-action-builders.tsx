@@ -1,4 +1,12 @@
-import { Download, FolderInput, Pencil, Star, Trash2 } from "lucide-react";
+import {
+  Download,
+  ExternalLink,
+  FolderInput,
+  FolderOpen,
+  Pencil,
+  Star,
+  Trash2,
+} from "lucide-react";
 import type { ActionBarAction } from "@/action-bar/src/action-bar";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
 
@@ -6,6 +14,7 @@ export type DriveFileActionCallbacks = {
   onDownload: () => void;
   onStar: () => void;
   onDelete: () => void;
+  onOpen?: () => void;
   onRename?: () => void;
   onMove?: () => void;
 };
@@ -15,12 +24,23 @@ export function buildDriveFileActions(
   options: {
     isStarred: boolean;
     inTrash: boolean;
+    isFolder?: boolean;
+    canOpen?: boolean;
     canDownload?: boolean;
     canMove?: boolean;
   },
   callbacks: DriveFileActionCallbacks,
 ): ActionBarAction[] {
   const actions: ActionBarAction[] = [];
+
+  if (options.canOpen !== false && callbacks.onOpen) {
+    actions.push({
+      id: "open",
+      label: labels.detailOpen,
+      onClick: callbacks.onOpen,
+      icon: options.isFolder ? <FolderOpen /> : <ExternalLink />,
+    });
+  }
 
   if (options.canDownload !== false) {
     actions.push({

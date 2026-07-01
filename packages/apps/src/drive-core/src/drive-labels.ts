@@ -27,6 +27,7 @@ export const driveLabels = {
   selectionDownload: "Download",
   selectionMoveToTrash: "Move to trash",
   selectionDeletePermanently: "Delete permanently",
+  detailOpen: "Open",
   detailDownload: "Download",
   detailStar: "Star",
   detailUnstar: "Unstar",
