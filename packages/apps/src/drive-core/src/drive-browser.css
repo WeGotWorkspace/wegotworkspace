@@ -245,11 +245,15 @@
 }
 
 .drive-workspace .drive-file-tile__text {
-  @apply flex min-w-0 flex-1 flex-col;
+  @apply flex min-w-0 flex-1 flex-col gap-0.5;
+}
+
+.drive-workspace .drive-file-tile__title-row {
+  @apply flex min-w-0 items-center gap-1.5;
 }
 
 .drive-workspace .drive-file-tile__title {
-  @apply flex-1 min-w-0 truncate text-sm sm:text-[0.9375rem] font-medium;
+  @apply min-w-0 flex-1 truncate text-sm sm:text-[0.9375rem] font-medium;
   color: var(--color-ink);
 }
 

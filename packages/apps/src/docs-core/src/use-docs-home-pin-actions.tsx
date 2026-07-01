@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { Download, HardDrive, HardDriveDownload } from "lucide-react";
+import { HardDrive } from "lucide-react";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { isDocsCollabEditablePath } from "@/docs-core/src/docs-collab-text-files";
 import type { DriveFile } from "@/drive-core/src/drive-models";
@@ -41,37 +41,13 @@ export function useDocsHomePinActions({
     [labels.homeLoadError, labels.offlineAvailable, onAvailabilityChanged, pin, show, showError],
   );
 
-  const onRemoveOfflineCopy = useCallback(
-    async (file: DriveFile) => {
-      if (!file.apiPath) return;
-      try {
-        await pin.removeOfflineCopy(file.apiPath);
-        show(labels.removeOfflineCopy, { icon: <Download className="size-4" /> });
-        onAvailabilityChanged();
-      } catch (error) {
-        showError(error instanceof Error ? error.message : labels.homeLoadError);
-      }
-    },
-    [labels.homeLoadError, labels.removeOfflineCopy, onAvailabilityChanged, pin, show, showError],
-  );
-
   const extraFileActions = useCallback(
     (file: DriveFile): ActionBarAction[] => {
       const apiPath = file.apiPath?.trim();
       if (!apiPath || !isDocsCollabEditablePath(apiPath)) return [];
       const pinned = pinnedApiPaths.has(normalizeDocsAvailabilityPath(apiPath));
       const loading = pin.loadingId === apiPath;
-      if (pinned) {
-        return [
-          {
-            id: "remove-offline",
-            label: labels.removeOfflineCopy,
-            onClick: () => void onRemoveOfflineCopy(file),
-            disabled: loading,
-            icon: <HardDriveDownload />,
-          },
-        ];
-      }
+      if (pinned) return [];
       return [
         {
           id: "make-offline",
@@ -82,24 +58,16 @@ export function useDocsHomePinActions({
         },
       ];
     },
-    [
-      labels.makeAvailableOffline,
-      labels.removeOfflineCopy,
-      onMakeAvailableOffline,
-      onRemoveOfflineCopy,
-      pin.loadingId,
-      pinnedApiPaths,
-    ],
+    [labels.makeAvailableOffline, onMakeAvailableOffline, pin.loadingId, pinnedApiPaths],
   );
 
   return useMemo(
     () => ({
       extraFileActions,
       onMakeAvailableOffline,
-      onRemoveOfflineCopy,
       pinLoadingId: pin.loadingId,
     }),
-    [extraFileActions, onMakeAvailableOffline, onRemoveOfflineCopy, pin.loadingId],
+    [extraFileActions, onMakeAvailableOffline, pin.loadingId],
   );
 }
 

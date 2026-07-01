@@ -20,7 +20,7 @@ use Illuminate\Http\Request;
  */
 final class DocCollabDocumentService
 {
-    private const DEFAULT_MARKDOWN = "# Collaborative document\n\nStart typing…\n";
+    private const DEFAULT_MARKDOWN = '';
 
     private const MAX_MARKDOWN_BYTES = 2_097_152;
 

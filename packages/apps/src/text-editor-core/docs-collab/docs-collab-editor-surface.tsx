@@ -4,6 +4,7 @@ import StarterKit from "@tiptap/starter-kit";
 import type { Awareness } from "y-protocols/awareness";
 import * as Y from "yjs";
 import {
+  getTextEditorContent,
   setTextEditorContent,
   type TextEditorContentFormat,
 } from "@/text-editor-core/src/text-editor-content";
@@ -44,4 +45,28 @@ export function applyContentSeedToYDoc(
   setTextEditorContent(tempEditor, content, format);
   Y.applyUpdate(target, Y.encodeStateAsUpdate(temp), SEED_ORIGIN);
   tempEditor.destroy();
+}
+
+function createCollabContentEditor(ydoc: Y.Doc, format: TextEditorContentFormat): Editor {
+  return new Editor({
+    extensions: [
+      StarterKit.configure({ undoRedo: false, link: false, underline: false }),
+      Collaboration.configure({ document: ydoc }),
+      ...createTextEditorExtensions({ format }).filter((ext) => ext.name !== "starterKit"),
+    ],
+    editorProps: {
+      attributes: { class: "text-editor-prose focus:outline-none" },
+    },
+  });
+}
+
+/** Serialize a collab Y.Doc to markdown or plain text (inverse of applyContentSeedToYDoc). */
+export function readContentFromYDoc(
+  source: Y.Doc,
+  format: TextEditorContentFormat = "markdown",
+): string {
+  const editor = createCollabContentEditor(source, format);
+  const content = getTextEditorContent(editor, format);
+  editor.destroy();
+  return content;
 }

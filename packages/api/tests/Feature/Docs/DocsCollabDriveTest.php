@@ -36,7 +36,7 @@ final class DocsCollabDriveTest extends WgwDatabaseTestCase
             ->assertOk()
             ->assertHeader('Content-Type', 'text/markdown; charset=utf-8');
 
-        $this->assertSame("# Collaborative document\n\nStart typing…\n", $response->getContent());
+        $this->assertSame('', $response->getContent());
     }
 
     public function test_group_member_persists_collaboration_markdown(): void

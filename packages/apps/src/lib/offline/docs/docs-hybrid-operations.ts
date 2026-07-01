@@ -37,6 +37,15 @@ import {
   renameDocsListingResult,
 } from "@/lib/offline/docs-listing-offline-store";
 import { readOfflineDocsUsername } from "@/lib/offline/offline-session";
+import {
+  downloadOfflineDocsFile,
+  readOfflineDocsFileBlob,
+} from "@/lib/offline/docs/docs-offline-download";
+import {
+  applyDocsStarToggle,
+  readDocsStarredPaths,
+  writeDocsStarredPaths,
+} from "@/lib/offline/docs/docs-stars-store";
 import { isDocsCollabEditablePath } from "@/docs-core/src/docs-collab-text-files";
 import {
   captureDocsCollabOfflinePersistence,
@@ -236,6 +245,59 @@ export function createHybridDocsDriveOperations(username: string): DriveAPIOpera
         await queueDocsOutbox(username, { op: "create", apiPath, content });
       }
       return offlineQueuedDriveData(normalizeApiVirtualPath(input.cwd));
+    },
+    downloadFile: async (path, opts) => {
+      const normalized = normalizeApiVirtualPath(path);
+      if (readBrowserOnline()) {
+        try {
+          await live.downloadFile(normalized, opts);
+          return;
+        } catch (error) {
+          rethrowUnlessOfflineQueue(error, opts?.signal);
+        }
+      }
+      await downloadOfflineDocsFile(username, normalized);
+    },
+    readFileBlob: async (path, opts) => {
+      const normalized = normalizeApiVirtualPath(path);
+      if (readBrowserOnline()) {
+        try {
+          return await live.readFileBlob(normalized, opts);
+        } catch (error) {
+          rethrowUnlessOfflineQueue(error, opts?.signal);
+        }
+      }
+      const blob = await readOfflineDocsFileBlob(username, normalized);
+      if (!blob) {
+        throw new Error("This file is not available offline.");
+      }
+      return blob;
+    },
+    listStars: async (opts) => {
+      if (readBrowserOnline()) {
+        try {
+          const paths = await live.listStars(opts);
+          await writeDocsStarredPaths(username, paths);
+          return paths;
+        } catch (error) {
+          rethrowUnlessOfflineQueue(error, opts?.signal);
+        }
+      }
+      return readDocsStarredPaths(username);
+    },
+    setStar: async (input, opts) => {
+      const path = normalizeApiVirtualPath(input.path);
+      if (readBrowserOnline()) {
+        try {
+          await live.setStar({ path, starred: input.starred }, opts);
+          await applyDocsStarToggle(username, path, input.starred);
+          return;
+        } catch (error) {
+          rethrowUnlessOfflineQueue(error, opts?.signal);
+        }
+      }
+      await applyDocsStarToggle(username, path, input.starred);
+      await queueDocsOutbox(username, { op: "star", path, starred: input.starred });
     },
   };
 }
