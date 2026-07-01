@@ -19,7 +19,8 @@ import { isDocsCollabEditablePath } from "@/docs-core/src/docs-collab-text-files
 export type DocsOutboxPayload =
   | { op: "rename"; from: string; destination: string; to: string }
   | { op: "trash"; from: string; destination: string; to: string }
-  | { op: "create"; apiPath: string; content: string };
+  | { op: "create"; apiPath: string; content: string }
+  | { op: "star"; path: string; starred: boolean };
 
 export type OutboxFlushResult = {
   flushed: number;
@@ -94,6 +95,8 @@ export async function flushDocsOutbox(username: string): Promise<OutboxFlushResu
           lastModified: Date.now(),
         });
         await drive.uploadFiles({ cwd: destination, files: [file] });
+      } else if (payload.op === "star") {
+        await drive.setStar({ path: payload.path, starred: payload.starred });
       }
       await removeOutboxMutation(username, row.id);
       flushed += 1;

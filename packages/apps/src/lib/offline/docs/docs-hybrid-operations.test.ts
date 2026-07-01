@@ -38,10 +38,16 @@ vi.mock("@/lib/api/wgw/drive", () => ({
     createFolder: vi.fn(),
     listAllDirectoryEntries: vi.fn(async () => []),
     uploadFiles: vi.fn(),
+    downloadFile: vi.fn(),
+    readFileBlob: vi.fn(),
+    listStars: vi.fn(async () => []),
+    setStar: vi.fn(),
   })),
 }));
 
+import { readDocsStarredPaths, writeDocsStarredPaths } from "@/lib/offline/docs/docs-stars-store";
 import * as docsCollabPersistence from "@/text-editor-core/docs-collab/docs-collab-persistence";
+import * as docsOfflineDownload from "@/lib/offline/docs/docs-offline-download";
 
 const username = "alice";
 
@@ -296,5 +302,58 @@ describe("createHybridDocsDriveOperations offline rename", () => {
       id: "users/alice/new-name.md",
       location: "My Drive",
     });
+  });
+});
+
+describe("createHybridDocsDriveOperations offline star and download", () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    vi.mocked(readBrowserOnline).mockReturnValue(false);
+    const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
+    await db.outbox.clear();
+    await docsListingRowsTable(db).clear();
+    await docsAvailabilityTable(db).clear();
+    await db.meta.clear();
+  });
+
+  it("reads starred paths from cache and queues star toggles while offline", async () => {
+    await writeDocsStarredPaths(username, ["/users/alice/A.md"]);
+    const operations = createHybridDocsDriveOperations(username);
+
+    await expect(operations.listStars()).resolves.toEqual(["/users/alice/A.md"]);
+
+    await operations.setStar({ path: "/users/alice/B.md", starred: true });
+    await operations.setStar({ path: "/users/alice/A.md", starred: false });
+
+    expect(await readDocsStarredPaths(username)).toEqual(["/users/alice/B.md"]);
+
+    const outbox = await listOutboxMutations(username);
+    expect(outbox).toHaveLength(2);
+    expect(outbox.map((row) => JSON.parse(row.payload ?? "{}"))).toEqual(
+      expect.arrayContaining([
+        { op: "star", path: "/users/alice/B.md", starred: true },
+        { op: "star", path: "/users/alice/A.md", starred: false },
+      ]),
+    );
+  });
+
+  it("delegates offline download to the offline download helper", async () => {
+    const apiPath = "/users/alice/note.md";
+    const downloadSpy = vi
+      .spyOn(docsOfflineDownload, "downloadOfflineDocsFile")
+      .mockResolvedValue(undefined);
+
+    const operations = createHybridDocsDriveOperations(username);
+    await operations.downloadFile(apiPath);
+
+    expect(downloadSpy).toHaveBeenCalledWith(username, apiPath);
+    downloadSpy.mockRestore();
+  });
+
+  it("rejects readFileBlob when no offline copy exists", async () => {
+    const operations = createHybridDocsDriveOperations(username);
+    await expect(operations.readFileBlob("/users/alice/missing.md")).rejects.toThrow(
+      "This file is not available offline.",
+    );
   });
 });
