@@ -5,8 +5,8 @@
   "scope": "/contacts",
   "id": "/contacts",
   "display": "standalone",
-  "background_color": "#8b5cf6",
-  "theme_color": "#8b5cf6",
+  "background_color": "#7360c8",
+  "theme_color": "#7360c8",
   "icons": [
     {
       "src": "/pwa-icons/contacts-192.png",

@@ -5,8 +5,8 @@
  * Import only from {@link ContactsWorkspace}.
  */
 .contacts-workspace {
-  --contacts-accent: #8b5cf6;
-  --contacts-sidebar: #764ed1;
+  --contacts-accent: #7360c8;
+  --contacts-sidebar: #6250af;
   --workspace-accent: var(--contacts-accent);
   --color-emerald: var(--contacts-accent);
   --workspace-root-bg: var(--color-cream, #ffffff);
@@ -14,7 +14,6 @@
   --app-sidebar-bg: var(--contacts-sidebar);
   --app-sidebar-border-color: color-mix(in oklab, #ffffff 18%, transparent);
   --app-sidebar-color: #ffffff;
-  --sidebar-logo-brand-fill: #ffffff;
   --sidebar-logo-close-button-color: #ffffff;
   --sidebar-badge-fg: var(--contacts-sidebar);
   --workspace-sidebar-toggle-color: var(--color-ink);
@@ -343,7 +342,7 @@
 }
 
 .contacts-detail-view__link {
-  color: var(--contacts-accent, #8b5cf6);
+  color: var(--contacts-accent, #7360c8);
   text-decoration: none;
 }
 
@@ -359,7 +358,7 @@
 }
 
 .contacts-dialog-surface {
-  --contacts-accent: #8b5cf6;
+  --contacts-accent: #7360c8;
   --color-emerald: var(--contacts-accent);
   --button-primary-bg: var(--contacts-accent);
   --button-primary-fg: #ffffff;

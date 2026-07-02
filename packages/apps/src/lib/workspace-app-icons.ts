@@ -22,7 +22,7 @@ export const WORKSPACE_FUTURE_APP_ICON_IDS = ["calendar", "reminders", "tasks"] 
 export const WORKSPACE_APP_ACCENT: Record<WorkspaceAppId, string> = {
   notes: "#f0b422",
   mail: "#ef4444",
-  contacts: "#8b5cf6",
+  contacts: "#7360c8",
   drive: "#10b981",
   docs: "#3b82f6",
   settings: "#64748b",
