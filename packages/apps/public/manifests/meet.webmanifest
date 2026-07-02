@@ -9,14 +9,14 @@
   "theme_color": "#06b6d4",
   "icons": [
     {
-      "src": "/pwa-icons/meet-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
+      "src": "/app-icons/meet.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "/pwa-icons/meet-512.png",
-      "sizes": "512x512",
+      "src": "/pwa-icons/meet-180.png",
+      "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"
     }

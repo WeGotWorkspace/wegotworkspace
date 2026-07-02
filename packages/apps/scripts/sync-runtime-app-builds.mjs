@@ -92,11 +92,13 @@ export function syncRuntimeAppBuilds() {
     mkdirSync(targetDist, { recursive: true });
     rmSync(targetAssetsDir, { recursive: true, force: true });
     rmSync(resolve(targetDist, "fonts"), { recursive: true, force: true });
+    rmSync(resolve(targetDist, "app-icons"), { recursive: true, force: true });
     rmSync(resolve(targetDist, "pwa-icons"), { recursive: true, force: true });
     rmSync(resolve(targetDist, "manifests"), { recursive: true, force: true });
 
     cpSync(assetsDir, targetAssetsDir, { recursive: true });
     cpSync(resolve(distRoot, "fonts"), resolve(targetDist, "fonts"), { recursive: true });
+    cpSync(resolve(distRoot, "app-icons"), resolve(targetDist, "app-icons"), { recursive: true });
     cpSync(resolve(distRoot, "pwa-icons"), resolve(targetDist, "pwa-icons"), { recursive: true });
     cpSync(resolve(distRoot, "manifests"), resolve(targetDist, "manifests"), { recursive: true });
 
@@ -168,6 +170,7 @@ function patchStaticRuntimeStylesheet(filePath) {
   const source = readFileSync(filePath, "utf8");
   const withRelativeAssetLinks = source
     .replace(/url\((['"]?)\/fonts\//g, "url($1../fonts/")
+    .replace(/url\((['"]?)\/app-icons\//g, "url($1../app-icons/")
     .replace(/url\((['"]?)\/pwa-icons\//g, "url($1../pwa-icons/")
     .replace(/url\((['"]?)\/manifests\//g, "url($1../manifests/")
     .replace(/url\((['"]?)\/assets\//g, "url($1./assets/");

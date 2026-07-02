@@ -9,14 +9,14 @@
   "theme_color": "#f0b422",
   "icons": [
     {
-      "src": "/pwa-icons/notes-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
+      "src": "/app-icons/notes.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "/pwa-icons/notes-512.png",
-      "sizes": "512x512",
+      "src": "/pwa-icons/notes-180.png",
+      "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"
     }

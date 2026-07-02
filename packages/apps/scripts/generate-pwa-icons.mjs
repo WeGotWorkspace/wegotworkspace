@@ -1,18 +1,20 @@
 #!/usr/bin/env node
 /**
- * Publish vector app icons for UI and rasterize PWA install icons.
+ * Publish vector app icons for UI/manifests and rasterize iOS apple-touch icons.
  *
  * Canonical source: `src/assets/app-icons/{app}.svg` — real vector SVG only.
  * Rejects SVG files that embed raster data (`<image`, `data:image`, `base64`).
  *
  * Output:
- *   - `public/app-icons/{app}.svg` — copied verbatim for UI
- *   - `public/app-icons/{app}-glyph.svg` — white glyph paths for switch-trigger CSS mask
- *   - `public/pwa-icons/{app}-{size}.png` — rasterized from vector SVG (manifest/favicon only)
+ *   - `public/app-icons/{app}.svg` — copied verbatim for UI + web app manifests
+ *   - `public/pwa-icons/{app}-180.png` — rasterized 180×180 for iOS apple-touch-icon only
  *
- * Optional: provide `{app}-glyph.svg` in source to override auto-extracted glyph paths.
+ * Web app manifests reference the SVG directly. PNG rasterization is limited to the one size
+ * iOS Safari still requires via `<link rel="apple-touch-icon">` (no SVG support there).
  *
- * Requires ImageMagick (`magick`).
+ * Switch-trigger inversion uses the same SVG with `--wai-*` CSS vars (see workspace-app-icon.css).
+ *
+ * Requires ImageMagick (`magick`) for apple-touch PNG generation.
  */
 import { execFileSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -28,12 +30,14 @@ const pwaDir = join(publicDir, "pwa-icons");
 
 const WORKSPACE_APPS = ["admin", "contacts", "docs", "drive", "mail", "meet", "notes", "settings"];
 const FUTURE_APPS = ["calendar", "reminders", "tasks"];
-const ALL_APPS = [...WORKSPACE_APPS, ...FUTURE_APPS];
-const PWA_SIZES = [180, 192, 512];
+/** Shell / suite PWA manifest (home.webmanifest) — vector only, no workspace grid tile. */
+const SHELL_APPS = ["home"];
+const ALL_APPS = [...WORKSPACE_APPS, ...FUTURE_APPS, ...SHELL_APPS];
+const APPLE_TOUCH_APPS = [...WORKSPACE_APPS, ...SHELL_APPS];
+const APPLE_TOUCH_SIZE = 180;
 
 const RASTER_EMBED_RE =
   /<image\b|data:image|xlink:href\s*=\s*["']data:|href\s*=\s*["']data:image|base64/i;
-const WHITE_FILL_RE = /fill\s*=\s*["'](#fff(?:fff)?|white)["']/i;
 
 mkdirSync(sourceDir, { recursive: true });
 mkdirSync(uiDir, { recursive: true });
@@ -50,26 +54,9 @@ function assertVectorSvg(app, svgPath) {
   return markup;
 }
 
-/** Pull white-filled vector shapes from the full icon for CSS mask inversion. */
-function extractWhiteGlyphSvg(fullMarkup) {
-  const openTag = fullMarkup.match(/<svg[^>]*>/i)?.[0];
-  if (!openTag) return null;
-
-  const viewBox = openTag.match(/viewBox\s*=\s*["']([^"']+)["']/i)?.[1] ?? "0 0 150 150";
-  const inner = fullMarkup.replace(/^[\s\S]*?<svg[^>]*>/i, "").replace(/<\/svg>\s*$/i, "");
-  const whiteNodes = [];
-
-  for (const tag of ["path", "circle", "rect", "ellipse", "polygon", "polyline", "g"]) {
-    const re = new RegExp(`<${tag}\\b[^>]*>`, "gi");
-    let match;
-    while ((match = re.exec(inner)) !== null) {
-      if (WHITE_FILL_RE.test(match[0])) whiteNodes.push(match[0]);
-    }
-  }
-
-  if (whiteNodes.length === 0) return null;
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}">\n${whiteNodes.join("\n")}\n</svg>\n`;
+/** ImageMagick does not resolve CSS custom properties — inline var() fallbacks for apple-touch PNGs. */
+function svgForRasterization(markup) {
+  return markup.replace(/var\(\s*--[\w-]+\s*,\s*([^)]+?)\s*\)/g, "$1");
 }
 
 let failed = false;
@@ -82,9 +69,8 @@ for (const app of ALL_APPS) {
     continue;
   }
 
-  let markup;
   try {
-    markup = assertVectorSvg(app, srcSvg);
+    assertVectorSvg(app, srcSvg);
   } catch (err) {
     console.error(err.message);
     failed = true;
@@ -94,37 +80,37 @@ for (const app of ALL_APPS) {
   const destSvg = join(uiDir, `${app}.svg`);
   copyFileSync(srcSvg, destSvg);
 
-  const srcGlyph = join(sourceDir, `${app}-glyph.svg`);
-  const destGlyph = join(uiDir, `${app}-glyph.svg`);
-  if (existsSync(srcGlyph)) {
-    assertVectorSvg(`${app}-glyph`, srcGlyph);
-    copyFileSync(srcGlyph, destGlyph);
-  } else {
-    const extracted = extractWhiteGlyphSvg(markup);
-    if (!extracted) {
-      console.error(
-        `${app}: no white vector paths found — add src/assets/app-icons/${app}-glyph.svg`,
-      );
-      failed = true;
-      continue;
-    }
-    writeFileSync(destGlyph, extracted);
-  }
-
-  if (WORKSPACE_APPS.includes(app)) {
-    for (const size of PWA_SIZES) {
-      const dest = join(pwaDir, `${app}-${size}.png`);
-      execFileSync("magick", [destSvg, "-filter", "Lanczos", "-resize", `${size}x${size}!`, dest], {
-        stdio: "inherit",
-      });
+  if (APPLE_TOUCH_APPS.includes(app)) {
+    const dest = join(pwaDir, `${app}-${APPLE_TOUCH_SIZE}.png`);
+    const rasterSvg = join(pwaDir, `.${app}-raster.svg`);
+    writeFileSync(rasterSvg, svgForRasterization(readFileSync(destSvg, "utf8")));
+    execFileSync(
+      "magick",
+      [
+        rasterSvg,
+        "-filter",
+        "Lanczos",
+        "-resize",
+        `${APPLE_TOUCH_SIZE}x${APPLE_TOUCH_SIZE}!`,
+        dest,
+      ],
+      { stdio: "inherit" },
+    );
+    rmSync(rasterSvg, { force: true });
+    for (const legacySize of [192, 512]) {
+      rmSync(join(pwaDir, `${app}-${legacySize}.png`), { force: true });
     }
   }
 
-  for (const legacy of [`${app}.png`, `${app}-glyph.png`]) {
+  for (const legacy of [`${app}.png`, `${app}-glyph.png`, `${app}-glyph.svg`]) {
     rmSync(join(uiDir, legacy), { force: true });
   }
+  for (const legacySize of [192, 512]) {
+    rmSync(join(pwaDir, `${app}-${legacySize}.png`), { force: true });
+  }
 
-  console.log(`Published vector icon${WORKSPACE_APPS.includes(app) ? " + PWA" : ""} for ${app}`);
+  const appleTouch = APPLE_TOUCH_APPS.includes(app) ? " + apple-touch PNG" : "";
+  console.log(`Published vector icon${appleTouch} for ${app}`);
 }
 
 if (failed) {

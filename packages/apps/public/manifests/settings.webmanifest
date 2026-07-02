@@ -9,14 +9,14 @@
   "theme_color": "#64748b",
   "icons": [
     {
-      "src": "/pwa-icons/settings-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
+      "src": "/app-icons/settings.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "/pwa-icons/settings-512.png",
-      "sizes": "512x512",
+      "src": "/pwa-icons/settings-180.png",
+      "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"
     }

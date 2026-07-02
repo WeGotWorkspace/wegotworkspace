@@ -4,8 +4,10 @@ type PwaHeadConfig = {
   themeColor: string;
   appTitle: string;
   manifest: string;
-  icon180: string;
-  icon192: string;
+  /** 180×180 PNG — required for iOS Add to Home Screen. */
+  appleTouchIcon: string;
+  /** Vector favicon for modern browsers. */
+  iconSvg: string;
 };
 
 export function createPwaHead(config: PwaHeadConfig) {
@@ -18,8 +20,8 @@ export function createPwaHead(config: PwaHeadConfig) {
     ],
     links: [
       { rel: "manifest", href: config.manifest },
-      { rel: "apple-touch-icon", href: config.icon180 },
-      { rel: "icon", type: "image/png", href: config.icon192 },
+      { rel: "apple-touch-icon", href: config.appleTouchIcon },
+      { rel: "icon", type: "image/svg+xml", href: config.iconSvg },
     ],
   };
 }
