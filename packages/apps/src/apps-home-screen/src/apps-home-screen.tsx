@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/ui/dropdown-menu";
+import "@/apps-home-screen/src/apps-home-screen.css";
 
 export type AppsHomeScreenItem = {
   id: string;
@@ -42,10 +43,7 @@ export function AppsHomeScreen({
   onLogout,
 }: AppsHomeScreenProps) {
   return (
-    <section
-      className={cn("w-full min-h-dvh", className)}
-      style={{ backgroundColor: "#0e0f17", color: "#ffffff" }}
-    >
+    <section className={cn("apps-home-screen w-full min-h-dvh", className)}>
       <header className="flex items-center justify-between p-6 md:p-8 shrink-0">
         <div className="flex min-w-0 items-center">
           <AppSwitchButton subtitle="Workspace" />
@@ -64,28 +62,28 @@ export function AppsHomeScreen({
               key={app.id}
               type="button"
               onClick={app.onSelect}
-              className="group flex w-full min-h-44 flex-col items-center justify-center gap-4 rounded-3xl p-3 text-center transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--color-ink) focus-visible:ring-offset-2"
+              className="group flex w-full min-h-48 flex-col items-center justify-center gap-4 rounded-3xl p-3 text-center transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--color-ink) focus-visible:ring-offset-2"
               aria-label={app.label}
             >
               {app.appId ? (
-                <span className="flex size-28 overflow-hidden rounded-3xl shadow-[0_12px_30px_-18px_rgba(0,0,0,0.55)] transition-transform group-hover:scale-[1.03]">
-                  <WorkspaceAppIcon appId={app.appId} className="size-full" />
+                <span className="apps-home-screen__tile-icon">
+                  <WorkspaceAppIcon appId={app.appId} variant="tile" />
                 </span>
               ) : app.iconSrc ? (
-                <span className="flex size-28 overflow-hidden rounded-3xl shadow-[0_12px_30px_-18px_rgba(0,0,0,0.55)] transition-transform group-hover:scale-[1.03]">
+                <span className="apps-home-screen__tile-icon">
                   <img
                     src={app.iconSrc}
                     alt=""
-                    className="size-full object-cover"
+                    className="workspace-app-icon--tile"
                     draggable={false}
                   />
                 </span>
               ) : (
                 <span
-                  className="flex size-28 items-center justify-center rounded-3xl shadow-[0_12px_30px_-18px_color-mix(in_oklab,var(--color-ink)_80%,transparent)] transition-transform group-hover:scale-[1.03]"
+                  className="apps-home-screen__tile-icon--accent"
                   style={{ backgroundColor: app.accent, color: app.fg ?? "var(--color-ink)" }}
                 >
-                  <span className="text-current [&_svg]:size-10">{app.icon}</span>
+                  <span className="text-current [&_svg]:size-12">{app.icon}</span>
                 </span>
               )}
               <span className="text-sm font-medium text-white">{app.label}</span>

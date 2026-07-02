@@ -53,6 +53,8 @@
   --color-ghost: #22c55e;
   /* Workspace pane / shell background (white for now; tweak here to re-tint). */
   --color-cream: #ffffff;
+  /** Suite home + sign-in shell — sampled from `home.svg` `--wai-bg`; keep in sync with `WORKSPACE_HOME_ACCENT`. */
+  --workspace-home-bg: #1b1d3a;
 }
 
 @custom-variant dark (&:is(.dark *));

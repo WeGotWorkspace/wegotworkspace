@@ -73,10 +73,7 @@ export const MeetGuestJoin: Story = {
 export const Login: Story = {
   name: "Login",
   render: (args) => (
-    <main
-      className="login-screen min-h-dvh"
-      style={{ backgroundColor: "var(--color-paper)", color: "var(--color-forest)" }}
-    >
+    <main className="login-screen min-h-dvh">
       <WorkspaceShellHeader {...args} />
     </main>
   ),
