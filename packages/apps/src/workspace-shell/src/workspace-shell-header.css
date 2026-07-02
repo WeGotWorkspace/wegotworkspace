@@ -32,9 +32,9 @@
 }
 
 .workspace-shell-header__user-menu-content {
-  background-color: var(--color-paper, #ffffff);
-  color: var(--color-ink);
-  border-color: color-mix(in oklab, var(--color-ink) 15%, transparent);
+  @apply min-w-48 p-1.5;
+  user-select: none;
+  border-color: color-mix(in oklab, currentColor 25%, transparent);
 }
 
 .workspace-shell-header__spacer {

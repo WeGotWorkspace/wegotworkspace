@@ -1,7 +1,7 @@
 @import "../../styles.css" reference;
 
 .button {
-  @apply inline-flex items-center justify-center gap-2 transition-colors;
+  @apply inline-flex items-center justify-center gap-2 border-0 transition-colors;
   border-radius: var(--control-radius);
   --button-icon-size: 1rem;
 }

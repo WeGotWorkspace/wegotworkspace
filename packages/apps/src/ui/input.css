@@ -2,7 +2,7 @@
 
 /**
  * Text field primitives. Optional overrides: `--input-height`, `--input-background`,
- * `--input-background-focus`, `--input-placeholder-color`.
+ * `--input-background-focus`, `--input-placeholder-color`, `--input-shadow`.
  */
 .input,
 .textarea,
@@ -11,7 +11,7 @@
   @apply focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring;
   @apply disabled:cursor-not-allowed disabled:opacity-50;
   border-radius: var(--control-radius);
-  box-shadow: var(--control-shadow);
+  box-shadow: var(--input-shadow, none);
   font-size: var(--input-font-size, 0.875rem);
   background-color: var(
     --input-background,

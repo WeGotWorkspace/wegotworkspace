@@ -8,11 +8,10 @@
   --input-background: color-mix(in oklab, #ffffff 12%, transparent);
   --input-background-focus: color-mix(in oklab, #ffffff 18%, transparent);
   --input-placeholder-color: color-mix(in oklab, #ffffff 42%, transparent);
-  --color-foreground: #ffffff;
+  --foreground: currentColor;
+  --color-foreground: var(--foreground);
   --button-primary-bg: #ffffff;
   --button-primary-fg: var(--workspace-home-bg, #1b1d3a);
-  --primary: #ffffff;
-  --primary-foreground: var(--workspace-home-bg, #1b1d3a);
 }
 
 .login-screen .workspace-shell-header {
