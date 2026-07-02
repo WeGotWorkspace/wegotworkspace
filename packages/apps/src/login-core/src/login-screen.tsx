@@ -15,13 +15,13 @@ export type LoginScreenProps = {
   error?: LoginScreenError;
 };
 
-export function LoginScreen({ returnPath = "/", error = "" }: LoginScreenProps = {}) {
+export function LoginScreen({ returnPath, error = "" }: LoginScreenProps = {}) {
   const navigate = useNavigate();
   const search = useMemo(() => {
     if (typeof window === "undefined") return new URLSearchParams();
     return new URLSearchParams(window.location.search);
   }, []);
-  const resolvedReturnPath = sanitizeWgwReturnPath(returnPath || search.get("return"));
+  const resolvedReturnPath = sanitizeWgwReturnPath(returnPath ?? search.get("return"));
   const resolvedError = (error || search.get("error")?.trim() || "") as LoginScreenError;
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
