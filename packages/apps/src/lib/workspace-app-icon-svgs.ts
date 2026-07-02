@@ -1,4 +1,5 @@
 import adminIcon from "@/assets/app-icons/admin.svg?raw";
+import homeIcon from "@/assets/app-icons/home.svg?raw";
 import calendarIcon from "@/assets/app-icons/calendar.svg?raw";
 import contactsIcon from "@/assets/app-icons/contacts.svg?raw";
 import docsIcon from "@/assets/app-icons/docs.svg?raw";
@@ -26,6 +27,9 @@ export const WORKSPACE_APP_ICON_INLINE: Record<WorkspaceAppId, string> = {
 export function workspaceAppIconInlineMarkup(appId: WorkspaceAppId): string {
   return WORKSPACE_APP_ICON_INLINE[appId];
 }
+
+/** Suite / workspace home shell icon — same `--wai-*` vars as app icons. */
+export const WORKSPACE_HOME_ICON_INLINE = homeIcon;
 
 /** Future icons — same source files, not wired in the home grid yet. */
 export const WORKSPACE_FUTURE_APP_ICON_INLINE = {

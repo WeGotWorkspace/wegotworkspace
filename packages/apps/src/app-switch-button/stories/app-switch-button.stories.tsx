@@ -34,7 +34,7 @@ export const InApp: Story = {
   },
 };
 
-/** Workspace home / install: text-only “we got Workspace” lockup (no icon). */
+/** Workspace home / install: full-color suite icon + “we got Workspace” lockup. */
 export const Workspace: Story = {
   args: {
     subtitle: "Workspace",

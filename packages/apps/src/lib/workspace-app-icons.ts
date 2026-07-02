@@ -47,6 +47,14 @@ export function workspaceAppIconAppleTouchSrc(appId: WorkspaceAppId): string {
   return `/pwa-icons/${appId}-${APPLE_TOUCH_SIZE}.png`;
 }
 
+/** Suite / workspace home shell icon — `/app-icons/home.svg` (not a workspace app tile). */
+export function workspaceHomeIconUiSrc(): string {
+  return "/app-icons/home.svg";
+}
+
+/** Sampled from home icon background — keep in sync with `home.webmanifest` theme colors. */
+export const WORKSPACE_HOME_ACCENT = "#1B1D3A";
+
 /**
  * @deprecated Prefer `workspaceAppIconManifestSrc` (SVG) or `workspaceAppIconAppleTouchSrc` (180 PNG).
  */

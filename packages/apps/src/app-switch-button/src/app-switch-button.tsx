@@ -2,7 +2,7 @@ import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
 import { DropdownMenu } from "@/menu-dropdown/src/dropdown-menu";
 import type { DropdownMenuItemProps } from "@/menu-dropdown/src/dropdown-menu";
-import { WorkspaceAppIcon } from "@/lib/workspace-app-icon";
+import { WorkspaceAppIcon, WorkspaceHomeIcon } from "@/lib/workspace-app-icon";
 import { WORKSPACE_APP_IDS, type WorkspaceAppId } from "@/lib/workspace-app-icons";
 import { cn } from "@/lib/utils";
 import "@/app-switch-button/src/app-switch-button.css";
@@ -74,13 +74,15 @@ export function AppSwitchButton({
             isWorkspaceContext && "app-switch-button__trigger--workspace",
           )}
         >
-          {!isWorkspaceContext ? (
+          {isWorkspaceContext ? (
+            <WorkspaceHomeIcon className="app-switch-button__icon" />
+          ) : (
             <WorkspaceAppIcon
               appId={current.id as WorkspaceAppId}
               className="app-switch-button__icon"
               variant="switch-trigger"
             />
-          ) : null}
+          )}
           <span className="app-switch-button__label">
             {!compact ? <span className="app-switch-button__label-top">{TAGLINE}</span> : null}
             <span>{subtitle}</span>
