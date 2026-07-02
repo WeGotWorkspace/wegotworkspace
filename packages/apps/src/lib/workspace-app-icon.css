@@ -20,3 +20,23 @@
   /* Card cutouts (e.g. contacts person silhouette) reveal sidebar text color. */
   --wai-cutout: var(--app-switch-icon-bg);
 }
+
+/** Home grid tile artwork — fills the `.apps-home-screen__tile-icon` cell. */
+.workspace-app-icon--tile {
+  @apply size-full object-cover;
+}
+
+/**
+ * Workspace home lockup on dark suite shells: white tile + original accent squares
+ * (orange / green / blue from `home.svg`), not mono sidebar-accent inversion.
+ */
+.workspace-app-icon--switch-trigger-home {
+  --app-switch-icon-bg: #ffffff;
+}
+
+.workspace-app-icon--switch-trigger-home svg {
+  --wai-bg: transparent;
+  --wai-fg: #f59f00;
+  --wai-detail: #0ca678;
+  --wai-cutout: #4c6ef5;
+}

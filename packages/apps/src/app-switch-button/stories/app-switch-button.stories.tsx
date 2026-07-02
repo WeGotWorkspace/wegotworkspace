@@ -34,11 +34,27 @@ export const InApp: Story = {
   },
 };
 
-/** Workspace home / install: full-color suite icon + “we got Workspace” lockup. */
+/** Workspace home / install: inverted suite icon + “we got Workspace” lockup on dark shell. */
 export const Workspace: Story = {
   args: {
     subtitle: "Workspace",
   },
+  decorators: [
+    (Story) => (
+      <div
+        className="rounded-lg p-4"
+        style={
+          {
+            backgroundColor: "var(--workspace-home-bg, #1b1d3a)",
+            color: "#ffffff",
+            "--app-switch-label-color": "#ffffff",
+          } as CSSProperties
+        }
+      >
+        <Story />
+      </div>
+    ),
+  ],
 };
 
 export const CompactWorkspace: Story = {
@@ -46,6 +62,22 @@ export const CompactWorkspace: Story = {
     variant: "compact",
     subtitle: "Workspace",
   },
+  decorators: [
+    (Story) => (
+      <div
+        className="rounded-lg p-4"
+        style={
+          {
+            backgroundColor: "var(--workspace-home-bg, #1b1d3a)",
+            color: "#ffffff",
+            "--app-switch-label-color": "#ffffff",
+          } as CSSProperties
+        }
+      >
+        <Story />
+      </div>
+    ),
+  ],
 };
 
 /** Compact header in an app shell: user artwork icon + single app name line. */
@@ -153,7 +185,7 @@ export const AppIcons: Story = {
           <WorkspaceAppIcon
             key={`tile-${appId}`}
             appId={appId as WorkspaceAppId}
-            className="size-28 rounded-3xl shadow-lg"
+            className="size-32 rounded-[6px] shadow-lg"
           />
         ))}
       </div>

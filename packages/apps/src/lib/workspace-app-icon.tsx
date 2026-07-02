@@ -10,12 +10,12 @@ import {
 } from "@/lib/workspace-app-icons";
 import "@/lib/workspace-app-icon.css";
 
-export type WorkspaceAppIconVariant = "default" | "switch-trigger";
+export type WorkspaceAppIconVariant = "default" | "switch-trigger" | "tile";
 
 type WorkspaceAppIconProps = {
   appId: WorkspaceAppId;
   className?: string;
-  /** `switch-trigger` inverts colors for the large app-switch lockup icon only. */
+  /** `switch-trigger` inverts colors for the app-switch lockup; `tile` fills the home grid cell. */
   variant?: WorkspaceAppIconVariant;
 };
 
@@ -36,7 +36,11 @@ export function WorkspaceAppIcon({ appId, className, variant = "default" }: Work
     <img
       src={workspaceAppIconUiSrc(appId)}
       alt=""
-      className={cn("block shrink-0 object-cover", className)}
+      className={cn(
+        "block shrink-0 object-cover",
+        variant === "tile" && "workspace-app-icon--tile",
+        className,
+      )}
       draggable={false}
     />
   );
@@ -54,7 +58,10 @@ export function WorkspaceHomeIcon({ className, variant = "default" }: WorkspaceH
     return (
       <span
         aria-hidden
-        className={cn("workspace-app-icon--switch-trigger shrink-0", className)}
+        className={cn(
+          "workspace-app-icon--switch-trigger workspace-app-icon--switch-trigger-home shrink-0",
+          className,
+        )}
         dangerouslySetInnerHTML={{ __html: WORKSPACE_HOME_ICON_INLINE }}
       />
     );

@@ -75,7 +75,7 @@ export function AppSwitchButton({
           )}
         >
           {isWorkspaceContext ? (
-            <WorkspaceHomeIcon className="app-switch-button__icon" />
+            <WorkspaceHomeIcon className="app-switch-button__icon" variant="switch-trigger" />
           ) : (
             <WorkspaceAppIcon
               appId={current.id as WorkspaceAppId}
