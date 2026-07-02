@@ -75,7 +75,7 @@
 
 /**
  * Portaled admin dialogs/alerts sit outside `.admin-workspace`; repeat theme tokens so
- * {@link Button} and shadcn `buttonVariants` match the admin shell.
+ * {@link Button} and {@link buttonVariants} match the admin shell.
  */
 .admin-dialog-surface {
   --button-primary-bg: #2f302c;

@@ -82,11 +82,7 @@
 }
 
 /* Descendant classes — only use inside `SettingsWorkspace` (`.settings-workspace`). */
-/* Display rows: `FieldLabelRow` + `Input readOnly` — no extra class on the input. */
-.settings-workspace .field-label-row:has(input[readonly]) .input {
-  @apply cursor-default;
-  background-color: color-mix(in oklab, var(--color-ink) 4%, transparent);
-}
+/* Display rows: `FieldLabelRow` + `Input readOnly` — disabled fill from `@/ui/input`. */
 
 .settings-workspace .settings-form-actions {
   @apply flex justify-end pt-2;

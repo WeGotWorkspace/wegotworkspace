@@ -6,7 +6,6 @@ import {
   BUTTON_BASE_CLASSNAME,
   BUTTON_ICON_SLOT_CLASSNAME,
   BUTTON_VARIANT_CLASSNAMES,
-  getButtonVariantStyle,
   ICON_BUTTON_ACTIVE_CLASSNAME,
   ICON_BUTTON_SIZE_CLASSNAMES,
   type ButtonVariant,
@@ -49,7 +48,7 @@ export function IconButton({
         BUTTON_VARIANT_CLASSNAMES[variant],
         className,
       )}
-      style={{ ...getButtonVariantStyle(variant, active), ...style }}
+      style={style}
       {...props}
     >
       <span className={BUTTON_ICON_SLOT_CLASSNAME}>{icon}</span>

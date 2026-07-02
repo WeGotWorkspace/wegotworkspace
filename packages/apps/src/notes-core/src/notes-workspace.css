@@ -43,7 +43,7 @@
 
 /**
  * Portaled notes dialogs/alerts sit outside `.notes-workspace`; repeat accent tokens so
- * {@link Button} and shadcn `buttonVariants` match the notes shell.
+ * {@link Button} and {@link buttonVariants} match the notes shell.
  */
 .notes-dialog-surface {
   --notes-accent: #f0b422;

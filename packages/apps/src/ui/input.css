@@ -2,14 +2,15 @@
 
 /**
  * Text field primitives. Optional overrides: `--input-height`, `--input-background`,
- * `--input-background-focus`, `--input-placeholder-color`, `--input-shadow`.
+ * `--input-background-focus`, `--input-background-disabled`, `--input-color-disabled`,
+ * `--input-placeholder-color`, `--input-shadow`.
  */
 .input,
 .textarea,
 .select-trigger {
   @apply flex w-full border-0 text-foreground transition-colors;
   @apply focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring;
-  @apply disabled:cursor-not-allowed disabled:opacity-50;
+  @apply disabled:cursor-not-allowed;
   border-radius: var(--control-radius);
   box-shadow: var(--input-shadow, none);
   font-size: var(--input-font-size, 0.875rem);
@@ -43,8 +44,31 @@
   @apply justify-between whitespace-nowrap ring-offset-background;
   @apply data-[placeholder]:text-muted-foreground data-[state=open]:text-foreground;
   @apply focus:outline-none focus:ring-1 focus:ring-ring;
-  @apply disabled:cursor-not-allowed disabled:opacity-50;
+  @apply disabled:cursor-not-allowed;
   @apply [&>span]:line-clamp-1;
+}
+
+.input:disabled,
+.input:read-only,
+.textarea:disabled,
+.textarea:read-only,
+.select-trigger:disabled {
+  color: var(--input-color-disabled, var(--color-muted-foreground));
+  background-color: var(
+    --input-background-disabled,
+    color-mix(in oklab, var(--color-muted) 30%, var(--color-background))
+  );
+}
+
+.input:disabled,
+.textarea:disabled,
+.select-trigger:disabled {
+  @apply cursor-not-allowed;
+}
+
+.input:read-only,
+.textarea:read-only {
+  @apply cursor-default;
 }
 
 .input:focus:not(:read-only),

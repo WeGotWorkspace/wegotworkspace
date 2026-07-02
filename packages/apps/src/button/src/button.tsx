@@ -1,71 +1,94 @@
-import type { ComponentPropsWithRef, ReactNode } from "react";
+import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import "@/button/src/button.css";
 import {
   BUTTON_BASE_CLASSNAME,
   BUTTON_ICON_SLOT_CLASSNAME,
   BUTTON_PILL_CLASSNAME,
-  BUTTON_SIZE_CLASSNAMES,
   BUTTON_VARIANT_CLASSNAMES,
-  getButtonVariantStyle,
-  type ButtonSize,
-  type ButtonVariant,
+  getButtonSizeClassName,
+  normalizeButtonVariant,
+  type ButtonSizeProp,
+  type ButtonVariantProp,
 } from "@/button/src/button.shared";
 export {
   BUTTON_SIZE_OPTIONS,
   BUTTON_VARIANT_OPTIONS,
   ICON_BUTTON_SIZE_OPTIONS,
+  buttonVariants,
+  normalizeButtonSize,
+  normalizeButtonVariant,
   type ButtonSize,
+  type ButtonSizeProp,
   type ButtonVariant,
+  type ButtonVariantProp,
   type IconButtonSize,
+  type ShadcnButtonSize,
+  type ShadcnButtonVariant,
 } from "@/button/src/button.shared";
 export { IconButton } from "@/button/src/icon-button";
 export type { IconButtonProps } from "@/button/src/icon-button";
 
-export type ButtonProps = Omit<ComponentPropsWithRef<"button">, "children"> & {
+export type ButtonProps = Omit<React.ComponentPropsWithRef<"button">, "children"> & {
   label?: string;
   icon?: ReactNode;
-  size?: ButtonSize;
+  size?: ButtonSizeProp;
   pill?: boolean;
-  variant?: ButtonVariant;
+  variant?: ButtonVariantProp;
+  asChild?: boolean;
   children?: ReactNode;
 };
 
-export function Button({
-  ref,
-  label,
-  icon,
-  size = "md",
-  pill = false,
-  variant = "primary",
-  className,
-  style,
-  children,
-  ...props
-}: ButtonProps) {
-  const content = children ?? (
-    <>
-      {icon ? <span className={BUTTON_ICON_SLOT_CLASSNAME}>{icon}</span> : null}
-      {label ? <span>{label}</span> : null}
-    </>
-  );
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      label,
+      icon,
+      size = "md",
+      pill = false,
+      variant = "primary",
+      className,
+      style,
+      children,
+      asChild = false,
+      type = "button",
+      ...props
+    },
+    ref,
+  ) => {
+    const Comp = asChild ? Slot : "button";
+    const normalizedVariant = normalizeButtonVariant(variant);
+    const content = asChild
+      ? children
+      : (children ?? (
+          <>
+            {icon ? <span className={BUTTON_ICON_SLOT_CLASSNAME}>{icon}</span> : null}
+            {label ? <span>{label}</span> : null}
+          </>
+        ));
 
-  return (
-    <button
-      type="button"
-      aria-label={props["aria-label"] ?? label}
-      className={cn(
-        BUTTON_BASE_CLASSNAME,
-        BUTTON_SIZE_CLASSNAMES[size],
-        pill && BUTTON_PILL_CLASSNAME,
-        BUTTON_VARIANT_CLASSNAMES[variant],
-        className,
-      )}
-      style={{ ...getButtonVariantStyle(variant), ...style }}
-      {...props}
-      ref={ref}
-    >
-      {content}
-    </button>
-  );
-}
+    return (
+      <Comp
+        type={asChild ? undefined : type}
+        aria-label={props["aria-label"] ?? (asChild ? undefined : label)}
+        className={cn(
+          BUTTON_BASE_CLASSNAME,
+          getButtonSizeClassName(size),
+          pill && BUTTON_PILL_CLASSNAME,
+          BUTTON_VARIANT_CLASSNAMES[normalizedVariant],
+          className,
+        )}
+        style={style}
+        {...props}
+        ref={ref}
+      >
+        {content}
+      </Comp>
+    );
+  },
+);
+Button.displayName = "Button";
+
+export { Button };
