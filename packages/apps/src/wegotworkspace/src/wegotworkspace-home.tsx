@@ -1,10 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { AppsHomeScreen, type AppsHomeScreenItem } from "@/apps-home-screen/src/apps-home-screen";
-import {
-  WORKSPACE_APP_ACCENT,
-  workspaceAppIconSrc,
-  type WorkspaceAppId,
-} from "@/lib/workspace-app-icons";
+import { WORKSPACE_APP_ACCENT, type WorkspaceAppId } from "@/lib/workspace-app-icons";
 import { useWeGotWorkspaceLogout } from "@/wegotworkspace/src/wegotworkspace-story-logout";
 
 function homeAppTile(
@@ -16,7 +12,7 @@ function homeAppTile(
   return {
     id: appId,
     label,
-    iconSrc: workspaceAppIconSrc(appId),
+    appId,
     accent: WORKSPACE_APP_ACCENT[appId],
     fg,
     onSelect,

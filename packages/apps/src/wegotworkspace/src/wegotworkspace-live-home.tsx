@@ -2,11 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { FileText } from "lucide-react";
 import { AppsHomeScreen, type AppsHomeScreenItem } from "@/apps-home-screen/src/apps-home-screen";
-import {
-  WORKSPACE_APP_ACCENT,
-  workspaceAppIconSrc,
-  type WorkspaceAppId,
-} from "@/lib/workspace-app-icons";
+import { WORKSPACE_APP_ACCENT, type WorkspaceAppId } from "@/lib/workspace-app-icons";
 import {
   fetchWeGotWorkspaceHomeState,
   MOCK_HOME_STATE,
@@ -23,7 +19,7 @@ function homeAppTile(
   return {
     id: appId,
     label,
-    iconSrc: workspaceAppIconSrc(appId),
+    appId,
     accent: WORKSPACE_APP_ACCENT[appId],
     fg,
     onSelect,

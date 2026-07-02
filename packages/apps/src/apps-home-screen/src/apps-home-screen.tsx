@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { LogOut } from "lucide-react";
 import { AppSwitchButton } from "@/app-switch-button/src/app-switch-button";
+import { WorkspaceAppIcon } from "@/lib/workspace-app-icon";
+import type { WorkspaceAppId } from "@/lib/workspace-app-icons";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -12,9 +14,11 @@ import {
 export type AppsHomeScreenItem = {
   id: string;
   label: string;
-  /** Lucide or custom node when `iconSrc` is not set. */
+  /** Branded app tile when set (exact artwork from `/app-icons/`). */
+  appId?: WorkspaceAppId;
+  /** Lucide or custom node when neither `appId` nor `iconSrc` is set. */
   icon?: ReactNode;
-  /** Branded PNG from `/pwa-icons/` — fills the tile when set. */
+  /** @deprecated Prefer `appId` — PNG from `/pwa-icons/` for legacy callers only. */
   iconSrc?: string;
   accent: string;
   fg?: string;
@@ -63,7 +67,11 @@ export function AppsHomeScreen({
               className="group flex w-full min-h-44 flex-col items-center justify-center gap-4 rounded-3xl p-3 text-center transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--color-ink) focus-visible:ring-offset-2"
               aria-label={app.label}
             >
-              {app.iconSrc ? (
+              {app.appId ? (
+                <span className="flex size-28 overflow-hidden rounded-3xl shadow-[0_12px_30px_-18px_rgba(0,0,0,0.55)] transition-transform group-hover:scale-[1.03]">
+                  <WorkspaceAppIcon appId={app.appId} className="size-full" />
+                </span>
+              ) : app.iconSrc ? (
                 <span className="flex size-28 overflow-hidden rounded-3xl shadow-[0_12px_30px_-18px_rgba(0,0,0,0.55)] transition-transform group-hover:scale-[1.03]">
                   <img
                     src={app.iconSrc}

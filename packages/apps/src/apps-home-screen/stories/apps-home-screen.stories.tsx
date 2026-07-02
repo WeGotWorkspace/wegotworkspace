@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { AppsHomeScreen } from "../src/apps-home-screen";
-import { WORKSPACE_APP_ACCENT, workspaceAppIconSrc } from "@/lib/workspace-app-icons";
+import { WORKSPACE_APP_ACCENT } from "@/lib/workspace-app-icons";
 
 const meta: Meta<typeof AppsHomeScreen> = {
   title: "Shared/Apps Home Screen",
@@ -23,39 +23,39 @@ export const Default: Story = {
       {
         id: "notes",
         label: "Notes",
-        iconSrc: workspaceAppIconSrc("notes"),
+        appId: "notes",
         accent: WORKSPACE_APP_ACCENT.notes,
       },
       {
         id: "mail",
         label: "Mail",
-        iconSrc: workspaceAppIconSrc("mail"),
+        appId: "mail",
         accent: WORKSPACE_APP_ACCENT.mail,
       },
       {
         id: "drive",
         label: "Drive",
-        iconSrc: workspaceAppIconSrc("drive"),
+        appId: "drive",
         accent: WORKSPACE_APP_ACCENT.drive,
         fg: "#ffffff",
       },
       {
         id: "settings",
         label: "Settings",
-        iconSrc: workspaceAppIconSrc("settings"),
+        appId: "settings",
         accent: WORKSPACE_APP_ACCENT.settings,
       },
       {
         id: "meet",
         label: "Meet",
-        iconSrc: workspaceAppIconSrc("meet"),
+        appId: "meet",
         accent: WORKSPACE_APP_ACCENT.meet,
         fg: "#ffffff",
       },
       {
         id: "admin",
         label: "Admin",
-        iconSrc: workspaceAppIconSrc("admin"),
+        appId: "admin",
         accent: WORKSPACE_APP_ACCENT.admin,
         fg: "#ffffff",
       },

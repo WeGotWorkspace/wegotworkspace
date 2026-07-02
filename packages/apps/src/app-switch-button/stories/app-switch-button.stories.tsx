@@ -1,13 +1,18 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { AppSwitchButton } from "../src/app-switch-button";
+import { WorkspaceAppIcon } from "@/lib/workspace-app-icon";
+import { WORKSPACE_APP_IDS, type WorkspaceAppId } from "@/lib/workspace-app-icons";
 
 const meta: Meta<typeof AppSwitchButton> = {
   title: "Shared/App Switch Button",
   component: AppSwitchButton,
   parameters: {
     layout: "centered",
-    /** Docs / `@ljcl/storybook-addon-cssprops`: tweak tokens used by menu surface classes. */
     cssprops: {
+      "app-sidebar-color": {
+        value: "#ffffff",
+        description: "Sidebar label color for the switch lockup",
+      },
       "color-paper": { value: "var(--color-paper)", description: "Notes / workspace menu surface" },
       "color-ink": { value: "var(--color-ink)", description: "Primary ink on light surfaces" },
     },
@@ -17,7 +22,7 @@ const meta: Meta<typeof AppSwitchButton> = {
 export default meta;
 type Story = StoryObj<typeof AppSwitchButton>;
 
-/** In-app trigger: PNG icon + “we got” / route label (not workspace BrandMark). */
+/** In-app trigger: user artwork icon + “we got” / route label (not workspace BrandMark). */
 export const InApp: Story = {
   parameters: {
     routerPath: "/mail",
@@ -38,7 +43,7 @@ export const CompactWorkspace: Story = {
   },
 };
 
-/** Compact header in an app shell: PNG icon + single app name line. */
+/** Compact header in an app shell: user artwork icon + single app name line. */
 export const CompactInApp: Story = {
   parameters: {
     routerPath: "/docs",
@@ -53,4 +58,38 @@ export const Disabled: Story = {
     ...Workspace.args,
     disabled: true,
   },
+};
+
+/** All workspace app icons at switcher + home tile sizes (exact `/app-icons/` artwork). */
+export const AppIcons: Story = {
+  render: () => (
+    <div className="flex flex-col gap-6 p-4">
+      <div className="flex flex-wrap items-end gap-4">
+        {WORKSPACE_APP_IDS.map((appId) => (
+          <div key={appId} className="flex flex-col items-center gap-2">
+            <WorkspaceAppIcon appId={appId} className="size-[calc(2*1.875rem*0.85)] rounded-lg" />
+            <span className="text-xs capitalize text-muted-foreground">{appId}</span>
+          </div>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
+        {WORKSPACE_APP_IDS.map((appId) => (
+          <WorkspaceAppIcon
+            key={`menu-${appId}`}
+            appId={appId as WorkspaceAppId}
+            className="size-4 rounded-[4px]"
+          />
+        ))}
+      </div>
+      <div className="flex flex-wrap items-center gap-4">
+        {WORKSPACE_APP_IDS.map((appId) => (
+          <WorkspaceAppIcon
+            key={`tile-${appId}`}
+            appId={appId as WorkspaceAppId}
+            className="size-28 rounded-3xl shadow-lg"
+          />
+        ))}
+      </div>
+    </div>
+  ),
 };

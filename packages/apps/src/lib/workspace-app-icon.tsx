@@ -1,17 +1,16 @@
 import { cn } from "@/lib/utils";
-import { workspaceAppIconSrc, type WorkspaceAppId } from "@/lib/workspace-app-icons";
+import { workspaceAppIconUiSrc, type WorkspaceAppId } from "@/lib/workspace-app-icons";
 
 type WorkspaceAppIconProps = {
   appId: WorkspaceAppId;
   className?: string;
-  size?: number;
 };
 
-/** Branded workspace app icon from `/pwa-icons/` assets. */
-export function WorkspaceAppIcon({ appId, className, size = 192 }: WorkspaceAppIconProps) {
+/** Branded workspace app icon — exact user artwork via `/app-icons/{app}.png`. */
+export function WorkspaceAppIcon({ appId, className }: WorkspaceAppIconProps) {
   return (
     <img
-      src={workspaceAppIconSrc(appId, size)}
+      src={workspaceAppIconUiSrc(appId)}
       alt=""
       className={cn("block shrink-0 object-cover", className)}
       draggable={false}
