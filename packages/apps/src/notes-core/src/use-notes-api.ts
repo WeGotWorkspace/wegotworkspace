@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useConnectivity, useOnReconnect } from "@/hooks/use-connectivity";
+import { useConnectivity } from "@/hooks/use-connectivity";
 import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
 import { useHybridBootstrap } from "@/lib/live/use-hybrid-bootstrap";
 import {
@@ -10,12 +10,15 @@ import {
   notifyNotesBootstrapUpdated,
   subscribeNotesBootstrapUpdated,
 } from "@/lib/offline/notes-bootstrap-sync";
+import { syncNotesBodiesForOffline } from "@/lib/offline/notes/notes-body-sync";
 import { readNotesBootstrapFromCache } from "@/lib/offline/notes-offline-store";
 import {
   readOfflineNotesUsername,
   resolveNotesOfflineUsername,
 } from "@/lib/offline/offline-session";
 import { setNotesSyncConflictListener } from "@/lib/offline/notes-sync-conflicts";
+import { useOfflineConflictQueue } from "@/lib/offline/use-offline-conflict-queue";
+import { useOfflineReconnectFlush } from "@/lib/offline/use-offline-reconnect-flush";
 import type { NotesUIData } from "@/notes-core/src/notes-types";
 import { createDefaultNotesApiSource, type NotesApiSource } from "./notes-api-source";
 
@@ -63,15 +66,12 @@ export function useNotesAPI(source?: NotesApiSource, options?: UseNotesAPIOption
     [data?.session.user.username],
   );
 
-  const onSyncConflict = options?.onSyncConflict;
-
-  useEffect(() => {
-    setNotesSyncConflictListener(onSyncConflict);
-    return () => setNotesSyncConflictListener(undefined);
-  }, [onSyncConflict]);
+  useOfflineConflictQueue({
+    setListener: setNotesSyncConflictListener,
+    onConflicts: options?.onSyncConflict,
+  });
 
   const [listRefreshing, setListRefreshing] = useState(false);
-  const [syncing, setSyncing] = useState(false);
   const [bootstrapRevision, setBootstrapRevision] = useState(0);
   const crossTabRefreshInFlightRef = useRef(false);
 
@@ -94,32 +94,33 @@ export function useNotesAPI(source?: NotesApiSource, options?: UseNotesAPIOption
       });
   }, [applyBootstrapRefresh, listRefreshing, offlineUsername]);
 
+  const reconnectSyncing = useOfflineReconnectFlush({
+    enabled: Boolean(offlineUsername),
+    flush: async () => {
+      if (!offlineUsername) return;
+      await getNotesSyncRunner(offlineUsername).flush();
+      const next = await applyBootstrapRefresh();
+      await syncNotesBodiesForOffline(offlineUsername, next.data.notes).catch(() => undefined);
+      notifyNotesBootstrapUpdated(offlineUsername);
+    },
+  });
+
   useEffect(() => {
     if (!offlineUsername) return;
     return subscribeNotesBootstrapUpdated(offlineUsername, () => {
-      if (crossTabRefreshInFlightRef.current || syncing || listRefreshing) return;
+      if (crossTabRefreshInFlightRef.current || reconnectSyncing || listRefreshing) return;
       crossTabRefreshInFlightRef.current = true;
       void applyBootstrapRefresh().finally(() => {
         crossTabRefreshInFlightRef.current = false;
       });
     });
-  }, [applyBootstrapRefresh, listRefreshing, offlineUsername, syncing]);
+  }, [applyBootstrapRefresh, listRefreshing, offlineUsername, reconnectSyncing]);
 
-  useOnReconnect(
-    useCallback(() => {
-      if (!offlineUsername) return;
-      void (async () => {
-        setSyncing(true);
-        try {
-          await getNotesSyncRunner(offlineUsername).flush();
-          await applyBootstrapRefresh();
-          notifyNotesBootstrapUpdated(offlineUsername);
-        } finally {
-          setSyncing(false);
-        }
-      })();
-    }, [applyBootstrapRefresh, offlineUsername]),
-  );
+  useEffect(() => {
+    const notes = data?.data.notes ?? [];
+    if (phase !== "ready" || !offlineUsername || notes.length === 0) return;
+    void syncNotesBodiesForOffline(offlineUsername, notes).catch(() => undefined);
+  }, [data?.data.notes, offlineUsername, phase]);
 
   useEffect(() => {
     if (!offlineUsername || !online || phase !== "ready") return;
@@ -128,7 +129,9 @@ export function useNotesAPI(source?: NotesApiSource, options?: UseNotesAPIOption
     let cancelled = false;
 
     const runSilentRefresh = () => {
-      if (cancelled || listRefreshing || syncing || crossTabRefreshInFlightRef.current) return;
+      if (cancelled || listRefreshing || reconnectSyncing || crossTabRefreshInFlightRef.current) {
+        return;
+      }
       crossTabRefreshInFlightRef.current = true;
       void applyBootstrapRefresh().finally(() => {
         crossTabRefreshInFlightRef.current = false;
@@ -150,7 +153,7 @@ export function useNotesAPI(source?: NotesApiSource, options?: UseNotesAPIOption
       window.clearInterval(intervalId);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [applyBootstrapRefresh, listRefreshing, offlineUsername, online, phase, syncing]);
+  }, [applyBootstrapRefresh, listRefreshing, offlineUsername, online, phase, reconnectSyncing]);
 
   return {
     phase,
@@ -158,8 +161,8 @@ export function useNotesAPI(source?: NotesApiSource, options?: UseNotesAPIOption
     retry: load,
     successVersion,
     bootstrapRevision,
-    syncing,
-    listLoading: phase === "loading" || listRefreshing || syncing,
+    syncing: reconnectSyncing,
+    listLoading: phase === "loading" || listRefreshing || reconnectSyncing,
     refreshList,
     session: data?.session ?? mockWorkspaceSession,
     data: data?.data ?? placeholderData,
