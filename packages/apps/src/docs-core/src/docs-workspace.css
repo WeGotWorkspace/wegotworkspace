@@ -4,10 +4,11 @@
 .docs-workspace {
   @apply min-w-0 overflow-x-hidden;
 
-  /* Slightly lighter than Drive (#2563eb) — same blue family, distinct app chrome */
+  /* Docs app chrome — blue sampled from app icon background */
   --docs-accent: #3b82f6;
-  /* Sidebar matches Drive blue — #3b82f6 fails WCAG 4.5:1 with white ink */
+  /* Sidebar darker than accent — #3b82f6 fails WCAG 4.5:1 with white ink */
   --docs-sidebar: #2563eb;
+  --workspace-accent: var(--docs-accent);
   --color-emerald: var(--docs-accent);
   --docs-surface: var(--color-cream, #ffffff);
   --background: oklch(98.5% 0.005 100);
@@ -44,6 +45,13 @@
   background-color: var(--docs-surface);
   color: var(--docs-text);
   font-family: var(--font-sans);
+}
+
+/* Docs home reuses Drive grid/list under `.drive-workspace` for layout selectors.
+   Remap drive accent tokens so tiles and list rows use docs blue, not drive green. */
+.docs-workspace .drive-workspace {
+  --drive-accent: var(--docs-accent);
+  --color-emerald: var(--docs-accent);
 }
 
 @media (min-width: 768px) {
@@ -84,12 +92,6 @@
   background-color: color-mix(in oklab, #ffffff 10%, var(--docs-sidebar));
 }
 
-.docs-workspace .app-sidebar {
-  --app-switch-label-color: #ffffff;
-  --app-switch-label-tagline-color: #ffffff;
-  --app-switch-chevron-color: #ffffff;
-}
-
 .docs-workspace .sidebar-section .menu-item--surface-idle {
   color: #ffffff;
   background-color: var(--docs-sidebar);
@@ -118,7 +120,7 @@
 .docs-workspace .app-sidebar__scroll {
   --color-ink: #ffffff;
   --button-primary-bg: #ffffff;
-  --button-primary-fg: #2563eb;
+  --button-primary-fg: var(--docs-sidebar);
   --button-subtle-color: #ffffff;
   --button-subtle-background: color-mix(in oklab, #ffffff 12%, transparent);
   --button-subtle-hover-background: color-mix(in oklab, #ffffff 20%, transparent);

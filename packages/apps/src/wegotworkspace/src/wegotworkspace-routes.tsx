@@ -52,8 +52,29 @@ import { withWeGotWorkspaceAuth } from "@/wegotworkspace/src/wegotworkspace-requ
 import { wegotworkspaceRootRoute } from "@/wegotworkspace/src/wegotworkspace-router-shared";
 import { WeGotWorkspaceNotFound } from "@/wegotworkspace/src/wegotworkspace-shell";
 import { useWeGotWorkspaceLogout } from "@/wegotworkspace/src/wegotworkspace-story-logout";
+import { createWorkspacePwaHead } from "@/lib/workspace-pwa-head";
 
 export type WeGotWorkspaceRouteMode = "mock" | "live";
+
+const homePwaHead = () => createWorkspacePwaHead("home");
+const loginPwaHead = () =>
+  createWorkspacePwaHead("home", {
+    title: "Sign in — WeGotWorkspace",
+    description: "Sign in to your workspace to continue.",
+  });
+const mailPwaHead = () => createWorkspacePwaHead("mail");
+const notesPwaHead = () => createWorkspacePwaHead("notes");
+const drivePwaHead = () => createWorkspacePwaHead("drive");
+const docsPwaHead = () => createWorkspacePwaHead("docs");
+const settingsPwaHead = () => createWorkspacePwaHead("settings");
+const meetPwaHead = () => createWorkspacePwaHead("meet");
+const meetGuestPwaHead = () =>
+  createWorkspacePwaHead("meet", {
+    title: "Join meeting",
+    description: "Join a video meeting as a guest.",
+  });
+const adminPwaHead = () => createWorkspacePwaHead("admin");
+const contactsPwaHead = () => createWorkspacePwaHead("contacts");
 
 const STORY_SYSTEM_MAILBOXES = [
   "Inbox",
@@ -175,12 +196,14 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
   const indexRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/",
+    head: homePwaHead,
     component: isLive ? withWeGotWorkspaceAuth(Home) : Home,
   });
 
   const loginRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/login",
+    head: loginPwaHead,
     validateSearch: (search: Record<string, unknown>): LoginSearch => ({
       return: typeof search.return === "string" ? search.return : undefined,
     }),
@@ -197,6 +220,7 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
   const mailRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/mail",
+    head: mailPwaHead,
     component: isLive ? withWeGotWorkspaceAuth(MailApp) : MockMailRoute,
   });
 
@@ -207,6 +231,7 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
   const notesIndexRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/notes",
+    head: notesPwaHead,
     beforeLoad: () => {
       throw redirect({ to: "/notes/all" });
     },
@@ -215,66 +240,77 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
   const notesAllRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/notes/all",
+    head: notesPwaHead,
     component: NotesComponent,
   });
 
   const notesAllNoteRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/notes/all/$noteId",
+    head: notesPwaHead,
     component: NotesComponent,
   });
 
   const notesStarredRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/notes/starred",
+    head: notesPwaHead,
     component: NotesComponent,
   });
 
   const notesStarredNoteRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/notes/starred/$noteId",
+    head: notesPwaHead,
     component: NotesComponent,
   });
 
   const notesArchiveRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/notes/archive",
+    head: notesPwaHead,
     component: NotesComponent,
   });
 
   const notesArchiveNoteRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/notes/archive/$noteId",
+    head: notesPwaHead,
     component: NotesComponent,
   });
 
   const notesTagRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/notes/tags/$tagSlug",
+    head: notesPwaHead,
     component: NotesComponent,
   });
 
   const notesTagNoteRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/notes/tags/$tagSlug/$noteId",
+    head: notesPwaHead,
     component: NotesComponent,
   });
 
   const notesNotebookRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/notes/$notebookSlug",
+    head: notesPwaHead,
     component: NotesComponent,
   });
 
   const notesNotebookNoteRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/notes/$notebookSlug/$noteId",
+    head: notesPwaHead,
     component: NotesComponent,
   });
 
   const driveRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/drive",
+    head: drivePwaHead,
     validateSearch: validateDriveRouteSearch,
     component: isLive ? withWeGotWorkspaceAuth(DriveApp) : MockDriveRoute,
   });
@@ -282,6 +318,7 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
   const docsRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/docs",
+    head: docsPwaHead,
     validateSearch: validateDocsRouteSearch,
     component: isLive ? withWeGotWorkspaceAuth(DocsApp) : MockDocsRoute,
   });
@@ -289,12 +326,14 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
   const settingsRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/settings",
+    head: settingsPwaHead,
     component: isLive ? withWeGotWorkspaceAuth(SettingsApp) : MockSettingsRoute,
   });
 
   const meetRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/meet",
+    head: meetPwaHead,
     validateSearch: validateMeetRouteSearch,
     component: isLive ? withWeGotWorkspaceAuth(MeetApp) : MockMeetRoute,
   });
@@ -302,6 +341,7 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
   const meetGuestRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/meet/guest",
+    head: meetGuestPwaHead,
     validateSearch: validateMeetRouteSearch,
     component: MeetGuestRoute,
   });
@@ -309,6 +349,7 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
   const meetJoinRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/meet/join",
+    head: meetGuestPwaHead,
     validateSearch: validateMeetRouteSearch,
     component: MeetGuestRoute,
   });
@@ -316,6 +357,7 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
   const adminRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/admin",
+    head: adminPwaHead,
     component: isLive ? withWeGotWorkspaceAuth(AdminApp) : MockAdminRoute,
   });
 
@@ -326,6 +368,7 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
   const contactsIndexRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/contacts",
+    head: contactsPwaHead,
     beforeLoad: () => {
       throw redirect({ to: "/contacts/all" });
     },
@@ -334,30 +377,35 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
   const contactsAllRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/contacts/all",
+    head: contactsPwaHead,
     component: ContactsComponent,
   });
 
   const contactsAllContactRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/contacts/all/$contactId",
+    head: contactsPwaHead,
     component: ContactsComponent,
   });
 
   const contactsGroupRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/contacts/groups/$groupCardId",
+    head: contactsPwaHead,
     component: ContactsComponent,
   });
 
   const contactsGroupContactRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/contacts/groups/$groupCardId/$contactId",
+    head: contactsPwaHead,
     component: ContactsComponent,
   });
 
   const installRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/install",
+    head: homePwaHead,
     component: isLive ? InstallApp : MockInstallRoute,
   });
 

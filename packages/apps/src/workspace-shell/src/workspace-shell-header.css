@@ -24,8 +24,17 @@
   @apply shrink-0;
 }
 
-.workspace-shell-header__account .workspace-app-layout__user-footer {
-  @apply gap-2 border-0 p-0;
+.workspace-shell-header__user-menu-trigger {
+  @apply flex size-9 items-center justify-center rounded-full border text-xs font-semibold transition-colors;
+  background-color: var(--workspace-shell-header-user-menu-bg, rgba(255, 255, 255, 0.16));
+  color: var(--workspace-shell-header-user-menu-fg, #ffffff);
+  border-color: var(--workspace-shell-header-user-menu-border, rgba(255, 255, 255, 0.22));
+}
+
+.workspace-shell-header__user-menu-content {
+  @apply min-w-48 p-1.5;
+  user-select: none;
+  border-color: color-mix(in oklab, currentColor 25%, transparent);
 }
 
 .workspace-shell-header__spacer {

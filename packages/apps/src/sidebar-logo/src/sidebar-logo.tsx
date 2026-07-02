@@ -1,9 +1,8 @@
 import { X } from "lucide-react";
-import { BrandMark } from "@/brand-mark/src/brand-mark";
 
 type SidebarLogoProps = {
   showAppSwitcher?: boolean;
-  /** When `showAppSwitcher` is true, render this node (e.g. `WorkspaceAppSwitcher` / `AppSwitchButton`, which includes the brand mark). */
+  /** When `showAppSwitcher` is true, render this node (e.g. `WorkspaceAppSwitcher` / `AppSwitchButton`, which includes the app icon). */
   appSwitcher?: React.ReactNode;
   onCloseMobile: () => void;
   closeButtonHoverClassName?: string;
@@ -16,9 +15,9 @@ export function SidebarLogo({
   closeButtonHoverClassName = "hover:bg-[color-mix(in_oklab,var(--color-ink)_8%,transparent)]",
 }: SidebarLogoProps) {
   return (
-    <div className="p-6 md:p-8 flex items-center gap-3 justify-between">
+    <div className="p-6 flex items-center gap-3 justify-between">
       <div className="flex items-center gap-2 min-w-0">
-        {showAppSwitcher && appSwitcher ? appSwitcher : <BrandMark />}
+        {showAppSwitcher && appSwitcher ? appSwitcher : null}
       </div>
       <button
         aria-label="Close menu"

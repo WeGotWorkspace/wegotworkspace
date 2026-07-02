@@ -24,6 +24,10 @@
   --button-icon-size: 1.25rem;
 }
 
+.icon-button--active {
+  color: var(--button-active-color, var(--color-emerald));
+}
+
 .icon-button--active .button__icon > svg {
   fill: currentColor;
 }

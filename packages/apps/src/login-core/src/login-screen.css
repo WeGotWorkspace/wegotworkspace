@@ -1,27 +1,30 @@
 @import "../../styles.css" reference;
 
 .login-screen {
-  background-color: var(--color-paper);
-  color: var(--color-ink);
-  --brand-mark-fill: var(--color-forest);
-  --field-label-color: var(--color-slate-muted);
-  --button-primary-bg: var(--color-forest);
-  --button-primary-fg: var(--color-paper);
-  --primary: var(--color-forest);
-  --primary-foreground: var(--color-paper);
+  background-color: var(--workspace-home-bg, #1b1d3a);
+  color: #ffffff;
+  --app-switch-label-color: #ffffff;
+  --field-label-color: color-mix(in oklab, #ffffff 72%, transparent);
+  --input-background: color-mix(in oklab, #ffffff 12%, transparent);
+  --input-background-focus: color-mix(in oklab, #ffffff 18%, transparent);
+  --input-placeholder-color: color-mix(in oklab, #ffffff 42%, transparent);
+  --foreground: currentColor;
+  --color-foreground: var(--foreground);
+  --button-primary-bg: #ffffff;
+  --button-primary-fg: var(--workspace-home-bg, #1b1d3a);
 }
 
 .login-screen .workspace-shell-header {
-  color: var(--color-forest);
+  color: #ffffff;
 }
 
 .login-screen__hero {
   font-family: var(--font-serif);
-  color: var(--color-forest);
+  color: #ffffff;
 }
 
 .login-screen__footer {
-  color: var(--color-slate-muted);
+  color: color-mix(in oklab, #ffffff 62%, transparent);
 }
 
 .login-screen__error {

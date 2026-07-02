@@ -1,0 +1,17 @@
+@import "../../styles.css" reference;
+
+/** Shared suite home shell — matches `home.svg` background and sign-in screen. */
+.apps-home-screen {
+  background-color: var(--workspace-home-bg, #1b1d3a);
+  color: #ffffff;
+  --app-switch-label-color: #ffffff;
+}
+
+/** Home grid tile — larger than legacy PNG-era `size-28`; radius matches app switcher (`rounded-[6px]`). */
+.apps-home-screen__tile-icon {
+  @apply flex size-32 overflow-hidden rounded-[6px] shadow-[0_12px_30px_-18px_rgba(0,0,0,0.55)] transition-transform group-hover:scale-[1.03];
+}
+
+.apps-home-screen__tile-icon--accent {
+  @apply flex size-32 items-center justify-center rounded-[6px] shadow-[0_12px_30px_-18px_color-mix(in_oklab,var(--color-ink)_80%,transparent)] transition-transform group-hover:scale-[1.03];
+}

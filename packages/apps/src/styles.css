@@ -53,6 +53,8 @@
   --color-ghost: #22c55e;
   /* Workspace pane / shell background (white for now; tweak here to re-tint). */
   --color-cream: #ffffff;
+  /** Suite home + sign-in shell — sampled from `home.svg` `--wai-bg`; keep in sync with `WORKSPACE_HOME_ACCENT`. */
+  --workspace-home-bg: #1b1d3a;
 }
 
 @custom-variant dark (&:is(.dark *));
@@ -150,8 +152,9 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
-  /* Shared form controls + sheet-like elevation (text editor sheet uses the same shadow). */
+  /* Shared form controls: flat inputs (no shadow) + sheet-like elevation for surfaces. */
   --control-radius: 0.1875rem;
+  --input-shadow: none;
   /* Capsule chips: tags, metadata labels, count badges, switches. */
   --control-radius-pill: 9999px;
   /* Pill buttons, boolean switches, segmented toggles (grid/list, etc.). */

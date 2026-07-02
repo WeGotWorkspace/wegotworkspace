@@ -3,50 +3,86 @@
 /* Pane class fragments: `settings-workspace.styles.ts` (must stay in sync). */
 
 /**
- * Settings product shell: cream main pane + light gray sidebar (admin accent tint).
+ * Settings product shell: cream main pane + slate sidebar (sampled from app icon background).
  * Import only from {@link SettingsWorkspace}.
  */
 .settings-workspace {
-  --settings-accent: color-mix(in oklab, #4a5059 50%, #ffffff);
+  --settings-accent: #64748b;
   --settings-accent-bg: var(--settings-accent);
   --workspace-accent: var(--settings-accent);
   --workspace-root-bg: var(--color-cream, #ffffff);
   --workspace-main-bg: color-mix(in oklab, var(--settings-accent) 6%, var(--color-cream, #ffffff));
   --app-sidebar-bg: var(--settings-accent);
-  --app-sidebar-border-color: color-mix(in oklab, var(--color-ink) 12%, transparent);
-  --app-sidebar-color: var(--color-ink);
-  --sidebar-logo-brand-fill: var(--color-ink);
-  --sidebar-logo-close-button-color: var(--color-ink);
+  --app-sidebar-border-color: color-mix(in oklab, #ffffff 14%, transparent);
+  --app-sidebar-color: #ffffff;
+  --sidebar-logo-close-button-color: #ffffff;
   --sidebar-badge-fg: var(--settings-accent);
   --workspace-sidebar-toggle-color: var(--color-ink);
   --workspace-sidebar-toggle-bg: color-mix(in oklab, var(--color-ink) 8%, transparent);
-  --workspace-user-footer-link-hover-bg: color-mix(in oklab, var(--color-ink) 10%, transparent);
+  --workspace-user-footer-link-hover-bg: color-mix(in oklab, #ffffff 10%, transparent);
 
-  --workspace-user-footer-text-color: color-mix(in oklab, var(--color-ink) 70%, transparent);
-  --workspace-user-footer-border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
-  --workspace-user-footer-avatar-bg: color-mix(in oklab, var(--color-ink) 12%, transparent);
-  --workspace-user-footer-avatar-color: var(--color-ink);
-  --workspace-user-footer-link-color: color-mix(in oklab, var(--color-ink) 65%, transparent);
-  --workspace-user-footer-link-bg: color-mix(in oklab, var(--color-ink) 6%, transparent);
+  --workspace-user-footer-text-color: #ffffff;
+  --workspace-user-footer-border-color: color-mix(in oklab, #ffffff 18%, transparent);
+  --workspace-user-footer-avatar-bg: color-mix(in oklab, #ffffff 20%, transparent);
+  --workspace-user-footer-avatar-color: #ffffff;
+  --workspace-user-footer-link-color: #ffffff;
+  --workspace-user-footer-link-bg: color-mix(in oklab, #ffffff 8%, transparent);
 
   --button-primary-bg: var(--settings-accent);
-  --button-primary-fg: var(--color-ink);
+  --button-primary-fg: #ffffff;
   --primary: var(--settings-accent);
-  --primary-foreground: var(--color-ink);
+  --primary-foreground: #ffffff;
+}
+
+.settings-workspace .app-sidebar {
+  color: var(--app-sidebar-color);
+  --color-ink: var(--app-sidebar-color);
+  --field-label-color: color-mix(in oklab, #ffffff 78%, transparent);
 }
 
 .settings-workspace .app-sidebar__scroll {
-  --button-subtle-color: var(--color-ink);
-  --button-subtle-background: color-mix(in oklab, var(--color-ink) 10%, transparent);
-  --button-subtle-hover-background: color-mix(in oklab, var(--color-ink) 16%, transparent);
+  --color-ink: #ffffff;
+  --button-subtle-color: #ffffff;
+  --button-subtle-background: color-mix(in oklab, #ffffff 10%, transparent);
+  --button-subtle-hover-background: color-mix(in oklab, #ffffff 18%, transparent);
+}
+
+.settings-workspace .app-sidebar__footer {
+  --color-ink: var(--app-sidebar-color);
+  --workspace-user-footer-text-color: #ffffff;
+  --workspace-user-footer-subtitle-color: color-mix(in oklab, #ffffff 72%, transparent);
+  --workspace-user-footer-border-color: color-mix(in oklab, #ffffff 16%, transparent);
+  --workspace-user-footer-avatar-bg: color-mix(in oklab, #ffffff 20%, transparent);
+  --workspace-user-footer-avatar-color: var(--workspace-user-footer-text-color);
+  --workspace-user-footer-link-color: #ffffff;
+}
+
+.settings-workspace .sidebar-section .menu-item--surface-idle {
+  color: #ffffff;
+}
+
+.settings-workspace .sidebar-section .menu-item--surface-selected {
+  background-color: color-mix(in oklab, #ffffff 14%, transparent);
+  color: #ffffff;
+}
+
+.settings-workspace .sidebar-section .menu-item.menu-item--selected .menu-item__badge {
+  background-color: #ffffff;
+  color: var(--settings-accent);
+}
+
+.settings-workspace .sidebar-section__title {
+  color: color-mix(in oklab, #ffffff 78%, transparent);
+}
+
+.settings-workspace .sidebar-section .menu-item:not(.menu-item--selected) .menu-item__icon-slot,
+.settings-workspace .sidebar-section .menu-item.menu-item--selected .menu-item__icon-slot {
+  color: #ffffff;
+  opacity: 1;
 }
 
 /* Descendant classes — only use inside `SettingsWorkspace` (`.settings-workspace`). */
-/* Display rows: `FieldLabelRow` + `Input readOnly` — no extra class on the input. */
-.settings-workspace .field-label-row:has(input[readonly]) .input {
-  @apply cursor-default;
-  background-color: color-mix(in oklab, var(--color-ink) 4%, transparent);
-}
+/* Display rows: `FieldLabelRow` + `Input readOnly` — disabled fill from `@/ui/input`. */
 
 .settings-workspace .settings-form-actions {
   @apply flex justify-end pt-2;

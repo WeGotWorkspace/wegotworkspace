@@ -19,7 +19,6 @@ export type { MeetChatMessage } from "@/meet-core/src/meet-chat-pane";
 export { MeetCallToolbar } from "@/meet-core/src/meet-call-toolbar";
 export { MeetRoomStatusBar } from "@/meet-core/src/meet-room-status-bar";
 export { MeetLobbyStatusCard } from "@/meet-core/src/meet-lobby-status-card";
-export { MeetWorkspaceHeader } from "@/meet-core/src/meet-workspace-header";
 export {
   WorkspaceShellHeader,
   type WorkspaceShellHeaderProps,

@@ -59,6 +59,10 @@ export const Destructive: Story = {
   args: { ...Primary.args, variant: "destructive" },
 };
 
+export const Link: Story = {
+  args: { ...Primary.args, variant: "link", icon: undefined, label: "Learn more" },
+};
+
 export const Disabled: Story = {
   args: { ...Primary.args, disabled: true },
 };

@@ -109,7 +109,7 @@ final class FrontRoutingTest extends TestCase
             ->assertHeader('Content-Type', 'text/css; charset=utf-8');
     }
 
-    public function test_pwa_icon_path_serves_shell_asset(): void
+    public function test_app_icon_svg_path_serves_shell_asset(): void
     {
         $this->repoRoot = UiDistFixture::bootstrapMonorepoLayout();
         $installRoot = $this->repoRoot.'/apps/wegotworkspace';
@@ -117,7 +117,20 @@ final class FrontRoutingTest extends TestCase
         WgwInstallFixture::markInstalled($installRoot, $data);
         WgwInstallFixture::syncDatabaseConnection();
 
-        $this->get('/pwa-icons/settings-512.png')
+        $this->get('/app-icons/settings.svg')
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/svg+xml');
+    }
+
+    public function test_apple_touch_icon_path_serves_shell_asset(): void
+    {
+        $this->repoRoot = UiDistFixture::bootstrapMonorepoLayout();
+        $installRoot = $this->repoRoot.'/apps/wegotworkspace';
+        $data = $installRoot.'/wgw-content';
+        WgwInstallFixture::markInstalled($installRoot, $data);
+        WgwInstallFixture::syncDatabaseConnection();
+
+        $this->get('/pwa-icons/settings-180.png')
             ->assertOk()
             ->assertHeader('Content-Type', 'image/png');
     }

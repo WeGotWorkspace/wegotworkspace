@@ -1,5 +1,26 @@
 @import "../../styles.css" reference;
 
+/**
+ * Sidebar chrome SST — workspace roots publish `--app-sidebar-bg`, `--app-sidebar-color`,
+ * and `--workspace-accent`. App switch lockup (label, tagline, chevron, inverted icon)
+ * derives all colors from those tokens; do not override per product.
+ */
+:is([class$="-workspace"], .app-sidebar, .workspace-shell-header) {
+  --app-switch-lockup-bg: var(--app-sidebar-bg, var(--workspace-home-bg, #1b1d3a));
+  --app-switch-label-color: var(--app-sidebar-color, currentColor);
+  /* Opaque mix (not transparent) so a11y contrast uses the real chrome surface. */
+  --app-switch-label-tagline-color: color-mix(
+    in oklab,
+    var(--app-switch-label-color) 92%,
+    var(--app-switch-lockup-bg)
+  );
+  --app-switch-chevron-color: color-mix(
+    in oklab,
+    var(--app-switch-label-color) 50%,
+    var(--app-switch-lockup-bg)
+  );
+}
+
 .app-sidebar {
   @apply fixed md:static z-40 inset-y-0 left-0 shrink-0 flex h-dvh min-h-0 w-64 flex-col self-stretch border-r shadow-2xl md:h-full md:min-h-0 md:shadow-none transition-[translate,margin,border-width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] overflow-hidden will-change-transform;
   background-color: var(--app-sidebar-bg, var(--mail-sidebar, var(--color-cream, #ffffff)));
@@ -8,12 +29,6 @@
     color-mix(in oklab, var(--color-ink) 15%, transparent)
   );
   color: var(--app-sidebar-color, var(--color-ink));
-  --app-switch-label-color: var(--app-sidebar-color, var(--color-ink));
-  --app-switch-label-tagline-color: color-mix(
-    in oklab,
-    var(--app-switch-label-color) 72%,
-    transparent
-  );
   --app-sidebar-close-hover-bg: color-mix(
     in oklab,
     var(--sidebar-logo-close-button-color, var(--color-ink)) 8%,

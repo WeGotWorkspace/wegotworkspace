@@ -60,10 +60,11 @@ export default defineConfig(({ mode }) => {
         workbox: {
           // Wait for tabs to close before activating a new worker (safer for local preview).
           skipWaiting: false,
-          clientsClaim: false,
+          // Control the page on first SW activation so Chrome can offer install without a manual reload.
+          clientsClaim: true,
           navigateFallback: "index.html",
           navigateFallbackDenylist: [/^\/api\//],
-          globPatterns: ["**/*.{js,css,html,ico,png,woff2,webmanifest}"],
+          globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2,webmanifest}"],
         },
         manifest: false,
       }),

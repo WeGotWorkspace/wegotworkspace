@@ -1,0 +1,24 @@
+{
+  "name": "Contacts",
+  "short_name": "Contacts",
+  "start_url": "/contacts/all",
+  "scope": "/contacts",
+  "id": "/contacts",
+  "display": "standalone",
+  "background_color": "#7360c8",
+  "theme_color": "#7360c8",
+  "icons": [
+    {
+      "src": "/app-icons/contacts.svg?v=2",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icons/contacts-180.png?v=2",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

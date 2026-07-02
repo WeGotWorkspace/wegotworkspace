@@ -5,13 +5,17 @@
  * Each workspace root (`admin-workspace`, `settings-workspace`) should import this
  * once, then only set product-specific overrides (sidebar accent, subtle buttons, …).
  *
+ * Sidebar chrome contract (see also `app-sidebar.css` lockup derivation):
+ * - `--app-sidebar-bg` — sidebar surface
+ * - `--app-sidebar-color` — sidebar foreground (nav text, switch label, inverted icon bg)
+ * - `--workspace-accent` — product accent (inverted switch icon glyph, badges, CTAs)
+ *
  * Main column width (`--workspace-main-content-max-width`) is unified here so pane
  * content and {@link Card} stacks share the same measure across products.
  */
 :is(.admin-workspace, .settings-workspace, .notes-workspace, .mail-workspace, .install-workspace) {
   --workspace-root-bg: var(--color-cream, #ffffff);
   --app-sidebar-border-color: color-mix(in oklab, var(--color-ink) 15%, transparent);
-  --app-sidebar-color: var(--color-ink);
   --workspace-sidebar-toggle-color: var(--color-ink);
   --workspace-sidebar-toggle-bg: color-mix(in oklab, var(--color-ink) 6%, transparent);
   --workspace-user-footer-text-color: color-mix(in oklab, var(--color-ink) 80%, transparent);

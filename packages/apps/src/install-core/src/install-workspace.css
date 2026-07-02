@@ -5,11 +5,11 @@
 /* Pane class fragments: `install-workspace.styles.ts` (must stay in sync). */
 
 .install-workspace {
-  --install-accent: var(--color-paper, #34d399);
-  --install-sidebar-fg: #042318;
+  --install-accent: var(--workspace-home-bg, #1b1d3a);
+  --workspace-accent: var(--install-accent);
+  --install-sidebar-fg: #ffffff;
   --app-sidebar-bg: var(--install-accent);
   --app-sidebar-color: var(--install-sidebar-fg);
-  --sidebar-logo-brand-fill: var(--install-sidebar-fg);
   --sidebar-logo-close-button-color: var(--install-sidebar-fg);
   --app-sidebar-close-hover-bg: color-mix(in oklab, var(--install-sidebar-fg) 12%, transparent);
   --workspace-sidebar-toggle-color: var(--color-ink);

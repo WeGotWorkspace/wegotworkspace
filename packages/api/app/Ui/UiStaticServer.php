@@ -15,6 +15,7 @@ final class UiStaticServer
 {
     /** @var list<string> */
     private const GLOBAL_PREFIXES = [
+        '/app-icons',
         '/assets',
         '/fonts',
         '/pwa-icons',
@@ -168,7 +169,7 @@ final class UiStaticServer
 
         $fs = $this->mapUrlToFilesystem($root, $rel);
         if ($fs === null) {
-            if ($rel !== '' && preg_match('#^(css|js|img|fonts|assets|pwa-icons|manifests)/#', $rel) === 1) {
+            if ($rel !== '' && preg_match('#^(css|js|img|fonts|assets|app-icons|pwa-icons|manifests)/#', $rel) === 1) {
                 return null;
             }
             if (! $allowSpaFallback) {

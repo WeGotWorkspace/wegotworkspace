@@ -3,18 +3,25 @@
 
 .drive-workspace {
   @apply min-w-0 overflow-x-hidden;
-  --drive-accent: #2563eb;
+  --drive-accent: #10b981;
   --color-emerald: var(--drive-accent);
   --drive-sidebar: var(--drive-accent);
+  --workspace-accent: var(--drive-accent);
   --app-sidebar-bg: var(--drive-sidebar);
-  --app-sidebar-border-color: color-mix(in oklab, #ffffff 18%, transparent);
-  --app-sidebar-color: #ffffff;
-  --sidebar-logo-close-button-color: var(--app-sidebar-color);
+  --app-sidebar-border-color: color-mix(in oklab, var(--color-ink) 12%, transparent);
+  --app-sidebar-color: var(--color-ink);
+  --sidebar-logo-close-button-color: var(--color-ink);
   --sidebar-badge-fg: var(--drive-accent);
   --workspace-main-content-max-width: none;
   --workspace-sidebar-toggle-color: var(--color-ink);
   --workspace-sidebar-toggle-bg: color-mix(in oklab, var(--color-ink) 6%, transparent);
-  --workspace-user-footer-link-hover-bg: color-mix(in oklab, #ffffff 18%, transparent);
+  --workspace-user-footer-link-hover-bg: color-mix(in oklab, var(--color-ink) 10%, transparent);
+  --workspace-user-footer-text-color: color-mix(in oklab, var(--color-ink) 70%, transparent);
+  --workspace-user-footer-border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
+  --workspace-user-footer-avatar-bg: color-mix(in oklab, var(--color-ink) 12%, transparent);
+  --workspace-user-footer-avatar-color: var(--color-ink);
+  --workspace-user-footer-link-color: color-mix(in oklab, var(--color-ink) 65%, transparent);
+  --workspace-user-footer-link-bg: color-mix(in oklab, var(--color-ink) 6%, transparent);
   --upload-progress-active-fill: var(--drive-sidebar);
   --upload-progress-done-fill: var(--color-emerald);
   --file-drop-overlay-card-color: var(--drive-sidebar);
@@ -30,26 +37,12 @@
   @apply mx-0 flex min-h-full flex-1 flex-col w-full max-w-none px-0 py-0;
 }
 
-.drive-workspace .app-sidebar {
-  --field-label-color: color-mix(in oklab, #ffffff 72%, transparent);
-}
-
 .drive-workspace .app-sidebar__scroll {
-  --color-ink: #ffffff;
   --button-primary-bg: var(--color-ink);
   --button-primary-fg: var(--drive-sidebar);
-}
-
-.drive-workspace .app-sidebar__footer {
-  --workspace-user-footer-text-color: #ffffff;
-  --workspace-user-footer-subtitle-color: color-mix(in oklab, #ffffff 72%, transparent);
-  --workspace-user-footer-border-color: color-mix(in oklab, #ffffff 18%, transparent);
-  --workspace-user-footer-avatar-bg: color-mix(in oklab, #ffffff 22%, transparent);
-  --workspace-user-footer-avatar-color: var(--app-sidebar-color);
-  --workspace-user-footer-link-color: #ffffff;
-  --button-subtle-color: #ffffff;
-  --button-subtle-background: color-mix(in oklab, #ffffff 10%, transparent);
-  --button-subtle-hover-background: color-mix(in oklab, #ffffff 18%, transparent);
+  --button-subtle-color: var(--color-ink);
+  --button-subtle-background: color-mix(in oklab, var(--color-ink) 10%, transparent);
+  --button-subtle-hover-background: color-mix(in oklab, var(--color-ink) 16%, transparent);
 }
 
 .drive-workspace .drive-detail-actions {
