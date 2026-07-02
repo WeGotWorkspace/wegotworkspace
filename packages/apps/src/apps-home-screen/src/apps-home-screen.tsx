@@ -18,7 +18,7 @@ export type AppsHomeScreenItem = {
   appId?: WorkspaceAppId;
   /** Lucide or custom node when neither `appId` nor `iconSrc` is set. */
   icon?: ReactNode;
-  /** @deprecated Prefer `appId` — PNG from `/pwa-icons/` for legacy callers only. */
+  /** @deprecated Prefer `appId` — legacy PNG callers; manifests now use SVG via `appId`. */
   iconSrc?: string;
   accent: string;
   fg?: string;

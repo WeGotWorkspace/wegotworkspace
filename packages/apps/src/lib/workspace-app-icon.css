@@ -1,26 +1,22 @@
 @import "../styles.css" reference;
 
 /**
- * Switch trigger lockup: `--app-sidebar-color` background + `--workspace-accent` glyph.
- * Glyph shape comes from vector SVG paths ({app}-glyph.svg), not raster masks.
+ * Switch trigger lockup: `--app-sidebar-color` background + `--workspace-accent` artwork.
+ * The same vector SVG as the default icon is inlined; `--wai-*` vars remap layers for inversion.
  */
 .workspace-app-icon--switch-trigger {
   --app-switch-icon-bg: var(--app-sidebar-color, var(--app-switch-label-color, currentColor));
   --app-switch-icon-fg: var(--workspace-accent, currentColor);
-  @apply relative block overflow-hidden rounded-[6px];
+  @apply block overflow-hidden rounded-[6px];
   background-color: var(--app-switch-icon-bg);
 }
 
-.workspace-app-icon--switch-trigger::after {
-  @apply absolute inset-0;
-  content: "";
-  background-color: var(--app-switch-icon-fg);
-  mask-image: var(--workspace-app-icon-glyph-mask);
-  mask-size: 100% 100%;
-  mask-repeat: no-repeat;
-  mask-position: center;
-  -webkit-mask-image: var(--workspace-app-icon-glyph-mask);
-  -webkit-mask-size: 100% 100%;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: center;
+.workspace-app-icon--switch-trigger svg {
+  @apply block size-full;
+  --wai-bg: transparent;
+  --wai-fg: var(--app-switch-icon-fg);
+  --wai-detail: var(--app-switch-icon-fg);
+  --wai-detail-muted: var(--app-switch-icon-fg);
+  /* Card cutouts (e.g. contacts person silhouette) reveal sidebar text color. */
+  --wai-cutout: var(--app-switch-icon-bg);
 }

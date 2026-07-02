@@ -1,4 +1,4 @@
-/** Workspace product ids that have branded launcher / PWA icons under `/app-icons/` and `/pwa-icons/`. */
+/** Workspace product ids that have branded launcher / PWA icons under `/app-icons/`. */
 export const WORKSPACE_APP_IDS = [
   "notes",
   "mail",
@@ -30,30 +30,30 @@ export const WORKSPACE_APP_ACCENT: Record<WorkspaceAppId, string> = {
   admin: "#475569",
 };
 
-const PWA_ICON_SIZE = 192;
+const APPLE_TOUCH_SIZE = 180;
 
-/** Canonical user vector artwork for UI — real SVG paths in `/app-icons/`. */
+/** Canonical vector artwork for UI and web app manifests — `/app-icons/{app}.svg`. */
 export function workspaceAppIconUiSrc(appId: WorkspaceAppId): string {
   return `/app-icons/${appId}.svg`;
 }
 
-/** White glyph vector mask for switch-trigger inversion. */
-export function workspaceAppIconGlyphMaskSrc(appId: WorkspaceAppId): string {
-  return `/app-icons/${appId}-glyph.svg`;
+/** Alias for manifest / install surfaces that reference the same vector asset as UI. */
+export function workspaceAppIconManifestSrc(appId: WorkspaceAppId): string {
+  return workspaceAppIconUiSrc(appId);
 }
 
-/** CSS vars for the inverted switch trigger glyph mask (colors derive from workspace chrome tokens). */
-export function workspaceAppIconSwitchTriggerStyle(
-  appId: WorkspaceAppId,
-): Record<`--${string}`, string> {
-  return {
-    "--workspace-app-icon-glyph-mask": `url(${workspaceAppIconGlyphMaskSrc(appId)})`,
-  };
+/** 180×180 PNG for iOS `<link rel="apple-touch-icon">` only — generated via `generate-pwa-icons.mjs`. */
+export function workspaceAppIconAppleTouchSrc(appId: WorkspaceAppId): string {
+  return `/pwa-icons/${appId}-${APPLE_TOUCH_SIZE}.png`;
 }
 
-/** Rasterized PWA / install icons only — generated from vector SVG via `generate-pwa-icons.mjs`. */
-export function workspaceAppIconSrc(appId: WorkspaceAppId, size = PWA_ICON_SIZE): string {
-  return `/pwa-icons/${appId}-${size}.png`;
+/**
+ * @deprecated Prefer `workspaceAppIconManifestSrc` (SVG) or `workspaceAppIconAppleTouchSrc` (180 PNG).
+ */
+export function workspaceAppIconSrc(appId: WorkspaceAppId, size = APPLE_TOUCH_SIZE): string {
+  return size === APPLE_TOUCH_SIZE
+    ? workspaceAppIconAppleTouchSrc(appId)
+    : workspaceAppIconManifestSrc(appId);
 }
 
 export function isWorkspaceAppId(value: string): value is WorkspaceAppId {
