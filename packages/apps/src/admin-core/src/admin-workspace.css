@@ -31,9 +31,6 @@
   color: var(--app-sidebar-color);
   --color-ink: var(--app-sidebar-color);
   --field-label-color: color-mix(in oklab, #ffffff 78%, transparent);
-  --app-switch-label-color: #ffffff;
-  --app-switch-label-tagline-color: color-mix(in oklab, #ffffff 72%, transparent);
-  --app-switch-chevron-color: color-mix(in oklab, #ffffff 70%, transparent);
 }
 
 .admin-workspace .app-sidebar__scroll {

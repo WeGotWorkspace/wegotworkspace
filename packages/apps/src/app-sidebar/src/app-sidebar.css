@@ -8,12 +8,6 @@
     color-mix(in oklab, var(--color-ink) 15%, transparent)
   );
   color: var(--app-sidebar-color, var(--color-ink));
-  --app-switch-label-color: var(--app-sidebar-color, var(--color-ink));
-  --app-switch-label-tagline-color: color-mix(
-    in oklab,
-    var(--app-switch-label-color) 72%,
-    transparent
-  );
   --app-sidebar-close-hover-bg: color-mix(
     in oklab,
     var(--sidebar-logo-close-button-color, var(--color-ink)) 8%,

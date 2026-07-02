@@ -90,12 +90,6 @@
   background-color: color-mix(in oklab, #ffffff 10%, var(--docs-sidebar));
 }
 
-.docs-workspace .app-sidebar {
-  --app-switch-label-color: #ffffff;
-  --app-switch-label-tagline-color: color-mix(in oklab, #ffffff 72%, transparent);
-  --app-switch-chevron-color: color-mix(in oklab, #ffffff 70%, transparent);
-}
-
 .docs-workspace .sidebar-section .menu-item--surface-idle {
   color: #ffffff;
   background-color: var(--docs-sidebar);

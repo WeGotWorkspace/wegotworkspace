@@ -9,6 +9,7 @@
   --meet-panel-soft: #20223a;
   --meet-text: #ffffff;
   --meet-muted: rgba(255, 255, 255, 0.6);
+  --app-sidebar-color: var(--meet-text);
   --meet-border: rgba(255, 255, 255, 0.06);
   --meet-border-strong: rgba(255, 255, 255, 0.08);
   --meet-border-input: rgba(255, 255, 255, 0.15);
@@ -41,9 +42,6 @@
   --workspace-user-footer-avatar-color: var(--meet-text);
   --workspace-user-footer-link-color: var(--meet-text);
   --workspace-user-footer-link-bg: var(--meet-panel-soft);
-  --app-switch-label-color: var(--meet-text);
-  --app-switch-label-tagline-color: var(--meet-muted);
-  --app-switch-chevron-color: var(--meet-muted);
   --field-label-color: var(--meet-muted);
   --foreground: var(--meet-text);
   --color-foreground: var(--meet-text);

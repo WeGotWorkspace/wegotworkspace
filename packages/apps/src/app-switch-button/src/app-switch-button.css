@@ -1,5 +1,16 @@
 @import "../../styles.css" reference;
 
+/* Single source of truth: derive switch lockup tokens from workspace chrome text color. */
+:is(.app-sidebar, .workspace-shell-header) {
+  --app-switch-label-color: var(--app-sidebar-color, currentColor);
+  --app-switch-label-tagline-color: color-mix(
+    in oklab,
+    var(--app-switch-label-color) 72%,
+    transparent
+  );
+  --app-switch-chevron-color: color-mix(in oklab, var(--app-switch-label-color) 50%, transparent);
+}
+
 .app-switch-button__trigger {
   @apply inline-flex min-w-0 items-center gap-2 rounded-lg pr-2 pl-1 py-1 -ml-1 transition-colors;
   color: var(--app-switch-label-color, currentColor);
@@ -12,16 +23,13 @@
   @apply shrink-0;
 }
 .app-switch-button__icon {
-  @apply rounded-[6px] object-cover;
-  box-sizing: border-box;
-  border: 1px solid color-mix(in srgb, currentColor 50%, transparent);
   /* Match the two-line label block (text-3xl × leading-[0.85]); no BrandMark offset. */
   height: calc(2 * var(--app-switch-lockup-line));
   width: calc(2 * var(--app-switch-lockup-line));
 }
 
 .app-switch-button__menu-icon {
-  @apply rounded-[4px] object-cover;
+  @apply rounded-[4px];
 }
 
 .app-switch-button__trigger:hover {
@@ -81,7 +89,6 @@
 .app-switch-button__trigger--compact .app-switch-button__icon {
   height: var(--app-switch-lockup-line);
   width: var(--app-switch-lockup-line);
-  @apply rounded-[4px];
 }
 
 .app-switch-button__trigger--compact .app-switch-button__chevron-stack {
