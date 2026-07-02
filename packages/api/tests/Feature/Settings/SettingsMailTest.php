@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Settings;
 
+use App\Models\MailUserCredential;
 use App\Models\Principal;
 use Tests\Support\SettingsTestFixtures;
 use Tests\Support\WgwDatabaseTestCase;
@@ -133,5 +134,26 @@ final class SettingsMailTest extends WgwDatabaseTestCase
             ->assertOk()
             ->assertJsonPath('mail.imapUsername', 'bob.override@example.test')
             ->assertJsonPath('mail.imapHasPassword', true);
+    }
+
+    public function test_mail_save_stores_updated_at_as_datetime(): void
+    {
+        $token = $this->userBearerToken();
+
+        $this->withBearer($token)->putJson('/api/v1/settings/mail', [
+            'imapUsername' => 'bob.mail@example.test',
+            'imapPassword' => 'mail-secret',
+        ])->assertOk();
+
+        $updatedAt = MailUserCredential::query()
+            ->where('username', 'bob')
+            ->value('updated_at');
+
+        $this->assertIsString($updatedAt);
+        $this->assertMatchesRegularExpression(
+            '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/',
+            $updatedAt,
+            'mail_user_credentials.updated_at must be a MySQL-compatible datetime string',
+        );
     }
 }

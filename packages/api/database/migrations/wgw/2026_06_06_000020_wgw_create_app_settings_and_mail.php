@@ -21,7 +21,7 @@ return new class extends WgwMigration
                 $table->string('username')->primary();
                 $table->string('imap_username')->default('');
                 $table->text('password_enc');
-                $table->unsignedBigInteger('updated_at');
+                $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
             });
         }
     }

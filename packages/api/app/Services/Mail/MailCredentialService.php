@@ -74,7 +74,7 @@ final class MailCredentialService
                 'username' => $normalizedUser,
                 'imap_username' => $mergedUsername,
                 'password_enc' => $this->encryptField($mergedPassword, $normalizedUser, $secret),
-                'updated_at' => time(),
+                'updated_at' => now()->toDateTimeString(),
             ]
         );
     }

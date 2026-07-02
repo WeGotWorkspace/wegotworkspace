@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS mail_user_credentials (
     username TEXT NOT NULL PRIMARY KEY,
     imap_username TEXT NOT NULL DEFAULT '',
     password_enc TEXT NOT NULL DEFAULT '',
-    updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE TABLE IF NOT EXISTS meet_peers (
