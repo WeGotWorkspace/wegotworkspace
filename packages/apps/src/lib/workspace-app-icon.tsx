@@ -15,7 +15,7 @@ type WorkspaceAppIconProps = {
   variant?: WorkspaceAppIconVariant;
 };
 
-/** Branded workspace app icon — exact user artwork via `/app-icons/{app}.png`. */
+/** Branded workspace app icon — exact user vector artwork via `/app-icons/{app}.svg`. */
 export function WorkspaceAppIcon({ appId, className, variant = "default" }: WorkspaceAppIconProps) {
   if (variant === "switch-trigger") {
     return (

@@ -9,21 +9,21 @@ import {
 } from "@/lib/workspace-app-icons";
 
 describe("workspaceAppIconUiSrc", () => {
-  it("points at canonical user artwork under /app-icons/", () => {
-    expect(workspaceAppIconUiSrc("mail")).toBe("/app-icons/mail.png");
+  it("points at canonical vector artwork under /app-icons/", () => {
+    expect(workspaceAppIconUiSrc("mail")).toBe("/app-icons/mail.svg");
   });
 });
 
 describe("workspaceAppIconGlyphMaskSrc", () => {
-  it("points at build-time glyph masks under /app-icons/", () => {
-    expect(workspaceAppIconGlyphMaskSrc("drive")).toBe("/app-icons/drive-glyph.png");
+  it("points at vector glyph masks under /app-icons/", () => {
+    expect(workspaceAppIconGlyphMaskSrc("drive")).toBe("/app-icons/drive-glyph.svg");
   });
 });
 
 describe("workspaceAppIconSwitchTriggerStyle", () => {
   it("sets glyph mask url for switch trigger inversion", () => {
     expect(workspaceAppIconSwitchTriggerStyle("drive")).toEqual({
-      "--workspace-app-icon-glyph-mask": "url(/app-icons/drive-glyph.png)",
+      "--workspace-app-icon-glyph-mask": "url(/app-icons/drive-glyph.svg)",
     });
   });
 });

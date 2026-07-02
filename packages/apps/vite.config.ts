@@ -63,7 +63,7 @@ export default defineConfig(({ mode }) => {
           clientsClaim: false,
           navigateFallback: "index.html",
           navigateFallbackDenylist: [/^\/api\//],
-          globPatterns: ["**/*.{js,css,html,ico,png,woff2,webmanifest}"],
+          globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2,webmanifest}"],
         },
         manifest: false,
       }),

@@ -2,7 +2,7 @@
 
 /**
  * Switch trigger lockup: `--app-sidebar-color` background + `--workspace-accent` glyph.
- * Glyph shape comes from build-time PNG mask ({app}-glyph.png), not redrawn SVG.
+ * Glyph shape comes from vector SVG paths ({app}-glyph.svg), not raster masks.
  */
 .workspace-app-icon--switch-trigger {
   --app-switch-icon-bg: var(--app-sidebar-color, var(--app-switch-label-color, currentColor));
