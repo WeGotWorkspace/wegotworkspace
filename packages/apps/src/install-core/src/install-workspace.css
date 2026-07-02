@@ -5,9 +5,9 @@
 /* Pane class fragments: `install-workspace.styles.ts` (must stay in sync). */
 
 .install-workspace {
-  --install-accent: var(--color-paper, #34d399);
+  --install-accent: var(--workspace-home-bg, #1b1d3a);
   --workspace-accent: var(--install-accent);
-  --install-sidebar-fg: #042318;
+  --install-sidebar-fg: #ffffff;
   --app-sidebar-bg: var(--install-accent);
   --app-sidebar-color: var(--install-sidebar-fg);
   --sidebar-logo-close-button-color: var(--install-sidebar-fg);
