@@ -85,6 +85,7 @@ export function AppSwitchButton({
             <WorkspaceAppIcon
               appId={current.id as WorkspaceAppId}
               className="app-switch-button__icon"
+              variant="switch-trigger"
             />
           )}
           <span className="app-switch-button__label">

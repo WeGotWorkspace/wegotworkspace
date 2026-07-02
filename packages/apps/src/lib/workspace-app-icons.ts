@@ -37,6 +37,21 @@ export function workspaceAppIconUiSrc(appId: WorkspaceAppId): string {
   return `/app-icons/${appId}.png`;
 }
 
+/** Luminance mask of the white glyph — build-time extract from {@link workspaceAppIconUiSrc}. */
+export function workspaceAppIconGlyphMaskSrc(appId: WorkspaceAppId): string {
+  return `/app-icons/${appId}-glyph.png`;
+}
+
+/** CSS vars for the inverted switch trigger: bg = sidebar label, fg = app accent. */
+export function workspaceAppIconSwitchTriggerStyle(
+  appId: WorkspaceAppId,
+): Record<`--${string}`, string> {
+  return {
+    "--app-switch-icon-fg": WORKSPACE_APP_ACCENT[appId],
+    "--workspace-app-icon-glyph-mask": `url(${workspaceAppIconGlyphMaskSrc(appId)})`,
+  };
+}
+
 /** Rasterized PWA / install icons only — upscaled from the same source artwork. */
 export function workspaceAppIconSrc(appId: WorkspaceAppId, size = PWA_ICON_SIZE): string {
   return `/pwa-icons/${appId}-${size}.png`;

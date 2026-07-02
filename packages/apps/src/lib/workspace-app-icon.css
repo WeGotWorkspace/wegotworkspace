@@ -1,0 +1,25 @@
+@import "../styles.css" reference;
+
+/**
+ * Switch trigger lockup: sidebar label color background + accent glyph.
+ * Glyph shape comes from build-time PNG mask ({app}-glyph.png), not redrawn SVG.
+ */
+.workspace-app-icon--switch-trigger {
+  --app-switch-icon-bg: var(--app-switch-label-color, currentColor);
+  @apply relative block overflow-hidden rounded-[6px];
+  background-color: var(--app-switch-icon-bg);
+}
+
+.workspace-app-icon--switch-trigger::after {
+  @apply absolute inset-0;
+  content: "";
+  background-color: var(--app-switch-icon-fg);
+  mask-image: var(--workspace-app-icon-glyph-mask);
+  mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-image: var(--workspace-app-icon-glyph-mask);
+  -webkit-mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+}

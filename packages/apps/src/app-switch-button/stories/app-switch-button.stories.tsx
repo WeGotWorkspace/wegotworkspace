@@ -60,6 +60,46 @@ export const Disabled: Story = {
   },
 };
 
+/** Admin sidebar: white trigger bg + slate glyph (inverted lockup). */
+export const AdminTrigger: Story = {
+  parameters: {
+    routerPath: "/admin",
+    cssprops: {
+      "app-sidebar-color": { value: "#ffffff" },
+    },
+  },
+  decorators: [
+    (Story) => (
+      <div
+        className="app-sidebar rounded-lg p-4"
+        style={{ backgroundColor: "#475569", color: "#ffffff", "--app-sidebar-color": "#ffffff" }}
+      >
+        <Story />
+      </div>
+    ),
+  ],
+};
+
+/** Drive sidebar: dark trigger bg + green glyph (inverted lockup). */
+export const DriveTrigger: Story = {
+  parameters: {
+    routerPath: "/drive",
+    cssprops: {
+      "app-sidebar-color": { value: "#0f172a" },
+    },
+  },
+  decorators: [
+    (Story) => (
+      <div
+        className="app-sidebar rounded-lg p-4"
+        style={{ backgroundColor: "#10b981", color: "#0f172a", "--app-sidebar-color": "#0f172a" }}
+      >
+        <Story />
+      </div>
+    ),
+  ],
+};
+
 /** All workspace app icons at switcher + home tile sizes (exact `/app-icons/` artwork). */
 export const AppIcons: Story = {
   render: () => (
@@ -67,8 +107,20 @@ export const AppIcons: Story = {
       <div className="flex flex-wrap items-end gap-4">
         {WORKSPACE_APP_IDS.map((appId) => (
           <div key={appId} className="flex flex-col items-center gap-2">
+            <WorkspaceAppIcon
+              appId={appId}
+              className="size-[calc(2*1.875rem*0.85)]"
+              variant="switch-trigger"
+            />
+            <span className="text-xs capitalize text-muted-foreground">{appId} trigger</span>
+          </div>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-end gap-4">
+        {WORKSPACE_APP_IDS.map((appId) => (
+          <div key={`orig-${appId}`} className="flex flex-col items-center gap-2">
             <WorkspaceAppIcon appId={appId} className="size-[calc(2*1.875rem*0.85)] rounded-lg" />
-            <span className="text-xs capitalize text-muted-foreground">{appId}</span>
+            <span className="text-xs capitalize text-muted-foreground">{appId} original</span>
           </div>
         ))}
       </div>

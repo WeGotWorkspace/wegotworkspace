@@ -1,13 +1,32 @@
 import { cn } from "@/lib/utils";
-import { workspaceAppIconUiSrc, type WorkspaceAppId } from "@/lib/workspace-app-icons";
+import {
+  workspaceAppIconSwitchTriggerStyle,
+  workspaceAppIconUiSrc,
+  type WorkspaceAppId,
+} from "@/lib/workspace-app-icons";
+import "@/lib/workspace-app-icon.css";
+
+export type WorkspaceAppIconVariant = "default" | "switch-trigger";
 
 type WorkspaceAppIconProps = {
   appId: WorkspaceAppId;
   className?: string;
+  /** `switch-trigger` inverts colors for the large app-switch lockup icon only. */
+  variant?: WorkspaceAppIconVariant;
 };
 
 /** Branded workspace app icon — exact user artwork via `/app-icons/{app}.png`. */
-export function WorkspaceAppIcon({ appId, className }: WorkspaceAppIconProps) {
+export function WorkspaceAppIcon({ appId, className, variant = "default" }: WorkspaceAppIconProps) {
+  if (variant === "switch-trigger") {
+    return (
+      <span
+        aria-hidden
+        className={cn("workspace-app-icon--switch-trigger shrink-0", className)}
+        style={workspaceAppIconSwitchTriggerStyle(appId)}
+      />
+    );
+  }
+
   return (
     <img
       src={workspaceAppIconUiSrc(appId)}

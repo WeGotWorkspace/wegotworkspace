@@ -15,6 +15,15 @@ const pwaDir = join(publicDir, "pwa-icons");
 const apps = ["admin", "contacts", "docs", "drive", "mail", "meet", "notes", "settings"];
 const sizes = [180, 192, 512];
 
+/** White glyph silhouette on transparent — used as CSS mask for switch trigger inversion. */
+function generateGlyphMask(src, dest) {
+  execFileSync(
+    "magick",
+    [src, "-colorspace", "Gray", "-threshold", "85%", "-transparent", "black", dest],
+    { stdio: "inherit" },
+  );
+}
+
 for (const app of apps) {
   const src = join(uiDir, `${app}.png`);
   if (!existsSync(src)) {
@@ -22,13 +31,14 @@ for (const app of apps) {
     process.exitCode = 1;
     continue;
   }
+  generateGlyphMask(src, join(uiDir, `${app}-glyph.png`));
   for (const size of sizes) {
     const dest = join(pwaDir, `${app}-${size}.png`);
     execFileSync("magick", [src, "-filter", "Lanczos", "-resize", `${size}x${size}!`, dest], {
       stdio: "inherit",
     });
   }
-  console.log(`Generated PWA icons for ${app}`);
+  console.log(`Generated PWA + glyph mask for ${app}`);
 }
 
 if (process.exitCode) {

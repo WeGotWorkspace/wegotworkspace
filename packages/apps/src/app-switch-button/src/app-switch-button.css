@@ -91,6 +91,10 @@
   width: var(--app-switch-lockup-line);
 }
 
+.app-switch-button__trigger--compact .workspace-app-icon--switch-trigger {
+  @apply rounded-[4px];
+}
+
 .app-switch-button__trigger--compact .app-switch-button__chevron-stack {
   @apply grid-rows-1;
 }
