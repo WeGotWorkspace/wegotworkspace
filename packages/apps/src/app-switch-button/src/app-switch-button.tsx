@@ -1,73 +1,20 @@
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import {
-  ChevronDown,
-  Contact,
-  FileText,
-  HardDrive,
-  Mail as MailIcon,
-  NotebookPen,
-  Settings as SettingsIcon,
-  Shield,
-  Video,
-} from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { DropdownMenu } from "@/menu-dropdown/src/dropdown-menu";
 import type { DropdownMenuItemProps } from "@/menu-dropdown/src/dropdown-menu";
 import { BrandMark } from "@/brand-mark/src/brand-mark";
+import { WorkspaceAppIcon } from "@/lib/workspace-app-icon";
+import { WORKSPACE_APP_IDS, type WorkspaceAppId } from "@/lib/workspace-app-icons";
 import { cn } from "@/lib/utils";
 import "@/app-switch-button/src/app-switch-button.css";
 
 const TAGLINE = "we got";
 
-const WORKSPACE_APPS = [
-  {
-    id: "notes",
-    label: "Notes",
-    icon: NotebookPen,
-    to: "/notes",
-  },
-  {
-    id: "mail",
-    label: "Mail",
-    icon: MailIcon,
-    to: "/mail",
-  },
-  {
-    id: "contacts",
-    label: "Contacts",
-    icon: Contact,
-    to: "/contacts",
-  },
-  {
-    id: "drive",
-    label: "Drive",
-    icon: HardDrive,
-    to: "/drive",
-  },
-  {
-    id: "docs",
-    label: "Docs",
-    icon: FileText,
-    to: "/docs",
-  },
-  {
-    id: "settings",
-    label: "Settings",
-    icon: SettingsIcon,
-    to: "/settings",
-  },
-  {
-    id: "meet",
-    label: "Meet",
-    icon: Video,
-    to: "/meet",
-  },
-  {
-    id: "admin",
-    label: "Admin",
-    icon: Shield,
-    to: "/admin",
-  },
-] as const;
+const WORKSPACE_APPS = WORKSPACE_APP_IDS.map((id) => ({
+  id,
+  label: id.charAt(0).toUpperCase() + id.slice(1),
+  to: `/${id}` as const,
+}));
 
 export type AppSwitchButtonVariant = "default" | "compact";
 
@@ -99,19 +46,16 @@ export function AppSwitchButton({
       void navigate({ to: app.to });
     });
 
-  const menuItems: DropdownMenuItemProps[] = WORKSPACE_APPS.map((app) => {
-    const Icon = app.icon;
-    return {
-      id: app.id,
-      label: app.label,
-      icon: <Icon className="size-4" />,
-      checked: app.id === current.id,
-      onClick: () => {
-        if (disabled || app.id === current.id) return;
-        onSelect?.(app);
-      },
-    };
-  });
+  const menuItems: DropdownMenuItemProps[] = WORKSPACE_APPS.map((app) => ({
+    id: app.id,
+    label: app.label,
+    icon: <WorkspaceAppIcon appId={app.id as WorkspaceAppId} className="size-4 rounded-[4px]" />,
+    checked: app.id === current.id,
+    onClick: () => {
+      if (disabled || app.id === current.id) return;
+      onSelect?.(app);
+    },
+  }));
 
   return (
     <DropdownMenu

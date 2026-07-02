@@ -5,8 +5,8 @@
  * Import only from {@link ContactsWorkspace}.
  */
 .contacts-workspace {
-  --contacts-accent: #0891b2;
-  --contacts-sidebar: #164e63;
+  --contacts-accent: #8b5cf6;
+  --contacts-sidebar: #764ed1;
   --workspace-accent: var(--contacts-accent);
   --color-emerald: var(--contacts-accent);
   --workspace-root-bg: var(--color-cream, #ffffff);
@@ -16,7 +16,7 @@
   --app-sidebar-color: #ffffff;
   --sidebar-logo-brand-fill: #ffffff;
   --sidebar-logo-close-button-color: #ffffff;
-  --sidebar-badge-fg: #164e63;
+  --sidebar-badge-fg: var(--contacts-sidebar);
   --workspace-sidebar-toggle-color: var(--color-ink);
   --workspace-sidebar-toggle-bg: color-mix(in oklab, var(--color-ink) 8%, transparent);
   --workspace-user-footer-link-hover-bg: color-mix(in oklab, #ffffff 10%, transparent);
@@ -28,7 +28,7 @@
   --workspace-user-footer-link-color: #ffffff;
   --workspace-user-footer-link-bg: color-mix(in oklab, #ffffff 8%, transparent);
 
-  --contacts-list-avatar-bg: #0e7490;
+  --contacts-list-avatar-bg: var(--contacts-sidebar);
   --contacts-list-avatar-color: #ffffff;
   --contacts-pending-sync-color: #c98a1f;
   --contacts-swipe-delete-color: #dc2626;
@@ -61,7 +61,7 @@
 .contacts-workspace .workspace-detail-pane {
   --button-primary-bg: var(--contacts-accent);
   --button-primary-fg: #ffffff;
-  --button-subtle-color: #164e63;
+  --button-subtle-color: var(--contacts-sidebar);
 }
 
 .contacts-workspace .app-sidebar {
@@ -74,7 +74,7 @@
 .contacts-workspace .app-sidebar__scroll {
   --color-ink: #ffffff;
   --button-primary-bg: #ffffff;
-  --button-primary-fg: #164e63;
+  --button-primary-fg: var(--contacts-sidebar);
   --button-subtle-color: #ffffff;
   --button-subtle-background: color-mix(in oklab, #ffffff 12%, transparent);
   --button-subtle-hover-background: color-mix(in oklab, #ffffff 20%, transparent);
@@ -346,7 +346,7 @@
 }
 
 .contacts-detail-view__link {
-  color: var(--contacts-accent, #0891b2);
+  color: var(--contacts-accent, #8b5cf6);
   text-decoration: none;
 }
 
@@ -362,7 +362,7 @@
 }
 
 .contacts-dialog-surface {
-  --contacts-accent: #0891b2;
+  --contacts-accent: #8b5cf6;
   --color-emerald: var(--contacts-accent);
   --button-primary-bg: var(--contacts-accent);
   --button-primary-fg: #ffffff;

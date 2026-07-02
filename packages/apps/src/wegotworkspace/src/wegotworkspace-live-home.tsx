@@ -1,22 +1,34 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import {
-  Contact,
-  FileText,
-  HardDrive,
-  Mail as MailIcon,
-  NotebookPen,
-  Settings as SettingsIcon,
-  Shield,
-  Video,
-} from "lucide-react";
+import { FileText } from "lucide-react";
 import { AppsHomeScreen, type AppsHomeScreenItem } from "@/apps-home-screen/src/apps-home-screen";
+import {
+  WORKSPACE_APP_ACCENT,
+  workspaceAppIconSrc,
+  type WorkspaceAppId,
+} from "@/lib/workspace-app-icons";
 import {
   fetchWeGotWorkspaceHomeState,
   MOCK_HOME_STATE,
   type WeGotWorkspaceHomeState,
 } from "@/wegotworkspace/src/wegotworkspace-home-state";
 import { useWeGotWorkspaceLogout } from "@/wegotworkspace/src/wegotworkspace-story-logout";
+
+function homeAppTile(
+  appId: WorkspaceAppId,
+  label: string,
+  onSelect: () => void,
+  fg?: string,
+): AppsHomeScreenItem {
+  return {
+    id: appId,
+    label,
+    iconSrc: workspaceAppIconSrc(appId),
+    accent: WORKSPACE_APP_ACCENT[appId],
+    fg,
+    onSelect,
+  };
+}
 
 export function WeGotWorkspaceLiveHome() {
   const navigate = useNavigate();
@@ -34,84 +46,21 @@ export function WeGotWorkspaceLiveHome() {
   }, []);
 
   const apps: AppsHomeScreenItem[] = [
-    {
-      id: "notes",
-      label: "Notes",
-      icon: <NotebookPen className="size-4" />,
-      accent: "var(--notes-sidebar, #fcd34d)",
-      fg: "var(--color-ink)",
-      onSelect: () => void navigate({ to: "/notes" }),
-    },
-    {
-      id: "mail",
-      label: "Mail",
-      icon: <MailIcon className="size-4" />,
-      accent: "var(--mail-sidebar, #d9254f)",
-      fg: "var(--color-ink)",
-      onSelect: () => void navigate({ to: "/mail" }),
-    },
+    homeAppTile("notes", "Notes", () => void navigate({ to: "/notes" })),
+    homeAppTile("mail", "Mail", () => void navigate({ to: "/mail" })),
     ...(homeState.showContacts
-      ? [
-          {
-            id: "contacts",
-            label: "Contacts",
-            icon: <Contact className="size-4" />,
-            accent: "var(--contacts-sidebar, #16a34a)",
-            fg: "#ffffff",
-            onSelect: () => void navigate({ to: "/contacts" }),
-          } satisfies AppsHomeScreenItem,
-        ]
+      ? [homeAppTile("contacts", "Contacts", () => void navigate({ to: "/contacts" }), "#ffffff")]
       : []),
-    {
-      id: "drive",
-      label: "Drive",
-      icon: <HardDrive className="size-4" />,
-      accent: "var(--drive-sidebar, #2563eb)",
-      fg: "#ffffff",
-      onSelect: () => void navigate({ to: "/drive" }),
-    },
-    {
-      id: "docs",
-      label: "Docs",
-      icon: <FileText className="size-4" />,
-      accent: "#0d9488",
-      fg: "#ffffff",
-      onSelect: () => void navigate({ to: "/docs" }),
-    },
-    {
-      id: "settings",
-      label: "Settings",
-      icon: <SettingsIcon className="size-4" />,
-      accent: "#949dad",
-      fg: "var(--color-ink)",
-      onSelect: () => void navigate({ to: "/settings" }),
-    },
-    {
-      id: "meet",
-      label: "Meet",
-      icon: <Video className="size-4" />,
-      accent: "#4f7cff",
-      fg: "#ffffff",
-      onSelect: () => void navigate({ to: "/meet" }),
-    },
-    {
-      id: "admin",
-      label: "Admin",
-      icon: <Shield className="size-4" />,
-      accent: "var(--admin-sidebar, #4a5059)",
-      fg: "#ffffff",
-      onSelect: () => void navigate({ to: "/admin" }),
-    },
+    homeAppTile("drive", "Drive", () => void navigate({ to: "/drive" }), "#ffffff"),
+    homeAppTile("docs", "Docs", () => void navigate({ to: "/docs" }), "#ffffff"),
+    homeAppTile("settings", "Settings", () => void navigate({ to: "/settings" })),
+    homeAppTile("meet", "Meet", () => void navigate({ to: "/meet" }), "#ffffff"),
+    homeAppTile("admin", "Admin", () => void navigate({ to: "/admin" }), "#ffffff"),
     ...homeState.pluginAppTiles.map((tile) => ({
       id: tile.id,
       label: tile.label,
-      icon:
-        tile.icon === "file-text" ? (
-          <FileText className="size-4" />
-        ) : (
-          <FileText className="size-4" />
-        ),
-      accent: "var(--drive-sidebar, #2563eb)",
+      icon: <FileText className="size-4" />,
+      accent: WORKSPACE_APP_ACCENT.drive,
       fg: "#ffffff",
       onSelect: () => {
         window.location.assign(tile.route);

@@ -1,13 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import {
-  HardDrive,
-  Mail as MailIcon,
-  NotebookPen,
-  Settings as SettingsIcon,
-  Shield,
-  Video,
-} from "lucide-react";
 import { AppsHomeScreen } from "../src/apps-home-screen";
+import { WORKSPACE_APP_ACCENT, workspaceAppIconSrc } from "@/lib/workspace-app-icons";
 
 const meta: Meta<typeof AppsHomeScreen> = {
   title: "Shared/Apps Home Screen",
@@ -30,43 +23,40 @@ export const Default: Story = {
       {
         id: "notes",
         label: "Notes",
-        icon: <NotebookPen className="size-4" />,
-        accent: "var(--notes-sidebar, #fcd34d)",
-        fg: "var(--color-ink)",
+        iconSrc: workspaceAppIconSrc("notes"),
+        accent: WORKSPACE_APP_ACCENT.notes,
       },
       {
         id: "mail",
         label: "Mail",
-        icon: <MailIcon className="size-4" />,
-        accent: "var(--mail-sidebar, #d9254f)",
-        fg: "var(--color-ink)",
+        iconSrc: workspaceAppIconSrc("mail"),
+        accent: WORKSPACE_APP_ACCENT.mail,
       },
       {
         id: "drive",
         label: "Drive",
-        icon: <HardDrive className="size-4" />,
-        accent: "var(--drive-sidebar, #2563eb)",
+        iconSrc: workspaceAppIconSrc("drive"),
+        accent: WORKSPACE_APP_ACCENT.drive,
         fg: "#ffffff",
       },
       {
         id: "settings",
         label: "Settings",
-        icon: <SettingsIcon className="size-4" />,
-        accent: "#949dad",
-        fg: "var(--color-ink)",
+        iconSrc: workspaceAppIconSrc("settings"),
+        accent: WORKSPACE_APP_ACCENT.settings,
       },
       {
         id: "meet",
         label: "Meet",
-        icon: <Video className="size-4" />,
-        accent: "#4f7cff",
+        iconSrc: workspaceAppIconSrc("meet"),
+        accent: WORKSPACE_APP_ACCENT.meet,
         fg: "#ffffff",
       },
       {
         id: "admin",
         label: "Admin",
-        icon: <Shield className="size-4" />,
-        accent: "var(--admin-sidebar, #4a5059)",
+        iconSrc: workspaceAppIconSrc("admin"),
+        accent: WORKSPACE_APP_ACCENT.admin,
         fg: "#ffffff",
       },
     ],

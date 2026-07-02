@@ -5,7 +5,7 @@
  * Import only from {@link MailWorkspace}.
  */
 .mail-workspace {
-  --mail-accent: #d9254f;
+  --mail-accent: #ef4444;
   --mail-sidebar: var(--mail-accent);
   --workspace-accent: var(--mail-accent);
   --color-emerald: var(--mail-accent);
@@ -149,7 +149,7 @@
  * {@link Button} and field labels read tokens from `.mail-compose-dialog-surface`.
  */
 :is(.mail-compose-dialog-surface, .mail-dialog-surface) {
-  --mail-accent: #d9254f;
+  --mail-accent: #ef4444;
   --destination-picker-accent: var(--mail-accent);
   --color-emerald: var(--mail-accent);
   --button-primary-bg: var(--mail-accent);

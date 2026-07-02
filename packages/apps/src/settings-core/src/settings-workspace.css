@@ -7,7 +7,7 @@
  * Import only from {@link SettingsWorkspace}.
  */
 .settings-workspace {
-  --settings-accent: color-mix(in oklab, #4a5059 50%, #ffffff);
+  --settings-accent: color-mix(in oklab, #64748b 50%, #ffffff);
   --settings-accent-bg: var(--settings-accent);
   --workspace-accent: var(--settings-accent);
   --workspace-root-bg: var(--color-cream, #ffffff);

@@ -4,10 +4,10 @@
 .docs-workspace {
   @apply min-w-0 overflow-x-hidden;
 
-  /* Slightly lighter than Drive (#2563eb) — same blue family, distinct app chrome */
+  /* Docs app chrome — blue sampled from app icon background */
   --docs-accent: #3b82f6;
-  /* Sidebar matches Drive blue — #3b82f6 fails WCAG 4.5:1 with white ink */
-  --docs-sidebar: #2563eb;
+  /* Darkened for WCAG 4.5:1 contrast with white sidebar ink */
+  --docs-sidebar: #3372d8;
   --color-emerald: var(--docs-accent);
   --docs-surface: var(--color-cream, #ffffff);
   --background: oklch(98.5% 0.005 100);
@@ -118,7 +118,7 @@
 .docs-workspace .app-sidebar__scroll {
   --color-ink: #ffffff;
   --button-primary-bg: #ffffff;
-  --button-primary-fg: #2563eb;
+  --button-primary-fg: var(--docs-sidebar);
   --button-subtle-color: #ffffff;
   --button-subtle-background: color-mix(in oklab, #ffffff 12%, transparent);
   --button-subtle-hover-background: color-mix(in oklab, #ffffff 20%, transparent);

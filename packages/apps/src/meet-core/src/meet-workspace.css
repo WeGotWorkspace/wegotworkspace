@@ -3,7 +3,7 @@
 .meet-workspace {
   @apply flex h-dvh w-full flex-col;
 
-  --meet-accent: #4f7cff;
+  --meet-accent: #06b6d4;
   --meet-surface: #0e0f17;
   --meet-panel: #171826;
   --meet-panel-soft: #20223a;
@@ -345,8 +345,8 @@
 
 .meet-dialog-surface,
 .meet-popover-surface {
-  --meet-accent: #4f7cff;
-  --meet-accent-strong: #3b6ae8;
+  --meet-accent: #06b6d4;
+  --meet-accent-strong: #0495ad;
   --meet-panel: #171826;
   --meet-panel-soft: #20223a;
   --meet-text: #ffffff;

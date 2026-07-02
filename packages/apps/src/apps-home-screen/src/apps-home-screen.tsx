@@ -12,7 +12,10 @@ import {
 export type AppsHomeScreenItem = {
   id: string;
   label: string;
-  icon: ReactNode;
+  /** Lucide or custom node when `iconSrc` is not set. */
+  icon?: ReactNode;
+  /** Branded PNG from `/pwa-icons/` — fills the tile when set. */
+  iconSrc?: string;
   accent: string;
   fg?: string;
   onSelect?: () => void;
@@ -60,12 +63,23 @@ export function AppsHomeScreen({
               className="group flex w-full min-h-44 flex-col items-center justify-center gap-4 rounded-3xl p-3 text-center transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--color-ink) focus-visible:ring-offset-2"
               aria-label={app.label}
             >
-              <span
-                className="flex size-28 items-center justify-center rounded-3xl shadow-[0_12px_30px_-18px_color-mix(in_oklab,var(--color-ink)_80%,transparent)] transition-transform group-hover:scale-[1.03]"
-                style={{ backgroundColor: app.accent, color: app.fg ?? "var(--color-ink)" }}
-              >
-                <span className="text-current [&_svg]:size-10">{app.icon}</span>
-              </span>
+              {app.iconSrc ? (
+                <span className="flex size-28 overflow-hidden rounded-3xl shadow-[0_12px_30px_-18px_rgba(0,0,0,0.55)] transition-transform group-hover:scale-[1.03]">
+                  <img
+                    src={app.iconSrc}
+                    alt=""
+                    className="size-full object-cover"
+                    draggable={false}
+                  />
+                </span>
+              ) : (
+                <span
+                  className="flex size-28 items-center justify-center rounded-3xl shadow-[0_12px_30px_-18px_color-mix(in_oklab,var(--color-ink)_80%,transparent)] transition-transform group-hover:scale-[1.03]"
+                  style={{ backgroundColor: app.accent, color: app.fg ?? "var(--color-ink)" }}
+                >
+                  <span className="text-current [&_svg]:size-10">{app.icon}</span>
+                </span>
+              )}
               <span className="text-sm font-medium text-white">{app.label}</span>
             </button>
           ))}
