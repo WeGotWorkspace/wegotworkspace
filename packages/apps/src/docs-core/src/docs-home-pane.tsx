@@ -33,7 +33,10 @@ export type DocsHomePaneProps = {
   offlinePinnedIds?: ReadonlySet<string>;
   /** Row ids with pending offline sync (collab save or outbox). */
   offlinePendingSyncIds?: ReadonlySet<string>;
-  offlineLabels?: Pick<DocsUILabels, "offlineAvailable" | "offlinePendingSync">;
+  offlineLabels?: {
+    offlineAvailable: string;
+    offlinePendingSync: string;
+  };
   query: string;
   onQueryChange: (query: string) => void;
   viewMode: ViewMode;
