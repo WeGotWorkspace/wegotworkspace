@@ -71,10 +71,6 @@
   @apply items-center gap-1.5 py-0.5 pl-0.5 pr-1.5;
 }
 
-.app-switch-button__trigger--workspace {
-  @apply pl-2;
-}
-
 .app-switch-button__trigger--compact .app-switch-button__icon {
   height: var(--app-switch-lockup-line);
   width: var(--app-switch-lockup-line);

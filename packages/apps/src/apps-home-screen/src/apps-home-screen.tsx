@@ -1,16 +1,11 @@
 import type { ReactNode } from "react";
-import { LogOut } from "lucide-react";
 import { AppSwitchButton } from "@/app-switch-button/src/app-switch-button";
 import { WorkspaceAppIcon } from "@/lib/workspace-app-icon";
 import type { WorkspaceAppId } from "@/lib/workspace-app-icons";
 import { cn } from "@/lib/utils";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/ui/dropdown-menu";
+import { WorkspaceShellHeaderUserMenu } from "@/workspace-shell/src/workspace-shell-header-user-menu";
 import "@/apps-home-screen/src/apps-home-screen.css";
+import "@/workspace-shell/src/workspace-shell-header.css";
 
 export type AppsHomeScreenItem = {
   id: string;
@@ -44,15 +39,19 @@ export function AppsHomeScreen({
 }: AppsHomeScreenProps) {
   return (
     <section className={cn("apps-home-screen w-full min-h-dvh", className)}>
-      <header className="flex items-center justify-between p-6 md:p-8 shrink-0">
-        <div className="flex min-w-0 items-center">
+      <header className="workspace-shell-header shrink-0">
+        <div className="workspace-shell-header__start">
           <AppSwitchButton subtitle="Workspace" />
         </div>
-        {showUserMenu ? (
-          <HomeUserMenu displayName={userDisplayName} onLogout={onLogout} />
-        ) : (
-          <div className="size-9" aria-hidden />
-        )}
+        <div className="workspace-shell-header__end">
+          {showUserMenu ? (
+            <div className="workspace-shell-header__account">
+              <WorkspaceShellHeaderUserMenu displayName={userDisplayName} onLogout={onLogout} />
+            </div>
+          ) : (
+            <div className="workspace-shell-header__spacer" aria-hidden />
+          )}
+        </div>
       </header>
 
       <div className="mx-auto w-full max-w-5xl px-6 pb-10 md:px-10 md:pb-14">
@@ -92,47 +91,5 @@ export function AppsHomeScreen({
         </div>
       </div>
     </section>
-  );
-}
-
-function HomeUserMenu({ displayName, onLogout }: { displayName: string; onLogout?: () => void }) {
-  const initials = displayName
-    .split(/\s+/)
-    .map((segment) => segment[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          className="size-9 rounded-full flex items-center justify-center text-xs font-semibold transition-colors"
-          style={{
-            backgroundColor: "rgba(255,255,255,0.16)",
-            color: "#ffffff",
-            border: "1px solid rgba(255,255,255,0.22)",
-          }}
-          aria-label="User menu"
-        >
-          {initials || "U"}
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        style={{
-          backgroundColor: "var(--color-paper, #ffffff)",
-          color: "var(--color-ink)",
-          borderColor: "color-mix(in oklab, var(--color-ink) 15%, transparent)",
-        }}
-      >
-        <DropdownMenuItem className="text-xs opacity-60 focus:bg-transparent">
-          {displayName}
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={onLogout} className="cursor-pointer">
-          <LogOut className="size-4 mr-2" /> Sign out
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }

@@ -15,7 +15,7 @@ export function SidebarLogo({
   closeButtonHoverClassName = "hover:bg-[color-mix(in_oklab,var(--color-ink)_8%,transparent)]",
 }: SidebarLogoProps) {
   return (
-    <div className="p-6 md:p-8 flex items-center gap-3 justify-between">
+    <div className="p-6 flex items-center gap-3 justify-between">
       <div className="flex items-center gap-2 min-w-0">
         {showAppSwitcher && appSwitcher ? appSwitcher : null}
       </div>

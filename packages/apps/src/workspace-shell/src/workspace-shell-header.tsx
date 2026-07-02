@@ -4,8 +4,8 @@ import type {
   AppSwitchButtonVariant,
 } from "@/app-switch-button/src/app-switch-button";
 import { WorkspaceAppSwitcher } from "@/workspace-app-switcher/src/workspace-app-switcher";
-import { WorkspaceUserFooter } from "@/workspace-shell/src/workspace-app-layout";
-import { workspaceUserInitials, type WorkspaceSession } from "@/lib/workspace/workspace-session";
+import { WorkspaceShellHeaderUserMenu } from "@/workspace-shell/src/workspace-shell-header-user-menu";
+import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { cn } from "@/lib/utils";
 import "@/workspace-shell/src/workspace-shell-header.css";
 
@@ -30,8 +30,6 @@ export type WorkspaceShellHeaderProps = {
    * `onLogout` are provided (meet guest join flow passes `false`).
    */
   showUserAccount?: boolean;
-  /** When false, account chip omits the username line (e.g. compact Docs toolbar). */
-  showAccountDetail?: boolean;
 };
 
 export function WorkspaceShellHeader({
@@ -46,7 +44,6 @@ export function WorkspaceShellHeader({
   displayName,
   onLogout,
   showUserAccount,
-  showAccountDetail = true,
 }: WorkspaceShellHeaderProps) {
   const accountVisible =
     (showUserAccount ?? Boolean(session && onLogout)) && session != null && onLogout != null;
@@ -71,12 +68,7 @@ export function WorkspaceShellHeader({
         ) : null}
         {accountVisible ? (
           <div className="workspace-shell-header__account">
-            <WorkspaceUserFooter
-              name={accountName}
-              initials={workspaceUserInitials(session.user)}
-              detailLine={showAccountDetail ? session.user.username : undefined}
-              onLogoutClick={onLogout}
-            />
+            <WorkspaceShellHeaderUserMenu displayName={accountName} onLogout={onLogout} />
           </div>
         ) : (
           <div className="workspace-shell-header__spacer" aria-hidden />

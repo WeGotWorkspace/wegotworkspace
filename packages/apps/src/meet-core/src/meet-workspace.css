@@ -4,8 +4,9 @@
   @apply flex h-dvh w-full flex-col;
 
   --meet-accent: #06b6d4;
+  --meet-accent-strong: #0495ad;
   --workspace-accent: var(--meet-accent);
-  --meet-surface: #0e0f17;
+  --meet-surface: var(--workspace-home-bg, #1b1d3a);
   --meet-panel: #171826;
   --meet-panel-soft: #20223a;
   --meet-text: #ffffff;
@@ -25,7 +26,7 @@
   --meet-screen-bg: #000000;
   --meet-pip-border: rgba(255, 255, 255, 0.22);
 
-  --button-primary-bg: var(--meet-accent-strong);
+  --button-primary-bg: var(--meet-accent);
   --button-primary-fg: var(--meet-text);
   --button-subtle-background: var(--meet-panel-soft);
   --button-subtle-color: var(--meet-text);
@@ -35,14 +36,6 @@
     var(--meet-panel-soft)
   );
   --button-active-color: var(--meet-text);
-
-  --workspace-user-footer-text-color: var(--meet-text);
-  --workspace-user-footer-subtitle-color: var(--meet-muted);
-  --workspace-user-footer-border-color: transparent;
-  --workspace-user-footer-avatar-bg: var(--meet-panel-soft);
-  --workspace-user-footer-avatar-color: var(--meet-text);
-  --workspace-user-footer-link-color: var(--meet-text);
-  --workspace-user-footer-link-bg: var(--meet-panel-soft);
   --field-label-color: var(--meet-muted);
   --foreground: var(--meet-text);
   --color-foreground: var(--meet-text);
@@ -51,13 +44,14 @@
   --accent: var(--meet-panel-soft);
   --accent-foreground: var(--meet-text);
 
-  background-color: var(--meet-surface);
+  background-color: var(--workspace-home-bg, #1b1d3a);
+  --app-switch-label-color: #ffffff;
   color: var(--meet-text);
   font-family: var(--font-sans);
 }
 
-.meet-workspace .workspace-shell-header .app-switch-button__trigger {
-  background-color: var(--meet-panel);
+.meet-workspace .workspace-shell-header {
+  color: #ffffff;
 }
 
 .meet-workspace--in-call {
@@ -355,7 +349,7 @@
   --field-label-color: var(--meet-muted);
   --user-avatar-bg: rgba(255, 255, 255, 0.1);
   --user-avatar-fg: var(--meet-text);
-  --button-primary-bg: var(--meet-accent-strong);
+  --button-primary-bg: var(--meet-accent);
   --button-primary-fg: var(--meet-text);
   --button-subtle-background: var(--meet-panel-soft);
   --button-subtle-color: var(--meet-text);

@@ -53,7 +53,8 @@ export const MeetSignedIn: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByRole("button", { name: "Log out" }));
+    await userEvent.click(canvas.getByRole("button", { name: "User menu" }));
+    await userEvent.click(canvas.getByRole("menuitem", { name: /Sign out/i }));
     await expect(args.onLogout).toHaveBeenCalledOnce();
   },
 };
