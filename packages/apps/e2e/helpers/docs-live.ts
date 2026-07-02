@@ -38,6 +38,27 @@ export function docsHomeRow(page: Page, fileName: string) {
   return page.locator(".drive-list-row", { hasText: fileName });
 }
 
+/**
+ * Wait until the Docs home row badge indicates the file body is synced offline.
+ * The row can pass through "Syncing offline" / "Pending sync" before becoming available.
+ */
+export async function waitForDocsBodySynced(page: Page, fileName: string): Promise<void> {
+  const row = docsHomeRow(page, fileName);
+  await expect(row).toBeVisible({ timeout: 30_000 });
+  await expect
+    .poll(
+      async () => {
+        const badge = row.locator(".drive-offline-badge");
+        const badgeCount = await badge.count();
+        if (badgeCount === 0) return false;
+        const label = (await badge.first().getAttribute("aria-label")) ?? "";
+        return label === "Available offline";
+      },
+      { timeout: 60_000 },
+    )
+    .toBe(true);
+}
+
 /** Drop the docs offline IndexedDB so e2e starts from a clean cache. */
 export async function clearDocsOfflineStore(page: Page): Promise<void> {
   await page.evaluate(async () => {

@@ -29,6 +29,7 @@ import {
   openFirstNote,
   prepareNotesForOfflineSync,
   restoreNetwork,
+  waitForNoteSaved,
   blockReachabilityAndApi,
   reloadNotesOffline,
 } from "./helpers/notes-live";
@@ -50,6 +51,24 @@ test.describe("Notes offline sync (live app)", () => {
 
     await page.context().setOffline(false);
     await expectSyncCompleted(page);
+    await expect(page.locator(".ProseMirror")).toContainText(token);
+  });
+
+  test("offline create + body edit reconnect preserves body", async ({ page }) => {
+    const token = `e2e-create-offline-${Date.now()}`;
+
+    await prepareNotesForOfflineSync(page);
+
+    await page.context().setOffline(true);
+    await expectOfflineIndicator(page);
+    await page.getByRole("button", { name: "New note" }).click();
+    await expect(page.locator(".ProseMirror")).toBeVisible({ timeout: 20_000 });
+    await appendToActiveNoteBody(page, token);
+    await expectPendingDotVisible(page);
+
+    await page.context().setOffline(false);
+    await expectSyncCompleted(page);
+    await waitForNoteSaved(page, token);
     await expect(page.locator(".ProseMirror")).toContainText(token);
   });
 
