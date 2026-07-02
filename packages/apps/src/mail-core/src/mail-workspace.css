@@ -6,7 +6,7 @@
  */
 .mail-workspace {
   --mail-accent: #ef4444;
-  --mail-sidebar: var(--mail-accent);
+  --mail-sidebar: #d9254f;
   --workspace-accent: var(--mail-accent);
   --color-emerald: var(--mail-accent);
   --workspace-root-bg: var(--color-cream, #ffffff);
@@ -103,7 +103,7 @@
 }
 
 .mail-workspace .mail-detail-view__sender-row .user-avatar {
-  --user-avatar-bg: var(--color-emerald);
+  --user-avatar-bg: var(--mail-sidebar);
   --user-avatar-fg: #ffffff;
   --user-avatar-label-color: var(--color-ink);
   --user-avatar-subtitle-color: color-mix(in oklab, var(--color-ink) 55%, transparent);
@@ -146,11 +146,12 @@
  */
 :is(.mail-compose-dialog-surface, .mail-dialog-surface) {
   --mail-accent: #ef4444;
+  --mail-sidebar: #d9254f;
   --destination-picker-accent: var(--mail-accent);
   --color-emerald: var(--mail-accent);
-  --button-primary-bg: var(--mail-accent);
+  --button-primary-bg: var(--mail-sidebar);
   --button-primary-fg: var(--color-cream, #ffffff);
-  --primary: var(--mail-accent);
+  --primary: var(--mail-sidebar);
   --primary-foreground: var(--color-cream, #ffffff);
   --field-label-color: color-mix(in oklab, var(--color-ink) 60%, transparent);
   --segmented-control-track-active-bg: var(--color-ink);

@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, fn, userEvent, within } from "storybook/test";
 import { createMeetAppBootstrap } from "@/lib/api/mock/meet-bootstrap";
@@ -5,8 +6,8 @@ import {
   WorkspaceShellHeader,
   type WorkspaceShellHeaderProps,
 } from "@/workspace-shell/src/workspace-shell-header";
-import { MeetStoryScope } from "@/meet-core/stories/meet-story-scope";
 import "@/login-core/src/login-screen.css";
+import "@/meet-core/src/meet-workspace.css";
 
 const { session: signedInSession } = createMeetAppBootstrap();
 
@@ -32,11 +33,21 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof WorkspaceShellHeader>;
 
+const meetHeaderShellStyle = {
+  backgroundColor: "var(--workspace-home-bg, #1b1d3a)",
+  color: "#ffffff",
+  "--app-sidebar-bg": "var(--workspace-home-bg, #1b1d3a)",
+  "--app-sidebar-color": "#ffffff",
+  "--app-switch-lockup-bg": "var(--workspace-home-bg, #1b1d3a)",
+  "--app-switch-label-color": "#ffffff",
+  "--app-switch-label-tagline-color": "color-mix(in oklab, #ffffff 92%, #1b1d3a)",
+} as CSSProperties;
+
 function MeetDarkHeader(args: WorkspaceShellHeaderProps) {
   return (
-    <MeetStoryScope>
+    <div className="meet-workspace min-h-dvh" style={meetHeaderShellStyle}>
       <WorkspaceShellHeader {...args} />
-    </MeetStoryScope>
+    </div>
   );
 }
 

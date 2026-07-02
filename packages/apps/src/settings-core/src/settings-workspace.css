@@ -29,9 +29,9 @@
   --workspace-user-footer-link-bg: color-mix(in oklab, #ffffff 8%, transparent);
 
   --button-primary-bg: var(--settings-accent);
-  --button-primary-fg: var(--color-ink);
+  --button-primary-fg: #ffffff;
   --primary: var(--settings-accent);
-  --primary-foreground: var(--color-ink);
+  --primary-foreground: #ffffff;
 }
 
 .settings-workspace .app-sidebar {

@@ -6,13 +6,19 @@
  * derives all colors from those tokens; do not override per product.
  */
 :is([class$="-workspace"], .app-sidebar, .workspace-shell-header) {
+  --app-switch-lockup-bg: var(--app-sidebar-bg, var(--workspace-home-bg, #1b1d3a));
   --app-switch-label-color: var(--app-sidebar-color, currentColor);
+  /* Opaque mix (not transparent) so a11y contrast uses the real chrome surface. */
   --app-switch-label-tagline-color: color-mix(
     in oklab,
-    var(--app-switch-label-color) 72%,
-    transparent
+    var(--app-switch-label-color) 92%,
+    var(--app-switch-lockup-bg)
   );
-  --app-switch-chevron-color: color-mix(in oklab, var(--app-switch-label-color) 50%, transparent);
+  --app-switch-chevron-color: color-mix(
+    in oklab,
+    var(--app-switch-label-color) 50%,
+    var(--app-switch-lockup-bg)
+  );
 }
 
 .app-sidebar {

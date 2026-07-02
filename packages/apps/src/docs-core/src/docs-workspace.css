@@ -6,7 +6,8 @@
 
   /* Docs app chrome — blue sampled from app icon background */
   --docs-accent: #3b82f6;
-  --docs-sidebar: var(--docs-accent);
+  /* Sidebar darker than accent — #3b82f6 fails WCAG 4.5:1 with white ink */
+  --docs-sidebar: #2563eb;
   --workspace-accent: var(--docs-accent);
   --color-emerald: var(--docs-accent);
   --docs-surface: var(--color-cream, #ffffff);

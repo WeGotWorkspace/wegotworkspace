@@ -42,7 +42,11 @@
 .app-switch-button__label-top {
   color: var(
     --app-switch-label-tagline-color,
-    color-mix(in oklab, var(--app-switch-label-color, currentColor) 72%, transparent)
+    color-mix(
+      in oklab,
+      var(--app-switch-label-color, currentColor) 92%,
+      var(--app-switch-lockup-bg, var(--app-switch-label-color, currentColor))
+    )
   );
 }
 
@@ -54,7 +58,11 @@
   @apply size-4 self-center transition-transform;
   color: var(
     --app-switch-chevron-color,
-    color-mix(in oklab, var(--app-switch-label-color, currentColor) 50%, transparent)
+    color-mix(
+      in oklab,
+      var(--app-switch-label-color, currentColor) 50%,
+      var(--app-switch-lockup-bg, var(--app-switch-label-color, currentColor))
+    )
   );
 }
 
