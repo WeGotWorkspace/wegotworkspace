@@ -10,7 +10,6 @@
   --install-sidebar-fg: #042318;
   --app-sidebar-bg: var(--install-accent);
   --app-sidebar-color: var(--install-sidebar-fg);
-  --sidebar-logo-brand-fill: var(--install-sidebar-fg);
   --sidebar-logo-close-button-color: var(--install-sidebar-fg);
   --app-sidebar-close-hover-bg: color-mix(in oklab, var(--install-sidebar-fg) 12%, transparent);
   --workspace-sidebar-toggle-color: var(--color-ink);

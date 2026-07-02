@@ -1,5 +1,4 @@
 import { X } from "lucide-react";
-import { BrandMark } from "@/brand-mark/src/brand-mark";
 
 type SidebarLogoProps = {
   showAppSwitcher?: boolean;
@@ -18,7 +17,7 @@ export function SidebarLogo({
   return (
     <div className="p-6 md:p-8 flex items-center gap-3 justify-between">
       <div className="flex items-center gap-2 min-w-0">
-        {showAppSwitcher && appSwitcher ? appSwitcher : <BrandMark />}
+        {showAppSwitcher && appSwitcher ? appSwitcher : null}
       </div>
       <button
         aria-label="Close menu"

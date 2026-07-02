@@ -25,7 +25,6 @@ export const Default: Story = {
     <WorkspaceAppLayout
       style={{
         ["--workspace-root-bg" as string]: "var(--color-paper)",
-        ["--sidebar-logo-brand-fill" as string]: "var(--color-ink)",
         ["--sidebar-logo-close-button-color" as string]: "var(--color-ink)",
         ["--workspace-user-footer-text-color" as string]:
           "color-mix(in oklab, var(--color-ink) 70%, transparent)",

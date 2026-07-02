@@ -13,7 +13,6 @@
   --app-sidebar-bg: var(--mail-sidebar);
   --app-sidebar-border-color: color-mix(in oklab, #ffffff 18%, transparent);
   --app-sidebar-color: #ffffff;
-  --sidebar-logo-brand-fill: #ffffff;
   --sidebar-logo-close-button-color: #ffffff;
   --sidebar-badge-fg: var(--mail-accent);
   --workspace-sidebar-toggle-color: var(--color-ink);

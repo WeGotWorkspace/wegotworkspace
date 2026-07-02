@@ -7,13 +7,12 @@
   --app-switch-lockup-line: calc(1.875rem * 0.85);
 }
 
-.app-switch-button__brand,
 .app-switch-button__icon,
 .app-switch-button__menu-icon {
   @apply shrink-0;
 }
 .app-switch-button__icon {
-  /* Match the two-line label block (text-3xl × leading-[0.85]); no BrandMark offset. */
+  /* Match the two-line label block (text-3xl × leading-[0.85]). */
   height: calc(2 * var(--app-switch-lockup-line));
   width: calc(2 * var(--app-switch-lockup-line));
 }
@@ -72,9 +71,8 @@
   @apply items-center gap-1.5 py-0.5 pl-0.5 pr-1.5;
 }
 
-.app-switch-button__brand--compact {
-  --brand-mark-height: 1.75rem;
-  --brand-mark-offset-y: -2px;
+.app-switch-button__trigger--workspace {
+  @apply pl-2;
 }
 
 .app-switch-button__trigger--compact .app-switch-button__icon {

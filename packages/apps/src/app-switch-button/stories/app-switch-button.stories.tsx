@@ -27,14 +27,14 @@ const meta: Meta<typeof AppSwitchButton> = {
 export default meta;
 type Story = StoryObj<typeof AppSwitchButton>;
 
-/** In-app trigger: user artwork icon + “we got” / route label (not workspace BrandMark). */
+/** In-app trigger: user artwork icon + “we got” / route label. */
 export const InApp: Story = {
   parameters: {
     routerPath: "/mail",
   },
 };
 
-/** Workspace home / install: BrandMark + “we got Workspace”. */
+/** Workspace home / install: text-only “we got Workspace” lockup (no icon). */
 export const Workspace: Story = {
   args: {
     subtitle: "Workspace",
