@@ -57,7 +57,7 @@ export function useMeetWorkspaceShell({
   );
   const showUserAccount = hasSignedInIdentity && !inJoinFlow;
   const waitingForAdmission = controller.waitingForAdmission && inJoinFlow;
-  const disableAppSwitcher = !hasSignedInIdentity || inJoinFlow;
+  const disableAppSwitcher = !hasSignedInIdentity || isJoinRoute;
   const isGuestInviteFlow = inJoinFlow && !hasSignedInIdentity;
   const showMissingInviteScreen = isGuestInviteFlow && guestInviteState === "missing";
   const showInviteCheckingScreen = isGuestInviteFlow && guestInviteState === "checking";
