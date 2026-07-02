@@ -1,4 +1,4 @@
-/** Workspace product ids that have branded launcher / PWA icons under `/pwa-icons/`. */
+/** Workspace product ids that have branded launcher / PWA icons under `/app-icons/` and `/pwa-icons/`. */
 export const WORKSPACE_APP_IDS = [
   "notes",
   "mail",
@@ -11,6 +11,12 @@ export const WORKSPACE_APP_IDS = [
 ] as const;
 
 export type WorkspaceAppId = (typeof WORKSPACE_APP_IDS)[number];
+
+/**
+ * Future app icons stored under `/app-icons/` but not wired in the home grid or switcher yet.
+ * Source artwork: calendar, reminders, tasks (150×150 PNG in `public/app-icons/`).
+ */
+export const WORKSPACE_FUTURE_APP_ICON_IDS = ["calendar", "reminders", "tasks"] as const;
 
 /** Sampled from icon PNG border pixels — keep in sync with webmanifest theme colors. */
 export const WORKSPACE_APP_ACCENT: Record<WorkspaceAppId, string> = {
@@ -26,6 +32,12 @@ export const WORKSPACE_APP_ACCENT: Record<WorkspaceAppId, string> = {
 
 const PWA_ICON_SIZE = 192;
 
+/** Canonical user artwork for UI (exact 150×150 PNG, served as-is). */
+export function workspaceAppIconUiSrc(appId: WorkspaceAppId): string {
+  return `/app-icons/${appId}.png`;
+}
+
+/** Rasterized PWA / install icons only — upscaled from the same source artwork. */
 export function workspaceAppIconSrc(appId: WorkspaceAppId, size = PWA_ICON_SIZE): string {
   return `/pwa-icons/${appId}-${size}.png`;
 }
