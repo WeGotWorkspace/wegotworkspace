@@ -226,7 +226,7 @@ function runnerFor(username: string): ConnectivitySyncRunner<OutboxFlushResult> 
 - **Conflicts:** create one `createSyncConflictChannel<string>()` instance; report from flush/save, set the listener from your screen, and resolve in a modal. Docs collab save failures after CRDT re-merge attempt use [`docs-sync-conflicts.ts`](../src/lib/offline/docs/docs-sync-conflicts.ts) and [`docs-conflict-dialog.tsx`](../src/text-editor-core/docs-collab/docs-conflict-dialog.tsx) (Keep mine / Use server).
 - **Pending badge:** poll your "pending" selector and render a dot. Docs home also surfaces pin/pending badges on drive rows via optional `drive-browser` props.
 - **Retry callout:** Docs collab wires [`useDocsCollabFailedSync`](../src/text-editor-core/docs-collab/use-docs-collab-failed-sync.ts) in [`docs-collab-workspace.tsx`](../src/text-editor-core/docs-collab/docs-collab-workspace.tsx) with `saveNow` retry.
-- **Make available offline:** Docs home pin/hydrate via [`use-docs-offline-pin.ts`](../src/docs-core/src/use-docs-offline-pin.ts) + Dexie `docs_availability` (v21).
+- **Make available offline:** Docs home pin/hydrate via [`docs-offline-pin-core.ts`](../src/lib/offline/docs/docs-offline-pin-core.ts) + [`use-docs-home-offline-availability.ts`](../src/docs-core/src/use-docs-home-offline-availability.ts) + Dexie `docs_availability` (v21). Proactive pin UI tracked in [#233](https://github.com/WeGotWorkspace/wegotworkspace/issues/233).
 
 ### 6. Mount nothing extra for the shell indicator
 

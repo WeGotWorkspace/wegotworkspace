@@ -89,7 +89,7 @@ Adopt **Fastmail** (Text::JSCalendar / Text::JSContact normative goldens) and **
 
 | Area | Status | Notes |
 |------|--------|-------|
-| ICS/vCard payload bounds | Done ([#162](https://github.com/WeGotWorkspace/wegotworkspace/issues/162)) | 512 KiB max serialized size; component/property caps before VObject parse |
-| Cross-user ACL tests | Done ([#163](https://github.com/WeGotWorkspace/wegotworkspace/issues/163)) | `JmapRestCrossUserAclTest` matrix for contacts/calendars/tasks |
-| Search index on CRUD | Done ([#164](https://github.com/WeGotWorkspace/wegotworkspace/issues/164)) | Best-effort sync with structured `search_index_sync_failed` logs; admin reindex for recovery |
-| OpenAPI Error responses | Done ([#165](https://github.com/WeGotWorkspace/wegotworkspace/issues/165)) | 400/403/404/412/413 on `/contacts/*`, `/calendars/*`, `/tasks/*` |
+| ICS/vCard payload bounds | Open ([#162](https://github.com/WeGotWorkspace/wegotworkspace/issues/162)) | Target: 512 KiB max serialized size; component/property caps before VObject parse |
+| Cross-user ACL tests | Partial ([#163](https://github.com/WeGotWorkspace/wegotworkspace/issues/163)) | Contacts read-only ACL tests exist; full `JmapRestCrossUserAclTest` matrix for calendars/tasks not landed |
+| Search index on CRUD | Partial ([#164](https://github.com/WeGotWorkspace/wegotworkspace/issues/164)) | Contacts: `BestEffortSearchIndexSync`; calendars/tasks CRUD search sync not complete |
+| OpenAPI Error responses | Open ([#165](https://github.com/WeGotWorkspace/wegotworkspace/issues/165)) | Standard Error `$ref` on `/contacts/*`, `/calendars/*`, `/tasks/*` not fully wired |
