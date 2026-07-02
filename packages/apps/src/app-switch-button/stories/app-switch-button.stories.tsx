@@ -1,7 +1,12 @@
+import type { CSSProperties } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { AppSwitchButton } from "../src/app-switch-button";
 import { WorkspaceAppIcon } from "@/lib/workspace-app-icon";
-import { WORKSPACE_APP_IDS, type WorkspaceAppId } from "@/lib/workspace-app-icons";
+import {
+  WORKSPACE_APP_ACCENT,
+  WORKSPACE_APP_IDS,
+  type WorkspaceAppId,
+} from "@/lib/workspace-app-icons";
 
 const meta: Meta<typeof AppSwitchButton> = {
   title: "Shared/App Switch Button",
@@ -107,11 +112,21 @@ export const AppIcons: Story = {
       <div className="flex flex-wrap items-end gap-4">
         {WORKSPACE_APP_IDS.map((appId) => (
           <div key={appId} className="flex flex-col items-center gap-2">
-            <WorkspaceAppIcon
-              appId={appId}
-              className="size-[calc(2*1.875rem*0.85)]"
-              variant="switch-trigger"
-            />
+            <div
+              className="rounded-lg p-1"
+              style={
+                {
+                  "--app-sidebar-color": "#0f172a",
+                  "--workspace-accent": WORKSPACE_APP_ACCENT[appId],
+                } as CSSProperties
+              }
+            >
+              <WorkspaceAppIcon
+                appId={appId}
+                className="size-[calc(2*1.875rem*0.85)]"
+                variant="switch-trigger"
+              />
+            </div>
             <span className="text-xs capitalize text-muted-foreground">{appId} trigger</span>
           </div>
         ))}

@@ -7,6 +7,7 @@
   /* Docs app chrome — blue sampled from app icon background */
   --docs-accent: #3b82f6;
   --docs-sidebar: var(--docs-accent);
+  --workspace-accent: var(--docs-accent);
   --color-emerald: var(--docs-accent);
   --docs-surface: var(--color-cream, #ffffff);
   --background: oklch(98.5% 0.005 100);

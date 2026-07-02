@@ -1,18 +1,8 @@
 @import "../../styles.css" reference;
 
-/* Single source of truth: derive switch lockup tokens from workspace chrome text color. */
-:is(.app-sidebar, .workspace-shell-header) {
-  --app-switch-label-color: var(--app-sidebar-color, currentColor);
-  --app-switch-label-tagline-color: color-mix(
-    in oklab,
-    var(--app-switch-label-color) 72%,
-    transparent
-  );
-  --app-switch-chevron-color: color-mix(in oklab, var(--app-switch-label-color) 50%, transparent);
-}
-
 .app-switch-button__trigger {
   @apply inline-flex min-w-0 items-center gap-2 rounded-lg pr-2 pl-1 py-1 -ml-1 transition-colors;
+  user-select: none;
   color: var(--app-switch-label-color, currentColor);
   --app-switch-lockup-line: calc(1.875rem * 0.85);
 }
@@ -75,6 +65,7 @@
 
 .app-switch-button__menu {
   @apply min-w-48 p-1.5;
+  user-select: none;
   border-color: color-mix(in oklab, currentColor 25%, transparent);
 }
 .app-switch-button__trigger--compact {

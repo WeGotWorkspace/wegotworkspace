@@ -4,6 +4,7 @@
   @apply flex h-dvh w-full flex-col;
 
   --meet-accent: #06b6d4;
+  --workspace-accent: var(--meet-accent);
   --meet-surface: #0e0f17;
   --meet-panel: #171826;
   --meet-panel-soft: #20223a;

@@ -21,9 +21,8 @@ describe("workspaceAppIconGlyphMaskSrc", () => {
 });
 
 describe("workspaceAppIconSwitchTriggerStyle", () => {
-  it("sets accent fg and glyph mask url for switch trigger inversion", () => {
+  it("sets glyph mask url for switch trigger inversion", () => {
     expect(workspaceAppIconSwitchTriggerStyle("drive")).toEqual({
-      "--app-switch-icon-fg": WORKSPACE_APP_ACCENT.drive,
       "--workspace-app-icon-glyph-mask": "url(/app-icons/drive-glyph.png)",
     });
   });

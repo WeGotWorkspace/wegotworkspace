@@ -6,6 +6,7 @@
   --drive-accent: #10b981;
   --color-emerald: var(--drive-accent);
   --drive-sidebar: var(--drive-accent);
+  --workspace-accent: var(--drive-accent);
   --app-sidebar-bg: var(--drive-sidebar);
   --app-sidebar-border-color: color-mix(in oklab, var(--color-ink) 12%, transparent);
   --app-sidebar-color: var(--color-ink);

@@ -42,12 +42,11 @@ export function workspaceAppIconGlyphMaskSrc(appId: WorkspaceAppId): string {
   return `/app-icons/${appId}-glyph.png`;
 }
 
-/** CSS vars for the inverted switch trigger: bg = sidebar label, fg = app accent. */
+/** CSS vars for the inverted switch trigger glyph mask (colors derive from workspace chrome tokens). */
 export function workspaceAppIconSwitchTriggerStyle(
   appId: WorkspaceAppId,
 ): Record<`--${string}`, string> {
   return {
-    "--app-switch-icon-fg": WORKSPACE_APP_ACCENT[appId],
     "--workspace-app-icon-glyph-mask": `url(${workspaceAppIconGlyphMaskSrc(appId)})`,
   };
 }

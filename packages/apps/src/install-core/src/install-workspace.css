@@ -6,6 +6,7 @@
 
 .install-workspace {
   --install-accent: var(--color-paper, #34d399);
+  --workspace-accent: var(--install-accent);
   --install-sidebar-fg: #042318;
   --app-sidebar-bg: var(--install-accent);
   --app-sidebar-color: var(--install-sidebar-fg);
