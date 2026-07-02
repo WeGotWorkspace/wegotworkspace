@@ -15,6 +15,7 @@ import {
 import { wgwFetch, wgwReadJson } from "@/lib/api/wgw/http";
 import type { WgwNoteUpsertRequest } from "@/lib/api/wgw/types";
 import { NOTES_DOMAIN } from "@/lib/offline/notes/notes-schema";
+import { migrateNoteCollabPersistenceAfterIdRemap } from "@/lib/offline/notes/notes-collab-persistence-migrate";
 import {
   listOutboxMutations,
   markOutboxError,
@@ -115,6 +116,13 @@ export async function flushNotesOutbox(username: string): Promise<OutboxFlushRes
         }
         const tempId = upsert.tempNoteId;
         if (tempId && tempId !== saved.id) {
+          await migrateNoteCollabPersistenceAfterIdRemap({
+            username,
+            notebook: upsert.metadata.notebook,
+            tempNoteId: tempId,
+            savedNoteId: saved.id,
+            archived: upsert.metadata.archived,
+          });
           await removeNoteFromCache(username, tempId);
         }
         await upsertNoteInCache(username, saved, false);
