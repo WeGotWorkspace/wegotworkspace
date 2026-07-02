@@ -1,6 +1,9 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
+import { useOnReconnect } from "@/hooks/use-connectivity";
 import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
 import { useHybridBootstrap } from "@/lib/live/use-hybrid-bootstrap";
+import { syncDocsBodiesFromHomeListing } from "@/lib/offline/docs/docs-body-sync";
+import { resolveDocsOfflineUsername } from "@/lib/offline/offline-session";
 import type { DocsAppBootstrap, DocsUIData } from "@/docs-core/src/docs-types";
 import { createDefaultDocsApiSource, type DocsApiSource } from "@/docs-core/src/docs-api-source";
 
@@ -46,6 +49,23 @@ export function useDocsAPI(source?: DocsApiSource) {
   const networkOperations = useMemo(
     () => resolvedSource.createNetworkOperations(),
     [resolvedSource],
+  );
+  const offlineUsername = resolveDocsOfflineUsername(data?.session.user.username);
+
+  useEffect(() => {
+    if (phase !== "ready" || !offlineUsername) return;
+    const controller = new AbortController();
+    void syncDocsBodiesFromHomeListing(offlineUsername, { signal: controller.signal }).catch(
+      () => undefined,
+    );
+    return () => controller.abort();
+  }, [offlineUsername, phase]);
+
+  useOnReconnect(
+    useCallback(() => {
+      if (!offlineUsername) return;
+      void syncDocsBodiesFromHomeListing(offlineUsername).catch(() => undefined);
+    }, [offlineUsername]),
   );
 
   return {
