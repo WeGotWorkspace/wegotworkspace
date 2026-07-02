@@ -5,7 +5,7 @@
  * Import only from {@link NotesWorkspace}.
  */
 .notes-workspace {
-  --notes-accent: #f59e0b;
+  --notes-accent: #f0b422;
   --notes-sidebar: var(--notes-accent);
   --workspace-accent: var(--notes-accent);
   --color-emerald: var(--notes-accent);
@@ -47,7 +47,7 @@
  * {@link Button} and shadcn `buttonVariants` match the notes shell.
  */
 .notes-dialog-surface {
-  --notes-accent: #f59e0b;
+  --notes-accent: #f0b422;
   --color-emerald: var(--notes-accent);
   --button-primary-bg: var(--notes-accent);
   --button-primary-fg: var(--color-ink);

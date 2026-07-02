@@ -14,7 +14,7 @@ export type WorkspaceAppId = (typeof WORKSPACE_APP_IDS)[number];
 
 /** Sampled from icon PNG border pixels — keep in sync with webmanifest theme colors. */
 export const WORKSPACE_APP_ACCENT: Record<WorkspaceAppId, string> = {
-  notes: "#f59e0b",
+  notes: "#f0b422",
   mail: "#ef4444",
   contacts: "#8b5cf6",
   drive: "#10b981",

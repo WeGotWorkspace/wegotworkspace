@@ -2,10 +2,10 @@
 
 /* Note sheet: docs-style shadow, compact but roomier than mail; warm paper tint */
 .note-text-editor-body.text-editor {
-  --text-editor-sheet: color-mix(in oklab, var(--notes-accent, #f59e0b) 24%, oklch(1 0 0));
+  --text-editor-sheet: color-mix(in oklab, var(--notes-accent, #f0b422) 24%, oklch(1 0 0));
   --text-editor-shadow-sheet:
     0 1px 2px color-mix(in oklab, var(--color-ink) 14%, transparent),
-    0 6px 20px -6px color-mix(in oklab, var(--notes-accent, #f59e0b) 42%, transparent),
+    0 6px 20px -6px color-mix(in oklab, var(--notes-accent, #f0b422) 42%, transparent),
     0 14px 36px -12px color-mix(in oklab, var(--color-ink) 22%, transparent);
   --text-editor-sheet-padding: 1.75rem;
   --text-editor-sheet-margin-block: 1.25rem;
@@ -38,17 +38,17 @@
 }
 
 .note-detail-view .docs-collab-presence__avatar--self {
-  background-color: var(--notes-accent, #f59e0b);
+  background-color: var(--notes-accent, #f0b422);
   color: var(--color-ink);
   box-shadow:
     0 0 0 2px var(--background),
-    0 0 0 3px color-mix(in oklab, var(--notes-accent, #f59e0b) 42%, transparent);
+    0 0 0 3px color-mix(in oklab, var(--notes-accent, #f0b422) 42%, transparent);
 }
 
 .note-detail-view .docs-collab-presence__avatar--connecting {
-  color: color-mix(in oklab, var(--notes-accent, #f59e0b) 72%, var(--color-ink));
-  background-color: color-mix(in oklab, var(--notes-accent, #f59e0b) 14%, transparent);
-  border: 1px dashed color-mix(in oklab, var(--notes-accent, #f59e0b) 38%, transparent);
+  color: color-mix(in oklab, var(--notes-accent, #f0b422) 72%, var(--color-ink));
+  background-color: color-mix(in oklab, var(--notes-accent, #f0b422) 14%, transparent);
+  border: 1px dashed color-mix(in oklab, var(--notes-accent, #f0b422) 38%, transparent);
 }
 
 .note-detail-view .docs-collab-presence__avatar--warning {
