@@ -1,7 +1,7 @@
 {
   "name": "Notes",
   "short_name": "Notes",
-  "start_url": "/notes",
+  "start_url": "/notes/all",
   "scope": "/notes",
   "id": "/notes",
   "display": "standalone",
@@ -9,13 +9,13 @@
   "theme_color": "#f0b422",
   "icons": [
     {
-      "src": "/app-icons/notes.svg",
+      "src": "/app-icons/notes.svg?v=2",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "/pwa-icons/notes-180.png",
+      "src": "/pwa-icons/notes-180.png?v=2",
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"

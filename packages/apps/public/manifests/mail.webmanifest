@@ -9,13 +9,13 @@
   "theme_color": "#ef4444",
   "icons": [
     {
-      "src": "/app-icons/mail.svg",
+      "src": "/app-icons/mail.svg?v=2",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "/pwa-icons/mail-180.png",
+      "src": "/pwa-icons/mail-180.png?v=2",
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"

@@ -12,6 +12,10 @@
  * Web app manifests reference the SVG directly. PNG rasterization is limited to the one size
  * iOS Safari still requires via `<link rel="apple-touch-icon">` (no SVG support there).
  *
+ * When icon artwork changes, bump `WORKSPACE_PWA_ICON_CACHE_VERSION` in
+ * `src/lib/workspace-pwa-head.ts` and regenerate manifest `?v=` query strings (or re-run this script
+ * once manifest emission is wired here).
+ *
  * Switch-trigger inversion uses the same SVG with `--wai-*` CSS vars (see workspace-app-icon.css).
  *
  * Requires ImageMagick (`magick`) for apple-touch PNG generation.
