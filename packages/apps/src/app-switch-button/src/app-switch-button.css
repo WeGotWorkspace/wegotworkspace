@@ -3,10 +3,25 @@
 .app-switch-button__trigger {
   @apply inline-flex min-w-0 items-center gap-2 rounded-lg pr-2 pl-1 py-1 -ml-1 transition-colors;
   color: var(--app-switch-label-color, currentColor);
+  --app-switch-lockup-line: calc(1.875rem * 0.85);
 }
 
-.app-switch-button__brand {
+.app-switch-button__brand,
+.app-switch-button__icon,
+.app-switch-button__menu-icon {
   @apply shrink-0;
+}
+.app-switch-button__icon {
+  @apply rounded-[6px] object-cover;
+  box-sizing: border-box;
+  border: 1px solid color-mix(in srgb, currentColor 50%, transparent);
+  /* Match the two-line label block (text-3xl × leading-[0.85]); no BrandMark offset. */
+  height: calc(2 * var(--app-switch-lockup-line));
+  width: calc(2 * var(--app-switch-lockup-line));
+}
+
+.app-switch-button__menu-icon {
+  @apply rounded-[4px] object-cover;
 }
 
 .app-switch-button__trigger:hover {
@@ -54,7 +69,6 @@
   @apply min-w-48 p-1.5;
   border-color: color-mix(in oklab, currentColor 25%, transparent);
 }
-
 .app-switch-button__trigger--compact {
   @apply items-center gap-1.5 py-0.5 pl-0.5 pr-1.5;
 }
@@ -62,6 +76,12 @@
 .app-switch-button__brand--compact {
   --brand-mark-height: 1.75rem;
   --brand-mark-offset-y: -2px;
+}
+
+.app-switch-button__trigger--compact .app-switch-button__icon {
+  height: var(--app-switch-lockup-line);
+  width: var(--app-switch-lockup-line);
+  @apply rounded-[4px];
 }
 
 .app-switch-button__trigger--compact .app-switch-button__chevron-stack {

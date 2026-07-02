@@ -39,7 +39,8 @@ export function AppSwitchButton({
   const current =
     WORKSPACE_APPS.find((a) => path === a.to || path.startsWith(`${a.to}/`)) ?? WORKSPACE_APPS[0];
   const subtitle = subtitleProp ?? current.label;
-  const menuSurfaceKey = subtitleProp === "Workspace" ? "workspace" : current.id;
+  const isWorkspaceContext = subtitleProp === "Workspace";
+  const menuSurfaceKey = isWorkspaceContext ? "workspace" : current.id;
   const onSelect =
     onSelectProp ??
     ((app: (typeof WORKSPACE_APPS)[number]) => {
@@ -49,7 +50,12 @@ export function AppSwitchButton({
   const menuItems: DropdownMenuItemProps[] = WORKSPACE_APPS.map((app) => ({
     id: app.id,
     label: app.label,
-    icon: <WorkspaceAppIcon appId={app.id as WorkspaceAppId} className="size-4 rounded-[4px]" />,
+    icon: (
+      <WorkspaceAppIcon
+        appId={app.id as WorkspaceAppId}
+        className="app-switch-button__menu-icon size-4"
+      />
+    ),
     checked: app.id === current.id,
     onClick: () => {
       if (disabled || app.id === current.id) return;
@@ -68,12 +74,19 @@ export function AppSwitchButton({
             compact && "app-switch-button__trigger--compact",
           )}
         >
-          <BrandMark
-            className={cn(
-              "app-switch-button__brand",
-              compact && "app-switch-button__brand--compact",
-            )}
-          />
+          {isWorkspaceContext ? (
+            <BrandMark
+              className={cn(
+                "app-switch-button__brand",
+                compact && "app-switch-button__brand--compact",
+              )}
+            />
+          ) : (
+            <WorkspaceAppIcon
+              appId={current.id as WorkspaceAppId}
+              className="app-switch-button__icon"
+            />
+          )}
           <span className="app-switch-button__label">
             {!compact ? <span className="app-switch-button__label-top">{TAGLINE}</span> : null}
             <span>{subtitle}</span>

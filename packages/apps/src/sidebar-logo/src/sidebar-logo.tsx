@@ -3,7 +3,7 @@ import { BrandMark } from "@/brand-mark/src/brand-mark";
 
 type SidebarLogoProps = {
   showAppSwitcher?: boolean;
-  /** When `showAppSwitcher` is true, render this node (e.g. `WorkspaceAppSwitcher` / `AppSwitchButton`, which includes the brand mark). */
+  /** When `showAppSwitcher` is true, render this node (e.g. `WorkspaceAppSwitcher` / `AppSwitchButton`, which includes the app icon). */
   appSwitcher?: React.ReactNode;
   onCloseMobile: () => void;
   closeButtonHoverClassName?: string;

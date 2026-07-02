@@ -17,22 +17,40 @@ const meta: Meta<typeof AppSwitchButton> = {
 export default meta;
 type Story = StoryObj<typeof AppSwitchButton>;
 
-export const Default: Story = {
+/** In-app trigger: PNG icon + “we got” / route label (not workspace BrandMark). */
+export const InApp: Story = {
+  parameters: {
+    routerPath: "/mail",
+  },
+};
+
+/** Workspace home / install: BrandMark + “we got Workspace”. */
+export const Workspace: Story = {
   args: {
     subtitle: "Workspace",
   },
 };
 
-export const Compact: Story = {
+export const CompactWorkspace: Story = {
   args: {
     variant: "compact",
-    subtitle: "Docs",
+    subtitle: "Workspace",
+  },
+};
+
+/** Compact header in an app shell: PNG icon + single app name line. */
+export const CompactInApp: Story = {
+  parameters: {
+    routerPath: "/docs",
+  },
+  args: {
+    variant: "compact",
   },
 };
 
 export const Disabled: Story = {
   args: {
-    ...Default.args,
+    ...Workspace.args,
     disabled: true,
   },
 };
