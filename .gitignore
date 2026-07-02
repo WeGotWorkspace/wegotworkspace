@@ -17,6 +17,10 @@ node_modules/
 /apps/wegotworkspace/wgw-content/*
 /apps/wegotworkspace/wgw-content/sessions/*
 /apps/wegotworkspace/wgw-plugins/
+# PWA / Workbox build artifacts synced to install docroot (pnpm build → sync-runtime-app-builds.mjs)
+/apps/wegotworkspace/index.html
+/apps/wegotworkspace/sw.js
+/apps/wegotworkspace/workbox-*.js
 /apps/wegotworkspace/packages/
 /apps/wegotworkspace/packages/apps/docs/build/
 /apps/wegotworkspace/packages/apps/drive/dist/
@@ -31,6 +35,10 @@ node_modules/
 /apps/wegotworkspace/wgw-modules/
 /apps/wegotworkspace/build/
 /apps/wegotworkspace/dist/
+# PWA docroot artifacts copied by packages/apps/scripts/sync-runtime-app-builds.mjs
+/apps/wegotworkspace/index.html
+/apps/wegotworkspace/sw.js
+/apps/wegotworkspace/workbox-*.js
 /data/*
 /data/sessions/*
 /tools/office-website/
