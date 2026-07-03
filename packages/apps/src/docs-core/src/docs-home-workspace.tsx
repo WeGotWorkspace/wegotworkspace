@@ -150,11 +150,7 @@ export function DocsHomeWorkspace({
     if (online && offlineUsername) refresh();
   }, [online, offlineUsername, refresh]);
 
-  /** Row badge dots: show offline availability/sync state both online and offline. */
-  const offlineBadgePinnedIds = useMemo(() => {
-    return offlineAvailableIds;
-  }, [offlineAvailableIds]);
-
+  /** Row badge dots: only pending body sync or unsaved/outbox/collab — never green "available offline". */
   const offlineSyncingIds = useMemo(() => {
     if (!docsBodySyncProgress.running) return new Set<string>();
     return new Set(
@@ -333,7 +329,6 @@ export function DocsHomeWorkspace({
             hasMore={hasMore}
             error={error}
             offlineUnavailableIds={offlineUnavailableIds}
-            offlinePinnedIds={offlineBadgePinnedIds}
             offlinePendingSyncIds={offlineBadgePendingIds}
             offlineLabels={{
               ...labels,

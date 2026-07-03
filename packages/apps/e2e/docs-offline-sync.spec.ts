@@ -167,7 +167,7 @@ test.describe("Docs offline sync (live app)", () => {
     await clearDocsOfflineStore(page);
     await seedDocAtPath(page, apiPath, "# Auto-sync seed\n");
     await gotoDocsHome(page);
-    await waitForDocsBodySynced(page, fileName);
+    await waitForDocsBodySynced(page, fileName, apiPath);
 
     await page.context().setOffline(true);
     await docsHomeRow(page, fileName).click();
@@ -191,7 +191,7 @@ test.describe("Docs offline sync (live app)", () => {
     await clearDocsOfflineStore(page);
     await seedDocAtPath(page, apiPath, "# Group auto-sync seed\n");
     await gotoDocsHome(page);
-    await waitForDocsBodySynced(page, fileName);
+    await waitForDocsBodySynced(page, fileName, apiPath);
 
     await page.context().setOffline(true);
     await docsHomeRow(page, fileName).click();

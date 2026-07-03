@@ -39,20 +39,46 @@ export function docsHomeRow(page: Page, fileName: string) {
 }
 
 /**
- * Wait until the Docs home row badge indicates the file body is synced offline.
- * The row can pass through "Syncing offline" / "Pending sync" before becoming available.
+ * Wait until auto-sync has cached the document body offline.
+ * Rows show an amber badge while syncing; once done there is no badge (green "available" is not shown).
  */
-export async function waitForDocsBodySynced(page: Page, fileName: string): Promise<void> {
+export async function waitForDocsBodySynced(
+  page: Page,
+  fileName: string,
+  apiPath?: string,
+): Promise<void> {
   const row = docsHomeRow(page, fileName);
   await expect(row).toBeVisible({ timeout: 30_000 });
+  const normalizedPath = (apiPath ?? `/${myDriveDocSearchPath(fileName)}`).replace(/^\/+/, "");
+
   await expect
     .poll(
       async () => {
         const badge = row.locator(".drive-offline-badge");
-        const badgeCount = await badge.count();
-        if (badgeCount === 0) return false;
-        const label = (await badge.first().getAttribute("aria-label")) ?? "";
-        return label === "Available offline";
+        if ((await badge.count()) > 0) {
+          const label = (await badge.first().getAttribute("aria-label")) ?? "";
+          if (label === "Syncing offline" || label === "Pending sync") return false;
+        }
+        return page.evaluate(async (path) => {
+          const username = localStorage.getItem("wgw.offline.docs.username");
+          if (!username) return false;
+          const dbName = `wgw-offline-${username}`;
+          return new Promise<boolean>((resolve) => {
+            const request = indexedDB.open(dbName);
+            request.onerror = () => resolve(false);
+            request.onsuccess = () => {
+              const db = request.result;
+              if (!db.objectStoreNames.contains("docs_availability")) {
+                resolve(false);
+                return;
+              }
+              const tx = db.transaction("docs_availability", "readonly");
+              const get = tx.objectStore("docs_availability").get(path);
+              get.onsuccess = () => resolve(Boolean(get.result));
+              get.onerror = () => resolve(false);
+            };
+          });
+        }, normalizedPath);
       },
       { timeout: 60_000 },
     )
