@@ -22,7 +22,7 @@ function fileApiPath(file: DriveFile): string | null {
   return path ? normalizeDocsAvailabilityPath(path) : null;
 }
 
-/** Resolves offline pin/availability state for Docs home rows. */
+/** Resolves offline auto-sync availability state for Docs home rows. */
 export function useDocsHomeOfflineAvailability(
   files: readonly DriveFile[],
   enabled: boolean,

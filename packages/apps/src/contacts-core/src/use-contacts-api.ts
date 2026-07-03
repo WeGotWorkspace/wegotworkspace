@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useOnReconnect } from "@/hooks/use-connectivity";
+import { useCallback, useMemo, useState } from "react";
 import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
 import { useHybridBootstrap } from "@/lib/live/use-hybrid-bootstrap";
 import {
@@ -12,6 +11,8 @@ import {
   resolveContactsOfflineUsername,
 } from "@/lib/offline/offline-session";
 import { setContactsSyncConflictListener } from "@/lib/offline/contacts-sync-conflicts";
+import { useOfflineConflictQueue } from "@/lib/offline/use-offline-conflict-queue";
+import { useOfflineReconnectFlush } from "@/lib/offline/use-offline-reconnect-flush";
 import type { ContactsUIData } from "@/contacts-core/src/contacts-types";
 import { createDefaultContactsApiSource, type ContactsApiSource } from "./contacts-api-source";
 
@@ -54,23 +55,20 @@ export function useContactsAPI(source?: ContactsApiSource, options?: UseContacts
     [data?.session.user.username],
   );
 
-  const onSyncConflict = options?.onSyncConflict;
+  useOfflineConflictQueue({
+    setListener: setContactsSyncConflictListener,
+    onConflicts: options?.onSyncConflict,
+  });
 
-  useEffect(() => {
-    setContactsSyncConflictListener(onSyncConflict);
-    return () => setContactsSyncConflictListener(undefined);
-  }, [onSyncConflict]);
-
-  useOnReconnect(
-    useCallback(() => {
+  const reconnectSyncing = useOfflineReconnectFlush({
+    enabled: Boolean(offlineUsername),
+    flush: async () => {
       if (!offlineUsername) return;
-      void (async () => {
-        await getContactsSyncRunner(offlineUsername).flush();
-        const cached = await readContactsBootstrapFromCache(offlineUsername);
-        if (cached) patchBootstrap(() => cached);
-      })();
-    }, [offlineUsername, patchBootstrap]),
-  );
+      await getContactsSyncRunner(offlineUsername).flush();
+      const cached = await readContactsBootstrapFromCache(offlineUsername);
+      if (cached) patchBootstrap(() => cached);
+    },
+  });
 
   const [listRefreshing, setListRefreshing] = useState(false);
 
@@ -92,7 +90,7 @@ export function useContactsAPI(source?: ContactsApiSource, options?: UseContacts
     error,
     retry: load,
     successVersion,
-    listLoading: phase === "loading" || listRefreshing,
+    listLoading: phase === "loading" || listRefreshing || reconnectSyncing,
     refreshList,
     session: data?.session ?? mockWorkspaceSession,
     data: data?.data ?? placeholderData,

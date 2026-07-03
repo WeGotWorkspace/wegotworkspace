@@ -1,7 +1,10 @@
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { IndexeddbPersistence } from "y-indexeddb";
+import * as Y from "yjs";
 import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
 import type { Note } from "@/lib/models/note";
+import { hasDocsCollabOfflinePersistence } from "@/lib/offline/docs/docs-collab-offline-availability";
 import {
   enqueueCoalescedNoteUpdate,
   enqueueOutboxMutation,
@@ -12,6 +15,7 @@ import { NOTES_DOMAIN } from "@/lib/offline/notes/notes-schema";
 import { offlineAccountKeyFromUsername, offlineDbForAccount } from "@/lib/offline/offline-db";
 import { notesNotesTable } from "@/lib/offline/notes/notes-schema";
 import { flushNotesOutbox } from "@/lib/offline/notes-outbox-flush";
+import { noteCollabPath } from "@/notes-core/src/note-collab-path";
 
 const username = "bob";
 
@@ -145,6 +149,44 @@ describe("flushNotesOutbox", () => {
     expect(createNoteItem).toHaveBeenCalledOnce();
     expect(result.bootstrap?.data.notes.some((row) => row.id === "server-note-99")).toBe(true);
     expect(result.bootstrap?.data.notes.some((row) => row.id === tempId)).toBe(false);
+  });
+
+  it("migrates collab persistence from temp id to saved id", async () => {
+    const tempId = "local-body-id";
+    const savedId = "server-body-id";
+    const notebook = "Drafts";
+    const tempPath = noteCollabPath({
+      scope: { kind: "personal", username },
+      notebook,
+      noteId: tempId,
+    });
+    const savedPath = noteCollabPath({
+      scope: { kind: "personal", username },
+      notebook,
+      noteId: savedId,
+    });
+    const ydoc = new Y.Doc();
+    ydoc.getXmlFragment("default").insert(0, [new Y.XmlElement("paragraph")]);
+    const persistence = new IndexeddbPersistence(tempPath, ydoc);
+    await persistence.whenSynced;
+    await persistence.destroy();
+    ydoc.destroy();
+
+    const offlineNote: Note = {
+      ...note,
+      id: tempId,
+      notebook,
+      body: ["Created offline body"],
+    };
+    await enqueueCoalescedNoteUpdate(username, tempId, offlineNote, offlineNote.date, tempId);
+
+    updateNoteItem.mockRejectedValue(Object.assign(new Error("not found"), { status: 404 }));
+    createNoteItem.mockResolvedValue({ ...offlineNote, id: savedId });
+
+    await flushNotesOutbox(username);
+
+    await expect(hasDocsCollabOfflinePersistence(tempPath)).resolves.toBe(false);
+    await expect(hasDocsCollabOfflinePersistence(savedPath)).resolves.toBe(true);
   });
 
   it("clears pendingSync after a successful flush", async () => {

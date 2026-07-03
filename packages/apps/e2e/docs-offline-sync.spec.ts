@@ -2,18 +2,24 @@ import { expect, test } from "@playwright/test";
 import {
   appendToActiveDocBody,
   blockReachabilityAndApi,
+  clearDocsOfflineStore,
   currentEditorText,
   docTokenOnServer,
+  docsHomeRow,
   docsUrlForFile,
   expectEditorContains,
   expectOfflineIndicator,
   expectPendingDotVisible,
   expectSyncCompleted,
+  gotoDocsHome,
   loginToDocs,
+  myDriveDocSearchPath,
   prepareDocsForOfflineSync,
   prepareGroupDocForOfflineSync,
   reloadDocsOffline,
   restoreNetwork,
+  seedDocAtPath,
+  waitForDocsBodySynced,
   waitForDocSaved,
 } from "./helpers/docs-live";
 
@@ -149,6 +155,57 @@ test.describe("Docs offline sync (live app)", () => {
     await expect(page.locator(".ProseMirror")).toContainText(token);
   });
 
+  test("My Drive auto-sync: never-opened doc opens offline, edits, reconnects", async ({
+    page,
+  }) => {
+    const token = `e2e-auto-mydrive-${Date.now()}`;
+    const fileName = `e2e-auto-mydrive-${Date.now()}.md`;
+    const searchPath = myDriveDocSearchPath(fileName);
+    const apiPath = `/${searchPath}`;
+
+    await loginToDocs(page);
+    await clearDocsOfflineStore(page);
+    await seedDocAtPath(page, apiPath, "# Auto-sync seed\n");
+    await gotoDocsHome(page);
+    await waitForDocsBodySynced(page, fileName, apiPath);
+
+    await page.context().setOffline(true);
+    await docsHomeRow(page, fileName).click();
+    await expect(page.locator(".ProseMirror")).toBeVisible({ timeout: 30_000 });
+    await expectOfflineIndicator(page);
+
+    await appendToActiveDocBody(page, token);
+    await expectPendingDotVisible(page);
+
+    await page.context().setOffline(false);
+    await expectSyncCompleted(page);
+    await waitForDocSaved(page, apiPath, token);
+  });
+
+  test("Group auto-sync: never-opened doc opens offline, edits, reconnects", async ({ page }) => {
+    const token = `e2e-auto-group-${Date.now()}`;
+    const fileName = `e2e-auto-group-${Date.now()}.md`;
+    const apiPath = `/groups/Engineering/${fileName}`;
+
+    await loginToDocs(page);
+    await clearDocsOfflineStore(page);
+    await seedDocAtPath(page, apiPath, "# Group auto-sync seed\n");
+    await gotoDocsHome(page);
+    await waitForDocsBodySynced(page, fileName, apiPath);
+
+    await page.context().setOffline(true);
+    await docsHomeRow(page, fileName).click();
+    await expect(page.locator(".ProseMirror")).toBeVisible({ timeout: 30_000 });
+    await expectOfflineIndicator(page);
+
+    await appendToActiveDocBody(page, token);
+    await expectPendingDotVisible(page);
+
+    await page.context().setOffline(false);
+    await expectSyncCompleted(page);
+    await waitForDocSaved(page, apiPath, token);
+  });
+
   test("My Drive .md: open doc caches offline, edit reconnect persists", async ({ page }) => {
     const token = `e2e-pin-home-${Date.now()}`;
     const fileName = `e2e-pin-home-${Date.now()}.md`;
@@ -181,6 +238,36 @@ test.describe("Docs offline sync (live app)", () => {
     await page.context().setOffline(false);
     await expectSyncCompleted(page);
     await waitForDocSaved(page, apiPath, token);
+  });
+
+  test("reconnect conflict: opens conflict dialog when re-merge cannot save", async ({ page }) => {
+    const token = `e2e-conflict-${Date.now()}`;
+    const fileName = `e2e-conflict-${Date.now()}.md`;
+    const apiPath = await prepareDocsForOfflineSync(page, fileName);
+
+    await page.context().setOffline(true);
+    await expectOfflineIndicator(page);
+    await appendToActiveDocBody(page, token);
+    await expectPendingDotVisible(page);
+
+    await page.route("**/api/v1/files/collaboration**", async (route) => {
+      if (route.request().method() === "GET") {
+        await route.continue();
+        return;
+      }
+      await route.fulfill({
+        status: 412,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "stateMismatch" }),
+      });
+    });
+    await page.context().setOffline(false);
+
+    await expect(page.getByRole("heading", { name: "Document conflict" })).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(page.getByRole("button", { name: "Keep mine" })).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(encodeURIComponent(apiPath)));
   });
 
   test("stale navigator.onLine: blocked API/probe then restore triggers sync", async ({ page }) => {

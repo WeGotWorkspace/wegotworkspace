@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { DOCS_VIEW_MODE_STORAGE_KEY } from "@/hooks/persisted-view-mode";
 import { usePersistedViewMode } from "@/hooks/use-persisted-view-mode";
 import { useAppToast } from "@/hooks/use-app-toast";
-import { useOnReconnect, useConnectivity } from "@/hooks/use-connectivity";
+import { useConnectivity } from "@/hooks/use-connectivity";
 import { Plus } from "lucide-react";
 import { TooltipProvider } from "@/ui/tooltip";
 import { Button } from "@/button/src/button";
@@ -40,6 +40,10 @@ import {
   createHybridDocsDriveOperations,
   getDocsSyncRunner,
 } from "@/lib/offline/docs/docs-hybrid-operations";
+import { readDocsBodySyncProgress } from "@/lib/offline/docs/docs-body-sync";
+import { useOfflineBodySyncProgress } from "@/lib/offline/use-offline-body-sync-progress";
+import { useOfflineReconnectFlush } from "@/lib/offline/use-offline-reconnect-flush";
+import { useOfflineSyncToast } from "@/lib/offline/use-offline-sync-toast";
 import "@/docs-core/src/docs-workspace.css";
 import "@/docs-core/src/docs-home-workspace.css";
 
@@ -113,24 +117,53 @@ export function DocsHomeWorkspace({
     offlineUsername,
   );
 
-  useOnReconnect(
-    useCallback(() => {
+  const syncing = useOfflineReconnectFlush({
+    enabled: Boolean(offlineUsername),
+    flush: async () => {
       if (!offlineUsername) return;
-      void getDocsSyncRunner(offlineUsername)
-        .flush()
-        .finally(() => refresh());
-    }, [offlineUsername, refresh]),
-  );
+      await getDocsSyncRunner(offlineUsername).flush();
+    },
+    afterFlush: refresh,
+  });
+
+  const readBodySyncProgress = useCallback(() => {
+    if (!offlineUsername) {
+      return Promise.resolve({
+        running: false,
+        total: 0,
+        synced: 0,
+        failed: 0,
+        updatedAt: 0,
+      });
+    }
+    return readDocsBodySyncProgress(offlineUsername);
+  }, [offlineUsername]);
+
+  const docsBodySyncProgress = useOfflineBodySyncProgress({
+    enabled: Boolean(offlineUsername),
+    readProgress: readBodySyncProgress,
+  });
+
+  useOfflineSyncToast(syncing, labels.toastSynced);
 
   useEffect(() => {
     if (online && offlineUsername) refresh();
   }, [online, offlineUsername, refresh]);
 
-  /** Row badge dots: green only while browsing offline; amber only when sync is pending. */
-  const offlineBadgePinnedIds = useMemo(() => {
-    if (!isOfflineListing) return new Set<string>();
-    return offlineAvailableIds;
-  }, [isOfflineListing, offlineAvailableIds]);
+  /** Row badge dots: only pending body sync or unsaved/outbox/collab — never green "available offline". */
+  const offlineSyncingIds = useMemo(() => {
+    if (!docsBodySyncProgress.running) return new Set<string>();
+    return new Set(
+      files.filter((file) => !offlineAvailableIds.has(file.id)).map((file) => file.id),
+    );
+  }, [docsBodySyncProgress.running, files, offlineAvailableIds]);
+
+  const offlineBadgePendingIds = useMemo(() => {
+    if (offlineSyncingIds.size === 0) return offlinePendingSyncIds;
+    const merged = new Set(offlinePendingSyncIds);
+    for (const id of offlineSyncingIds) merged.add(id);
+    return merged;
+  }, [offlinePendingSyncIds, offlineSyncingIds]);
 
   const offlineUnavailableIds = useMemo(() => {
     if (!isOfflineListing) return undefined;
@@ -296,9 +329,13 @@ export function DocsHomeWorkspace({
             hasMore={hasMore}
             error={error}
             offlineUnavailableIds={offlineUnavailableIds}
-            offlinePinnedIds={offlineBadgePinnedIds}
-            offlinePendingSyncIds={offlinePendingSyncIds}
-            offlineLabels={labels}
+            offlinePendingSyncIds={offlineBadgePendingIds}
+            offlineLabels={{
+              ...labels,
+              offlinePendingSync: docsBodySyncProgress.running
+                ? labels.syncingOffline
+                : labels.offlinePendingSync,
+            }}
             query={query}
             onQueryChange={setQuery}
             viewMode={viewMode}

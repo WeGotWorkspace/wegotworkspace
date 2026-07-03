@@ -101,6 +101,68 @@ function selectTwoItems(viewMode: "list" | "grid") {
   fireEvent.click(second, { metaKey: true });
 }
 
+describe("DocsHomePane offline badges", () => {
+  it("shows amber pending badge but not green available badge", () => {
+    render(
+      <TooltipProvider>
+        <DocsHomePane
+          labels={docsLabels}
+          files={[FILE]}
+          loading={false}
+          loadingMore={false}
+          hasMore={false}
+          error={null}
+          offlinePendingSyncIds={new Set([FILE.id])}
+          offlineLabels={{
+            offlineAvailable: docsLabels.offlineAvailable,
+            offlinePendingSync: docsLabels.syncingOffline,
+          }}
+          query=""
+          onQueryChange={() => {}}
+          viewMode="list"
+          onViewModeChange={() => {}}
+          onLoadMore={() => {}}
+          onOpenFile={() => {}}
+          sidebarOpen={false}
+          onToggleSidebar={() => {}}
+        />
+      </TooltipProvider>,
+    );
+
+    const row = screen.getByText(FILE.title).closest("tr")!;
+    const badge = row.querySelector(".drive-offline-badge");
+    expect(badge).toBeTruthy();
+    expect(badge!.className).toContain("drive-offline-badge--pending");
+    expect(badge!.className).not.toContain("drive-offline-badge--pinned");
+    expect(badge!.getAttribute("aria-label")).toBe("Syncing offline");
+  });
+
+  it("shows no badge when synced and not pending", () => {
+    const { container } = render(
+      <TooltipProvider>
+        <DocsHomePane
+          labels={docsLabels}
+          files={[FILE]}
+          loading={false}
+          loadingMore={false}
+          hasMore={false}
+          error={null}
+          query=""
+          onQueryChange={() => {}}
+          viewMode="list"
+          onViewModeChange={() => {}}
+          onLoadMore={() => {}}
+          onOpenFile={() => {}}
+          sidebarOpen={false}
+          onToggleSidebar={() => {}}
+        />
+      </TooltipProvider>,
+    );
+
+    expect(container.querySelector(".drive-offline-badge")).toBeNull();
+  });
+});
+
 describe("DocsHomePane file interaction", () => {
   it("selects on single click in list view without opening", () => {
     const { onOpenFile } = renderPane("list");

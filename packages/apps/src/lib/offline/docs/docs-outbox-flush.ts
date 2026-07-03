@@ -25,6 +25,7 @@ export type DocsOutboxPayload =
 export type OutboxFlushResult = {
   flushed: number;
   failed: number;
+  stateMismatches: string[];
 };
 
 function parsePayload(row: OfflineOutboxRow): DocsOutboxPayload | null {
@@ -64,6 +65,7 @@ export async function flushDocsOutbox(username: string): Promise<OutboxFlushResu
   const rows = await listOutboxMutationsForDomain(username, DOCS_DOMAIN);
   let flushed = 0;
   let failed = 0;
+  const stateMismatches: string[] = [];
 
   for (const row of rows) {
     const payload = parsePayload(row);
@@ -102,15 +104,19 @@ export async function flushDocsOutbox(username: string): Promise<OutboxFlushResu
       flushed += 1;
     } catch (error) {
       failed += 1;
-      await markOutboxError(
-        username,
-        row.id,
-        error instanceof Error ? error.message : String(error),
-      );
+      const status = (error as { status?: number } | undefined)?.status;
+      const message = error instanceof Error ? error.message : String(error);
+      const isStateMismatch =
+        status === 409 || status === 412 || /precondition failed/i.test(message);
+      if (isStateMismatch) {
+        const path = docsOutboxApiPath(row);
+        if (path) stateMismatches.push(path);
+      }
+      await markOutboxError(username, row.id, message);
     }
   }
 
-  return { flushed, failed };
+  return { flushed, failed, stateMismatches };
 }
 
 export function docsOutboxApiPath(row: OfflineOutboxRow): string | null {

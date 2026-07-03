@@ -19,6 +19,7 @@ import {
   DOCS_HOME_SOURCES,
 } from "@/docs-core/src/docs-home-constants";
 import { getConnectivitySnapshot } from "@/lib/offline/core/browser-online";
+import { syncDocsBodiesFromListingResults } from "@/lib/offline/docs/docs-body-sync";
 import type { DocsListingBrowseFilters } from "@/lib/offline/docs/docs-listing-cache-key";
 import {
   readDocsListingFromCache,
@@ -219,13 +220,16 @@ export function useDocsHomeList({
         setIsOfflineListing(false);
         setError(null);
         await persistListingCache(nextResults, nextHasMore);
+        if (offlineUsername) {
+          void syncDocsBodiesFromListingResults(offlineUsername, nextResults, { signal });
+        }
         return true;
       } catch (_err) {
         if (signal.aborted) return false;
         return false;
       }
     },
-    [baseParams, debouncedQuery, fetcher, persistListingCache],
+    [baseParams, debouncedQuery, fetcher, offlineUsername, persistListingCache],
   );
 
   useEffect(() => {

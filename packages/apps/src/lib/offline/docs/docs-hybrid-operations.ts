@@ -27,6 +27,7 @@ import {
   removeOutboxMutationsForDocsPath,
   type OutboxFlushResult,
 } from "@/lib/offline/docs/docs-outbox-flush";
+import { reportDocsSyncConflicts } from "@/lib/offline/docs/docs-sync-conflicts";
 import type { WgwUnifiedSearchResult } from "@/lib/api/wgw/search";
 import {
   buildOfflineDocsSearchResult,
@@ -64,7 +65,9 @@ function rethrowUnlessOfflineQueue(error: unknown, signal?: AbortSignal): void {
 const syncRunnerRegistry = new ConnectivitySyncRunnerRegistry<OutboxFlushResult>();
 
 async function flushDocsOutboxTask(username: string): Promise<OutboxFlushResult> {
-  return flushDocsOutbox(username);
+  const result = await flushDocsOutbox(username);
+  reportDocsSyncConflicts(result.stateMismatches);
+  return result;
 }
 
 function runnerFor(username: string): ConnectivitySyncRunner<OutboxFlushResult> {

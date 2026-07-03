@@ -11,6 +11,7 @@ export const docsLabels = {
   homeLoadError: "Could not load documents.",
   homeNotAvailableOffline: "This document is not available offline.",
   offlineAvailable: "Available offline",
+  syncingOffline: "Syncing offline",
   offlinePendingSync: "Pending sync",
   syncFailedTitle: "Some changes could not sync",
   syncFailedMessage: "Your edits are saved locally. Retry when you are back online.",
