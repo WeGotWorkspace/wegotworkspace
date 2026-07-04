@@ -310,8 +310,7 @@ export function useDriveMutations({ shell, list, onOpenDocsFile }: UseDriveMutat
               : /pdf|text|document/.test(file.type)
                 ? "doc"
                 : "file";
-      const sizeKb = file.size / 1024;
-      const size = sizeKb > 1024 ? `${(sizeKb / 1024).toFixed(1)} MB` : `${Math.round(sizeKb)} KB`;
+      const size = formatBytesCompact(file.size);
       return {
         id: `f-${Date.now()}-${i}`,
         notebook: `${kind[0].toUpperCase()}${kind.slice(1)} · ${size}`,
