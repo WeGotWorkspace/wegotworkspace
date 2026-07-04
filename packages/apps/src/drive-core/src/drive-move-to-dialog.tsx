@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/ui/dialog";
+import { cn } from "@/lib/utils";
 import { resolveDriveFolderPickerStartPath } from "@/drive-core/src/drive-folder-picker-utils";
 import { DriveFolderPicker } from "@/drive-core/src/drive-folder-picker";
 import type { DriveFile, ViewKey } from "@/drive-core/src/drive-models";
@@ -25,6 +26,7 @@ export function DriveMoveToDialog({
   operations,
   currentUsername,
   groupRootNames,
+  dialogSurfaceClassName = "drive-dialog-surface",
   onClose,
   onConfirm,
 }: {
@@ -38,6 +40,8 @@ export function DriveMoveToDialog({
   operations?: DriveAPIOperations;
   currentUsername: string;
   groupRootNames: Set<string>;
+  /** Portaled dialog theme class (repeat app accent tokens outside the workspace root). */
+  dialogSurfaceClassName?: string;
   onClose: () => void;
   onConfirm: (destinationPath: string) => void;
 }) {
@@ -50,7 +54,7 @@ export function DriveMoveToDialog({
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent className="drive-dialog-surface sm:max-w-lg">
+      <DialogContent className={cn(dialogSurfaceClassName, "sm:max-w-lg")}>
         <DialogHeader>
           <DialogTitle>{labels.moveDialogTitle}</DialogTitle>
           <DialogDescription>{labels.moveDialogDescription}</DialogDescription>

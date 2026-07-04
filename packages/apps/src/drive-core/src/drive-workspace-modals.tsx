@@ -1,4 +1,4 @@
-import { Button } from "@/button/src/button";
+import { Button, buttonVariants } from "@/button/src/button";
 import { Input } from "@/ui/input";
 import { RenameFilenameField } from "@/dialogs/src/rename-filename-field";
 import {
@@ -161,6 +161,7 @@ export function DriveWorkspaceModals({ controller }: DriveWorkspaceModalsProps) 
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
+              className={buttonVariants({ variant: "destructive" })}
               onClick={() => {
                 if (confirmDelete) {
                   if (confirmDelete.permanent) reallyDelete(confirmDelete.ids);

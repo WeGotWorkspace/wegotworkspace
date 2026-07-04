@@ -1,6 +1,7 @@
 import { TooltipProvider } from "@/ui/tooltip";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useAppToast } from "@/hooks/use-app-toast";
+import { useConnectivity } from "@/hooks/use-connectivity";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
 import {
@@ -44,7 +45,9 @@ export function DriveWorkspace({
   className,
 }: DriveWorkspaceProps) {
   const { showError } = useAppToast();
+  const { online } = useConnectivity();
   const offlineEnabled = Boolean(offlineUsername);
+  const searchEnabled = !offlineEnabled || online;
 
   const controller = useDriveController({
     data,
@@ -112,9 +115,14 @@ export function DriveWorkspace({
     commitMoveToFolder: controller.commitMoveToFolder,
   });
 
-  const browserTitleContext = controller.searchQuery.trim()
-    ? controller.labels.searchViewTitle
-    : controller.viewLabel;
+  const { searchQuery, setSearchQuery } = controller;
+
+  useEffect(() => {
+    if (!searchEnabled && searchQuery) setSearchQuery("");
+  }, [searchEnabled, searchQuery, setSearchQuery]);
+
+  const browserTitleContext =
+    searchEnabled && searchQuery.trim() ? controller.labels.searchViewTitle : controller.viewLabel;
   useDocumentTitle(browserTitleContext);
 
   return (
@@ -132,7 +140,11 @@ export function DriveWorkspace({
           />
         }
         mainHeader={
-          <DriveMainHeader controller={controller} unifiedSearchEnabled={Boolean(operations)} />
+          <DriveMainHeader
+            controller={controller}
+            unifiedSearchEnabled={Boolean(operations)}
+            searchEnabled={searchEnabled}
+          />
         }
         main={
           <DriveMainPane
@@ -226,9 +238,11 @@ function DriveSidebar({
 function DriveMainHeader({
   controller,
   unifiedSearchEnabled,
+  searchEnabled,
 }: {
   controller: DriveController;
   unifiedSearchEnabled: boolean;
+  searchEnabled: boolean;
 }) {
   const {
     labels,
@@ -247,13 +261,13 @@ function DriveMainHeader({
     <ViewHeader
       sidebarOpen={sidebarOpen}
       onToggleSidebar={() => setSidebarOpen((v) => !v)}
-      title={searchQuery.trim() ? labels.searchViewTitle : viewLabel}
-      searchPlaceholder={labels.searchPlaceholder}
-      searchValue={searchQuery}
-      onSearchInput={setSearchQuery}
+      title={searchEnabled && searchQuery.trim() ? labels.searchViewTitle : viewLabel}
+      searchPlaceholder={searchEnabled ? labels.searchPlaceholder : undefined}
+      searchValue={searchEnabled ? searchQuery : undefined}
+      onSearchInput={searchEnabled ? setSearchQuery : undefined}
       searchInputRef={searchInputRef}
       searchContent={
-        unifiedSearchEnabled ? (
+        searchEnabled && unifiedSearchEnabled ? (
           <UnifiedSearchApiDropdown
             className="drive-main-header__search-dropdown"
             query={searchQuery}

@@ -90,6 +90,7 @@ export function DocsHomeWorkspace({
   }, [offlineUsername, operations]);
 
   const { online } = useConnectivity();
+  const searchEnabled = !offlineUsername || online;
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [viewMode, setViewMode] = usePersistedViewMode({
@@ -149,6 +150,10 @@ export function DocsHomeWorkspace({
   useEffect(() => {
     if (online && offlineUsername) refresh();
   }, [online, offlineUsername, refresh]);
+
+  useEffect(() => {
+    if (!searchEnabled && query) setQuery("");
+  }, [searchEnabled, query]);
 
   /** Row badge dots: only pending body sync or unsaved/outbox/collab — never green "available offline". */
   const offlineSyncingIds = useMemo(() => {
@@ -330,6 +335,7 @@ export function DocsHomeWorkspace({
             }}
             query={query}
             onQueryChange={setQuery}
+            searchEnabled={searchEnabled}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
             onLoadMore={loadMore}

@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { Button } from "@/button/src/button";
 import { RenameFilenameField } from "@/dialogs/src/rename-filename-field";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,7 @@ export function DriveCreateMarkdownDialog({
   groupRootNames,
   isSubmitting = false,
   errorMessage,
+  dialogSurfaceClassName = "drive-dialog-surface",
   onClose,
   onConfirm,
 }: {
@@ -44,6 +46,8 @@ export function DriveCreateMarkdownDialog({
   groupRootNames: Set<string>;
   isSubmitting?: boolean;
   errorMessage?: string | null;
+  /** Portaled dialog theme class (repeat app accent tokens outside the workspace root). */
+  dialogSurfaceClassName?: string;
   onClose: () => void;
   onConfirm: (fileName: string, destinationPath: string) => void;
 }) {
@@ -75,7 +79,7 @@ export function DriveCreateMarkdownDialog({
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent className="drive-dialog-surface sm:max-w-lg">
+      <DialogContent className={cn(dialogSurfaceClassName, "sm:max-w-lg")}>
         <DialogHeader>
           <DialogTitle>{labels.createMarkdownDialogTitle}</DialogTitle>
           <DialogDescription>{labels.createMarkdownDialogDescription}</DialogDescription>

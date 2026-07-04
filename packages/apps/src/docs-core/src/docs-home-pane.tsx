@@ -54,6 +54,8 @@ export type DocsHomePaneProps = {
   requestDeleteSelected?: (ids: string[]) => void;
   /** Undo the latest queued trash mutation (toast or Cmd+Z). */
   onUndoQueuedAction?: () => boolean;
+  /** When false, the header search field is hidden (e.g. offline without live search). */
+  searchEnabled?: boolean;
 };
 
 export function DocsHomePane({
@@ -84,6 +86,7 @@ export function DocsHomePane({
   requestMoveSelected,
   requestDeleteSelected,
   onUndoQueuedAction,
+  searchEnabled = true,
 }: DocsHomePaneProps) {
   const filesById = useMemo(() => {
     const map = new Map<string, DriveFile>();
@@ -209,9 +212,9 @@ export function DocsHomePane({
           title={labels.homeTitle}
           sidebarOpen={sidebarOpen}
           onToggleSidebar={onToggleSidebar}
-          searchPlaceholder={labels.homeSearchPlaceholder}
-          searchValue={query}
-          onSearchInput={onQueryChange}
+          searchPlaceholder={searchEnabled ? labels.homeSearchPlaceholder : undefined}
+          searchValue={searchEnabled ? query : undefined}
+          onSearchInput={searchEnabled ? onQueryChange : undefined}
           searchInputRef={searchInputRef}
           actions={
             <ViewModeToggle
