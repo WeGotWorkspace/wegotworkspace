@@ -58,6 +58,7 @@ function entry(path: string, name: string): WgwDriveDirectoryEntry {
     type: "file",
     size: 100,
     time: 1,
+    permissions: 644,
   };
 }
 
