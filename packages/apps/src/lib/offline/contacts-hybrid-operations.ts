@@ -18,13 +18,14 @@ import {
   listAddressBooks,
   listCards,
 } from "@/lib/api/wgw/contacts";
-import { syncAllContactBooks } from "@/lib/api/wgw/contacts-sync";
+import { pullAddressBookChanges, syncAllContactBooks } from "@/lib/api/wgw/contacts-sync";
 import { isFetchNetworkError, readBrowserOnline } from "@/lib/offline/browser-online";
 import { applyContactPatch } from "@/lib/offline/contacts/contacts-patch-merge";
 import {
   createTempContactId,
   enqueueCoalescedContactUpdate,
   enqueueOutboxMutation,
+  listCachedAddressBookIds,
   readContactsBootstrapFromCache,
   removeContactCardFromCache,
   upsertContactCardInCache,
@@ -235,15 +236,17 @@ export async function fetchContactsHybridBootstrap(): Promise<
     await flushContactsOutboxAndReport(username);
   }
   await writeContactsBootstrapToCache(username, bootstrap);
-  const bookIds = bootstrap.data.addressBooks.map((b) => b.id).filter((id) => id.length > 0);
-  if (bookIds.length > 0 && readBrowserOnline()) {
-    await syncAllContactBooks(username, bookIds);
-    const cached = await readContactsBootstrapFromCache(username);
-    if (cached) {
-      cached.session = bootstrap.session;
-      cached.data.addressBooks = bootstrap.data.addressBooks;
-      await writeContactsBootstrapToCache(username, cached);
-      return cached;
+  if (readBrowserOnline()) {
+    await pullAddressBookChanges(username);
+    const bookIds = await listCachedAddressBookIds(username);
+    if (bookIds.length > 0) {
+      await syncAllContactBooks(username, bookIds);
+      const cached = await readContactsBootstrapFromCache(username);
+      if (cached) {
+        cached.session = bootstrap.session;
+        await writeContactsBootstrapToCache(username, cached);
+        return cached;
+      }
     }
   }
   return bootstrap;

@@ -1,10 +1,16 @@
 import type { ContactCard } from "@/contacts-core/src/contacts-types";
 import { wgwFetch, wgwReadJson } from "@/lib/api/wgw/http";
-import { getCard } from "@/lib/api/wgw/contacts";
+import { getAddressBook, getCard, listAddressBooks } from "@/lib/api/wgw/contacts";
 import {
+  listCachedAddressBookIds,
+  readAddressBooksSyncToken,
   readSyncToken,
+  removeAddressBookFromCache,
   removeContactCardFromCache,
+  replaceAllAddressBooksInCache,
+  upsertAddressBookInCache,
   upsertContactCardInCache,
+  writeAddressBooksSyncToken,
   writeSyncToken,
 } from "@/lib/offline/contacts-offline-store";
 import { offlineAccountKeyFromUsername, offlineDbForAccount } from "@/lib/offline/core/offline-db";
@@ -82,6 +88,55 @@ async function applyContactCardChanges(
   }
 }
 
+export async function pullAddressBookChanges(
+  username: string,
+  opts?: { signal?: AbortSignal },
+): Promise<void> {
+  const since = (await readAddressBooksSyncToken(username)) ?? "0";
+  const query = new URLSearchParams({ since });
+  const res = await wgwFetch(`/contacts/addressbooks/changes?${query.toString()}`, {
+    signal: opts?.signal,
+  });
+  if (!res.ok) {
+    if (res.status === 400) {
+      await fullResyncAddressBooks(username, opts);
+      return;
+    }
+    throw new Error(`GET /contacts/addressbooks/changes failed (${res.status})`);
+  }
+  const changes = (await wgwReadJson(res)) as JmapChangesResponse;
+  await applyAddressBookChanges(username, changes, opts);
+  await writeAddressBooksSyncToken(username, changes.newState);
+}
+
+async function fullResyncAddressBooks(
+  username: string,
+  opts?: { signal?: AbortSignal },
+): Promise<void> {
+  const books = await listAddressBooks(opts);
+  await replaceAllAddressBooksInCache(username, books);
+  await writeAddressBooksSyncToken(username, "0");
+  await pullAddressBookChanges(username, opts);
+}
+
+async function applyAddressBookChanges(
+  username: string,
+  changes: JmapChangesResponse,
+  opts?: { signal?: AbortSignal },
+): Promise<void> {
+  for (const bookId of changes.destroyed) {
+    await removeAddressBookFromCache(username, bookId);
+  }
+  for (const bookId of changes.created) {
+    const book = await getAddressBook(bookId, opts);
+    await upsertAddressBookInCache(username, book);
+    await pullContactCardChangesForBook(username, bookId, opts);
+  }
+  for (const bookId of changes.updated) {
+    await pullContactCardChangesForBook(username, bookId, opts);
+  }
+}
+
 export async function syncAllContactBooks(
   username: string,
   addressBookIds: string[],
@@ -89,5 +144,16 @@ export async function syncAllContactBooks(
 ): Promise<void> {
   for (const bookId of addressBookIds) {
     await pullContactCardChangesForBook(username, bookId, opts);
+  }
+}
+
+export async function syncContactBooksAfterAddressBookChanges(
+  username: string,
+  opts?: { signal?: AbortSignal },
+): Promise<void> {
+  await pullAddressBookChanges(username, opts);
+  const bookIds = await listCachedAddressBookIds(username);
+  if (bookIds.length > 0) {
+    await syncAllContactBooks(username, bookIds, opts);
   }
 }

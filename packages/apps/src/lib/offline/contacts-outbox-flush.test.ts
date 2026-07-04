@@ -38,9 +38,10 @@ const bootstrap = {
   },
 } satisfies ContactsAppBootstrap;
 
-const { contactCardSet, getCard, syncAllContactBooks } = vi.hoisted(() => ({
+const { contactCardSet, getCard, pullAddressBookChanges, syncAllContactBooks } = vi.hoisted(() => ({
   contactCardSet: vi.fn(),
   getCard: vi.fn(),
+  pullAddressBookChanges: vi.fn(),
   syncAllContactBooks: vi.fn(),
 }));
 
@@ -70,6 +71,7 @@ vi.mock("@/lib/api/wgw/contacts", () => ({
 }));
 
 vi.mock("@/lib/api/wgw/contacts-sync", () => ({
+  pullAddressBookChanges,
   syncAllContactBooks,
 }));
 
@@ -77,6 +79,8 @@ describe("flushContactsOutbox", () => {
   beforeEach(async () => {
     contactCardSet.mockReset();
     getCard.mockReset();
+    pullAddressBookChanges.mockReset();
+    pullAddressBookChanges.mockResolvedValue(undefined);
     syncAllContactBooks.mockReset();
     syncAllContactBooks.mockResolvedValue(undefined);
     await writeContactsBootstrapToCache(username, bootstrap);
