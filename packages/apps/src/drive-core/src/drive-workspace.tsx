@@ -1,4 +1,6 @@
 import { TooltipProvider } from "@/ui/tooltip";
+import { useCallback } from "react";
+import { useAppToast } from "@/hooks/use-app-toast";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
 import {
@@ -17,6 +19,15 @@ import { useDocumentTitle } from "@/lib/document-title";
 import { useDriveSidebarModel } from "@/drive-core/src/use-drive-sidebar-model";
 import type { DriveWorkspaceProps } from "@/drive-core/src/drive-workspace-props";
 import { DriveWorkspaceModals } from "@/drive-core/src/drive-workspace-modals";
+import {
+  useDriveOfflineAvailability,
+  useDriveOfflineOpenGuard,
+} from "@/drive-core/src/use-drive-offline-availability";
+import { useDriveOfflineFileActions } from "@/drive-core/src/use-drive-offline-file-actions";
+import { getDriveSyncRunner } from "@/lib/offline/drive/drive-hybrid-operations";
+import { useOfflineReconnectFlush } from "@/lib/offline/use-offline-reconnect-flush";
+import { useOfflineSyncToast } from "@/lib/offline/use-offline-sync-toast";
+import type { DriveFile } from "@/drive-core/src/drive-models";
 import "@/drive-core/src/drive-workspace.css";
 
 export function DriveWorkspace({
@@ -24,6 +35,7 @@ export function DriveWorkspace({
   session,
   operations,
   listLoading = false,
+  offlineUsername = null,
   view,
   onViewChange,
   onOpenDocsFile,
@@ -31,6 +43,9 @@ export function DriveWorkspace({
   onLogout,
   className,
 }: DriveWorkspaceProps) {
+  const { showError } = useAppToast();
+  const offlineEnabled = Boolean(offlineUsername);
+
   const controller = useDriveController({
     data,
     session,
@@ -41,6 +56,42 @@ export function DriveWorkspace({
     onOpenDocsFile,
     onNavigate,
   });
+
+  const {
+    offlineAvailableIds: rowOfflineAvailableIds,
+    offlinePendingSyncIds: rowOfflinePendingSyncIds,
+    refresh,
+  } = useDriveOfflineAvailability(controller.visibleItems, offlineEnabled, offlineUsername);
+
+  const canOpenOffline = useDriveOfflineOpenGuard(
+    controller.visibleItems,
+    rowOfflineAvailableIds,
+    offlineEnabled,
+  );
+
+  const extraFileActions = useDriveOfflineFileActions(offlineUsername, refresh);
+
+  const guardedOpenFile = useCallback(
+    (file: DriveFile) => {
+      if (!canOpenOffline(file)) {
+        showError("This file is not available offline. Make it available while online.");
+        return;
+      }
+      controller.openFile(file);
+    },
+    [canOpenOffline, controller, showError],
+  );
+
+  const syncing = useOfflineReconnectFlush({
+    enabled: offlineEnabled,
+    flush: async () => {
+      if (!offlineUsername) return;
+      await getDriveSyncRunner(offlineUsername).flush();
+    },
+    afterFlush: refresh,
+  });
+
+  useOfflineSyncToast(syncing, "Changes synced");
   const { primarySidebarItems, groupSidebarItems } = useDriveSidebarModel({
     labels: controller.labels,
     view: controller.view,
@@ -72,7 +123,15 @@ export function DriveWorkspace({
         mainHeader={
           <DriveMainHeader controller={controller} unifiedSearchEnabled={Boolean(operations)} />
         }
-        main={<DriveMainPane controller={controller} operations={operations} />}
+        main={
+          <DriveMainPane
+            controller={controller}
+            operations={operations}
+            openFile={guardedOpenFile}
+            offlinePendingSyncIds={rowOfflinePendingSyncIds}
+            extraFileActions={offlineEnabled ? extraFileActions : undefined}
+          />
+        }
       />
       <DriveWorkspaceModals controller={controller} />
       <input

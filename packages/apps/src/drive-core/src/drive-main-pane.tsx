@@ -11,6 +11,7 @@ import { DriveDetailPanel, DriveGridView, DriveListView } from "@/drive-core/src
 import type { DriveFile } from "@/drive-core/src/drive-models";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
 import type { DriveAPIOperations } from "@/drive-core/src/drive-types";
+import type { ActionBarAction } from "@/action-bar/src/action-bar";
 import type { useDriveController } from "@/drive-core/src/use-drive-controller";
 
 type DriveController = ReturnType<typeof useDriveController>;
@@ -18,9 +19,18 @@ type DriveController = ReturnType<typeof useDriveController>;
 export type DriveMainPaneProps = {
   controller: DriveController;
   operations?: DriveAPIOperations;
+  openFile?: (file: DriveFile) => void;
+  offlinePendingSyncIds?: ReadonlySet<string>;
+  extraFileActions?: (file: DriveFile) => ActionBarAction[];
 };
 
-export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
+export function DriveMainPane({
+  controller,
+  operations,
+  openFile: openFileOverride,
+  offlinePendingSyncIds,
+  extraFileActions,
+}: DriveMainPaneProps) {
   const {
     labels,
     view,
@@ -91,13 +101,15 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
     itemDragHandlers,
     folderDropZoneProps,
     onSelect: handleSelect,
-    onOpen: openFile,
+    onOpen: openFileOverride ?? openFile,
     onLongPress: enterSelectionFor,
     onStar: toggleStar,
     onDownload: handleDownload,
     onRename: requestRenameItem,
     onMove: requestMoveItem,
     onTrash: requestDeleteItem,
+    offlinePendingSyncIds,
+    extraFileActions,
   };
 
   const dropTargetLabel =
