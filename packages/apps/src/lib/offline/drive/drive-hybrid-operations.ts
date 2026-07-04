@@ -83,7 +83,11 @@ async function queueDriveOutbox(username: string, payload: DriveOutboxPayload): 
   });
 }
 
-function offlineQueuedDriveData(cwd: string, bootstrap: DriveAppBootstrap | null): DriveUIData {
+async function offlineQueuedDriveData(username: string, cwd: string): Promise<DriveUIData> {
+  const cached = await readCachedDriveState(username, cwd);
+  if (cached) return cached;
+
+  const bootstrap = await readDriveBootstrapFromCache(username);
   if (bootstrap) {
     return buildOfflineDriveUIData(bootstrap, cwd, []);
   }
@@ -246,8 +250,7 @@ export function createHybridDriveOperations(
         ? { op: "trash", from, destination, to }
         : { op: "rename", from, destination, to: input.to };
       await queueDriveOutbox(username, payload);
-      const boot = await ensureBootstrap();
-      return offlineQueuedDriveData(destination, boot);
+      return offlineQueuedDriveData(username, destination);
     },
     uploadFiles: async (input, opts) => {
       if (readBrowserOnline()) {
@@ -268,8 +271,7 @@ export function createHybridDriveOperations(
           mimeType: encoded.mimeType,
         });
       }
-      const boot = await ensureBootstrap();
-      return offlineQueuedDriveData(cwd, boot);
+      return offlineQueuedDriveData(username, cwd);
     },
     downloadFile: async (path, opts) => {
       const normalized = normalizeApiVirtualPath(path);
