@@ -165,13 +165,6 @@ export function DocsHomeWorkspace({
     return merged;
   }, [offlinePendingSyncIds, offlineSyncingIds]);
 
-  const offlineUnavailableIds = useMemo(() => {
-    if (!isOfflineListing) return undefined;
-    return new Set(
-      files.filter((file) => !offlineAvailableIds.has(file.id)).map((file) => file.id),
-    );
-  }, [files, isOfflineListing, offlineAvailableIds]);
-
   const canOpenOffline = useDocsHomeOpenGuard({
     isOfflineListing,
     offlineAvailableIds,
@@ -328,7 +321,6 @@ export function DocsHomeWorkspace({
             loadingMore={loadingMore}
             hasMore={hasMore}
             error={error}
-            offlineUnavailableIds={offlineUnavailableIds}
             offlinePendingSyncIds={offlineBadgePendingIds}
             offlineLabels={{
               ...labels,

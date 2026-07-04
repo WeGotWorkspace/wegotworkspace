@@ -27,8 +27,6 @@ export type DocsHomePaneProps = {
   loadingMore: boolean;
   hasMore: boolean;
   error: string | null;
-  /** Row ids that cannot be opened while offline (muted styling). */
-  offlineUnavailableIds?: ReadonlySet<string>;
   /** Row ids with pending offline sync (collab save, outbox, or body hydration). */
   offlinePendingSyncIds?: ReadonlySet<string>;
   offlineLabels?: {
@@ -65,7 +63,6 @@ export function DocsHomePane({
   loadingMore,
   hasMore,
   error,
-  offlineUnavailableIds,
   offlinePendingSyncIds,
   offlineLabels,
   query,
@@ -201,7 +198,6 @@ export function DocsHomePane({
     onRename: onRename ?? noop,
     onMove: onMove ?? noop,
     onTrash: onTrash ?? noop,
-    offlineUnavailableIds,
     offlinePendingSyncIds,
     offlineBadgeLabels: offlineLabels,
   };

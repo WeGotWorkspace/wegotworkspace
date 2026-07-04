@@ -69,7 +69,18 @@ export function DriveWorkspace({
     offlineEnabled,
   );
 
-  const extraFileActions = useDriveOfflineFileActions(offlineUsername, refresh);
+  const { extraFileActions, pinOfflineFile, pinLoadingId } = useDriveOfflineFileActions({
+    username: offlineUsername,
+    offlineAvailableIds: rowOfflineAvailableIds,
+    onChanged: refresh,
+  });
+
+  const handleMakeOfflineAvailable = useCallback(
+    (file: DriveFile) => {
+      void pinOfflineFile(file);
+    },
+    [pinOfflineFile],
+  );
 
   const guardedOpenFile = useCallback(
     (file: DriveFile) => {
@@ -128,7 +139,11 @@ export function DriveWorkspace({
             controller={controller}
             operations={operations}
             openFile={guardedOpenFile}
+            offlineEnabled={offlineEnabled}
+            offlineAvailableIds={rowOfflineAvailableIds}
             offlinePendingSyncIds={rowOfflinePendingSyncIds}
+            onMakeOfflineAvailable={handleMakeOfflineAvailable}
+            pinLoadingId={pinLoadingId}
             extraFileActions={offlineEnabled ? extraFileActions : undefined}
           />
         }

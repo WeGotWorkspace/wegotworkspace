@@ -248,7 +248,6 @@ function OfflineCachedListingHarness() {
         loadingMore={false}
         hasMore={false}
         error={null}
-        offlineUnavailableIds={new Set([String(files[1]?.id ?? "")])}
         query=""
         onQueryChange={() => {}}
         viewMode="list"

@@ -1,85 +1,101 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { CloudOff, HardDriveDownload } from "lucide-react";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { useConnectivity } from "@/hooks/use-connectivity";
 import type { ActionBarAction } from "@/action-bar/src/action-bar";
 import type { DriveFile } from "@/drive-core/src/drive-models";
-import { readOfflineDeviceContentSettings } from "@/lib/offline/core/offline-device-settings";
-import { hasOfflineFileContent } from "@/lib/offline/shared/content-availability";
+import { driveLabels } from "@/drive-core/src/drive-labels";
 import {
   makeDriveOfflineAvailable,
   removeDriveOfflineCopy,
 } from "@/lib/offline/drive/drive-offline-pin-core";
 
-function parseFileSizeBytes(file: DriveFile): number {
-  if (file.kind === "folder") return 0;
-  const raw = file.size?.replace(/[^\d.]/g, "");
-  if (!raw) return 0;
-  const value = Number.parseFloat(raw);
-  if (Number.isNaN(value)) return 0;
-  if (file.size?.includes("GB")) return Math.round(value * 1024 * 1024 * 1024);
-  if (file.size?.includes("MB")) return Math.round(value * 1024 * 1024);
-  if (file.size?.includes("KB")) return Math.round(value * 1024);
-  return Math.round(value);
-}
+type UseDriveOfflineFileActionsOptions = {
+  username: string | null | undefined;
+  offlineAvailableIds?: ReadonlySet<string>;
+  onChanged?: () => void;
+};
 
-export function useDriveOfflineFileActions(
-  username: string | null | undefined,
-  onChanged?: () => void,
-): (file: DriveFile) => ActionBarAction[] {
+export function useDriveOfflineFileActions({
+  username,
+  offlineAvailableIds,
+  onChanged,
+}: UseDriveOfflineFileActionsOptions): {
+  extraFileActions: (file: DriveFile) => ActionBarAction[];
+  pinOfflineFile: (file: DriveFile) => Promise<void>;
+  removeOfflineFile: (file: DriveFile) => Promise<void>;
+  pinLoadingId: string | null;
+} {
   const { online } = useConnectivity();
   const { showError, show } = useAppToast();
+  const [pinLoadingId, setPinLoadingId] = useState<string | null>(null);
 
-  return useCallback(
-    (file: DriveFile) => {
+  const pinOfflineFile = useCallback(
+    async (file: DriveFile) => {
+      if (!username || file.kind === "folder" || !file.apiPath) return;
+      if (!online) {
+        showError("Connect to the network to make files available offline.");
+        return;
+      }
+      setPinLoadingId(file.apiPath);
+      try {
+        await makeDriveOfflineAvailable(username, file.apiPath);
+        show("File saved for offline use");
+        onChanged?.();
+      } catch (error) {
+        showError(error instanceof Error ? error.message : String(error));
+      } finally {
+        setPinLoadingId((current) => (current === file.apiPath ? null : current));
+      }
+    },
+    [onChanged, online, show, showError, username],
+  );
+
+  const removeOfflineFile = useCallback(
+    async (file: DriveFile) => {
+      if (!username || file.kind === "folder" || !file.apiPath) return;
+      try {
+        await removeDriveOfflineCopy(username, file.apiPath);
+        show("Offline copy removed");
+        onChanged?.();
+      } catch (error) {
+        showError(error instanceof Error ? error.message : String(error));
+      }
+    },
+    [onChanged, show, showError, username],
+  );
+
+  const extraFileActions = useCallback(
+    (file: DriveFile): ActionBarAction[] => {
       if (!username || file.kind === "folder" || !file.apiPath) return [];
 
-      const settings = readOfflineDeviceContentSettings();
-      const sizeBytes = parseFileSizeBytes(file);
-      const overLimit = sizeBytes > settings.maxFileSizeBytes;
       const actions: ActionBarAction[] = [];
+      const hasLocalCopy = offlineAvailableIds?.has(file.id) ?? false;
 
-      if (online && overLimit && settings.contentSyncEnabled) {
+      if (online && !hasLocalCopy) {
         actions.push({
-          label: "Make available offline",
+          label: driveLabels.offlineMakeAvailable,
           icon: <HardDriveDownload className="size-4" aria-hidden />,
           onClick: () => {
-            void (async () => {
-              try {
-                await makeDriveOfflineAvailable(username, file.apiPath!);
-                show("File saved for offline use");
-                onChanged?.();
-              } catch (error) {
-                showError(error instanceof Error ? error.message : String(error));
-              }
-            })();
+            void pinOfflineFile(file);
           },
         });
       }
 
-      actions.push({
-        label: "Remove offline copy",
-        icon: <CloudOff className="size-4" aria-hidden />,
-        onClick: () => {
-          void (async () => {
-            try {
-              const hasContent = await hasOfflineFileContent(username, file.apiPath!);
-              if (!hasContent) {
-                showError("No offline copy for this file.");
-                return;
-              }
-              await removeDriveOfflineCopy(username, file.apiPath!);
-              show("Offline copy removed");
-              onChanged?.();
-            } catch (error) {
-              showError(error instanceof Error ? error.message : String(error));
-            }
-          })();
-        },
-      });
+      if (hasLocalCopy) {
+        actions.push({
+          label: driveLabels.offlineRemoveCopy,
+          icon: <CloudOff className="size-4" aria-hidden />,
+          onClick: () => {
+            void removeOfflineFile(file);
+          },
+        });
+      }
 
       return actions;
     },
-    [onChanged, online, show, showError, username],
+    [offlineAvailableIds, online, pinOfflineFile, removeOfflineFile, username],
   );
+
+  return { extraFileActions, pinOfflineFile, removeOfflineFile, pinLoadingId };
 }

@@ -1,0 +1,43 @@
+import { CloudDownload, Loader2 } from "lucide-react";
+import type { DriveUILabels } from "@/drive-core/src/drive-labels";
+import { DriveItemIconButton } from "@/drive-core/src/drive-item-icon-button";
+
+type DriveOfflinePinButtonProps = {
+  labels: DriveUILabels;
+  isAvailable: boolean;
+  isPending: boolean;
+  isPinning: boolean;
+  canPin: boolean;
+  onPin?: () => void;
+};
+
+/** Inline control to pin a file for offline use (list column or grid actions row). */
+export function DriveOfflinePinButton({
+  labels,
+  isAvailable,
+  isPending,
+  isPinning,
+  canPin,
+  onPin,
+}: DriveOfflinePinButtonProps) {
+  if (isAvailable) return null;
+
+  if (isPending || isPinning) {
+    return (
+      <DriveItemIconButton
+        label={labels.offlineDownloading}
+        icon={<Loader2 className="animate-spin" aria-hidden />}
+        disabled
+      />
+    );
+  }
+
+  return (
+    <DriveItemIconButton
+      label={labels.offlineMakeAvailable}
+      icon={<CloudDownload aria-hidden />}
+      disabled={!canPin || !onPin}
+      onClick={() => onPin?.()}
+    />
+  );
+}

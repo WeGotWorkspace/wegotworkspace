@@ -1,5 +1,6 @@
 import { useEffect, useState, type TransitionEvent } from "react";
 import { Cloud, Download } from "lucide-react";
+import { useConnectivity } from "@/hooks/use-connectivity";
 import { DriveViewIcon } from "@/drive-core/src/drive-view-icons";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { CollectionState } from "@/collection-state/src/collection-state";
@@ -20,7 +21,11 @@ export type DriveMainPaneProps = {
   controller: DriveController;
   operations?: DriveAPIOperations;
   openFile?: (file: DriveFile) => void;
+  offlineEnabled?: boolean;
+  offlineAvailableIds?: ReadonlySet<string>;
   offlinePendingSyncIds?: ReadonlySet<string>;
+  onMakeOfflineAvailable?: (file: DriveFile) => void;
+  pinLoadingId?: string | null;
   extraFileActions?: (file: DriveFile) => ActionBarAction[];
 };
 
@@ -28,7 +33,11 @@ export function DriveMainPane({
   controller,
   operations,
   openFile: openFileOverride,
+  offlineEnabled = false,
+  offlineAvailableIds,
   offlinePendingSyncIds,
+  onMakeOfflineAvailable,
+  pinLoadingId,
   extraFileActions,
 }: DriveMainPaneProps) {
   const {
@@ -74,6 +83,7 @@ export function DriveMainPane({
     view.type === "folder" && !searchQuery.trim() && (folderListingPending || listLoading);
 
   const { show, showError } = useAppToast();
+  const { online } = useConnectivity();
 
   const handleDownload = (file: DriveFile) => {
     if (operations && file.apiPath && file.kind !== "folder") {
@@ -108,8 +118,17 @@ export function DriveMainPane({
     onRename: requestRenameItem,
     onMove: requestMoveItem,
     onTrash: requestDeleteItem,
+    offlineEnabled,
+    offlineAvailableIds,
     offlinePendingSyncIds,
+    onMakeOfflineAvailable,
+    canPinOffline: online,
+    pinLoadingId,
     extraFileActions,
+    offlineBadgeLabels: {
+      offlineAvailable: labels.offlineAvailable,
+      offlinePendingSync: labels.offlinePendingSync,
+    },
   };
 
   const dropTargetLabel =
