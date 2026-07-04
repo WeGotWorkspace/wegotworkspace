@@ -10,6 +10,16 @@ vi.mock("@/lib/offline/docs/docs-offline-pin-core", () => ({
   makeDocsOfflineAvailable,
 }));
 
+vi.mock("@/lib/offline/core/offline-device-settings", () => ({
+  readOfflineDeviceContentSettings: vi.fn(() => ({
+    contentSyncEnabled: true,
+    maxFileSizeBytes: 8 * 1024 * 1024,
+  })),
+  isEligibleForAutoContentSync: vi.fn(
+    (_size: number, settings: { maxFileSizeBytes: number }) => _size <= settings.maxFileSizeBytes,
+  ),
+}));
+
 vi.mock("@/lib/offline/core/browser-online", () => ({
   getConnectivitySnapshot: vi.fn(() => true),
 }));
