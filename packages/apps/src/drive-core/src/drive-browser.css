@@ -291,16 +291,29 @@
 }
 
 .drive-workspace .drive-list-col-name {
-  width: auto;
+  width: 100%;
+  min-width: 0;
   padding-inline-start: 0.5rem;
-}
-
-.drive-workspace .drive-list-col-size {
-  width: 6rem;
 }
 
 .drive-workspace .drive-list-col-offline {
   width: 2.75rem;
+}
+
+.drive-workspace .drive-list-col-offline.drive-list-head__cell {
+  padding-bottom: 0.5rem;
+}
+
+.drive-workspace .drive-list-col-modified {
+  width: 5.5rem;
+}
+
+.drive-workspace .drive-list-col-kind {
+  width: 5.5rem;
+}
+
+.drive-workspace .drive-list-col-size {
+  width: 5rem;
 }
 
 .drive-workspace .drive-list-col-location {

@@ -710,18 +710,23 @@ export function DriveListView({
               {searchActive ? labels.searchViewTitle : labels.listColumnName}
             </th>
             {offlineEnabled ? (
-              <th className="drive-list-col-offline drive-list-head__cell">
-                {labels.listColumnOffline}
-              </th>
+              <th
+                className="drive-list-col-offline drive-list-head__cell"
+                aria-label={labels.listColumnOffline}
+              />
             ) : null}
             {showLocationColumn ? (
               <th className="drive-list-col-location drive-list-head__cell hidden sm:table-cell">
                 {locationColumnLabel}
               </th>
             ) : null}
-            <th className="drive-list-head__cell hidden sm:table-cell">Modified</th>
+            <th className="drive-list-col-modified drive-list-head__cell hidden sm:table-cell">
+              Modified
+            </th>
             {showKindColumn ? (
-              <th className="drive-list-head__cell hidden lg:table-cell">Kind</th>
+              <th className="drive-list-col-kind drive-list-head__cell hidden lg:table-cell">
+                Kind
+              </th>
             ) : null}
             <th className="drive-list-col-size drive-list-head__cell drive-list-head__cell--align-end hidden sm:table-cell">
               Size
@@ -833,11 +838,11 @@ export function DriveListView({
                     <DriveLocationLabel file={f} />
                   </td>
                 ) : null}
-                <td className="py-2 hidden sm:table-cell tabular-nums drive-list-muted">
+                <td className="drive-list-col-modified py-2 hidden sm:table-cell tabular-nums drive-list-muted whitespace-nowrap">
                   {f.date}
                 </td>
                 {showKindColumn ? (
-                  <td className="py-2 hidden lg:table-cell drive-list-muted">
+                  <td className="drive-list-col-kind py-2 hidden lg:table-cell drive-list-muted">
                     {KIND_LABEL[f.kind]}
                   </td>
                 ) : null}
