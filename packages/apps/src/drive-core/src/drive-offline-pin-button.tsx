@@ -1,6 +1,9 @@
-import { CloudDownload, Loader2 } from "lucide-react";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
 import { DriveItemIconButton } from "@/drive-core/src/drive-item-icon-button";
+import {
+  DriveOfflineAvailableIcon,
+  DriveOfflinePinningIcon,
+} from "@/drive-core/src/drive-offline-icons";
 
 type DriveOfflinePinButtonProps = {
   labels: DriveUILabels;
@@ -26,7 +29,7 @@ export function DriveOfflinePinButton({
     return (
       <DriveItemIconButton
         label={labels.offlineDownloading}
-        icon={<Loader2 className="animate-spin" aria-hidden />}
+        icon={<DriveOfflinePinningIcon className="animate-spin" />}
         disabled
       />
     );
@@ -35,7 +38,7 @@ export function DriveOfflinePinButton({
   return (
     <DriveItemIconButton
       label={labels.offlineMakeAvailable}
-      icon={<CloudDownload aria-hidden />}
+      icon={<DriveOfflineAvailableIcon />}
       disabled={!canPin || !onPin}
       onClick={() => onPin?.()}
     />

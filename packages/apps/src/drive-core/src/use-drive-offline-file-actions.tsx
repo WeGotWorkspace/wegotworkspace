@@ -1,10 +1,13 @@
 import { useCallback, useState } from "react";
-import { CloudOff, HardDriveDownload } from "lucide-react";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { useConnectivity } from "@/hooks/use-connectivity";
 import type { ActionBarAction } from "@/action-bar/src/action-bar";
 import type { DriveFile } from "@/drive-core/src/drive-models";
 import { driveLabels } from "@/drive-core/src/drive-labels";
+import {
+  DriveOfflineAvailableIcon,
+  DriveOfflineRemoveIcon,
+} from "@/drive-core/src/drive-offline-icons";
 import {
   makeDriveOfflineAvailable,
   removeDriveOfflineCopy,
@@ -75,7 +78,7 @@ export function useDriveOfflineFileActions({
       if (online && !hasLocalCopy) {
         actions.push({
           label: driveLabels.offlineMakeAvailable,
-          icon: <HardDriveDownload className="size-4" aria-hidden />,
+          icon: <DriveOfflineAvailableIcon />,
           onClick: () => {
             void pinOfflineFile(file);
           },
@@ -85,7 +88,7 @@ export function useDriveOfflineFileActions({
       if (hasLocalCopy) {
         actions.push({
           label: driveLabels.offlineRemoveCopy,
-          icon: <CloudOff className="size-4" aria-hidden />,
+          icon: <DriveOfflineRemoveIcon />,
           onClick: () => {
             void removeOfflineFile(file);
           },
