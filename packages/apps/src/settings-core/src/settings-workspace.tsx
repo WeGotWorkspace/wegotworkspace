@@ -13,6 +13,7 @@ import {
 } from "@/settings-core/src/use-settings-controller";
 import { useDocumentTitle } from "@/lib/document-title";
 import type { SettingsWorkspaceProps } from "@/settings-core/src/settings-workspace-props";
+import { SettingsOfflinePane } from "@/settings-core/src/settings-offline-pane";
 import { SettingsMailPane } from "@/settings-core/src/settings-mail-pane";
 import { SettingsMembershipsPane } from "@/settings-core/src/settings-memberships-pane";
 import { SettingsProfilePane } from "@/settings-core/src/settings-profile-pane";
@@ -83,6 +84,7 @@ function MainContent({ controller }: { controller: SettingsControllerState }) {
         <SettingsMembershipsPane groups={controller.memberships} />
       ) : null}
       {controller.section === "mail" ? <SettingsMailPane mail={controller.mail} /> : null}
+      {controller.section === "offline" ? <SettingsOfflinePane /> : null}
     </>
   );
 }
