@@ -1,45 +1,29 @@
 import type { Note } from "@/lib/models/note";
 import { getConnectivitySnapshot } from "@/lib/offline/core/browser-online";
-import { readMeta, writeMeta } from "@/lib/offline/core/meta-store";
+import {
+  isEligibleForAutoContentSync,
+  readOfflineDeviceContentSettings,
+} from "@/lib/offline/core/offline-device-settings";
+import {
+  emptyProgressiveSyncProgress,
+  readProgressiveSyncProgress,
+  runProgressiveSync,
+  type ProgressiveSyncProgress,
+} from "@/lib/offline/core/progressive-sync-runner";
 import { noteCollabPath } from "@/notes-core/src/note-collab-path";
 import { hydrateDocsCollabForOffline } from "@/lib/offline/docs/docs-pin-hydrate";
 
 const NOTES_BODY_SYNC_META_KEY = "notes:auto-sync:body-progress";
+const NOTES_BODY_SYNC_CONCURRENCY = 4;
 
-export type NotesBodySyncProgress = {
-  running: boolean;
-  total: number;
-  synced: number;
-  failed: number;
-  updatedAt: number;
-};
+export type NotesBodySyncProgress = ProgressiveSyncProgress;
 
 function emptyProgress(): NotesBodySyncProgress {
-  return {
-    running: false,
-    total: 0,
-    synced: 0,
-    failed: 0,
-    updatedAt: Date.now(),
-  };
-}
-
-async function writeProgress(username: string, progress: NotesBodySyncProgress): Promise<void> {
-  await writeMeta(username, NOTES_BODY_SYNC_META_KEY, JSON.stringify(progress));
+  return emptyProgressiveSyncProgress();
 }
 
 export async function readNotesBodySyncProgress(username: string): Promise<NotesBodySyncProgress> {
-  const raw = await readMeta(username, NOTES_BODY_SYNC_META_KEY);
-  if (!raw) return emptyProgress();
-  try {
-    return {
-      ...emptyProgress(),
-      ...(JSON.parse(raw) as Partial<NotesBodySyncProgress>),
-      updatedAt: Date.now(),
-    };
-  } catch {
-    return emptyProgress();
-  }
+  return readProgressiveSyncProgress(username, NOTES_BODY_SYNC_META_KEY);
 }
 
 /** Auto-hydrate note collab bodies for personal notes from the cached bootstrap list. */
@@ -48,34 +32,26 @@ export async function syncNotesBodiesForOffline(
   notes: readonly Note[],
 ): Promise<NotesBodySyncProgress> {
   if (!username || !getConnectivitySnapshot()) return emptyProgress();
-  const progress: NotesBodySyncProgress = {
-    running: true,
-    total: notes.length,
-    synced: 0,
-    failed: 0,
-    updatedAt: Date.now(),
-  };
-  await writeProgress(username, progress);
+  const settings = readOfflineDeviceContentSettings();
+  if (!settings.contentSyncEnabled) return emptyProgress();
 
-  for (const note of notes) {
-    const apiPath = noteCollabPath({
-      scope: { kind: "personal", username },
-      notebook: note.notebook,
-      noteId: note.id,
-      archived: note.archived,
-    });
-    try {
+  const eligible = notes.filter((note) =>
+    isEligibleForAutoContentSync(note.body?.length ?? 0, settings),
+  );
+
+  return runProgressiveSync({
+    username,
+    metaKey: NOTES_BODY_SYNC_META_KEY,
+    items: eligible,
+    concurrency: NOTES_BODY_SYNC_CONCURRENCY,
+    syncOne: async (note) => {
+      const apiPath = noteCollabPath({
+        scope: { kind: "personal", username },
+        notebook: note.notebook,
+        noteId: note.id,
+        archived: note.archived,
+      });
       await hydrateDocsCollabForOffline({ apiPath });
-      progress.synced += 1;
-    } catch {
-      progress.failed += 1;
-    }
-    progress.updatedAt = Date.now();
-    await writeProgress(username, progress);
-  }
-
-  progress.running = false;
-  progress.updatedAt = Date.now();
-  await writeProgress(username, progress);
-  return progress;
+    },
+  });
 }

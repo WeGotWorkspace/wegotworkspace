@@ -1,8 +1,1 @@
 @import "../../destination-picker/src/destination-picker.css";
-
-.drive-dialog-surface {
-  --destination-picker-accent: #2563eb;
-  --color-emerald: var(--destination-picker-accent);
-  --drive-sidebar: var(--destination-picker-accent);
-  --field-label-color: color-mix(in oklab, var(--color-ink) 55%, transparent);
-}

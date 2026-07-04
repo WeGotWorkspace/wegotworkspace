@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { DriveDetailActionBar } from "@/drive-core/src/drive-detail-action-bar";
 import { buildDriveFileActions } from "@/drive-core/src/drive-file-action-builders";
 import { DriveFileItemActionsMenu } from "@/drive-core/src/drive-file-actions";
+import { DriveOfflinePinButton } from "@/drive-core/src/drive-offline-pin-button";
 import { DriveMediaPreview } from "@/drive-core/src/drive-media-preview";
 import type { ActionBarAction } from "@/action-bar/src/action-bar";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
@@ -30,6 +31,60 @@ function DriveLocationLabel({ file }: { file: DriveFile }) {
       <Icon className="drive-location-label__icon" aria-hidden />
       <span className="drive-location-label__text">{file.location}</span>
     </span>
+  );
+}
+
+function DriveFileKindIcon({ file, listStyle = false }: { file: DriveFile; listStyle?: boolean }) {
+  if (file.kind === "folder") {
+    return (
+      <span className={cn("shrink-0 [&>svg]:size-4", listStyle && "drive-list-folder-icon")}>
+        <Folder className="size-4" fill="currentColor" fillOpacity={0.18} />
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className={cn(
+        "shrink-0",
+        listStyle ? "drive-list-file-icon [&>svg]:size-4" : "drive-file-tile__kind-icon",
+      )}
+    >
+      {kindIcon[file.kind]}
+    </span>
+  );
+}
+
+function DriveFileOfflinePinCell({
+  file,
+  labels,
+  offlineEnabled,
+  isOfflineAvailable,
+  isOfflinePendingSync,
+  isPinning,
+  canPinOffline,
+  onMakeOfflineAvailable,
+}: {
+  file: DriveFile;
+  labels: DriveUILabels;
+  offlineEnabled: boolean;
+  isOfflineAvailable: boolean;
+  isOfflinePendingSync: boolean;
+  isPinning: boolean;
+  canPinOffline: boolean;
+  onMakeOfflineAvailable?: (file: DriveFile) => void;
+}) {
+  if (!offlineEnabled || file.kind === "folder") return null;
+
+  return (
+    <DriveOfflinePinButton
+      labels={labels}
+      isAvailable={isOfflineAvailable}
+      isPending={isOfflinePendingSync}
+      isPinning={isPinning}
+      canPin={canPinOffline}
+      onPin={onMakeOfflineAvailable ? () => onMakeOfflineAvailable(file) : undefined}
+    />
   );
 }
 
@@ -117,12 +172,13 @@ export function DriveGridView({
   onTrash,
   searchActive: _searchActive = false,
   showLocationColumn = false,
-  offlineUnavailableIds,
-  offlinePinnedIds,
+  offlineAvailableIds,
   offlinePendingSyncIds,
+  offlineEnabled = false,
+  onMakeOfflineAvailable,
+  canPinOffline = false,
   extraFileActions,
   pinLoadingId,
-  offlineBadgeLabels,
 }: {
   items: DriveFile[];
   imagePreviewUrls: Record<string, string>;
@@ -132,13 +188,15 @@ export function DriveGridView({
   searchActive?: boolean;
   /** Show each file's drive location as a subtitle under the tile title. */
   showLocationColumn?: boolean;
-  /** Mute rows that cannot be opened offline. */
-  offlineUnavailableIds?: ReadonlySet<string>;
-  offlinePinnedIds?: ReadonlySet<string>;
+  offlineAvailableIds?: ReadonlySet<string>;
   offlinePendingSyncIds?: ReadonlySet<string>;
+  /** When true, show cloud/download affordances for files without a local copy. */
+  offlineEnabled?: boolean;
+  onMakeOfflineAvailable?: (file: DriveFile) => void;
+  /** When false (offline), cloud icon is decorative only. */
+  canPinOffline?: boolean;
   extraFileActions?: (file: DriveFile) => ActionBarAction[];
   pinLoadingId?: string | null;
-  offlineBadgeLabels?: DriveOfflineBadgeLabels;
   inTrash: boolean;
   selectionMode: boolean;
   isTouch: boolean;
@@ -203,12 +261,13 @@ export function DriveGridView({
                 isDragging={isItemDragging(f.id)}
                 isTouch={isTouch}
                 showLocation={showLocationColumn}
-                isOfflineUnavailable={offlineUnavailableIds?.has(f.id) ?? false}
-                isOfflinePinned={offlinePinnedIds?.has(f.id) ?? false}
+                isOfflineAvailable={offlineAvailableIds?.has(f.id) ?? false}
                 isOfflinePendingSync={offlinePendingSyncIds?.has(f.id) ?? false}
+                offlineEnabled={offlineEnabled}
+                canPinOffline={canPinOffline}
+                onMakeOfflineAvailable={onMakeOfflineAvailable}
                 extraActions={extraFileActions?.(f)}
                 actionsDisabled={pinLoadingId === f.apiPath}
-                offlineBadgeLabels={offlineBadgeLabels}
                 itemDragHandlers={itemDragHandlers(f.id)}
                 onSelect={(e) => onSelect(f.id, e)}
                 onOpen={() => onOpen(f)}
@@ -372,12 +431,13 @@ function FileTile({
   isDragging,
   isTouch,
   showLocation = false,
-  isOfflineUnavailable = false,
-  isOfflinePinned = false,
+  isOfflineAvailable = false,
   isOfflinePendingSync = false,
+  offlineEnabled = false,
+  canPinOffline = false,
+  onMakeOfflineAvailable,
   extraActions,
   actionsDisabled = false,
-  offlineBadgeLabels,
   onSelect,
   onOpen,
   onLongPress,
@@ -398,12 +458,13 @@ function FileTile({
   isDragging: boolean;
   isTouch: boolean;
   showLocation?: boolean;
-  isOfflineUnavailable?: boolean;
-  isOfflinePinned?: boolean;
+  isOfflineAvailable?: boolean;
   isOfflinePendingSync?: boolean;
+  offlineEnabled?: boolean;
+  canPinOffline?: boolean;
+  onMakeOfflineAvailable?: (file: DriveFile) => void;
   extraActions?: ActionBarAction[];
   actionsDisabled?: boolean;
-  offlineBadgeLabels?: DriveOfflineBadgeLabels;
   itemDragHandlers: ItemDragHandlers;
   onSelect: (e: React.MouseEvent) => void;
   onOpen: () => void;
@@ -435,7 +496,6 @@ function FileTile({
         selectionMode && "drive-file-tile--selection-mode",
         isDragging && "drive-file-tile--dragging",
         isSelected && "drive-file-tile--selected",
-        isOfflineUnavailable && "drive-file-tile--offline-unavailable",
       )}
     >
       <button
@@ -469,33 +529,39 @@ function FileTile({
           selectionMode={selectionMode}
           className="drive-file-tile__checkbox"
         />
-        <span className="drive-file-tile__kind-icon shrink-0">{kindIcon[file.kind]}</span>
         <div className="drive-file-tile__text min-w-0 flex-1">
           <div className="drive-file-tile__title-row">
             <span className="drive-file-tile__title">{file.title}</span>
-            <DriveOfflineBadge
-              pinned={isOfflinePinned}
-              pending={isOfflinePendingSync}
-              labels={offlineBadgeLabels}
-            />
           </div>
           {showLocation && file.location ? <DriveLocationLabel file={file} /> : null}
         </div>
-        <DriveFileItemActions
-          labels={labels}
-          file={file}
-          isStarred={isStarred}
-          inTrash={inTrash}
-          canOpen={!selectionMode}
-          onOpen={onOpen}
-          onDownload={onDownload}
-          onStar={onStar}
-          onRename={onRename}
-          onMove={onMove}
-          onDelete={onTrash}
-          extraActions={extraActions}
-          disabled={actionsDisabled}
-        />
+        <div className="drive-file-tile__actions flex shrink-0 items-center">
+          <DriveFileOfflinePinCell
+            file={file}
+            labels={labels}
+            offlineEnabled={offlineEnabled}
+            isOfflineAvailable={isOfflineAvailable}
+            isOfflinePendingSync={isOfflinePendingSync}
+            isPinning={actionsDisabled}
+            canPinOffline={canPinOffline}
+            onMakeOfflineAvailable={onMakeOfflineAvailable}
+          />
+          <DriveFileItemActions
+            labels={labels}
+            file={file}
+            isStarred={isStarred}
+            inTrash={inTrash}
+            canOpen={!selectionMode}
+            onOpen={onOpen}
+            onDownload={onDownload}
+            onStar={onStar}
+            onRename={onRename}
+            onMove={onMove}
+            onDelete={onTrash}
+            extraActions={extraActions}
+            disabled={actionsDisabled}
+          />
+        </div>
       </div>
     </div>
   );
@@ -589,9 +655,12 @@ export function DriveListView({
   showLocationColumn = false,
   locationColumnLabel = "Location",
   showKindColumn = true,
-  offlineUnavailableIds,
+  offlineAvailableIds,
   offlinePinnedIds,
   offlinePendingSyncIds,
+  offlineEnabled = false,
+  onMakeOfflineAvailable,
+  canPinOffline = false,
   extraFileActions,
   pinLoadingId,
   offlineBadgeLabels,
@@ -610,10 +679,12 @@ export function DriveListView({
   locationColumnLabel?: string;
   /** Show the "Kind" column. Defaults to `true`; Docs home hides it (all documents). */
   showKindColumn?: boolean;
-  /** Mute rows that cannot be opened offline. */
-  offlineUnavailableIds?: ReadonlySet<string>;
+  offlineAvailableIds?: ReadonlySet<string>;
   offlinePinnedIds?: ReadonlySet<string>;
   offlinePendingSyncIds?: ReadonlySet<string>;
+  offlineEnabled?: boolean;
+  onMakeOfflineAvailable?: (file: DriveFile) => void;
+  canPinOffline?: boolean;
   extraFileActions?: (file: DriveFile) => ActionBarAction[];
   pinLoadingId?: string | null;
   offlineBadgeLabels?: DriveOfflineBadgeLabels;
@@ -638,14 +709,24 @@ export function DriveListView({
             <th className="drive-list-col-name drive-list-head__cell">
               {searchActive ? labels.searchViewTitle : labels.listColumnName}
             </th>
+            {offlineEnabled ? (
+              <th
+                className="drive-list-col-offline drive-list-head__cell"
+                aria-label={labels.listColumnOffline}
+              />
+            ) : null}
             {showLocationColumn ? (
               <th className="drive-list-col-location drive-list-head__cell hidden sm:table-cell">
                 {locationColumnLabel}
               </th>
             ) : null}
-            <th className="drive-list-head__cell hidden sm:table-cell">Modified</th>
+            <th className="drive-list-col-modified drive-list-head__cell hidden sm:table-cell">
+              Modified
+            </th>
             {showKindColumn ? (
-              <th className="drive-list-head__cell hidden lg:table-cell">Kind</th>
+              <th className="drive-list-col-kind drive-list-head__cell hidden lg:table-cell">
+                Kind
+              </th>
             ) : null}
             <th className="drive-list-col-size drive-list-head__cell drive-list-head__cell--align-end hidden sm:table-cell">
               Size
@@ -661,7 +742,9 @@ export function DriveListView({
             const folderPath = isFolder ? driveFolderUiPath(f) : "";
             const isSelected = selectedIds.includes(f.id);
             const isActive = f.id === activeId;
-            const isOfflineUnavailable = offlineUnavailableIds?.has(f.id) ?? false;
+            const isOfflineAvailable = offlineAvailableIds?.has(f.id) ?? false;
+            const isOfflinePendingSync = offlinePendingSyncIds?.has(f.id) ?? false;
+            const isPinning = pinLoadingId === f.apiPath;
             const dropZone = isFolder
               ? folderDropZoneProps(folderPath)
               : ({} as FolderDropZoneProps);
@@ -705,7 +788,6 @@ export function DriveListView({
                   isFolder && dropZone.isDropTarget && "drive-list-row--drop-target",
                   isSelected && "drive-list-row--selected",
                   isActive && !isSelected && "drive-list-row--active",
-                  isOfflineUnavailable && "drive-list-row--offline-unavailable",
                 )}
               >
                 <td className="drive-list-col-name py-2 min-w-0" {...(isFolder ? dropZone : {})}>
@@ -715,18 +797,7 @@ export function DriveListView({
                       selectionMode={selectionMode}
                       className="drive-list-row__checkbox"
                     />
-                    <span
-                      className={cn(
-                        "shrink-0 [&>svg]:size-4",
-                        f.kind === "folder" ? "drive-list-folder-icon" : "drive-list-file-icon",
-                      )}
-                    >
-                      {f.kind === "folder" ? (
-                        <Folder className="size-4" fill="currentColor" fillOpacity={0.18} />
-                      ) : (
-                        kindIcon[f.kind]
-                      )}
-                    </span>
+                    <DriveFileKindIcon file={f} listStyle />
                     <div className="flex min-w-0 flex-1 items-center gap-1.5">
                       <span className="min-w-0 truncate font-medium">{f.title}</span>
                       {starred[f.id] ? (
@@ -735,24 +806,43 @@ export function DriveListView({
                           fill="currentColor"
                         />
                       ) : null}
-                      <DriveOfflineBadge
-                        pinned={offlinePinnedIds?.has(f.id) ?? false}
-                        pending={offlinePendingSyncIds?.has(f.id) ?? false}
-                        labels={offlineBadgeLabels}
-                      />
+                      {!offlineEnabled ? (
+                        <DriveOfflineBadge
+                          pinned={offlinePinnedIds?.has(f.id) ?? false}
+                          pending={isOfflinePendingSync}
+                          labels={offlineBadgeLabels}
+                        />
+                      ) : null}
                     </div>
                   </div>
                 </td>
+                {offlineEnabled ? (
+                  <td
+                    className="drive-list-col-offline py-2"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <DriveFileOfflinePinCell
+                      file={f}
+                      labels={labels}
+                      offlineEnabled={offlineEnabled}
+                      isOfflineAvailable={isOfflineAvailable}
+                      isOfflinePendingSync={isOfflinePendingSync}
+                      isPinning={isPinning}
+                      canPinOffline={canPinOffline}
+                      onMakeOfflineAvailable={onMakeOfflineAvailable}
+                    />
+                  </td>
+                ) : null}
                 {showLocationColumn ? (
                   <td className="drive-list-col-location py-2 hidden sm:table-cell drive-list-muted min-w-0">
                     <DriveLocationLabel file={f} />
                   </td>
                 ) : null}
-                <td className="py-2 hidden sm:table-cell tabular-nums drive-list-muted">
+                <td className="drive-list-col-modified py-2 hidden sm:table-cell tabular-nums drive-list-muted whitespace-nowrap">
                   {f.date}
                 </td>
                 {showKindColumn ? (
-                  <td className="py-2 hidden lg:table-cell drive-list-muted">
+                  <td className="drive-list-col-kind py-2 hidden lg:table-cell drive-list-muted">
                     {KIND_LABEL[f.kind]}
                   </td>
                 ) : null}
@@ -777,7 +867,7 @@ export function DriveListView({
                       onMove={() => onMove(f)}
                       onDelete={() => onTrash(f)}
                       extraActions={extraFileActions?.(f)}
-                      disabled={pinLoadingId === f.apiPath}
+                      disabled={isPinning}
                     />
                   </div>
                 </td>

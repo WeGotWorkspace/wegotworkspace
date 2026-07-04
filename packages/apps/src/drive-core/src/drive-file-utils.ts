@@ -48,12 +48,7 @@ export function driveFileFromEntry(
   const parent = uiPathFromApiPath(parentApiPath, username);
   const kind: FileKind = entry.type === "dir" ? "folder" : inferFileKindFromName(entry.name);
   const date = entry.time > 0 ? new Date(entry.time * 1000).toLocaleDateString() : "Now";
-  const size =
-    entry.type === "dir"
-      ? "—"
-      : entry.size > 0
-        ? `${Math.max(1, Math.round(entry.size / 1024))} KB`
-        : "0 KB";
+  const size = entry.type === "dir" ? "—" : entry.size > 0 ? formatBytesCompact(entry.size) : "0 B";
   return {
     id: apiPath,
     notebook: entry.type === "dir" ? "Folder" : `File · ${size}`,

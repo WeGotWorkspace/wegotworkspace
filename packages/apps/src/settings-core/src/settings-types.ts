@@ -3,7 +3,7 @@ import type {
   SettingsProfileRequest,
 } from "@wgw-api-generated/settings-types";
 
-export type SettingsSection = "profile" | "memberships" | "mail";
+export type SettingsSection = "profile" | "memberships" | "mail" | "offline";
 
 export type SettingsSectionDescriptor = {
   id: SettingsSection;

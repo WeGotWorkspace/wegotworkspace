@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Button } from "@/button/src/button";
+import { Button, buttonVariants } from "@/button/src/button";
 import { RenameFilenameField } from "@/dialogs/src/rename-filename-field";
 import {
   Dialog,
@@ -114,7 +114,12 @@ export function DocsHomeModals({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmTrash}>Move to Trash</AlertDialogAction>
+            <AlertDialogAction
+              className={buttonVariants({ variant: "destructive" })}
+              onClick={confirmTrash}
+            >
+              Move to Trash
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -130,6 +135,7 @@ export function DocsHomeModals({
         operations={operations}
         currentUsername={username}
         groupRootNames={groupRootNames}
+        dialogSurfaceClassName="docs-dialog-surface"
         onClose={closeMove}
         onConfirm={confirmMove}
       />
@@ -146,6 +152,7 @@ export function DocsHomeModals({
           operations={operations}
           currentUsername={username}
           groupRootNames={groupRootNames}
+          dialogSurfaceClassName="docs-dialog-surface"
           onClose={onCloseCreateDialog}
           onConfirm={onConfirmCreateDocument}
         />

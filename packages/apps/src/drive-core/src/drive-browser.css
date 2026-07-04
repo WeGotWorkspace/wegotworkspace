@@ -244,6 +244,10 @@
   color: var(--color-emerald);
 }
 
+.drive-workspace .drive-file-tile__actions {
+  @apply flex shrink-0 items-center gap-0.5;
+}
+
 .drive-workspace .drive-file-tile__text {
   @apply flex min-w-0 flex-1 flex-col gap-0.5;
 }
@@ -287,12 +291,29 @@
 }
 
 .drive-workspace .drive-list-col-name {
-  width: auto;
+  width: 100%;
+  min-width: 0;
   padding-inline-start: 0.5rem;
 }
 
+.drive-workspace .drive-list-col-offline {
+  width: 2.75rem;
+}
+
+.drive-workspace .drive-list-col-offline.drive-list-head__cell {
+  padding-bottom: 0.5rem;
+}
+
+.drive-workspace .drive-list-col-modified {
+  width: 5.5rem;
+}
+
+.drive-workspace .drive-list-col-kind {
+  width: 5.5rem;
+}
+
 .drive-workspace .drive-list-col-size {
-  width: 6rem;
+  width: 5rem;
 }
 
 .drive-workspace .drive-list-col-location {
@@ -368,16 +389,6 @@
 
 .drive-workspace .drive-list-row--dragging {
   @apply opacity-40;
-}
-
-.drive-workspace .drive-list-row--offline-unavailable,
-.drive-workspace .drive-file-tile--offline-unavailable {
-  opacity: 0.55;
-}
-
-.drive-workspace .drive-list-row--offline-unavailable .drive-list-row__name,
-.drive-workspace .drive-file-tile--offline-unavailable .drive-file-tile__title {
-  color: color-mix(in oklab, var(--color-ink) 45%, transparent);
 }
 
 /* Semantic offline status — not themed via workspace accent remaps. */

@@ -6,6 +6,7 @@ import {
 
 const CONTACTS_DOMAIN = "contacts";
 const DOCS_DOMAIN = "docs";
+const DRIVE_DOMAIN = "drive";
 const NOTES_DOMAIN = "notes";
 
 /** Contacts-domain wrapper over the generic offline account session helpers. */
@@ -48,4 +49,18 @@ export function readOfflineNotesUsername(): string | null {
 /** Session username first, then the last cached notes account from localStorage. */
 export function resolveNotesOfflineUsername(sessionUsername: string | undefined): string | null {
   return resolveOfflineUsername(NOTES_DOMAIN, sessionUsername);
+}
+
+/** Drive-domain wrapper over the generic offline account session helpers. */
+export function rememberOfflineDriveUsername(username: string): void {
+  rememberOfflineUsername(DRIVE_DOMAIN, username);
+}
+
+export function readOfflineDriveUsername(): string | null {
+  return readOfflineUsername(DRIVE_DOMAIN);
+}
+
+/** Session username first, then the last cached drive account from localStorage. */
+export function resolveDriveOfflineUsername(sessionUsername: string | undefined): string | null {
+  return resolveOfflineUsername(DRIVE_DOMAIN, sessionUsername);
 }

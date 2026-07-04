@@ -90,6 +90,7 @@ export function DocsHomeWorkspace({
   }, [offlineUsername, operations]);
 
   const { online } = useConnectivity();
+  const searchEnabled = !offlineUsername || online;
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [viewMode, setViewMode] = usePersistedViewMode({
@@ -150,6 +151,10 @@ export function DocsHomeWorkspace({
     if (online && offlineUsername) refresh();
   }, [online, offlineUsername, refresh]);
 
+  useEffect(() => {
+    if (!searchEnabled && query) setQuery("");
+  }, [searchEnabled, query]);
+
   /** Row badge dots: only pending body sync or unsaved/outbox/collab — never green "available offline". */
   const offlineSyncingIds = useMemo(() => {
     if (!docsBodySyncProgress.running) return new Set<string>();
@@ -164,13 +169,6 @@ export function DocsHomeWorkspace({
     for (const id of offlineSyncingIds) merged.add(id);
     return merged;
   }, [offlinePendingSyncIds, offlineSyncingIds]);
-
-  const offlineUnavailableIds = useMemo(() => {
-    if (!isOfflineListing) return undefined;
-    return new Set(
-      files.filter((file) => !offlineAvailableIds.has(file.id)).map((file) => file.id),
-    );
-  }, [files, isOfflineListing, offlineAvailableIds]);
 
   const canOpenOffline = useDocsHomeOpenGuard({
     isOfflineListing,
@@ -328,7 +326,6 @@ export function DocsHomeWorkspace({
             loadingMore={loadingMore}
             hasMore={hasMore}
             error={error}
-            offlineUnavailableIds={offlineUnavailableIds}
             offlinePendingSyncIds={offlineBadgePendingIds}
             offlineLabels={{
               ...labels,
@@ -338,6 +335,7 @@ export function DocsHomeWorkspace({
             }}
             query={query}
             onQueryChange={setQuery}
+            searchEnabled={searchEnabled}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
             onLoadMore={loadMore}

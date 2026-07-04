@@ -6,6 +6,7 @@
  */
 import "@/lib/offline/contacts/contacts-schema";
 import "@/lib/offline/docs/docs-schema";
+import "@/lib/offline/drive/drive-schema";
 import "@/lib/offline/notes/notes-schema";
 
 export {

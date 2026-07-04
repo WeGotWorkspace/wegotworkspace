@@ -7,6 +7,8 @@ export type DriveWorkspaceProps = {
   session: WorkspaceSession;
   operations?: DriveAPIOperations;
   listLoading?: boolean;
+  /** Enables Dexie offline layer (live app only). */
+  offlineUsername?: string | null;
   /** When set with {@link onViewChange}, view is controlled by the host (e.g. URL). */
   view?: ViewKey;
   /** Emitted when the user navigates; host should update routing. */

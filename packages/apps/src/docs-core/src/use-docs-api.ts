@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo } from "react";
 import { useOnReconnect } from "@/hooks/use-connectivity";
 import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
 import { useHybridBootstrap } from "@/lib/live/use-hybrid-bootstrap";
+import { subscribeOfflineDeviceContentSettings } from "@/lib/offline/core/offline-device-settings";
 import { syncDocsBodiesFromHomeListing } from "@/lib/offline/docs/docs-body-sync";
 import { resolveDocsOfflineUsername } from "@/lib/offline/offline-session";
 import type { DocsAppBootstrap, DocsUIData } from "@/docs-core/src/docs-types";
@@ -59,6 +60,16 @@ export function useDocsAPI(source?: DocsApiSource) {
       () => undefined,
     );
     return () => controller.abort();
+  }, [offlineUsername, phase]);
+
+  useEffect(() => {
+    if (phase !== "ready" || !offlineUsername) return;
+    const controller = new AbortController();
+    return subscribeOfflineDeviceContentSettings(() => {
+      void syncDocsBodiesFromHomeListing(offlineUsername, { signal: controller.signal }).catch(
+        () => undefined,
+      );
+    });
   }, [offlineUsername, phase]);
 
   useOnReconnect(

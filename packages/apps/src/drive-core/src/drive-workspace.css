@@ -153,11 +153,20 @@
   --unified-search-dropdown-width: 100%;
 }
 
+/**
+ * Portaled drive dialogs sit outside `.drive-workspace` in the DOM.
+ * Repeat accent tokens here so {@link Button} and destination picker match the drive shell.
+ */
 .drive-dialog-surface {
+  --drive-accent: #10b981;
+  --drive-sidebar: var(--drive-accent);
+  --destination-picker-accent: var(--drive-accent);
+  --color-emerald: var(--drive-accent);
   --button-primary-bg: var(--drive-sidebar);
   --button-primary-fg: #ffffff;
   --primary: var(--drive-sidebar);
   --primary-foreground: #ffffff;
+  --field-label-color: color-mix(in oklab, var(--color-ink) 55%, transparent);
 }
 
 .drive-workspace .drive-main-pane__body {

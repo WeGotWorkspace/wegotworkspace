@@ -15,8 +15,17 @@ import type { DriveAppProps } from "@/drive-core/src/drive-app-props";
 export function DriveApp({ apiSource }: DriveAppProps = {}) {
   const navigate = useNavigate();
   const search = useSearch({ strict: false });
-  const { phase, error, retry, successVersion, listLoading, session, data, operations } =
-    useDriveAPI(apiSource);
+  const {
+    phase,
+    error,
+    retry,
+    successVersion,
+    listLoading,
+    session,
+    data,
+    operations,
+    offlineUsername,
+  } = useDriveAPI(apiSource);
 
   const routeView = useMemo(
     () => driveViewFromSearch(parseDriveRouteSearch(search as Record<string, unknown>)),
@@ -55,6 +64,7 @@ export function DriveApp({ apiSource }: DriveAppProps = {}) {
           session={session}
           operations={operations}
           listLoading={listLoading}
+          offlineUsername={offlineUsername}
           view={routeView}
           onViewChange={handleViewChange}
           onOpenDocsFile={handleOpenDocsFile}
