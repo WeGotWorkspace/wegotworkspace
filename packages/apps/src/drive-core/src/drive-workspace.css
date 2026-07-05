@@ -54,17 +54,6 @@
   border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
 }
 
-/* Stacked mobile detail: viewport fallback when the action-bar container is wider than the phone (Storybook, wide iframes). Desktop aside uses action-bar--expanded via collapseActions={false}. */
-@media (max-width: 767px) {
-  .drive-workspace .drive-detail-actions:not(.action-bar--expanded) .action-bar__row {
-    display: none;
-  }
-
-  .drive-workspace .drive-detail-actions:not(.action-bar--expanded) .action-bar__menu {
-    display: inline-flex;
-  }
-}
-
 .drive-workspace .drive-main-pane {
   @apply flex min-h-0 flex-1 flex-col min-w-0 relative w-full;
   background-color: var(--color-cream, #ffffff);

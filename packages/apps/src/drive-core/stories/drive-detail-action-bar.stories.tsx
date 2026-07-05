@@ -13,11 +13,30 @@ const meta = {
   title: "Apps/Drive/Components/DriveDetailActionBar",
   component: DriveDetailActionBar,
   tags: ["autodocs"],
-  render: (args) => (
-    <DriveStoryScope>
-      <DriveDetailActionBar {...args} />
-    </DriveStoryScope>
-  ),
+  render: (args) => <DriveDetailActionBar {...args} />,
+  decorators: [
+    (Story, context) => {
+      if (context.parameters.narrowAside) {
+        return (
+          <DriveStoryScope className="flex min-h-[12rem] justify-end bg-[color-mix(in_oklab,var(--color-ink)_4%,transparent)] p-6">
+            <div
+              className="drive-detail-aside flex flex-col border-l"
+              data-open="true"
+              style={{ width: "min(33.333%, 22rem)" }}
+            >
+              <Story />
+            </div>
+          </DriveStoryScope>
+        );
+      }
+
+      return (
+        <DriveStoryScope>
+          <Story />
+        </DriveStoryScope>
+      );
+    },
+  ],
   parameters: driveStoryParameters({
     snippet: `<DriveDetailActionBar
   actions={buildDriveFileActions(driveLabels, { isStarred: false, inTrash: false }, {
@@ -83,6 +102,30 @@ export const Mobile: Story = {
   globals: {
     viewport: {
       value: "mobile1",
+      isRotated: false,
+    },
+  },
+};
+
+export const NarrowAside: Story = {
+  name: "Narrow aside (container query)",
+  parameters: {
+    narrowAside: true,
+    docs: {
+      description: {
+        story:
+          "Desktop detail aside width (~22rem). Actions collapse into the overflow menu based on ActionBar container width, not viewport breakpoints.",
+      },
+    },
+  },
+  args: {
+    actions: storyActions(false, false),
+    onClose: STORY_NOOP,
+    mobile: false,
+  },
+  globals: {
+    viewport: {
+      value: "desktop",
       isRotated: false,
     },
   },
