@@ -61,6 +61,18 @@ export function useDriveController({
         return;
       }
       if (inField) return;
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "i") {
+        e.preventDefault();
+        const opening = !list.detailOpen;
+        if (opening && !list.active) {
+          const focusId = list.activeId ?? list.selectedIds[0];
+          if (focusId) {
+            list.setActiveId(focusId);
+          }
+        }
+        list.setDetailOpen(opening);
+        return;
+      }
       if (e.key === "Escape" && list.lightboxOpen) {
         list.setLightboxOpen(false);
         return;
@@ -72,8 +84,12 @@ export function useDriveController({
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [
+    list.active,
+    list.activeId,
     list.detailOpen,
     list.lightboxOpen,
+    list.selectedIds,
+    list.setActiveId,
     list.setDetailOpen,
     list.setLightboxOpen,
     shell.searchInputRef,
@@ -107,6 +123,19 @@ export function useDriveController({
       }
 
       if (
+        e.key === "Enter" &&
+        !e.repeat &&
+        list.active &&
+        list.selectedIds.length <= 1 &&
+        !mutations.renameDialog
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        mutations.requestRenameItem(list.active);
+        return;
+      }
+
+      if (
         e.code === "Space" &&
         !e.repeat &&
         (list.viewMode === "grid" || list.viewMode === "list") &&
@@ -123,10 +152,12 @@ export function useDriveController({
     list.active,
     list.lightboxOpen,
     list.navigateLightbox,
-    list.openFile,
     list.openDocsEditorFile,
+    list.selectedIds.length,
     list.setLightboxOpen,
     list.viewMode,
+    mutations.renameDialog,
+    mutations.requestRenameItem,
   ]);
 
   useWorkspaceListKeyboardShortcuts({
