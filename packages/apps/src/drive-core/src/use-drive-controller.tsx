@@ -139,7 +139,7 @@ export function useDriveController({
     liveSearchResults: shell.liveSearchResults,
     starredItems: shell.starredItems,
     knownGroupRoots: shell.knownGroupRoots,
-    imagePreviewUrls: list.imagePreviewUrls,
+    filePreviews: list.filePreviews,
     dropUploadActive: mutations.dropUploadActive,
     setDropUploadActive: mutations.setDropUploadActive,
     uploadProgress: mutations.uploadProgress,

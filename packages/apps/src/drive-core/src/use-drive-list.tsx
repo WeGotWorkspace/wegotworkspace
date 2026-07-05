@@ -12,6 +12,7 @@ import { extensionFromFileName } from "@/drive-core/src/drive-file-utils";
 import type { DriveFile } from "@/drive-core/src/drive-models";
 import { DOCS_EDITOR_EXTENSIONS } from "@/drive-core/src/drive-models";
 import type { DriveShellState } from "@/drive-core/src/use-drive-shell";
+import { useDriveGridPreviews } from "@/drive-core/src/use-drive-grid-previews";
 
 const WRITE_QUEUE_DELAY_MS = 2500;
 
@@ -49,8 +50,6 @@ export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
     storageKey: DRIVE_VIEW_MODE_STORAGE_KEY,
     defaultMode: "grid",
   });
-  const [imagePreviewUrls, setImagePreviewUrls] = useState<Record<string, string>>({});
-  const imagePreviewUrlsRef = useRef<Record<string, string>>({});
   const recentOpenRef = useRef<{ key: string; at: number } | null>(null);
   const isTouch = useIsTouch();
   const lastTouchTapRef = useRef<{ id: string; at: number } | null>(null);
@@ -119,110 +118,18 @@ export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
     lastTouchTapRef.current = null;
   }, [viewResetKey]);
 
-  useEffect(() => {
-    if (!operations || viewMode !== "grid") return;
-    const previewableItems = visibleItems.filter(
-      (file) => (file.kind === "image" || file.kind === "video") && !!file.apiPath,
-    );
-    let cancelled = false;
-    for (const file of previewableItems) {
-      if (imagePreviewUrlsRef.current[file.id]) continue;
-      void operations
-        .readFileBlob(file.apiPath!)
-        .then((blob) => {
-          if (cancelled) return;
-          const url = URL.createObjectURL(blob);
-          setImagePreviewUrls((prev) => {
-            if (prev[file.id]) {
-              URL.revokeObjectURL(url);
-              return prev;
-            }
-            const next = { ...prev, [file.id]: url };
-            imagePreviewUrlsRef.current = next;
-            return next;
-          });
-        })
-        .catch(() => {
-          // Ignore preview fetch failures; tile falls back to icon.
-        });
-    }
-    return () => {
-      cancelled = true;
-    };
-  }, [operations, viewMode, visibleItems]);
-
-  useEffect(() => {
-    const keepIds = new Set(
-      viewMode === "grid"
-        ? visibleItems
-            .filter((file) => (file.kind === "image" || file.kind === "video") && !!file.apiPath)
-            .map((file) => file.id)
-        : [],
-    );
-    setImagePreviewUrls((prev) => {
-      let changed = false;
-      const next: Record<string, string> = {};
-      for (const [id, url] of Object.entries(prev)) {
-        if (keepIds.has(id)) next[id] = url;
-        else {
-          URL.revokeObjectURL(url);
-          changed = true;
-        }
-      }
-      if (!changed && Object.keys(next).length === Object.keys(prev).length) return prev;
-      imagePreviewUrlsRef.current = next;
-      return next;
-    });
-  }, [viewMode, visibleItems]);
-
-  useEffect(() => {
-    return () => {
-      for (const url of Object.values(imagePreviewUrlsRef.current)) {
-        URL.revokeObjectURL(url);
-      }
-      imagePreviewUrlsRef.current = {};
-    };
-  }, []);
-
   const active = activeId
     ? ((liveSearchResults?.find((f) => f.id === activeId) ??
         files.find((f) => f.id === activeId) ??
         null) as DriveFile | null)
     : null;
 
-  useEffect(() => {
-    if (
-      !operations ||
-      !detailOpen ||
-      !active ||
-      (active.kind !== "image" && active.kind !== "video") ||
-      !active.apiPath
-    )
-      return;
-    if (imagePreviewUrlsRef.current[active.id]) return;
-    let cancelled = false;
-    void operations
-      .readFileBlob(active.apiPath)
-      .then((blob) => {
-        if (cancelled) return;
-        const url = URL.createObjectURL(blob);
-        setImagePreviewUrls((prev) => {
-          if (prev[active.id]) {
-            URL.revokeObjectURL(url);
-            return prev;
-          }
-          const next = { ...prev, [active.id]: url };
-          imagePreviewUrlsRef.current = next;
-          return next;
-        });
-      })
-      .catch(() => {
-        // Keep icon fallback in detail panel.
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [operations, detailOpen, active]);
+  const { filePreviews } = useDriveGridPreviews({
+    items: visibleItems,
+    operations,
+    enabled: viewMode === "grid",
+    extraFile: detailOpen ? active : null,
+  });
 
   const openFile = (f: DriveFile) => {
     const openKey = f.apiPath ?? `${f.parent}/${f.title}`;
@@ -328,7 +235,7 @@ export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
     setViewMode,
     visibleItems,
     active,
-    imagePreviewUrls,
+    filePreviews,
     isTouch,
     openFile,
     handleSelect,

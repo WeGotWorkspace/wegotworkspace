@@ -10,12 +10,14 @@ import { DriveDetailActionBar } from "@/drive-core/src/drive-detail-action-bar";
 import { buildDriveFileActions } from "@/drive-core/src/drive-file-action-builders";
 import { DriveFileItemActionsMenu } from "@/drive-core/src/drive-file-actions";
 import { DriveOfflinePinButton } from "@/drive-core/src/drive-offline-pin-button";
-import { DriveMediaPreview } from "@/drive-core/src/drive-media-preview";
+import { FilePreview } from "@/file-preview/src/file-preview";
+import type { FilePreviewPayload } from "@/lib/file-preview/file-preview-types";
 import type { ActionBarAction } from "@/action-bar/src/action-bar";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
 import { driveFolderUiPath } from "@/drive-core/src/drive-item-path";
 import { isSharedDriveApiPath } from "@/drive-core/src/drive-search-utils";
 import "@/drive-core/src/drive-browser.css";
+import "@/file-preview/src/file-preview.css";
 
 type DriveOfflineBadgeLabels = {
   offlineAvailable: string;
@@ -152,7 +154,7 @@ type ItemDragHandlers = {
 
 export function DriveGridView({
   items,
-  imagePreviewUrls,
+  filePreviews,
   selectedIds,
   starred,
   labels,
@@ -181,7 +183,7 @@ export function DriveGridView({
   pinLoadingId,
 }: {
   items: DriveFile[];
-  imagePreviewUrls: Record<string, string>;
+  filePreviews: Record<string, FilePreviewPayload>;
   selectedIds: string[];
   starred: Record<string, boolean>;
   labels: DriveUILabels;
@@ -254,7 +256,7 @@ export function DriveGridView({
               <FileTile
                 key={f.id}
                 file={f}
-                previewSrc={imagePreviewUrls[f.id]}
+                preview={filePreviews[f.id]}
                 isSelected={selectedIds.includes(f.id)}
                 selectionMode={selectionMode}
                 isStarred={!!starred[f.id]}
@@ -424,7 +426,7 @@ function FolderTile({
 
 function FileTile({
   file,
-  previewSrc,
+  preview,
   isSelected,
   selectionMode,
   isStarred,
@@ -451,7 +453,7 @@ function FileTile({
   itemDragHandlers,
 }: {
   file: DriveFile;
-  previewSrc?: string;
+  preview?: FilePreviewPayload;
   isSelected: boolean;
   selectionMode: boolean;
   isStarred: boolean;
@@ -517,9 +519,11 @@ function FileTile({
         </span>
       ) : null}
       <div className="drive-file-tile__preview">
-        <DriveMediaPreview
-          file={file}
-          previewSrc={previewSrc}
+        <FilePreview
+          fileKind={file.kind}
+          fileName={file.title}
+          preview={preview}
+          textMode="clamped"
           mediaClassName="h-full w-full object-cover"
         />
       </div>
@@ -885,7 +889,7 @@ export function DriveListView({
 export function DriveDetailPanel({
   labels,
   file,
-  previewSrc,
+  preview,
   isStarred,
   inTrash,
   onClose,
@@ -898,7 +902,7 @@ export function DriveDetailPanel({
 }: {
   labels: DriveUILabels;
   file: DriveFile;
-  previewSrc?: string;
+  preview?: FilePreviewPayload;
   isStarred: boolean;
   inTrash: boolean;
   onClose: () => void;
@@ -931,9 +935,11 @@ export function DriveDetailPanel({
       <DriveDetailActionBar actions={actions} onClose={onClose} mobile={mobile} />
       <div className="drive-detail-panel__scroll">
         <div className="drive-detail-panel__preview">
-          <DriveMediaPreview
-            file={file}
-            previewSrc={previewSrc}
+          <FilePreview
+            fileKind={file.kind}
+            fileName={file.title}
+            preview={preview}
+            textMode="scrollable"
             mediaClassName="drive-detail-panel__preview-media"
             videoControls
           />

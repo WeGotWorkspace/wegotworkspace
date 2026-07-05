@@ -1,72 +1,42 @@
-import { useEffect, useState } from "react";
 import type { DriveFile } from "@/drive-core/src/drive-models";
-import { canBrowserPreviewImage } from "@/drive-core/src/drive-file-utils";
-import { kindIconLg } from "@/drive-core/src/drive-icons";
-import { cn } from "@/lib/utils";
+import { FilePreview } from "@/file-preview/src/file-preview";
+import type { FilePreviewPayload } from "@/lib/file-preview/file-preview-types";
 
 type DriveMediaPreviewProps = {
   file: DriveFile;
+  preview?: FilePreviewPayload;
+  /** @deprecated Use `preview` with `{ kind: "blob-url", url }` instead. */
   previewSrc?: string;
+  textMode?: "clamped" | "scrollable";
   mediaClassName?: string;
   fallbackClassName?: string;
   videoControls?: boolean;
 };
 
+/** @deprecated Prefer `FilePreview` directly. Kept for existing Drive imports. */
 export function DriveMediaPreview({
   file,
+  preview,
   previewSrc,
+  textMode,
   mediaClassName,
   fallbackClassName,
   videoControls = false,
 }: DriveMediaPreviewProps) {
-  const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    setFailed(false);
-  }, [previewSrc, file.id]);
-
-  const supportsInlineImage = file.kind !== "image" || canBrowserPreviewImage(file.title);
-
-  const canPreview =
-    (file.kind === "image" || file.kind === "video") &&
-    Boolean(previewSrc) &&
-    !failed &&
-    supportsInlineImage;
-
-  if (!canPreview) {
-    return (
-      <span className={cn("drive-media-preview__fallback", fallbackClassName)} aria-hidden="true">
-        {kindIconLg[file.kind]}
-      </span>
-    );
-  }
-
-  if (file.kind === "video") {
-    return (
-      <video
-        src={previewSrc}
-        className={mediaClassName}
-        controls={videoControls}
-        muted={!videoControls}
-        playsInline
-        preload="metadata"
-        onError={() => setFailed(true)}
-      />
-    );
-  }
+  const resolvedPreview =
+    preview ?? (previewSrc ? { kind: "blob-url" as const, url: previewSrc } : undefined);
 
   return (
-    <img
-      src={previewSrc}
-      alt={file.title}
-      className={mediaClassName}
-      onError={() => setFailed(true)}
-      onLoad={(event) => {
-        const img = event.currentTarget;
-        if (img.naturalWidth === 0 || img.naturalHeight === 0) {
-          setFailed(true);
-        }
-      }}
+    <FilePreview
+      fileKind={file.kind}
+      fileName={file.title}
+      preview={resolvedPreview}
+      textMode={textMode}
+      mediaClassName={mediaClassName}
+      fallbackClassName={fallbackClassName}
+      videoControls={videoControls}
     />
   );
 }
+
+export { FilePreview };

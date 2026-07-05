@@ -12,6 +12,7 @@ import { DriveDetailPanel, DriveGridView, DriveListView } from "@/drive-core/src
 import type { DriveFile } from "@/drive-core/src/drive-models";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
 import type { DriveAPIOperations } from "@/drive-core/src/drive-types";
+import type { FilePreviewPayload } from "@/lib/file-preview/file-preview-types";
 import type { ActionBarAction } from "@/action-bar/src/action-bar";
 import type { useDriveController } from "@/drive-core/src/use-drive-controller";
 
@@ -50,7 +51,7 @@ export function DriveMainPane({
     selectView,
     visibleItems,
     viewMode,
-    imagePreviewUrls,
+    filePreviews,
     selectedIds,
     starred,
     selectionMode,
@@ -97,9 +98,8 @@ export function DriveMainPane({
 
   const searchActive = Boolean(searchQuery.trim());
 
-  const browserProps = {
+  const sharedBrowserProps = {
     items: visibleItems,
-    imagePreviewUrls,
     selectedIds,
     starred,
     labels,
@@ -130,6 +130,8 @@ export function DriveMainPane({
       offlinePendingSync: labels.offlinePendingSync,
     },
   };
+
+  const gridBrowserProps = { ...sharedBrowserProps, filePreviews };
 
   const dropTargetLabel =
     view.type === "folder"
@@ -217,9 +219,9 @@ export function DriveMainPane({
               {labels.emptyFolder}
             </CollectionState>
           ) : viewMode === "grid" ? (
-            <DriveGridView {...browserProps} />
+            <DriveGridView {...gridBrowserProps} />
           ) : (
-            <DriveListView {...browserProps} activeId={activeId} />
+            <DriveListView {...sharedBrowserProps} activeId={activeId} />
           )}
         </div>
 
@@ -229,7 +231,7 @@ export function DriveMainPane({
               {...buildDetailPanelProps({
                 labels,
                 file: active,
-                previewSrc: imagePreviewUrls[active.id],
+                preview: filePreviews[active.id],
                 isStarred: !!starred[active.id],
                 inTrash: inTrashView,
                 operations,
@@ -260,7 +262,7 @@ export function DriveMainPane({
             {...buildDetailPanelProps({
               labels,
               file: active,
-              previewSrc: imagePreviewUrls[active.id],
+              preview: filePreviews[active.id],
               isStarred: !!starred[active.id],
               inTrash: inTrashView,
               operations,
@@ -298,7 +300,7 @@ export function DriveMainPane({
 function buildDetailPanelProps({
   labels,
   file,
-  previewSrc,
+  preview,
   isStarred,
   inTrash,
   operations,
@@ -312,7 +314,7 @@ function buildDetailPanelProps({
 }: {
   labels: DriveUILabels;
   file: DriveFile;
-  previewSrc?: string;
+  preview?: FilePreviewPayload;
   isStarred: boolean;
   inTrash: boolean;
   operations?: DriveAPIOperations;
@@ -327,7 +329,7 @@ function buildDetailPanelProps({
   return {
     labels,
     file,
-    previewSrc,
+    preview,
     isStarred,
     inTrash,
     onClose,
