@@ -203,6 +203,7 @@ export function useDriveController({
     starredItems: shell.starredItems,
     knownGroupRoots: shell.knownGroupRoots,
     filePreviews: list.filePreviews,
+    richPreviews: list.richPreviews,
     dropUploadActive: mutations.dropUploadActive,
     setDropUploadActive: mutations.setDropUploadActive,
     uploadProgress: mutations.uploadProgress,

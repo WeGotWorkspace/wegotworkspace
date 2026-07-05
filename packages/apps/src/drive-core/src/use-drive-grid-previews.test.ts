@@ -124,4 +124,28 @@ describe("useDriveGridPreviews", () => {
 
     expect(result.current.filePreviews[DOC.id]).toBeUndefined();
   });
+
+  it("fetches full docs preview for the active detail/lightbox file", async () => {
+    const markdown = "# Hello\n\nPreview body for the detail pane.";
+    const readFileBlob = vi.fn(async () => new Blob([markdown], { type: "text/markdown" }));
+
+    const { result } = renderHook(() =>
+      useDriveGridPreviews({
+        items: [DOC],
+        operations: createOperations({ readFileBlob }),
+        enabled: true,
+        extraFile: DOC,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.richPreviews[DOC.id]?.kind).toBe("docs");
+    });
+    expect(readFileBlob).toHaveBeenCalledWith(DOC.apiPath);
+    expect(result.current.richPreviews[DOC.id]).toMatchObject({
+      kind: "docs",
+      content: markdown,
+    });
+    expect(result.current.filePreviews[DOC.id]?.kind).toBe("text");
+  });
 });

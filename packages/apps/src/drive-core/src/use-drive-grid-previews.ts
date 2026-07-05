@@ -4,9 +4,12 @@ import type { DriveFile } from "@/drive-core/src/drive-models";
 import type { DriveAPIOperations } from "@/drive-core/src/drive-types";
 import type { FilePreviewPayload } from "@/lib/file-preview/file-preview-types";
 import {
+  decodeDocsPreviewContent,
   decodeUtf8Preview,
+  DOCS_PREVIEW_MAX_BYTES,
   fileSupportsTextPreview,
   formatPreviewText,
+  isDocsEditorPreviewFile,
   isLikelyUtf8Text,
   isTextPreviewExtension,
   isUsableTextExcerpt,
@@ -60,7 +63,9 @@ export function useDriveGridPreviews({
   extraFile = null,
 }: UseDriveGridPreviewsArgs) {
   const [fetchedPreviews, setFetchedPreviews] = useState<Record<string, PreviewEntry>>({});
+  const [richPreviews, setRichPreviews] = useState<Record<string, PreviewEntry>>({});
   const fetchedPreviewsRef = useRef<Record<string, PreviewEntry>>({});
+  const richPreviewsRef = useRef<Record<string, PreviewEntry>>({});
   const blobUrlsRef = useRef<Record<string, string>>({});
   const inFlightRef = useRef(0);
   const queueRef = useRef<Array<() => void>>([]);
@@ -121,6 +126,22 @@ export function useDriveGridPreviews({
     },
     [revokeBlobUrl],
   );
+
+  const setRichPreviewEntry = useCallback((id: string, entry: PreviewEntry) => {
+    setRichPreviews((prev) => {
+      const existing = prev[id];
+      if (
+        existing?.kind === "docs" &&
+        entry.kind === "docs" &&
+        existing.content === entry.content
+      ) {
+        return prev;
+      }
+      const next = { ...prev, [id]: entry };
+      richPreviewsRef.current = next;
+      return next;
+    });
+  }, []);
 
   const runNext = useCallback(() => {
     while (inFlightRef.current < MAX_CONCURRENT_FETCHES && queueRef.current.length > 0) {
@@ -201,6 +222,37 @@ export function useDriveGridPreviews({
     [enqueue, operations, runNext, setFetchedPreviewEntry],
   );
 
+  const fetchDocsRichPreview = useCallback(
+    (file: DriveFile) => {
+      if (!extraFile || file.id !== extraFile.id) return;
+      if (!isDocsEditorPreviewFile(file.title, file.apiPath)) return;
+      if (richPreviewsRef.current[file.id]?.kind === "docs") return;
+      if (!operations?.readFileBlob || !file.apiPath) return;
+
+      enqueue(() => {
+        inFlightRef.current += 1;
+        void operations
+          .readFileBlob(file.apiPath!)
+          .then(async (blob) => {
+            if (blob.size > DOCS_PREVIEW_MAX_BYTES) return;
+            const buffer = await blob.arrayBuffer();
+            const bytes = new Uint8Array(buffer);
+            const content = decodeDocsPreviewContent(bytes);
+            if (!content?.trim()) return;
+            setRichPreviewEntry(file.id, { kind: "docs", content });
+          })
+          .catch(() => {
+            // Detail/lightbox falls back to text preview payload.
+          })
+          .finally(() => {
+            inFlightRef.current -= 1;
+            runNext();
+          });
+      });
+    },
+    [enqueue, extraFile, operations, runNext, setRichPreviewEntry],
+  );
+
   useEffect(() => {
     if (!enabled && !extraFile) return;
 
@@ -210,8 +262,34 @@ export function useDriveGridPreviews({
       } else if (isTextPreviewable(file)) {
         fetchTextPreview(file);
       }
+      fetchDocsRichPreview(file);
     }
-  }, [enabled, extraFile, fetchMediaPreview, fetchTextPreview, previewTargets]);
+  }, [
+    enabled,
+    extraFile,
+    fetchDocsRichPreview,
+    fetchMediaPreview,
+    fetchTextPreview,
+    previewTargets,
+  ]);
+
+  useEffect(() => {
+    const keepIds = new Set(previewTargets.map((file) => file.id));
+    setRichPreviews((prev) => {
+      let changed = false;
+      const next: Record<string, PreviewEntry> = {};
+      for (const [id, entry] of Object.entries(prev)) {
+        if (keepIds.has(id) && extraFile?.id === id) {
+          next[id] = entry;
+        } else {
+          changed = true;
+        }
+      }
+      if (!changed && Object.keys(next).length === Object.keys(prev).length) return prev;
+      richPreviewsRef.current = next;
+      return next;
+    });
+  }, [extraFile?.id, previewTargets]);
 
   useEffect(() => {
     const keepIds = new Set(previewTargets.map((file) => file.id));
@@ -238,6 +316,7 @@ export function useDriveGridPreviews({
         revokeBlobUrl(id);
       }
       fetchedPreviewsRef.current = {};
+      richPreviewsRef.current = {};
       queueRef.current = [];
     };
   }, [revokeBlobUrl]);
@@ -247,5 +326,5 @@ export function useDriveGridPreviews({
     [excerptPreviews, fetchedPreviews],
   );
 
-  return { filePreviews };
+  return { filePreviews, richPreviews };
 }

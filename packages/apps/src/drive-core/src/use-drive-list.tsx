@@ -125,7 +125,7 @@ export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
   );
   const previewableIds = useMemo(() => previewableItems.map((file) => file.id), [previewableItems]);
 
-  const { filePreviews } = useDriveGridPreviews({
+  const { filePreviews, richPreviews } = useDriveGridPreviews({
     items: visibleItems,
     operations,
     enabled: viewMode === "grid" || lightboxOpen || detailOpen,
@@ -220,6 +220,7 @@ export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
     visibleItems,
     active,
     filePreviews,
+    richPreviews,
     isTouch,
     openFile,
     handleSelect,

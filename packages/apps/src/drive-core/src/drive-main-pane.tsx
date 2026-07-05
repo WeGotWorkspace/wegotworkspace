@@ -14,6 +14,7 @@ import type { DriveFile } from "@/drive-core/src/drive-models";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
 import type { DriveAPIOperations } from "@/drive-core/src/drive-types";
 import type { FilePreviewPayload } from "@/lib/file-preview/file-preview-types";
+import { resolveDetailFilePreview } from "@/lib/file-preview/file-preview-utils";
 import type { ActionBarAction } from "@/action-bar/src/action-bar";
 import type { useDriveController } from "@/drive-core/src/use-drive-controller";
 
@@ -53,6 +54,7 @@ export function DriveMainPane({
     visibleItems,
     viewMode,
     filePreviews,
+    richPreviews,
     selectedIds,
     starred,
     selectionMode,
@@ -182,6 +184,10 @@ export function DriveMainPane({
     setDetailOpen(false);
   };
 
+  const activePreview = active
+    ? resolveDetailFilePreview(filePreviews, richPreviews, active.id)
+    : undefined;
+
   return (
     <section
       className={cn(
@@ -242,7 +248,7 @@ export function DriveMainPane({
               {...buildDetailPanelProps({
                 labels,
                 file: active,
-                preview: filePreviews[active.id],
+                preview: activePreview,
                 isStarred: !!starred[active.id],
                 inTrash: inTrashView,
                 operations,
@@ -273,7 +279,7 @@ export function DriveMainPane({
             {...buildDetailPanelProps({
               labels,
               file: active,
-              preview: filePreviews[active.id],
+              preview: activePreview,
               isStarred: !!starred[active.id],
               inTrash: inTrashView,
               operations,
@@ -308,7 +314,7 @@ export function DriveMainPane({
       <DrivePreviewLightbox
         open={lightboxOpen}
         file={active?.kind === "folder" ? null : active}
-        preview={active ? filePreviews[active.id] : undefined}
+        preview={activePreview}
         previewableIds={previewableIds}
         onClose={() => setLightboxOpen(false)}
         onNavigate={navigateLightbox}

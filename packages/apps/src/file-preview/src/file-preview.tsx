@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import type { FileKind } from "@/drive-core/src/drive-models";
 import { canBrowserPreviewImage } from "@/drive-core/src/drive-file-utils";
 import { kindIconLg } from "@/drive-core/src/drive-icons";
+import { DocsFilePreview } from "@/docs-core/src/docs-file-preview";
 import type { FilePreviewPayload } from "@/lib/file-preview/file-preview-types";
+import { stripPreviewText } from "@/lib/file-preview/file-preview-utils";
 import {
   FilePreviewTextPane,
   type FilePreviewTextPaneMode,
@@ -36,6 +38,30 @@ export function FilePreview({
   }, [preview, fileName]);
 
   const supportsInlineImage = fileKind !== "image" || canBrowserPreviewImage(fileName);
+
+  if (preview?.kind === "docs" && preview.content.trim()) {
+    const fallbackText = stripPreviewText(preview.content, fileName);
+    return (
+      <DocsFilePreview
+        fileName={fileName}
+        content={preview.content}
+        className={mediaClassName}
+        fallback={
+          fallbackText ? (
+            <FilePreviewTextPane
+              content={fallbackText}
+              mode={textMode}
+              className={mediaClassName}
+            />
+          ) : (
+            <span className={cn("file-preview__fallback", fallbackClassName)} aria-hidden="true">
+              {kindIconLg[fileKind]}
+            </span>
+          )
+        }
+      />
+    );
+  }
 
   if (preview?.kind === "text" && preview.content.trim()) {
     return (

@@ -25,7 +25,7 @@ vi.mock("@/drive-core/src/use-persisted-drive-view-mode", () => ({
 }));
 
 vi.mock("@/drive-core/src/use-drive-grid-previews", () => ({
-  useDriveGridPreviews: () => ({ filePreviews: {} }),
+  useDriveGridPreviews: () => ({ filePreviews: {}, richPreviews: {} }),
 }));
 
 vi.mock("@/hooks/use-workspace-list-controller", () => ({

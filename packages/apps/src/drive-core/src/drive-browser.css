@@ -429,7 +429,8 @@
 .drive-workspace .drive-detail-panel__preview > video,
 .drive-workspace .drive-detail-panel__preview .file-preview__fallback,
 .drive-workspace .drive-detail-panel__preview .drive-media-preview__fallback,
-.drive-workspace .drive-detail-panel__preview .file-preview-text-pane {
+.drive-workspace .drive-detail-panel__preview .file-preview-text-pane,
+.drive-workspace .drive-detail-panel__preview .docs-file-preview {
   @apply absolute inset-0 h-full w-full;
 }
 

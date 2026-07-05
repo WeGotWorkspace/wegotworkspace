@@ -1,4 +1,6 @@
 export type FilePreviewPayload =
   | { kind: "blob-url"; url: string }
   | { kind: "text"; content: string }
+  /** Full raw body for read-only Docs editor preview (detail pane / lightbox). */
+  | { kind: "docs"; content: string }
   | { kind: "unsupported" };

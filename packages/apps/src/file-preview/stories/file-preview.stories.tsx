@@ -102,3 +102,26 @@ export const DetailPaneScrollable: Story = {
     textMode: "scrollable",
   },
 };
+
+export const DetailPaneDocsEditor: Story = {
+  name: "Detail pane (read-only Docs editor)",
+  decorators: [
+    (Story) => (
+      <div className="drive-workspace w-80">
+        <div className="drive-detail-panel__preview relative aspect-[4/3] overflow-hidden">
+          <Story />
+        </div>
+      </div>
+    ),
+  ],
+  args: {
+    fileKind: "doc",
+    fileName: "Spec.md",
+    preview: {
+      kind: "docs",
+      content: "# Spec\n\nRich **markdown** preview via the Docs editor.",
+    },
+    textMode: "scrollable",
+    mediaClassName: "drive-detail-panel__preview-media",
+  },
+};

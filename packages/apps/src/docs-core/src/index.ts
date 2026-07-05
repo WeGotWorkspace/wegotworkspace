@@ -1,3 +1,5 @@
+export { DocsFilePreview } from "@/docs-core/src/docs-file-preview";
+export type { DocsFilePreviewProps } from "@/docs-core/src/docs-file-preview";
 export { DocsApp } from "@/docs-core/src/docs-app";
 export type { DocsAppProps } from "@/docs-core/src/docs-app-props";
 export { DocsWorkspace } from "@/docs-core/src/docs-workspace";

@@ -1,5 +1,7 @@
 import { markdownToPlainText } from "@/lib/models/note-body-markdown";
 import { extensionFromFileName } from "@/drive-core/src/drive-file-utils";
+import { DOCS_EDITOR_EXTENSIONS } from "@/drive-core/src/drive-models";
+import type { FilePreviewPayload } from "@/lib/file-preview/file-preview-types";
 
 /** Extensions always treated as inline text previews (tier 1 allowlist). */
 export const TEXT_PREVIEW_EXTENSIONS = new Set([
@@ -53,6 +55,8 @@ export const BINARY_DOC_EXTENSIONS = new Set([
 
 export const TILE_TEXT_FETCH_BYTES = 4096;
 export const TILE_TEXT_PREVIEW_MAX_CHARS = 600;
+/** Max blob size loaded into the read-only Docs editor preview surface. */
+export const DOCS_PREVIEW_MAX_BYTES = 512 * 1024;
 
 export function isTextPreviewExtension(extension: string): boolean {
   return TEXT_PREVIEW_EXTENSIONS.has(extension.toLowerCase());
@@ -108,6 +112,32 @@ export function formatPreviewText(raw: string, fileName: string, maxChars?: numb
   const stripped = stripPreviewText(raw, fileName);
   if (maxChars === undefined) return stripped;
   return truncatePreviewText(stripped, maxChars);
+}
+
+export function docsEditorExtensionFromFileName(fileName: string, apiPath?: string): string {
+  let ext = extensionFromFileName(fileName);
+  if (!ext && apiPath) {
+    ext = extensionFromFileName(apiPath.split("/").pop() ?? "");
+  }
+  return ext.toLowerCase();
+}
+
+export function isDocsEditorPreviewFile(fileName: string, apiPath?: string): boolean {
+  return DOCS_EDITOR_EXTENSIONS.has(docsEditorExtensionFromFileName(fileName, apiPath));
+}
+
+export function decodeDocsPreviewContent(bytes: Uint8Array): string | null {
+  const decoded = decodeUtf8Preview(bytes, bytes.length);
+  if (!decoded) return null;
+  return decoded.replace(/\r\n/g, "\n");
+}
+
+export function resolveDetailFilePreview(
+  filePreviews: Record<string, FilePreviewPayload>,
+  richPreviews: Record<string, FilePreviewPayload>,
+  fileId: string,
+): FilePreviewPayload | undefined {
+  return richPreviews[fileId] ?? filePreviews[fileId];
 }
 
 export function fileSupportsTextPreview(fileName: string, kind: string, apiPath?: string): boolean {
