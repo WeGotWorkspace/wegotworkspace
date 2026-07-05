@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+/** @vitest-environment jsdom */
 import { cleanup, fireEvent } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { isKeyboardFieldTarget } from "@/lib/keyboard/is-keyboard-field-target";
@@ -13,7 +14,8 @@ describe("isKeyboardFieldTarget", () => {
     const textarea = document.createElement("textarea");
     const select = document.createElement("select");
     const editable = document.createElement("div");
-    editable.contentEditable = "true";
+    editable.setAttribute("contenteditable", "true");
+    document.body.appendChild(editable);
     const div = document.createElement("div");
 
     expect(isKeyboardFieldTarget(input)).toBe(true);
@@ -21,6 +23,7 @@ describe("isKeyboardFieldTarget", () => {
     expect(isKeyboardFieldTarget(select)).toBe(true);
     expect(isKeyboardFieldTarget(editable)).toBe(true);
     expect(isKeyboardFieldTarget(div)).toBe(false);
+    editable.remove();
   });
 
   it("returns false when event originates from a plain container", () => {

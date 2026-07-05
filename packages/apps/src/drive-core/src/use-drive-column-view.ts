@@ -47,7 +47,7 @@ export type UseDriveColumnViewArgs = {
   allFiles: readonly DriveFile[];
   operations?: DriveAPIOperations;
   currentUsername: string;
-  groupRootNames: readonly string[];
+  groupRootNames: ReadonlySet<string>;
   resetKey: string;
 };
 
@@ -94,7 +94,7 @@ export function useDriveColumnView({
       const controller = new AbortController();
       setLoadingPaths((prev) => ({ ...prev, [path]: true }));
       void operations
-        .listDirectory(apiPathFromUiPath(path, currentUsername, groupRootNames), {
+        .listDirectory(apiPathFromUiPath(path, currentUsername, new Set(groupRootNames)), {
           signal: controller.signal,
         })
         .then((data) => {

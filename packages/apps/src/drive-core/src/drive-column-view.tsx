@@ -11,7 +11,7 @@ export type DriveColumnViewProps = {
   allFiles: readonly DriveFile[];
   operations?: DriveAPIOperations;
   currentUsername: string;
-  groupRootNames: readonly string[];
+  groupRootNames: ReadonlySet<string>;
   resetKey: string;
   labels: DriveUILabels;
   activeId: string | null;

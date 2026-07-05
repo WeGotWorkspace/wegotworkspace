@@ -40,7 +40,7 @@ export function ColumnBrowser({
           aria-label={column.title}
         >
           <header className="column-browser__header">{column.title}</header>
-          <div className="column-browser__list">
+          <div className="column-browser__list" tabIndex={0}>
             {column.loading ? (
               <p className="column-browser__empty">Loading…</p>
             ) : column.items.length === 0 ? (

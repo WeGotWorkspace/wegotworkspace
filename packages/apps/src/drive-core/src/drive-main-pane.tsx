@@ -86,7 +86,6 @@ export function DriveMainPane({
     uploadProgress,
     folderListingPending,
     listLoading,
-    view,
     viewResetKey,
     currentUsername,
     groupRootNames,

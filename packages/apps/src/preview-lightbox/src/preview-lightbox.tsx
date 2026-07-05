@@ -117,7 +117,9 @@ export function PreviewLightbox({
             <X className="size-5" aria-hidden />
           </button>
         </header>
-        <div className="preview-lightbox__body">{children}</div>
+        <div className="preview-lightbox__body" tabIndex={0}>
+          {children}
+        </div>
       </div>
       {onPrevious ? (
         <button
