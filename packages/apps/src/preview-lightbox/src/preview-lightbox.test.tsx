@@ -4,12 +4,45 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PreviewLightbox } from "@/preview-lightbox/src/preview-lightbox";
 import "@/preview-lightbox/src/preview-lightbox.css";
 
+type DialogWithKeyHandler = HTMLDialogElement & {
+  _previewLightboxKeydown?: (event: KeyboardEvent) => void;
+};
+
+function installDialogPolyfill() {
+  const proto = HTMLDialogElement.prototype as HTMLDialogElement & {
+    showModal?: () => void;
+    close?: () => void;
+  };
+  if (proto.showModal && proto.close) return;
+
+  proto.showModal = function (this: DialogWithKeyHandler) {
+    this.setAttribute("open", "");
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      const cancelEvent = new Event("cancel", { bubbles: false, cancelable: true });
+      if (this.dispatchEvent(cancelEvent)) this.close();
+    };
+    this._previewLightboxKeydown = onKeyDown;
+    this.addEventListener("keydown", onKeyDown);
+  };
+
+  proto.close = function (this: DialogWithKeyHandler) {
+    this.removeAttribute("open");
+    const onKeyDown = this._previewLightboxKeydown;
+    if (onKeyDown) {
+      this.removeEventListener("keydown", onKeyDown);
+      delete this._previewLightboxKeydown;
+    }
+  };
+}
+
 afterEach(() => {
   cleanup();
-  document.body.style.overflow = "";
 });
 
 beforeEach(() => {
+  installDialogPolyfill();
   Object.defineProperty(window, "matchMedia", {
     writable: true,
     value: (query: string) => ({
@@ -33,7 +66,7 @@ describe("PreviewLightbox", () => {
     );
     expect(screen.getByRole("dialog", { name: "Roadmap.md" })).toBeTruthy();
     expect(screen.getByText("Preview body")).toBeTruthy();
-    expect(screen.getAllByRole("button", { name: "Close preview" }).length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: "Close preview" })).toBeTruthy();
   });
 
   it("calls onClose when Escape is pressed", () => {
@@ -43,19 +76,20 @@ describe("PreviewLightbox", () => {
         <p>Body</p>
       </PreviewLightbox>,
     );
-    fireEvent.keyDown(window, { key: "Escape" });
+    const dialog = screen.getByRole("dialog", { name: "Notes.txt" });
+    fireEvent.keyDown(dialog, { key: "Escape" });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it("calls onClose when scrim is clicked", () => {
+  it("calls onClose when backdrop is clicked", () => {
     const onClose = vi.fn();
     render(
       <PreviewLightbox open title="Cover.png" onClose={onClose}>
         <p>Body</p>
       </PreviewLightbox>,
     );
-    const scrims = screen.getAllByRole("button", { name: "Close preview" });
-    fireEvent.click(scrims[0]!);
+    const dialog = screen.getByRole("dialog", { name: "Cover.png" });
+    fireEvent.click(dialog);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 

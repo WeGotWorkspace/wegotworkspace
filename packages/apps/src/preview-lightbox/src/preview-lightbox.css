@@ -1,11 +1,12 @@
 @import "../../styles.css" reference;
 
 .preview-lightbox {
-  @apply fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8;
+  @apply fixed inset-0 z-[100] m-0 flex max-h-none max-w-none items-center justify-center border-0 bg-transparent p-4 md:p-8;
+  width: 100%;
+  height: 100%;
 }
 
-.preview-lightbox__scrim {
-  @apply absolute inset-0 cursor-pointer border-0 p-0;
+.preview-lightbox::backdrop {
   background-color: color-mix(in oklab, var(--color-ink) 72%, transparent);
 }
 
@@ -66,7 +67,7 @@
   animation: preview-lightbox-enter 180ms ease-out;
 }
 
-.preview-lightbox--enter .preview-lightbox__scrim {
+.preview-lightbox--enter::backdrop {
   animation: preview-lightbox-scrim-enter 180ms ease-out;
 }
 
@@ -92,7 +93,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .preview-lightbox--enter,
-  .preview-lightbox--enter .preview-lightbox__scrim {
+  .preview-lightbox--enter::backdrop {
     animation: none;
   }
 }
