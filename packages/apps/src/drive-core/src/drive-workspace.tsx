@@ -282,6 +282,12 @@ function DriveMainHeader({
       }
       actions={
         <div className="drive-main-header__actions">
+          <ViewModeToggle
+            value={viewMode}
+            onChange={setViewMode}
+            gridLabel={labels.gridView}
+            listLabel={labels.listView}
+          />
           <IconButton
             label={labels.detailPanelToggle}
             icon={<PanelRight className="size-4" aria-hidden />}
@@ -289,12 +295,6 @@ function DriveMainHeader({
             variant="subtle"
             active={detailOpen}
             onClick={() => setDetailOpen((open) => !open)}
-          />
-          <ViewModeToggle
-            value={viewMode}
-            onChange={setViewMode}
-            gridLabel={labels.gridView}
-            listLabel={labels.listView}
           />
         </div>
       }
