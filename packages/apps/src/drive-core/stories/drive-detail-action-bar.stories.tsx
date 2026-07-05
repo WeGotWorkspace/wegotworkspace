@@ -80,4 +80,10 @@ export const Mobile: Story = {
     onClose: STORY_NOOP,
     mobile: true,
   },
+  globals: {
+    viewport: {
+      value: "mobile1",
+      isRotated: false,
+    },
+  },
 };

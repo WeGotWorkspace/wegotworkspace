@@ -54,27 +54,13 @@
   border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
 }
 
-/* Viewport-based ⋯ menu on mobile (Tailwind md); disable action-bar width container queries here */
-.drive-workspace .drive-detail-actions.action-bar {
-  container-type: normal;
-}
-
-@media (min-width: 768px) {
-  .drive-workspace .drive-detail-actions .action-bar__row {
-    display: flex;
-  }
-
-  .drive-workspace .drive-detail-actions .action-bar__menu {
-    display: none;
-  }
-}
-
+/* Stacked mobile detail: viewport fallback when the action-bar container is wider than the phone (Storybook, wide iframes). Desktop aside uses action-bar--expanded via collapseActions={false}. */
 @media (max-width: 767px) {
-  .drive-workspace .drive-detail-actions .action-bar__row {
+  .drive-workspace .drive-detail-actions:not(.action-bar--expanded) .action-bar__row {
     display: none;
   }
 
-  .drive-workspace .drive-detail-actions .action-bar__menu {
+  .drive-workspace .drive-detail-actions:not(.action-bar--expanded) .action-bar__menu {
     display: inline-flex;
   }
 }

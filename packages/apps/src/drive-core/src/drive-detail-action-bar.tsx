@@ -13,6 +13,7 @@ export function DriveDetailActionBar({ actions, onClose, mobile }: DriveDetailAc
       onBack={onClose}
       backLabel={mobile ? "Back" : "Close"}
       backIcon={mobile ? "back" : "close"}
+      collapseActions={Boolean(mobile)}
       rightActions={actions}
       rightMenuLabel="More actions"
       rightMenuIcon={<MoreHorizontal />}
