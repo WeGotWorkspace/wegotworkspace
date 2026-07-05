@@ -155,6 +155,18 @@
 
 .drive-workspace .drive-main-header__actions {
   @apply flex items-center gap-2;
+  --button-active-color: var(--segmented-control-active-fg, var(--color-ink));
+  --segmented-control-active-bg: var(--color-cream, #ffffff);
+  --segmented-control-active-fg: var(--color-ink);
+  --segmented-control-active-shadow: 0 1px 2px
+    color-mix(in oklab, var(--color-ink) 20%, transparent);
+}
+
+/* Match ViewModeToggle selected segment; override generic emerald icon-button--active tint. */
+.drive-workspace .drive-main-header__actions .button--variant-subtle.icon-button--active {
+  background-color: var(--segmented-control-active-bg);
+  color: var(--segmented-control-active-fg);
+  box-shadow: var(--segmented-control-active-shadow);
 }
 
 /**
