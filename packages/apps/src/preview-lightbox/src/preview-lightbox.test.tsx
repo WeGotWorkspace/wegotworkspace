@@ -8,13 +8,21 @@ type DialogWithKeyHandler = HTMLDialogElement & {
   _previewLightboxKeydown?: (event: KeyboardEvent) => void;
 };
 
+let dialogPolyfillInstalled = false;
+
 function installDialogPolyfill() {
+  if (dialogPolyfillInstalled) return;
+  dialogPolyfillInstalled = true;
+
+  const dialog = document.createElement("dialog");
+  if (typeof dialog.showModal === "function" && typeof dialog.close === "function") {
+    return;
+  }
+
   const proto = HTMLDialogElement.prototype as HTMLDialogElement & {
     showModal?: () => void;
     close?: () => void;
   };
-  if (proto.showModal && proto.close) return;
-
   proto.showModal = function (this: DialogWithKeyHandler) {
     this.setAttribute("open", "");
     const onKeyDown = (event: KeyboardEvent) => {

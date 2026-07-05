@@ -247,7 +247,7 @@ export function DriveMainPane({
           <aside
             className="drive-detail-aside"
             data-open={desktopDetailOpen ? "true" : "false"}
-            aria-hidden={desktopDetailOpen ? undefined : true}
+            inert={desktopDetailOpen ? undefined : true}
           >
             <DriveDetailPanel
               {...buildDetailPanelProps({
