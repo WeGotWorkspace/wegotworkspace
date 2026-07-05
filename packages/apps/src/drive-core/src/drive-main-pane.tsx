@@ -9,7 +9,6 @@ import { PathBreadcrumb } from "@/path-breadcrumb/src/path-breadcrumb";
 import { UploadProgress } from "@/upload-progress/src/upload-progress";
 import { cn } from "@/lib/utils";
 import { DriveDetailPanel, DriveGridView, DriveListView } from "@/drive-core/src/drive-browser";
-import { DriveColumnView } from "@/drive-core/src/drive-column-view";
 import { DrivePreviewLightbox } from "@/drive-core/src/drive-preview-lightbox";
 import type { DriveFile } from "@/drive-core/src/drive-models";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
@@ -59,8 +58,6 @@ export function DriveMainPane({
     selectionMode,
     isTouch,
     handleSelect,
-    setActiveId,
-    setSelectedIds,
     openFile,
     enterSelectionFor,
     toggleStar,
@@ -86,10 +83,6 @@ export function DriveMainPane({
     uploadProgress,
     folderListingPending,
     listLoading,
-    viewResetKey,
-    currentUsername,
-    groupRootNames,
-    files,
   } = controller;
 
   const showFolderListingBusy =
@@ -151,11 +144,8 @@ export function DriveMainPane({
       : labels.sidebarMyDrive;
 
   const showMobileDetail = Boolean(detailOpen && active);
-  const columnViewActive = viewMode === "column" && !searchQuery.trim() && view.type === "folder";
-  const showColumnPreviewAside = columnViewActive && active && active.kind !== "folder";
-  const showDetailAside = (detailOpen && active) || showColumnPreviewAside;
-  const showMobileDetailOverlay =
-    Boolean(active) && (showMobileDetail || (columnViewActive && active?.kind !== "folder"));
+  const showDetailAside = Boolean(detailOpen && active);
+  const showMobileDetailOverlay = showMobileDetail;
   const [mobileOverlayMount, setMobileOverlayMount] = useState(false);
   const [mobileOverlayVisible, setMobileOverlayVisible] = useState(false);
 
@@ -189,11 +179,6 @@ export function DriveMainPane({
   };
 
   const handleDetailClose = () => {
-    if (showColumnPreviewAside) {
-      setActiveId(null);
-      setSelectedIds([]);
-      return;
-    }
     setDetailOpen(false);
   };
 
@@ -246,34 +231,6 @@ export function DriveMainPane({
             </CollectionState>
           ) : viewMode === "grid" ? (
             <DriveGridView {...gridBrowserProps} />
-          ) : viewMode === "column" ? (
-            columnViewActive ? (
-              <>
-                <div className="md:hidden min-h-0 flex-1">
-                  <DriveListView {...sharedBrowserProps} activeId={activeId} />
-                </div>
-                <div className="hidden md:flex min-h-0 flex-1">
-                  <DriveColumnView
-                    rootPath={view.path}
-                    seedItems={visibleItems}
-                    allFiles={files}
-                    operations={operations}
-                    currentUsername={currentUsername}
-                    groupRootNames={groupRootNames}
-                    resetKey={viewResetKey}
-                    labels={labels}
-                    activeId={activeId}
-                    onSelectFile={(file) => {
-                      setActiveId(file.id);
-                      setSelectedIds([file.id]);
-                    }}
-                    onOpenFolder={() => {}}
-                  />
-                </div>
-              </>
-            ) : (
-              <DriveListView {...sharedBrowserProps} activeId={activeId} />
-            )
           ) : (
             <DriveListView {...sharedBrowserProps} activeId={activeId} />
           )}

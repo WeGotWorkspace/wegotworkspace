@@ -1,7 +1,7 @@
-export type DriveViewMode = "grid" | "list" | "column";
+export type DriveViewMode = "grid" | "list";
 
 export function parseDriveViewMode(value: string | null, fallback: DriveViewMode): DriveViewMode {
-  if (value === "grid" || value === "list" || value === "column") return value;
+  if (value === "grid" || value === "list") return value;
   return fallback;
 }
 

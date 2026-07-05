@@ -10,7 +10,7 @@ import {
 } from "@/workspace-shell/src/workspace-app-layout";
 import { workspaceUserInitials, type WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { ViewHeader } from "@/view-header/src/view-header";
-import { DriveViewModeToggle } from "@/drive-core/src/drive-view-mode-toggle";
+import { ViewModeToggle } from "@/view-mode-toggle/src/view-mode-toggle";
 import { cn } from "@/lib/utils";
 import { DriveMainPane } from "@/drive-core/src/drive-main-pane";
 import { DriveNewMenu } from "@/drive-core/src/drive-new-menu";
@@ -277,12 +277,11 @@ function DriveMainHeader({
         ) : null
       }
       actions={
-        <DriveViewModeToggle
+        <ViewModeToggle
           value={viewMode}
           onChange={setViewMode}
           gridLabel={labels.gridView}
           listLabel={labels.listView}
-          columnLabel={labels.columnView}
         />
       }
     />

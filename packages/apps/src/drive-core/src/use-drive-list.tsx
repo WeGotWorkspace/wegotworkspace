@@ -131,8 +131,8 @@ export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
   const { filePreviews } = useDriveGridPreviews({
     items: visibleItems,
     operations,
-    enabled: viewMode === "grid" || viewMode === "column" || lightboxOpen,
-    extraFile: detailOpen || lightboxOpen || (viewMode === "column" && active) ? active : null,
+    enabled: viewMode === "grid" || lightboxOpen || detailOpen,
+    extraFile: detailOpen || lightboxOpen ? active : null,
   });
 
   const navigateLightbox = useCallback(
