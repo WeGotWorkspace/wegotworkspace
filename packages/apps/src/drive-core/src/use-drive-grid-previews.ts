@@ -67,6 +67,7 @@ export function useDriveGridPreviews({
   const [richPreviews, setRichPreviews] = useState<Record<string, PreviewEntry>>({});
   const fetchedPreviewsRef = useRef<Record<string, PreviewEntry>>({});
   const richPreviewsRef = useRef<Record<string, PreviewEntry>>({});
+  const extraFileIdRef = useRef<string | null>(null);
   const blobUrlsRef = useRef<Record<string, string>>({});
   const inFlightRef = useRef(0);
   const queueRef = useRef<Array<() => void>>([]);
@@ -88,6 +89,10 @@ export function useDriveGridPreviews({
     }
     return Array.from(map.values());
   }, [enabled, extraFile, items]);
+
+  useEffect(() => {
+    extraFileIdRef.current = extraFile?.id ?? null;
+  }, [extraFile?.id]);
 
   const excerptPreviews = useMemo(() => buildExcerptPreviews(previewTargets), [previewTargets]);
 
@@ -243,11 +248,13 @@ export function useDriveGridPreviews({
         void operations
           .readFileBlob(file.apiPath!)
           .then(async (blob) => {
+            if (extraFileIdRef.current !== file.id) return;
             if (blob.size > DOCS_PREVIEW_MAX_BYTES) return;
             const buffer = await blob.arrayBuffer();
             const bytes = new Uint8Array(buffer);
             const content = decodeDocsPreviewContent(bytes);
-            if (!content?.trim()) return;
+            if (content == null) return;
+            if (extraFileIdRef.current !== file.id) return;
             setRichPreviewEntry(file.id, { kind: "docs", content });
           })
           .catch(() => {

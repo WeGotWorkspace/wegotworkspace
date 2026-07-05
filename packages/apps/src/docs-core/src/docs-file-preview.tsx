@@ -6,6 +6,7 @@ import "@/docs-core/src/docs-file-preview.css";
 
 export type DocsFilePreviewProps = {
   fileName: string;
+  fileApiPath?: string;
   content: string;
   className?: string;
   fallback?: ReactNode;
@@ -42,8 +43,13 @@ class DocsFilePreviewBoundary extends Component<
   }
 }
 
-function DocsFilePreviewEditor({ fileName, content, className }: DocsFilePreviewProps) {
-  const format = docsEditorFormatFromFileName(fileName);
+function DocsFilePreviewEditor({
+  fileName,
+  fileApiPath,
+  content,
+  className,
+}: DocsFilePreviewProps) {
+  const format = docsEditorFormatFromFileName(fileName, fileApiPath);
 
   return (
     <div className={cn("docs-file-preview", className)}>
@@ -64,15 +70,19 @@ function DocsFilePreviewEditor({ fileName, content, className }: DocsFilePreview
 /** Read-only Docs editor surface for drive file previews (detail pane / lightbox). */
 export function DocsFilePreview({
   fileName,
+  fileApiPath,
   content,
   className,
   fallback = null,
 }: DocsFilePreviewProps) {
-  if (!content.trim()) return fallback;
-
   return (
     <DocsFilePreviewBoundary fallback={fallback}>
-      <DocsFilePreviewEditor fileName={fileName} content={content} className={className} />
+      <DocsFilePreviewEditor
+        fileName={fileName}
+        fileApiPath={fileApiPath}
+        content={content}
+        className={className}
+      />
     </DocsFilePreviewBoundary>
   );
 }

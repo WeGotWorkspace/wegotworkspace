@@ -26,10 +26,11 @@ describe("DocsFilePreview", () => {
     expect(editor.textContent).toContain("# Title");
   });
 
-  it("uses fallback when content is empty", () => {
-    render(<DocsFilePreview fileName="Spec.md" content="   " fallback={<p>fallback text</p>} />);
+  it("renders read-only TextEditor for empty markdown files", () => {
+    render(<DocsFilePreview fileName="Untitled.md" content="" fallback={<p>fallback text</p>} />);
 
-    expect(screen.getByText("fallback text")).toBeTruthy();
-    expect(screen.queryByTestId("text-editor")).toBeNull();
+    const editor = screen.getByTestId("text-editor");
+    expect(editor.getAttribute("data-editable")).toBe("false");
+    expect(screen.queryByText("fallback text")).toBeNull();
   });
 });

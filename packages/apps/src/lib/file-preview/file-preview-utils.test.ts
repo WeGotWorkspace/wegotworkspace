@@ -77,6 +77,10 @@ describe("file preview text helpers", () => {
     expect(decodeDocsPreviewContent(bytes)).toBe("# Title\n\nBody");
   });
 
+  it("decodes empty docs preview content for zero-byte files", () => {
+    expect(decodeDocsPreviewContent(new Uint8Array())).toBe("");
+  });
+
   it("prefers rich detail preview over tile text preview", () => {
     const resolved = resolveDetailFilePreview(
       { "doc-1": { kind: "text", content: "tile excerpt" } },

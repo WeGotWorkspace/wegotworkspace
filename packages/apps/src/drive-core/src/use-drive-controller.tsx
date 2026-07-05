@@ -100,7 +100,7 @@ export function useDriveController({
           e.preventDefault();
           e.stopPropagation();
           list.setLightboxOpen(false);
-          list.openFile(list.active);
+          list.openDocsEditorFile(list.active);
           return;
         }
         return;
@@ -124,6 +124,7 @@ export function useDriveController({
     list.lightboxOpen,
     list.navigateLightbox,
     list.openFile,
+    list.openDocsEditorFile,
     list.setLightboxOpen,
     list.viewMode,
   ]);
@@ -221,6 +222,7 @@ export function useDriveController({
     groupRootNames: shell.groupRootNames,
     sidebarGroupPaths: shell.sidebarGroupPaths,
     openFile: list.openFile,
+    openDocsEditorFile: list.openDocsEditorFile,
     handleSelect: list.handleSelect,
     enterSelectionFor: list.enterSelectionFor,
     exitSelection: list.exitSelection,

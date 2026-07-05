@@ -22,6 +22,7 @@ export type FilePreviewVariant = "tile" | "lightbox" | "detail";
 export type FilePreviewProps = {
   fileKind: FileKind;
   fileName: string;
+  fileApiPath?: string;
   preview?: FilePreviewPayload;
   variant?: FilePreviewVariant;
   textMode?: FilePreviewTextPaneMode;
@@ -53,6 +54,7 @@ function LightboxMediaFrame({
 export function FilePreview({
   fileKind,
   fileName,
+  fileApiPath,
   preview,
   variant = "tile",
   textMode = "clamped",
@@ -74,11 +76,12 @@ export function FilePreview({
 
   const supportsInlineImage = fileKind !== "image" || canBrowserPreviewImage(fileName);
 
-  if (preview?.kind === "docs" && preview.content.trim()) {
+  if (preview?.kind === "docs") {
     const fallbackText = stripPreviewText(preview.content, fileName);
     return (
       <DocsFilePreview
         fileName={fileName}
+        fileApiPath={fileApiPath}
         content={preview.content}
         className={mediaClassName}
         fallback={

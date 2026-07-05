@@ -131,6 +131,7 @@ export function isDocsEditorPreviewFile(fileName: string, apiPath?: string): boo
 }
 
 export function decodeDocsPreviewContent(bytes: Uint8Array): string | null {
+  if (bytes.length === 0) return "";
   const decoded = decodeUtf8Preview(bytes);
   if (!decoded) return null;
   return decoded.replace(/\r\n/g, "\n");

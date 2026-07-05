@@ -39,6 +39,7 @@ export function DrivePreviewLightbox({
       <FilePreview
         fileKind={file.kind}
         fileName={file.title}
+        fileApiPath={file.apiPath}
         preview={preview}
         variant="lightbox"
         textMode="scrollable"

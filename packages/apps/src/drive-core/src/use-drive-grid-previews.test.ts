@@ -158,4 +158,26 @@ describe("useDriveGridPreviews", () => {
     });
     expect(result.current.filePreviews[DOC.id]?.kind).toBe("text");
   });
+
+  it("fetches docs preview for empty markdown when extraFile is set without grid prefetch", async () => {
+    const readFileBlob = vi.fn(async () => new Blob([], { type: "text/markdown" }));
+
+    const { result } = renderHook(() =>
+      useDriveGridPreviews({
+        items: [DOC],
+        operations: createOperations({ readFileBlob }),
+        enabled: false,
+        extraFile: DOC,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.richPreviews[DOC.id]?.kind).toBe("docs");
+    });
+    expect(readFileBlob).toHaveBeenCalledWith(DOC.apiPath);
+    expect(result.current.richPreviews[DOC.id]).toMatchObject({
+      kind: "docs",
+      content: "",
+    });
+  });
 });

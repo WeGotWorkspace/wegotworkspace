@@ -938,6 +938,7 @@ export function DriveDetailPanel({
           <FilePreview
             fileKind={file.kind}
             fileName={file.title}
+            fileApiPath={file.apiPath}
             preview={preview}
             textMode="scrollable"
             mediaClassName="drive-detail-panel__preview-media"

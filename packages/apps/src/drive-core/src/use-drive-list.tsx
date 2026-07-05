@@ -6,11 +6,10 @@ import { useIsTouch } from "@/hooks/use-is-touch";
 import { useSelectionResetOnKeyChange } from "@/hooks/use-selection-reset-on-key-change";
 import { useWorkspaceListController } from "@/hooks/use-workspace-list-controller";
 import { filterDriveVisibleItems } from "@/drive-core/src/drive-visible-items";
-import { extensionFromFileName } from "@/drive-core/src/drive-file-utils";
 import type { DriveFile } from "@/drive-core/src/drive-models";
-import { DOCS_EDITOR_EXTENSIONS } from "@/drive-core/src/drive-models";
 import type { DriveShellState } from "@/drive-core/src/use-drive-shell";
 import { useDriveGridPreviews } from "@/drive-core/src/use-drive-grid-previews";
+import { isDocsEditorPreviewFile } from "@/lib/file-preview/file-preview-utils";
 
 const WRITE_QUEUE_DELAY_MS = 2500;
 
@@ -125,11 +124,14 @@ export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
   );
   const previewableIds = useMemo(() => previewableItems.map((file) => file.id), [previewableItems]);
 
+  const detailPreviewFile =
+    active && (detailOpen || lightboxOpen || viewMode === "list") ? active : null;
+
   const { filePreviews, richPreviews } = useDriveGridPreviews({
     items: visibleItems,
     operations,
     enabled: viewMode === "grid" || lightboxOpen || detailOpen,
-    extraFile: detailOpen || lightboxOpen ? active : null,
+    extraFile: detailPreviewFile,
   });
 
   const navigateLightbox = useCallback(
@@ -163,16 +165,19 @@ export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
       return;
     }
 
-    const ext = extensionFromFileName(f.title);
-    if (f.apiPath && DOCS_EDITOR_EXTENSIONS.has(ext) && onOpenDocsFile) {
-      onOpenDocsFile(f.apiPath);
-      return;
-    }
-
     setActiveId(f.id);
     setSelectedIds([f.id]);
     setDetailOpen(true);
   };
+
+  const openDocsEditorFile = useCallback(
+    (f: DriveFile) => {
+      if (f.apiPath && onOpenDocsFile && isDocsEditorPreviewFile(f.title, f.apiPath)) {
+        onOpenDocsFile(f.apiPath);
+      }
+    },
+    [onOpenDocsFile],
+  );
 
   const handleSelect = useCallback(
     (id: string, e: ReactMouseEvent) => {
@@ -223,6 +228,7 @@ export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
     richPreviews,
     isTouch,
     openFile,
+    openDocsEditorFile,
     handleSelect,
     enterSelectionFor,
     exitSelection,

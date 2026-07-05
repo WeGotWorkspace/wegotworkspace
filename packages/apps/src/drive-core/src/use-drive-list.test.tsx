@@ -130,13 +130,28 @@ describe("useDriveList openFile", () => {
     expect(result.current.detailOpen).toBe(false);
   });
 
-  it("opens Docs editor files via onOpenDocsFile", () => {
+  it("opens the detail preview pane for markdown files", () => {
     const onOpenDocsFile = vi.fn();
     const shell = createShell();
     const { result } = renderHook(() => useDriveList({ shell, onOpenDocsFile }));
 
     act(() => {
       result.current.openFile(MARKDOWN);
+    });
+
+    expect(onOpenDocsFile).not.toHaveBeenCalled();
+    expect(result.current.activeId).toBe(MARKDOWN.id);
+    expect(setSelectedIds).toHaveBeenCalledWith([MARKDOWN.id]);
+    expect(result.current.detailOpen).toBe(true);
+  });
+
+  it("opens Docs editor via openDocsEditorFile", () => {
+    const onOpenDocsFile = vi.fn();
+    const shell = createShell();
+    const { result } = renderHook(() => useDriveList({ shell, onOpenDocsFile }));
+
+    act(() => {
+      result.current.openDocsEditorFile(MARKDOWN);
     });
 
     expect(onOpenDocsFile).toHaveBeenCalledWith("/users/alice/Notes.md");
