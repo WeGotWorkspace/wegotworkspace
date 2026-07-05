@@ -1,0 +1,46 @@
+@import "../../styles.css" reference;
+
+.column-browser {
+  @apply flex min-h-0 flex-1 overflow-x-auto overflow-y-hidden;
+}
+
+.column-browser__column {
+  @apply flex min-h-0 w-56 shrink-0 flex-col border-r;
+  border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
+}
+
+.column-browser__header {
+  @apply shrink-0 truncate px-3 py-2 text-xs font-medium uppercase tracking-wide;
+  color: color-mix(in oklab, var(--color-ink) 55%, transparent);
+  background-color: color-mix(in oklab, var(--color-ink) 4%, transparent);
+}
+
+.column-browser__list {
+  @apply min-h-0 flex-1 overflow-y-auto py-1;
+}
+
+.column-browser__item {
+  @apply flex w-full items-center gap-2 px-3 py-2 text-left text-sm;
+  color: var(--color-ink);
+}
+
+.column-browser__item:hover {
+  background-color: color-mix(in oklab, var(--color-ink) 6%, transparent);
+}
+
+.column-browser__item--selected {
+  background-color: color-mix(in oklab, var(--drive-accent, #10b981) 14%, transparent);
+}
+
+.column-browser__item-title {
+  @apply min-w-0 flex-1 truncate;
+}
+
+.column-browser__item-chevron {
+  @apply size-4 shrink-0 opacity-50;
+}
+
+.column-browser__empty {
+  @apply px-3 py-6 text-center text-sm;
+  color: color-mix(in oklab, var(--color-ink) 45%, transparent);
+}

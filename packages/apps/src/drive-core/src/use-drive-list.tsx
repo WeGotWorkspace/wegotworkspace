@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DRIVE_VIEW_MODE_STORAGE_KEY } from "@/hooks/persisted-view-mode";
-import { usePersistedViewMode } from "@/hooks/use-persisted-view-mode";
+import { usePersistedDriveViewMode } from "@/drive-core/src/use-persisted-drive-view-mode";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { useIsTouch } from "@/hooks/use-is-touch";
@@ -47,10 +46,7 @@ export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [viewMode, setViewMode] = usePersistedViewMode({
-    storageKey: DRIVE_VIEW_MODE_STORAGE_KEY,
-    defaultMode: "grid",
-  });
+  const [viewMode, setViewMode] = usePersistedDriveViewMode("grid");
   const recentOpenRef = useRef<{ key: string; at: number } | null>(null);
   const isTouch = useIsTouch();
   const lastTouchTapRef = useRef<{ id: string; at: number } | null>(null);
@@ -135,8 +131,8 @@ export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
   const { filePreviews } = useDriveGridPreviews({
     items: visibleItems,
     operations,
-    enabled: viewMode === "grid" || lightboxOpen,
-    extraFile: detailOpen || lightboxOpen ? active : null,
+    enabled: viewMode === "grid" || viewMode === "column" || lightboxOpen,
+    extraFile: detailOpen || lightboxOpen || (viewMode === "column" && active) ? active : null,
   });
 
   const navigateLightbox = useCallback(

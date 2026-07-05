@@ -22,6 +22,7 @@ export const driveLabels = {
   newPresentation: "New pptx",
   gridView: "Grid view",
   listView: "List view",
+  columnView: "Column view",
   selectionDone: "Done",
   selectionStar: "Star",
   selectionMove: "Move",

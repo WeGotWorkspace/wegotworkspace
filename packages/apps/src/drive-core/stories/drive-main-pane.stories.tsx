@@ -15,7 +15,7 @@ function DriveMainPaneHarness({
   viewMode = "grid",
 }: {
   preset?: "default" | "empty" | "docsEditor";
-  viewMode?: "grid" | "list";
+  viewMode?: "grid" | "list" | "column";
 }) {
   const controller = useDrivePaneStoryController(
     preset === "empty"
@@ -118,5 +118,13 @@ export const ListViewSelectionMode: Story = {
     await userEvent.pointer({ keys: "[MouseRight>]", target: row });
     await expect(row).toHaveAttribute("data-selection-mode", "true");
     await expect(canvasElement.querySelector(".drive-list-row__checkbox")).toBeTruthy();
+  },
+};
+
+export const ColumnView: Story = {
+  name: "Column view (desktop)",
+  args: { preset: "default", viewMode: "column" },
+  parameters: {
+    viewport: { defaultViewport: "desktop" },
   },
 };
