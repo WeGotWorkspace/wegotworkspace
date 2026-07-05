@@ -153,6 +153,10 @@
   --unified-search-dropdown-width: 100%;
 }
 
+.drive-workspace .drive-main-header__actions {
+  @apply flex items-center gap-2;
+}
+
 /**
  * Portaled drive dialogs sit outside `.drive-workspace` in the DOM.
  * Repeat accent tokens here so {@link Button} and destination picker match the drive shell.

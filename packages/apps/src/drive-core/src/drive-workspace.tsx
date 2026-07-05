@@ -1,5 +1,7 @@
 import { TooltipProvider } from "@/ui/tooltip";
 import { useCallback, useEffect } from "react";
+import { PanelRight } from "lucide-react";
+import { IconButton } from "@/button/src/button";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { useConnectivity } from "@/hooks/use-connectivity";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
@@ -255,6 +257,8 @@ function DriveMainHeader({
     setSearchQuery,
     searchInputRef,
     handleUnifiedSearchSelect,
+    detailOpen,
+    setDetailOpen,
   } = controller;
 
   return (
@@ -277,12 +281,22 @@ function DriveMainHeader({
         ) : null
       }
       actions={
-        <ViewModeToggle
-          value={viewMode}
-          onChange={setViewMode}
-          gridLabel={labels.gridView}
-          listLabel={labels.listView}
-        />
+        <div className="drive-main-header__actions">
+          <IconButton
+            label={labels.detailPanelToggle}
+            icon={<PanelRight className="size-4" aria-hidden />}
+            size="sm"
+            variant="subtle"
+            active={detailOpen}
+            onClick={() => setDetailOpen((open) => !open)}
+          />
+          <ViewModeToggle
+            value={viewMode}
+            onChange={setViewMode}
+            gridLabel={labels.gridView}
+            listLabel={labels.listView}
+          />
+        </div>
       }
     />
   );
