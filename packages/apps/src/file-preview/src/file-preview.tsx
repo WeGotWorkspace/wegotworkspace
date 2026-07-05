@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { FileKind } from "@/drive-core/src/drive-models";
 import { canBrowserPreviewImage } from "@/drive-core/src/drive-file-utils";
 import { kindIconLg } from "@/drive-core/src/drive-icons";
@@ -51,6 +51,84 @@ function LightboxMediaFrame({
   );
 }
 
+function useLazyInView(rootRef: React.RefObject<HTMLElement | null>) {
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el || inView) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setInView(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "100px 0px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [inView, rootRef]);
+
+  return inView;
+}
+
+function LazyTileDocsPreview({
+  fileKind,
+  fileName,
+  fileApiPath,
+  content,
+  textMode,
+  mediaClassName,
+  fallbackClassName,
+}: {
+  fileKind: FileKind;
+  fileName: string;
+  fileApiPath?: string;
+  content: string;
+  textMode: FilePreviewTextPaneMode;
+  mediaClassName?: string;
+  fallbackClassName?: string;
+}) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const inView = useLazyInView(rootRef);
+
+  const fallbackText = stripPreviewText(content, fileName);
+  const fallback = fallbackText ? (
+    <FilePreviewTextPane content={fallbackText} mode={textMode} className={mediaClassName} />
+  ) : (
+    <span className={cn("file-preview__fallback", fallbackClassName)} aria-hidden="true">
+      {kindIconLg[fileKind]}
+    </span>
+  );
+
+  return (
+    <div
+      ref={rootRef}
+      className={cn("file-preview__tile-docs-lazy", mediaClassName)}
+      data-testid="file-preview-tile-docs-lazy"
+      data-mounted={inView ? "true" : "false"}
+    >
+      {inView ? (
+        <DocsFilePreview
+          fileName={fileName}
+          fileApiPath={fileApiPath}
+          content={content}
+          variant="tile"
+          className="file-preview__tile-docs"
+          fallback={fallback}
+        />
+      ) : (
+        fallback
+      )}
+    </div>
+  );
+}
+
 export function FilePreview({
   fileKind,
   fileName,
@@ -77,6 +155,20 @@ export function FilePreview({
   const supportsInlineImage = fileKind !== "image" || canBrowserPreviewImage(fileName);
 
   if (preview?.kind === "docs") {
+    if (variant === "tile") {
+      return (
+        <LazyTileDocsPreview
+          fileKind={fileKind}
+          fileName={fileName}
+          fileApiPath={fileApiPath}
+          content={preview.content}
+          textMode={textMode}
+          mediaClassName={mediaClassName}
+          fallbackClassName={fallbackClassName}
+        />
+      );
+    }
+
     const fallbackText = stripPreviewText(preview.content, fileName);
     return (
       <DocsFilePreview

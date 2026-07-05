@@ -58,8 +58,8 @@ afterEach(() => {
 });
 
 describe("useDriveGridPreviews", () => {
-  it("uses search excerpt without fetching when available", async () => {
-    const readFileBlob = vi.fn();
+  it("uses search excerpt for text fallback and still fetches rich docs preview", async () => {
+    const readFileBlob = vi.fn(async () => new Blob(["# Full doc"], { type: "text/markdown" }));
     const file = { ...DOC, excerpt: "Indexed preview snippet for the tile." };
 
     const { result } = renderHook(() =>
@@ -73,7 +73,10 @@ describe("useDriveGridPreviews", () => {
     await waitFor(() => {
       expect(result.current.filePreviews[file.id]?.kind).toBe("text");
     });
-    expect(readFileBlob).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(result.current.richPreviews[file.id]?.kind).toBe("docs");
+    });
+    expect(readFileBlob).toHaveBeenCalledWith(file.apiPath);
     expect(result.current.filePreviews[file.id]).toMatchObject({
       kind: "text",
       content: expect.stringContaining("Indexed preview"),
@@ -135,6 +138,28 @@ describe("useDriveGridPreviews", () => {
     expect(result.current.filePreviews[DOC.id]).toBeUndefined();
   });
 
+  it("fetches docs rich preview for visible grid markdown tiles", async () => {
+    const markdown = "# Hello\n\nGrid tile rich preview body.";
+    const readFileBlob = vi.fn(async () => new Blob([markdown], { type: "text/markdown" }));
+
+    const { result } = renderHook(() =>
+      useDriveGridPreviews({
+        items: [DOC],
+        operations: createOperations({ readFileBlob }),
+        enabled: true,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.richPreviews[DOC.id]?.kind).toBe("docs");
+    });
+    expect(readFileBlob).toHaveBeenCalledWith(DOC.apiPath);
+    expect(result.current.richPreviews[DOC.id]).toMatchObject({
+      kind: "docs",
+      content: markdown,
+    });
+  });
+
   it("fetches full docs preview for the active detail/lightbox file", async () => {
     const markdown = "# Hello\n\nPreview body for the detail pane.";
     const readFileBlob = vi.fn(async () => new Blob([markdown], { type: "text/markdown" }));
@@ -178,6 +203,51 @@ describe("useDriveGridPreviews", () => {
     expect(result.current.richPreviews[DOC.id]).toMatchObject({
       kind: "docs",
       content: "",
+    });
+  });
+
+  it("drops rich previews for items that scroll out of the visible set", async () => {
+    const readFileBlob = vi.fn(async () => new Blob(["# Hello"], { type: "text/markdown" }));
+
+    const { result, rerender } = renderHook(
+      ({ items }: { items: DriveFile[] }) =>
+        useDriveGridPreviews({
+          items,
+          operations: createOperations({ readFileBlob }),
+          enabled: true,
+        }),
+      { initialProps: { items: [DOC] } },
+    );
+
+    await waitFor(() => {
+      expect(result.current.richPreviews[DOC.id]?.kind).toBe("docs");
+    });
+
+    await act(async () => {
+      rerender({ items: [] });
+    });
+
+    expect(result.current.richPreviews[DOC.id]).toBeUndefined();
+  });
+
+  it("keeps text fallback when docs fetch exceeds size limit", async () => {
+    const oversized = "word ".repeat(Math.ceil(filePreviewUtils.DOCS_PREVIEW_MAX_BYTES / 5));
+    const readFileBlob = vi.fn(async () => new Blob([oversized], { type: "text/markdown" }));
+
+    const { result } = renderHook(() =>
+      useDriveGridPreviews({
+        items: [DOC],
+        operations: createOperations({ readFileBlob }),
+        enabled: true,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(readFileBlob).toHaveBeenCalled();
+    });
+    expect(result.current.richPreviews[DOC.id]).toBeUndefined();
+    await waitFor(() => {
+      expect(result.current.filePreviews[DOC.id]?.kind).toBe("text");
     });
   });
 });

@@ -12,6 +12,7 @@ import {
   lightboxFallbackAspectRatio,
   mediaAspectRatio,
   resolveDetailFilePreview,
+  resolveGridFilePreview,
   stripPreviewText,
   truncatePreviewText,
 } from "@/lib/file-preview/file-preview-utils";
@@ -83,6 +84,15 @@ describe("file preview text helpers", () => {
 
   it("prefers rich detail preview over tile text preview", () => {
     const resolved = resolveDetailFilePreview(
+      { "doc-1": { kind: "text", content: "tile excerpt" } },
+      { "doc-1": { kind: "docs", content: "# Full body" } },
+      "doc-1",
+    );
+    expect(resolved).toEqual({ kind: "docs", content: "# Full body" });
+  });
+
+  it("prefers rich grid preview over tile text preview", () => {
+    const resolved = resolveGridFilePreview(
       { "doc-1": { kind: "text", content: "tile excerpt" } },
       { "doc-1": { kind: "docs", content: "# Full body" } },
       "doc-1",

@@ -4,12 +4,15 @@ import { docsEditorFormatFromFileName } from "@/docs-core/src/docs-editor-format
 import { cn } from "@/lib/utils";
 import "@/docs-core/src/docs-file-preview.css";
 
+export type DocsFilePreviewVariant = "default" | "tile";
+
 export type DocsFilePreviewProps = {
   fileName: string;
   fileApiPath?: string;
   content: string;
   className?: string;
   fallback?: ReactNode;
+  variant?: DocsFilePreviewVariant;
 };
 
 type DocsFilePreviewBoundaryProps = {
@@ -48,11 +51,16 @@ function DocsFilePreviewEditor({
   fileApiPath,
   content,
   className,
+  variant = "default",
 }: DocsFilePreviewProps) {
   const format = docsEditorFormatFromFileName(fileName, fileApiPath);
+  const isTile = variant === "tile";
 
   return (
-    <div className={cn("docs-file-preview", className)}>
+    <div
+      className={cn("docs-file-preview", isTile && "docs-file-preview--tile", className)}
+      data-variant={variant}
+    >
       <TextEditor
         key={`${fileName}:${content.length}`}
         format={format}
@@ -60,20 +68,21 @@ function DocsFilePreviewEditor({
         editable={false}
         formatBar={false}
         sheetFill
-        sheetVariant={format === "text" ? "inline" : "sheet"}
+        sheetVariant={format === "text" || isTile ? "inline" : "sheet"}
         className="docs-file-preview__editor"
       />
     </div>
   );
 }
 
-/** Read-only Docs editor surface for drive file previews (detail pane / lightbox). */
+/** Read-only Docs editor surface for drive file previews (grid tiles / detail pane / lightbox). */
 export function DocsFilePreview({
   fileName,
   fileApiPath,
   content,
   className,
   fallback = null,
+  variant = "default",
 }: DocsFilePreviewProps) {
   return (
     <DocsFilePreviewBoundary fallback={fallback}>
@@ -82,6 +91,7 @@ export function DocsFilePreview({
         fileApiPath={fileApiPath}
         content={content}
         className={className}
+        variant={variant}
       />
     </DocsFilePreviewBoundary>
   );

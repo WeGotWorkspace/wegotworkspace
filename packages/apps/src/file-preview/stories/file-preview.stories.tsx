@@ -63,6 +63,20 @@ export const TextExcerpt: Story = {
   },
 };
 
+export const MarkdownRichTile: Story = {
+  name: "Markdown rich preview (tile)",
+  args: {
+    fileKind: "doc",
+    fileName: "Roadmap.md",
+    preview: {
+      kind: "docs",
+      content:
+        "# Roadmap\n\nShip **grid tile** markdown previews with lazy-mounted read-only Docs editor.",
+    },
+    textMode: "clamped",
+  },
+};
+
 export const UnsupportedFallback: Story = {
   name: "Unsupported (icon fallback)",
   args: {

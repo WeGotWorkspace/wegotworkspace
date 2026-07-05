@@ -51,3 +51,22 @@ export const PlainTextReadOnly: Story = {
     fallback: <FilePreviewTextPane content="Fallback text preview" mode="scrollable" />,
   },
 };
+
+export const TileMarkdownReadOnly: Story = {
+  name: "Grid tile (read-only)",
+  decorators: [
+    (Story) => (
+      <div className="drive-workspace w-64">
+        <div className="drive-file-tile__preview relative">
+          <Story />
+        </div>
+      </div>
+    ),
+  ],
+  args: {
+    fileName: "Spec.md",
+    content: SAMPLE_MARKDOWN,
+    variant: "tile",
+    fallback: <FilePreviewTextPane content="Fallback text preview" mode="clamped" />,
+  },
+};

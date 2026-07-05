@@ -217,6 +217,15 @@ export function resolveDetailFilePreview(
   return richPreviews[fileId] ?? filePreviews[fileId];
 }
 
+/** Grid tiles prefer rich docs payloads over plain text excerpts when both exist. */
+export function resolveGridFilePreview(
+  filePreviews: Record<string, FilePreviewPayload>,
+  richPreviews: Record<string, FilePreviewPayload>,
+  fileId: string,
+): FilePreviewPayload | undefined {
+  return resolveDetailFilePreview(filePreviews, richPreviews, fileId);
+}
+
 export function fileSupportsTextPreview(fileName: string, kind: string, apiPath?: string): boolean {
   let ext = extensionFromFileName(fileName);
   if (!ext && apiPath) {

@@ -1,4 +1,4 @@
-import { useEffect, useState, type TransitionEvent } from "react";
+import { useEffect, useMemo, useState, type TransitionEvent } from "react";
 import { Cloud, Download } from "lucide-react";
 import { useConnectivity } from "@/hooks/use-connectivity";
 import { DriveViewIcon } from "@/drive-core/src/drive-view-icons";
@@ -14,7 +14,10 @@ import type { DriveFile } from "@/drive-core/src/drive-models";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
 import type { DriveAPIOperations } from "@/drive-core/src/drive-types";
 import type { FilePreviewPayload } from "@/lib/file-preview/file-preview-types";
-import { resolveDetailFilePreview } from "@/lib/file-preview/file-preview-utils";
+import {
+  resolveDetailFilePreview,
+  resolveGridFilePreview,
+} from "@/lib/file-preview/file-preview-utils";
 import type { ActionBarAction } from "@/action-bar/src/action-bar";
 import type { useDriveController } from "@/drive-core/src/use-drive-controller";
 
@@ -138,7 +141,17 @@ export function DriveMainPane({
     },
   };
 
-  const gridBrowserProps = { ...sharedBrowserProps, filePreviews };
+  const gridFilePreviews = useMemo(() => {
+    if (Object.keys(richPreviews).length === 0) return filePreviews;
+    const merged: Record<string, FilePreviewPayload> = { ...filePreviews };
+    for (const file of visibleItems) {
+      const resolved = resolveGridFilePreview(filePreviews, richPreviews, file.id);
+      if (resolved) merged[file.id] = resolved;
+    }
+    return merged;
+  }, [filePreviews, richPreviews, visibleItems]);
+
+  const gridBrowserProps = { ...sharedBrowserProps, filePreviews: gridFilePreviews };
 
   const dropTargetLabel =
     view.type === "folder"

@@ -522,7 +522,9 @@ function FileTile({
         <FilePreview
           fileKind={file.kind}
           fileName={file.title}
+          fileApiPath={file.apiPath}
           preview={preview}
+          variant="tile"
           textMode="clamped"
           mediaClassName="h-full w-full object-cover"
         />

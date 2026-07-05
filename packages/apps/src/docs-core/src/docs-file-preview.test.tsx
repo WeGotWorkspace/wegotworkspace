@@ -33,4 +33,13 @@ describe("DocsFilePreview", () => {
     expect(editor.getAttribute("data-editable")).toBe("false");
     expect(screen.queryByText("fallback text")).toBeNull();
   });
+
+  it("applies tile variant styling for grid previews", () => {
+    const { container } = render(
+      <DocsFilePreview fileName="Spec.md" content="# Title" variant="tile" fallback={<p>x</p>} />,
+    );
+
+    expect(container.querySelector(".docs-file-preview--tile")).toBeTruthy();
+    expect(container.querySelector('[data-variant="tile"]')).toBeTruthy();
+  });
 });

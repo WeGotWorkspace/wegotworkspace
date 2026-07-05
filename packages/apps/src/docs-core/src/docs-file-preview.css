@@ -17,6 +17,25 @@
   @apply shadow-none;
 }
 
+.docs-file-preview--tile {
+  @apply overflow-hidden pointer-events-none;
+  background-color: color-mix(in oklab, var(--color-background, #fff) 98%, transparent);
+}
+
+.docs-file-preview--tile .docs-file-preview__editor,
+.docs-file-preview--tile .text-editor-sheet {
+  @apply min-h-0;
+}
+
+.docs-file-preview--tile .ProseMirror {
+  @apply text-[0.625rem] leading-snug;
+}
+
+.drive-workspace .drive-file-tile__preview .docs-file-preview--tile,
+.drive-workspace .drive-file-tile__preview .file-preview__tile-docs-lazy {
+  @apply absolute inset-0 h-full w-full;
+}
+
 .drive-workspace .drive-detail-panel__preview .docs-file-preview,
 .drive-workspace .drive-detail-panel__preview .docs-file-preview__editor {
   @apply absolute inset-0 h-full w-full;
