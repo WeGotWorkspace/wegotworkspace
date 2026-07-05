@@ -5,7 +5,6 @@ import { useAppToast } from "@/hooks/use-app-toast";
 import { useIsTouch } from "@/hooks/use-is-touch";
 import { useSelectionResetOnKeyChange } from "@/hooks/use-selection-reset-on-key-change";
 import { useWorkspaceListController } from "@/hooks/use-workspace-list-controller";
-import { findDrivePluginForExtension } from "@/drive-core/src/drive-plugin-utils";
 import { filterDriveVisibleItems } from "@/drive-core/src/drive-visible-items";
 import { extensionFromFileName } from "@/drive-core/src/drive-file-utils";
 import type { DriveFile } from "@/drive-core/src/drive-models";
@@ -33,8 +32,6 @@ export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
     operations,
     viewResetKey,
     selectView,
-    data,
-    ensurePluginSessionBeforeNavigate,
   } = shell;
 
   const { showError } = useAppToast();
@@ -163,55 +160,18 @@ export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
     if (f.kind === "folder") {
       const next = f.parent === "" ? f.title : `${f.parent}/${f.title}`;
       selectView({ type: "folder", path: next });
-    } else {
-      const ext = extensionFromFileName(f.title);
-      if (f.apiPath && DOCS_EDITOR_EXTENSIONS.has(ext) && onOpenDocsFile) {
-        onOpenDocsFile(f.apiPath);
-        return;
-      }
-      if (f.apiPath) {
-        const plugin = findDrivePluginForExtension(data.plugins, ext);
-        if (plugin?.drive?.openFileRoute && plugin.drive.openFileQueryParam) {
-          const rel = f.apiPath.replace(/^\/+/, "");
-          const qp = new URLSearchParams({ [plugin.drive.openFileQueryParam]: rel });
-          const target = `${plugin.drive.openFileRoute}?${qp.toString()}`;
-          ensurePluginSessionBeforeNavigate(plugin.integration?.sessionApiPath, () => {
-            window.open(target, "_blank", "noopener,noreferrer");
-          });
-          return;
-        }
-      }
-      if (f.apiPath && operations) {
-        const popup = window.open("about:blank", "_blank", "noopener,noreferrer");
-        void operations
-          .readFileBlob(f.apiPath)
-          .then((blob) => {
-            const url = URL.createObjectURL(blob);
-            if (popup && !popup.closed) {
-              popup.location.href = url;
-            } else {
-              const anchor = document.createElement("a");
-              anchor.href = url;
-              anchor.download = f.title || "download";
-              anchor.style.display = "none";
-              document.body.appendChild(anchor);
-              anchor.click();
-              anchor.remove();
-            }
-            window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
-          })
-          .catch(() => {
-            if (popup && !popup.closed) popup.close();
-            setActiveId(f.id);
-            setSelectedIds([f.id]);
-            setDetailOpen(true);
-          });
-        return;
-      }
-      setActiveId(f.id);
-      setSelectedIds([f.id]);
-      setDetailOpen(true);
+      return;
     }
+
+    const ext = extensionFromFileName(f.title);
+    if (f.apiPath && DOCS_EDITOR_EXTENSIONS.has(ext) && onOpenDocsFile) {
+      onOpenDocsFile(f.apiPath);
+      return;
+    }
+
+    setActiveId(f.id);
+    setSelectedIds([f.id]);
+    setDetailOpen(true);
   };
 
   const handleSelect = useCallback(
