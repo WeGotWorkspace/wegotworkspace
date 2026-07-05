@@ -27,7 +27,6 @@
   --file-drop-overlay-card-color: var(--drive-sidebar);
   --drive-detail-tag-bg: color-mix(in oklab, var(--drive-sidebar) 12%, transparent);
   --drive-detail-tag-fg: var(--drive-sidebar);
-  --drive-detail-aside-width: 33.333%;
 }
 
 .drive-workspace .workspace-app-layout__main-scroll {
@@ -186,22 +185,33 @@
 }
 
 .drive-workspace .drive-main-pane__scroll {
-  @apply flex-[2] min-w-0 overflow-x-hidden overflow-y-auto;
+  @apply flex-1 min-w-0 w-full overflow-x-hidden overflow-y-auto;
+}
+
+.drive-workspace
+  .drive-main-pane__body:has(.drive-detail-aside[data-open="true"])
+  .drive-main-pane__scroll {
+  @apply flex-[2];
 }
 
 .drive-workspace .drive-detail-aside {
-  @apply hidden md:flex flex-1 min-w-0 overflow-hidden border-l flex-col min-h-0 will-change-transform transition-[translate,margin,border-width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)];
+  @apply hidden md:flex min-w-0 overflow-hidden border-l flex-col min-h-0 will-change-transform transition-[translate,flex-basis,width,max-width,border-width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)];
+  flex: 0 0 0;
+  width: 0;
+  max-width: 0;
   background-color: var(--color-cream, #ffffff);
   border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
 }
 
 .drive-workspace .drive-detail-aside[data-open="true"] {
   @apply translate-x-0;
+  flex: 1 1 0;
+  width: auto;
+  max-width: none;
 }
 
 .drive-workspace .drive-detail-aside[data-open="false"] {
   @apply translate-x-full border-l-0;
-  margin-right: calc(-1 * var(--drive-detail-aside-width));
 }
 
 @media (prefers-reduced-motion: reduce) {
