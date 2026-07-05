@@ -1,7 +1,11 @@
 import { markdownToPlainText } from "@/lib/models/note-body-markdown";
 import { extensionFromFileName } from "@/drive-core/src/drive-file-utils";
+import type { FileKind } from "@/drive-core/src/drive-models";
 import { DOCS_EDITOR_EXTENSIONS } from "@/drive-core/src/drive-models";
 import type { FilePreviewPayload } from "@/lib/file-preview/file-preview-types";
+
+export const LIGHTBOX_DEFAULT_IMAGE_ASPECT = 4 / 3;
+export const LIGHTBOX_DEFAULT_VIDEO_ASPECT = 16 / 9;
 
 /** Extensions always treated as inline text previews (tier 1 allowlist). */
 export const TEXT_PREVIEW_EXTENSIONS = new Set([
@@ -130,6 +134,78 @@ export function decodeDocsPreviewContent(bytes: Uint8Array): string | null {
   const decoded = decodeUtf8Preview(bytes, bytes.length);
   if (!decoded) return null;
   return decoded.replace(/\r\n/g, "\n");
+}
+
+export function mediaAspectRatio(width?: number, height?: number): number | null {
+  if (width == null || height == null || width <= 0 || height <= 0) return null;
+  return width / height;
+}
+
+export function lightboxFallbackAspectRatio(fileKind: FileKind): number {
+  return fileKind === "video" ? LIGHTBOX_DEFAULT_VIDEO_ASPECT : LIGHTBOX_DEFAULT_IMAGE_ASPECT;
+}
+
+export function blobPreviewAspectRatio(
+  preview: FilePreviewPayload | undefined,
+  fileKind: FileKind,
+): number | null {
+  if (preview?.kind !== "blob-url") return null;
+  return mediaAspectRatio(preview.width, preview.height) ?? lightboxFallbackAspectRatio(fileKind);
+}
+
+function readImageBlobDimensions(blob: Blob): Promise<{ width: number; height: number } | null> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(
+        img.naturalWidth > 0 && img.naturalHeight > 0
+          ? { width: img.naturalWidth, height: img.naturalHeight }
+          : null,
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(null);
+    };
+    img.src = url;
+  });
+}
+
+function readVideoBlobDimensions(blob: Blob): Promise<{ width: number; height: number } | null> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(blob);
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    const cleanup = () => {
+      URL.revokeObjectURL(url);
+      video.removeAttribute("src");
+      video.load();
+    };
+    video.onloadedmetadata = () => {
+      const width = video.videoWidth;
+      const height = video.videoHeight;
+      cleanup();
+      resolve(width > 0 && height > 0 ? { width, height } : null);
+    };
+    video.onerror = () => {
+      cleanup();
+      resolve(null);
+    };
+    video.src = url;
+  });
+}
+
+/** Decode intrinsic media dimensions from a fetched blob (grid/lightbox prefetch). */
+export async function readBlobMediaDimensions(
+  blob: Blob,
+  fileKind: Extract<FileKind, "image" | "video">,
+): Promise<{ width: number; height: number } | null> {
+  if (fileKind === "video" || blob.type.startsWith("video/")) {
+    return readVideoBlobDimensions(blob);
+  }
+  return readImageBlobDimensions(blob);
 }
 
 export function resolveDetailFilePreview(

@@ -40,9 +40,9 @@ export function DrivePreviewLightbox({
         fileKind={file.kind}
         fileName={file.title}
         preview={preview}
+        variant="lightbox"
         textMode="scrollable"
-        mediaClassName="preview-lightbox__media mx-auto max-h-[min(70vh,40rem)] w-full object-contain"
-        fallbackClassName="preview-lightbox__fallback mx-auto flex size-24 items-center justify-center opacity-60"
+        fallbackClassName="preview-lightbox__fallback opacity-60"
         videoControls
       />
     </PreviewLightbox>

@@ -13,6 +13,7 @@ import {
   isLikelyUtf8Text,
   isTextPreviewExtension,
   isUsableTextExcerpt,
+  readBlobMediaDimensions,
   TILE_TEXT_FETCH_BYTES,
   TILE_TEXT_PREVIEW_MAX_CHARS,
 } from "@/lib/file-preview/file-preview-utils";
@@ -167,14 +168,22 @@ export function useDriveGridPreviews({
         inFlightRef.current += 1;
         void operations
           .readFileBlob(file.apiPath!)
-          .then((blob) => {
+          .then(async (blob) => {
             const url = URL.createObjectURL(blob);
             if (fetchedPreviewsRef.current[file.id]?.kind === "blob-url") {
               URL.revokeObjectURL(url);
               return;
             }
             blobUrlsRef.current[file.id] = url;
-            setFetchedPreviewEntry(file.id, { kind: "blob-url", url });
+            const dimensions =
+              file.kind === "image" || file.kind === "video"
+                ? await readBlobMediaDimensions(blob, file.kind)
+                : null;
+            setFetchedPreviewEntry(file.id, {
+              kind: "blob-url",
+              url,
+              ...(dimensions ?? {}),
+            });
           })
           .catch(() => {
             // Tile falls back to icon.

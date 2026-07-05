@@ -3,6 +3,7 @@ import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { DriveFile } from "@/drive-core/src/drive-models";
 import type { DriveAPIOperations } from "@/drive-core/src/drive-types";
+import * as filePreviewUtils from "@/lib/file-preview/file-preview-utils";
 import { useDriveGridPreviews } from "@/drive-core/src/use-drive-grid-previews";
 
 const DOC: DriveFile = {
@@ -83,6 +84,9 @@ describe("useDriveGridPreviews", () => {
     const blob = new Blob(["png"], { type: "image/png" });
     const readFileBlob = vi.fn(async () => blob);
     const revokeSpy = vi.spyOn(URL, "revokeObjectURL");
+    const readDimensions = vi
+      .spyOn(filePreviewUtils, "readBlobMediaDimensions")
+      .mockResolvedValue({ width: 120, height: 80 });
 
     const { result, unmount } = renderHook(() =>
       useDriveGridPreviews({
@@ -96,6 +100,12 @@ describe("useDriveGridPreviews", () => {
       expect(result.current.filePreviews[IMAGE.id]?.kind).toBe("blob-url");
     });
     expect(readFileBlob).toHaveBeenCalledWith(IMAGE.apiPath);
+    expect(readDimensions).toHaveBeenCalledWith(blob, "image");
+    expect(result.current.filePreviews[IMAGE.id]).toMatchObject({
+      kind: "blob-url",
+      width: 120,
+      height: 80,
+    });
 
     unmount();
     expect(revokeSpy).toHaveBeenCalled();
