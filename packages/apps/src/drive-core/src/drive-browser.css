@@ -450,7 +450,7 @@
 }
 
 .drive-workspace .drive-detail-panel__title {
-  @apply text-base md:text-lg leading-tight mb-4 tracking-tight break-words font-bold font-sans;
+  @apply text-base md:text-lg leading-tight mb-4 tracking-tight break-words font-semibold font-sans;
   font-family: var(--font-sans);
   color: var(--color-ink);
 }
