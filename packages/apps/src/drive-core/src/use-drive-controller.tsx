@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useWorkspaceListKeyboardShortcuts } from "@/hooks/use-workspace-list-keyboard-shortcuts";
+import { isKeyboardFieldTarget } from "@/lib/keyboard/is-keyboard-field-target";
 import type { ViewKey } from "@/drive-core/src/drive-models";
 import type { DriveAPIOperations, DriveUIData } from "@/drive-core/src/drive-types";
 import { useDriveList } from "@/drive-core/src/use-drive-list";
@@ -52,9 +53,7 @@ export function useDriveController({
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      const inField =
-        !!target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
+      const inField = isKeyboardFieldTarget(e.target);
       if ((e.key === "k" && (e.metaKey || e.ctrlKey)) || (!inField && e.key === "/")) {
         e.preventDefault();
         shell.searchInputRef.current?.focus();
@@ -62,13 +61,72 @@ export function useDriveController({
         return;
       }
       if (inField) return;
+      if (e.key === "Escape" && list.lightboxOpen) {
+        list.setLightboxOpen(false);
+        return;
+      }
       if (e.key === "Escape" && list.detailOpen) {
         list.setDetailOpen(false);
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [list.detailOpen, list.setDetailOpen, shell.searchInputRef]);
+  }, [
+    list.detailOpen,
+    list.lightboxOpen,
+    list.setDetailOpen,
+    list.setLightboxOpen,
+    shell.searchInputRef,
+  ]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (isKeyboardFieldTarget(e.target)) return;
+
+      if (list.lightboxOpen) {
+        if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+          e.preventDefault();
+          e.stopPropagation();
+          list.navigateLightbox(-1);
+          return;
+        }
+        if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+          e.preventDefault();
+          e.stopPropagation();
+          list.navigateLightbox(1);
+          return;
+        }
+        if (e.key === "Enter" && list.active && list.active.kind !== "folder") {
+          e.preventDefault();
+          e.stopPropagation();
+          list.setLightboxOpen(false);
+          list.openFile(list.active);
+          return;
+        }
+        return;
+      }
+
+      if (
+        e.code === "Space" &&
+        !e.repeat &&
+        (list.viewMode === "grid" || list.viewMode === "list") &&
+        list.active &&
+        list.active.kind !== "folder"
+      ) {
+        e.preventDefault();
+        list.setLightboxOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handler, true);
+    return () => window.removeEventListener("keydown", handler, true);
+  }, [
+    list.active,
+    list.lightboxOpen,
+    list.navigateLightbox,
+    list.openFile,
+    list.setLightboxOpen,
+    list.viewMode,
+  ]);
 
   useWorkspaceListKeyboardShortcuts({
     searchInputRef: shell.searchInputRef,
@@ -76,6 +134,7 @@ export function useDriveController({
     onRequestDeleteSelection: mutations.requestDeleteSelected,
     onNavigateList: list.navigateListByKeyboard,
     onUndoQueuedAction: list.undoLatest,
+    listNavigationEnabled: !list.lightboxOpen,
   });
 
   const handleUnifiedSearchSelect = useMemo(
@@ -112,6 +171,10 @@ export function useDriveController({
     setSidebarOpen: shell.setSidebarOpen,
     detailOpen: list.detailOpen,
     setDetailOpen: list.setDetailOpen,
+    lightboxOpen: list.lightboxOpen,
+    setLightboxOpen: list.setLightboxOpen,
+    previewableIds: list.previewableIds,
+    navigateLightbox: list.navigateLightbox,
     selectionMode: list.selectionMode,
     setSelectionMode: list.setSelectionMode,
     viewMode: list.viewMode,
