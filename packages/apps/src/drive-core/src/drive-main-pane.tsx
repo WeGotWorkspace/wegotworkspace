@@ -146,8 +146,9 @@ export function DriveMainPane({
       : labels.sidebarMyDrive;
 
   const showMobileDetail = Boolean(detailOpen && active);
-  const showDetailAside = Boolean(detailOpen && active);
   const showMobileDetailOverlay = showMobileDetail;
+  const showDesktopDetailAside = Boolean(active);
+  const desktopDetailOpen = Boolean(detailOpen && active);
   const [mobileOverlayMount, setMobileOverlayMount] = useState(false);
   const [mobileOverlayVisible, setMobileOverlayVisible] = useState(false);
 
@@ -242,8 +243,12 @@ export function DriveMainPane({
           )}
         </div>
 
-        {showDetailAside && active ? (
-          <aside className="drive-detail-aside">
+        {showDesktopDetailAside && active ? (
+          <aside
+            className="drive-detail-aside"
+            data-open={desktopDetailOpen ? "true" : "false"}
+            aria-hidden={desktopDetailOpen ? undefined : true}
+          >
             <DriveDetailPanel
               {...buildDetailPanelProps({
                 labels,
