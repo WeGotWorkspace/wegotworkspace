@@ -93,8 +93,6 @@ function createShell(viewResetKey = "folder:My Drive"): DriveShellState {
     operations: undefined,
     viewResetKey,
     selectView,
-    data: { plugins: [] } as DriveShellState["data"],
-    ensurePluginSessionBeforeNavigate: vi.fn(),
   } as unknown as DriveShellState;
 }
 
