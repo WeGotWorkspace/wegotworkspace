@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { IconButton } from "@/button/src/button";
 import { cn } from "@/lib/utils";
 import "@/preview-lightbox/src/preview-lightbox.css";
 
@@ -31,7 +32,6 @@ export function PreviewLightbox({
   children,
 }: PreviewLightboxProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const closeRef = useRef<HTMLButtonElement>(null);
   const prefersReducedMotion =
     typeof window !== "undefined" &&
     typeof window.matchMedia === "function" &&
@@ -42,7 +42,7 @@ export function PreviewLightbox({
     const dialog = dialogRef.current;
     if (!dialog) return;
     if (!dialog.open) dialog.showModal();
-    closeRef.current?.focus();
+    dialog.querySelector<HTMLButtonElement>(".preview-lightbox__close")?.focus();
     return () => {
       if (dialog.open) dialog.close();
     };
@@ -66,41 +66,43 @@ export function PreviewLightbox({
       <div className="preview-lightbox__panel">
         <header className="preview-lightbox__header">
           <h2 className="preview-lightbox__title">{title}</h2>
-          <button
-            ref={closeRef}
-            type="button"
-            className="preview-lightbox__close"
-            aria-label={closeLabel}
+          <IconButton
+            className="preview-lightbox__close shrink-0"
+            label={closeLabel}
+            icon={<X aria-hidden />}
+            size="sm"
+            variant="subtle"
+            showTooltip={false}
             onClick={onClose}
-          >
-            <X className="size-5" aria-hidden />
-          </button>
+          />
         </header>
         <div className="preview-lightbox__body" tabIndex={0}>
           {children}
         </div>
       </div>
       {onPrevious ? (
-        <button
-          type="button"
+        <IconButton
           className="preview-lightbox__nav preview-lightbox__nav--prev"
-          aria-label={previousLabel}
+          label={previousLabel}
+          icon={<ChevronLeft aria-hidden />}
+          size="lg"
+          variant="subtle"
+          showTooltip={false}
           disabled={!hasPrevious}
           onClick={onPrevious}
-        >
-          <ChevronLeft className="size-6" aria-hidden />
-        </button>
+        />
       ) : null}
       {onNext ? (
-        <button
-          type="button"
+        <IconButton
           className="preview-lightbox__nav preview-lightbox__nav--next"
-          aria-label={nextLabel}
+          label={nextLabel}
+          icon={<ChevronRight aria-hidden />}
+          size="lg"
+          variant="subtle"
+          showTooltip={false}
           disabled={!hasNext}
           onClick={onNext}
-        >
-          <ChevronRight className="size-6" aria-hidden />
-        </button>
+        />
       ) : null}
     </dialog>
   );

@@ -24,13 +24,8 @@
   @apply min-w-0 flex-1 truncate text-sm font-medium;
 }
 
-.preview-lightbox__close {
-  @apply shrink-0 rounded-md p-1.5;
-  color: color-mix(in oklab, var(--color-ink) 65%, transparent);
-}
-
-.preview-lightbox__close:hover {
-  background-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
+.preview-lightbox__body {
+  @apply flex min-h-0 flex-1 items-center justify-center overflow-auto p-4;
 }
 
 .preview-lightbox__body .preview-lightbox__media {
@@ -42,17 +37,10 @@
 }
 
 .preview-lightbox__nav {
-  @apply absolute top-1/2 z-20 -translate-y-1/2 rounded-full p-2 shadow-md;
-  background-color: color-mix(in oklab, var(--color-cream) 92%, transparent);
-  color: var(--color-ink);
-}
-
-.preview-lightbox__nav:hover:not(:disabled) {
-  background-color: var(--color-cream, #ffffff);
-}
-
-.preview-lightbox__nav:disabled {
-  @apply cursor-not-allowed opacity-40;
+  @apply absolute top-1/2 z-20 -translate-y-1/2 shadow-md;
+  --button-subtle-color: var(--color-ink);
+  --button-subtle-background: color-mix(in oklab, var(--color-cream) 92%, transparent);
+  --button-subtle-hover-background: var(--color-cream, #ffffff);
 }
 
 .preview-lightbox__nav--prev {
