@@ -9,9 +9,23 @@ const SAMPLE_MARKDOWN = `# Drive preview
 
 This **markdown** document renders with the Docs editor in read-only mode.
 
+## Overview
+
+Grid tiles show a miniature of the full letter-sized page, scaled down so headings, lists, and body copy remain recognizable at a glance.
+
 - Rich formatting
 - Lists and headings
 - Same serializer as the Docs workspace
+
+## Details
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+> A blockquote adds visual variety on the thumbnail page.
+
+1. Numbered lists
+2. Scale to fit the 16:9 tile
+3. Overflow clipped at the bottom edge
 `;
 
 const meta = {
@@ -57,7 +71,7 @@ export const TileMarkdownReadOnly: Story = {
   decorators: [
     (Story) => (
       <div className="drive-workspace w-64">
-        <div className="drive-file-tile__preview relative">
+        <div className="drive-file-tile__preview relative aspect-[16/9]">
           <Story />
         </div>
       </div>

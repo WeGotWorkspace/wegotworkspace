@@ -41,5 +41,7 @@ describe("DocsFilePreview", () => {
 
     expect(container.querySelector(".docs-file-preview--tile")).toBeTruthy();
     expect(container.querySelector('[data-variant="tile"]')).toBeTruthy();
+    expect(container.querySelector(".docs-file-preview__tile-scale")).toBeTruthy();
+    expect(container.querySelector(".docs-file-preview__tile-page")).toBeTruthy();
   });
 });

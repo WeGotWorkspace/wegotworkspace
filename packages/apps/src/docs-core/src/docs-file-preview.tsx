@@ -56,21 +56,31 @@ function DocsFilePreviewEditor({
   const format = docsEditorFormatFromFileName(fileName, fileApiPath);
   const isTile = variant === "tile";
 
+  const editor = (
+    <TextEditor
+      key={`${fileName}:${content.length}`}
+      format={format}
+      content={content}
+      editable={false}
+      formatBar={false}
+      sheetFill={!isTile}
+      sheetVariant={format === "text" ? "inline" : "sheet"}
+      className="docs-file-preview__editor"
+    />
+  );
+
   return (
     <div
       className={cn("docs-file-preview", isTile && "docs-file-preview--tile", className)}
       data-variant={variant}
     >
-      <TextEditor
-        key={`${fileName}:${content.length}`}
-        format={format}
-        content={content}
-        editable={false}
-        formatBar={false}
-        sheetFill
-        sheetVariant={format === "text" || isTile ? "inline" : "sheet"}
-        className="docs-file-preview__editor"
-      />
+      {isTile ? (
+        <div className="docs-file-preview__tile-scale">
+          <div className="docs-file-preview__tile-page">{editor}</div>
+        </div>
+      ) : (
+        editor
+      )}
     </div>
   );
 }
