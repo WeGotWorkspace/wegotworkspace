@@ -19,13 +19,13 @@
 
 .docs-file-preview--tile {
   --docs-file-preview-tile-page-width: 8.5in;
-  --docs-file-preview-tile-scale: 0.28;
+  --docs-file-preview-tile-scale: 1;
   @apply overflow-hidden pointer-events-none;
-  background-color: color-mix(in oklab, var(--drive-sidebar) 8%, transparent);
+  background-color: var(--color-cream, #fff);
 }
 
 .docs-file-preview__tile-scale {
-  @apply absolute inset-0 overflow-hidden;
+  @apply absolute inset-0 h-full w-full overflow-hidden;
   display: flex;
   justify-content: center;
   align-items: flex-start;

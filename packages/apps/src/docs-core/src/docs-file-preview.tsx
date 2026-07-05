@@ -1,4 +1,4 @@
-import { Component, type ErrorInfo, type ReactNode } from "react";
+import { Component, type ErrorInfo, type ReactNode, useLayoutEffect, useRef } from "react";
 import { TextEditor } from "@/text-editor-core/src";
 import { docsEditorFormatFromFileName } from "@/docs-core/src/docs-editor-format";
 import { cn } from "@/lib/utils";
@@ -46,6 +46,45 @@ class DocsFilePreviewBoundary extends Component<
   }
 }
 
+function DocsFilePreviewTileScale({ children }: { children: ReactNode }) {
+  const scaleRef = useRef<HTMLDivElement>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const scaleEl = scaleRef.current;
+    const pageEl = pageRef.current;
+    if (!scaleEl || !pageEl) return;
+
+    const syncScale = () => {
+      const containerHeight = scaleEl.clientHeight;
+      const pageHeight = pageEl.scrollHeight;
+      if (containerHeight <= 0 || pageHeight <= 0) return;
+      pageEl.style.setProperty(
+        "--docs-file-preview-tile-scale",
+        String(containerHeight / pageHeight),
+      );
+    };
+
+    syncScale();
+
+    if (typeof ResizeObserver === "undefined") return;
+
+    const observer = new ResizeObserver(syncScale);
+    observer.observe(scaleEl);
+    observer.observe(pageEl);
+
+    return () => observer.disconnect();
+  }, [children]);
+
+  return (
+    <div ref={scaleRef} className="docs-file-preview__tile-scale">
+      <div ref={pageRef} className="docs-file-preview__tile-page">
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function DocsFilePreviewEditor({
   fileName,
   fileApiPath,
@@ -74,13 +113,7 @@ function DocsFilePreviewEditor({
       className={cn("docs-file-preview", isTile && "docs-file-preview--tile", className)}
       data-variant={variant}
     >
-      {isTile ? (
-        <div className="docs-file-preview__tile-scale">
-          <div className="docs-file-preview__tile-page">{editor}</div>
-        </div>
-      ) : (
-        editor
-      )}
+      {isTile ? <DocsFilePreviewTileScale>{editor}</DocsFilePreviewTileScale> : editor}
     </div>
   );
 }

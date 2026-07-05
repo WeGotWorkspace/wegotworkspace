@@ -207,7 +207,7 @@
 .drive-workspace .drive-file-tile__preview {
   @apply relative flex items-center justify-center overflow-hidden;
   aspect-ratio: 16 / 9;
-  background-color: color-mix(in oklab, var(--drive-sidebar) 8%, transparent);
+  background-color: var(--color-cream, #fff);
   color: var(--drive-sidebar);
 }
 
