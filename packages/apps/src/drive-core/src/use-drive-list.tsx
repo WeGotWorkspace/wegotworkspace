@@ -5,10 +5,13 @@ import { useAppToast } from "@/hooks/use-app-toast";
 import { useIsTouch } from "@/hooks/use-is-touch";
 import { useSelectionResetOnKeyChange } from "@/hooks/use-selection-reset-on-key-change";
 import { useWorkspaceListController } from "@/hooks/use-workspace-list-controller";
+import { findDrivePluginForExtension } from "@/drive-core/src/drive-plugin-utils";
 import { filterDriveVisibleItems } from "@/drive-core/src/drive-visible-items";
+import { extensionFromFileName } from "@/drive-core/src/drive-file-utils";
 import type { DriveFile } from "@/drive-core/src/drive-models";
 import type { DriveShellState } from "@/drive-core/src/use-drive-shell";
 import { useDriveGridPreviews } from "@/drive-core/src/use-drive-grid-previews";
+import { isDocsCollabEditablePath } from "@/docs-core/src/docs-collab-text-files";
 import { isDocsEditorPreviewFile } from "@/lib/file-preview/file-preview-utils";
 
 const WRITE_QUEUE_DELAY_MS = 2500;
@@ -31,6 +34,8 @@ export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
     operations,
     viewResetKey,
     selectView,
+    data,
+    ensurePluginSessionBeforeNavigate,
   } = shell;
 
   const { showError } = useAppToast();
@@ -163,6 +168,30 @@ export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
       const next = f.parent === "" ? f.title : `${f.parent}/${f.title}`;
       selectView({ type: "folder", path: next });
       return;
+    }
+
+    const ext = extensionFromFileName(f.title);
+
+    if (
+      f.apiPath &&
+      onOpenDocsFile &&
+      (isDocsEditorPreviewFile(f.title, f.apiPath) || isDocsCollabEditablePath(f.apiPath))
+    ) {
+      onOpenDocsFile(f.apiPath);
+      return;
+    }
+
+    if (f.apiPath) {
+      const plugin = findDrivePluginForExtension(data.plugins, ext);
+      if (plugin?.drive?.openFileRoute && plugin.drive.openFileQueryParam) {
+        const rel = f.apiPath.replace(/^\/+/, "");
+        const qp = new URLSearchParams({ [plugin.drive.openFileQueryParam]: rel });
+        const target = `${plugin.drive.openFileRoute}?${qp.toString()}`;
+        ensurePluginSessionBeforeNavigate(plugin.integration?.sessionApiPath, () => {
+          window.open(target, "_blank", "noopener,noreferrer");
+        });
+        return;
+      }
     }
 
     setActiveId(f.id);

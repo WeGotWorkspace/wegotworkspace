@@ -80,9 +80,27 @@ const PDF: DriveFile = {
   apiPath: "/users/alice/Report.pdf",
 };
 
+const IMAGE: DriveFile = {
+  ...FOLDER,
+  id: "img-1",
+  title: "Photo.jpg",
+  kind: "image",
+  size: "2 MB",
+  apiPath: "/users/alice/Photo.jpg",
+};
+
+const VIDEO: DriveFile = {
+  ...FOLDER,
+  id: "vid-1",
+  title: "Clip.mp4",
+  kind: "video",
+  size: "15 MB",
+  apiPath: "/users/alice/Clip.mp4",
+};
+
 function createShell(viewResetKey = "folder:My Drive"): DriveShellState {
   return {
-    files: [FOLDER, MARKDOWN, PDF],
+    files: [FOLDER, MARKDOWN, PDF, IMAGE, VIDEO],
     setFiles: vi.fn(),
     liveSearchResults: null,
     starredItems: [],
@@ -93,6 +111,8 @@ function createShell(viewResetKey = "folder:My Drive"): DriveShellState {
     operations: undefined,
     viewResetKey,
     selectView,
+    data: { plugins: [] },
+    ensurePluginSessionBeforeNavigate: (_sessionPath, navigate) => navigate(),
   } as unknown as DriveShellState;
 }
 
@@ -130,7 +150,7 @@ describe("useDriveList openFile", () => {
     expect(result.current.detailOpen).toBe(false);
   });
 
-  it("opens the detail preview pane for markdown files", () => {
+  it("opens Docs editor for markdown files on double-click", () => {
     const onOpenDocsFile = vi.fn();
     const shell = createShell();
     const { result } = renderHook(() => useDriveList({ shell, onOpenDocsFile }));
@@ -139,10 +159,8 @@ describe("useDriveList openFile", () => {
       result.current.openFile(MARKDOWN);
     });
 
-    expect(onOpenDocsFile).not.toHaveBeenCalled();
-    expect(result.current.activeId).toBe(MARKDOWN.id);
-    expect(setSelectedIds).toHaveBeenCalledWith([MARKDOWN.id]);
-    expect(result.current.detailOpen).toBe(true);
+    expect(onOpenDocsFile).toHaveBeenCalledWith("/users/alice/Notes.md");
+    expect(result.current.detailOpen).toBe(false);
   });
 
   it("opens Docs editor via openDocsEditorFile", () => {
@@ -158,7 +176,7 @@ describe("useDriveList openFile", () => {
     expect(result.current.detailOpen).toBe(false);
   });
 
-  it("opens the detail preview pane for non-Docs files", () => {
+  it("opens the detail preview pane for PDF files", () => {
     const shell = createShell();
     const { result } = renderHook(() => useDriveList({ shell }));
 
@@ -169,6 +187,38 @@ describe("useDriveList openFile", () => {
     expect(result.current.activeId).toBe(PDF.id);
     expect(setSelectedIds).toHaveBeenCalledWith([PDF.id]);
     expect(result.current.detailOpen).toBe(true);
+  });
+
+  it("opens the detail preview pane for images without a new tab", () => {
+    const windowOpen = vi.spyOn(window, "open").mockReturnValue(null);
+    const shell = createShell();
+    const { result } = renderHook(() => useDriveList({ shell }));
+
+    act(() => {
+      result.current.openFile(IMAGE);
+    });
+
+    expect(windowOpen).not.toHaveBeenCalled();
+    expect(result.current.activeId).toBe(IMAGE.id);
+    expect(setSelectedIds).toHaveBeenCalledWith([IMAGE.id]);
+    expect(result.current.detailOpen).toBe(true);
+    windowOpen.mockRestore();
+  });
+
+  it("opens the detail preview pane for videos without a new tab", () => {
+    const windowOpen = vi.spyOn(window, "open").mockReturnValue(null);
+    const shell = createShell();
+    const { result } = renderHook(() => useDriveList({ shell }));
+
+    act(() => {
+      result.current.openFile(VIDEO);
+    });
+
+    expect(windowOpen).not.toHaveBeenCalled();
+    expect(result.current.activeId).toBe(VIDEO.id);
+    expect(setSelectedIds).toHaveBeenCalledWith([VIDEO.id]);
+    expect(result.current.detailOpen).toBe(true);
+    windowOpen.mockRestore();
   });
 
   it("does not open the detail pane on single-click selection alone", () => {
