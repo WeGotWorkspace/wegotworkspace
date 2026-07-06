@@ -40,7 +40,7 @@ This document summarizes what the v1 JMAP-shaped REST layers implement versus fu
 
 | Gap | Issue | Docs / converters |
 |-----|-------|-------------------|
-| Recurrence | [#146](https://github.com/WeGotWorkspace/wegotworkspace/issues/146) | `docs/tasks/ics-jmap-task-conversion-matrix.md` |
+| Recurrence | [#146](https://github.com/WeGotWorkspace/wegotworkspace/issues/146) | [docs/tasks/](./tasks/) — [ics-jmap-task-conversion-matrix.md](./tasks/ics-jmap-task-conversion-matrix.md) |
 | VALARM ↔ alerts | [#147](https://github.com/WeGotWorkspace/wegotworkspace/issues/147) | `Tasks/Conversion/*` |
 | Assignees / participants | [#148](https://github.com/WeGotWorkspace/wegotworkspace/issues/148) | same |
 | `icsProps` escape hatch | [#149](https://github.com/WeGotWorkspace/wegotworkspace/issues/149) | parity with calendars |
