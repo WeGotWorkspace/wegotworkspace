@@ -1,5 +1,6 @@
-import { useEffect, useState, type TransitionEvent } from "react";
+import { useEffect, useMemo, useState, type TransitionEvent } from "react";
 import { Cloud, Download } from "lucide-react";
+import { useConnectivity } from "@/hooks/use-connectivity";
 import { DriveViewIcon } from "@/drive-core/src/drive-view-icons";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { CollectionState } from "@/collection-state/src/collection-state";
@@ -11,6 +12,12 @@ import { DriveDetailPanel, DriveGridView, DriveListView } from "@/drive-core/src
 import type { DriveFile } from "@/drive-core/src/drive-models";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
 import type { DriveAPIOperations } from "@/drive-core/src/drive-types";
+import type { FilePreviewPayload } from "@/lib/file-preview/file-preview-types";
+import {
+  resolveDetailFilePreview,
+  resolveGridFilePreview,
+} from "@/lib/file-preview/file-preview-utils";
+import type { ActionBarAction } from "@/action-bar/src/action-bar";
 import type { useDriveController } from "@/drive-core/src/use-drive-controller";
 
 type DriveController = ReturnType<typeof useDriveController>;
@@ -18,9 +25,26 @@ type DriveController = ReturnType<typeof useDriveController>;
 export type DriveMainPaneProps = {
   controller: DriveController;
   operations?: DriveAPIOperations;
+  openFile?: (file: DriveFile) => void;
+  offlineEnabled?: boolean;
+  offlineAvailableIds?: ReadonlySet<string>;
+  offlinePendingSyncIds?: ReadonlySet<string>;
+  onMakeOfflineAvailable?: (file: DriveFile) => void;
+  pinLoadingId?: string | null;
+  extraFileActions?: (file: DriveFile) => ActionBarAction[];
 };
 
-export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
+export function DriveMainPane({
+  controller,
+  operations,
+  openFile: openFileOverride,
+  offlineEnabled = false,
+  offlineAvailableIds,
+  offlinePendingSyncIds,
+  onMakeOfflineAvailable,
+  pinLoadingId,
+  extraFileActions,
+}: DriveMainPaneProps) {
   const {
     labels,
     view,
@@ -31,7 +55,8 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
     selectView,
     visibleItems,
     viewMode,
-    imagePreviewUrls,
+    filePreviews,
+    richPreviews,
     selectedIds,
     starred,
     selectionMode,
@@ -64,6 +89,7 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
     view.type === "folder" && !searchQuery.trim() && (folderListingPending || listLoading);
 
   const { show, showError } = useAppToast();
+  const { online } = useConnectivity();
 
   const handleDownload = (file: DriveFile) => {
     if (operations && file.apiPath && file.kind !== "folder") {
@@ -77,9 +103,8 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
 
   const searchActive = Boolean(searchQuery.trim());
 
-  const browserProps = {
+  const sharedBrowserProps = {
     items: visibleItems,
-    imagePreviewUrls,
     selectedIds,
     starred,
     labels,
@@ -91,14 +116,37 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
     itemDragHandlers,
     folderDropZoneProps,
     onSelect: handleSelect,
-    onOpen: openFile,
+    onOpen: openFileOverride ?? openFile,
     onLongPress: enterSelectionFor,
     onStar: toggleStar,
     onDownload: handleDownload,
     onRename: requestRenameItem,
     onMove: requestMoveItem,
     onTrash: requestDeleteItem,
+    offlineEnabled,
+    offlineAvailableIds,
+    offlinePendingSyncIds,
+    onMakeOfflineAvailable,
+    canPinOffline: online,
+    pinLoadingId,
+    extraFileActions,
+    offlineBadgeLabels: {
+      offlineAvailable: labels.offlineAvailable,
+      offlinePendingSync: labels.offlinePendingSync,
+    },
   };
+
+  const gridFilePreviews = useMemo(() => {
+    if (Object.keys(richPreviews).length === 0) return filePreviews;
+    const merged: Record<string, FilePreviewPayload> = { ...filePreviews };
+    for (const file of visibleItems) {
+      const resolved = resolveGridFilePreview(filePreviews, richPreviews, file.id);
+      if (resolved) merged[file.id] = resolved;
+    }
+    return merged;
+  }, [filePreviews, richPreviews, visibleItems]);
+
+  const gridBrowserProps = { ...sharedBrowserProps, filePreviews: gridFilePreviews };
 
   const dropTargetLabel =
     view.type === "folder"
@@ -106,6 +154,9 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
       : labels.sidebarMyDrive;
 
   const showMobileDetail = Boolean(detailOpen && active);
+  const showMobileDetailOverlay = showMobileDetail;
+  const showDesktopDetailAside = Boolean(active);
+  const desktopDetailOpen = Boolean(detailOpen && active);
   const [mobileOverlayMount, setMobileOverlayMount] = useState(false);
   const [mobileOverlayVisible, setMobileOverlayVisible] = useState(false);
 
@@ -115,7 +166,7 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
       setMobileOverlayVisible(false);
       return;
     }
-    if (!showMobileDetail) {
+    if (!showMobileDetailOverlay) {
       setMobileOverlayVisible(false);
       return;
     }
@@ -128,7 +179,7 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
       cancelAnimationFrame(outerFrame);
       if (innerFrame !== undefined) cancelAnimationFrame(innerFrame);
     };
-  }, [showMobileDetail, active]);
+  }, [showMobileDetailOverlay, active]);
 
   const handleMobileOverlayTransitionEnd = (event: TransitionEvent<HTMLDivElement>) => {
     if (event.target !== event.currentTarget) return;
@@ -137,6 +188,14 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
       setMobileOverlayMount(false);
     }
   };
+
+  const handleDetailClose = () => {
+    setDetailOpen(false);
+  };
+
+  const activePreview = active
+    ? resolveDetailFilePreview(filePreviews, richPreviews, active.id)
+    : undefined;
 
   return (
     <section
@@ -186,24 +245,28 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
               {labels.emptyFolder}
             </CollectionState>
           ) : viewMode === "grid" ? (
-            <DriveGridView {...browserProps} />
+            <DriveGridView {...gridBrowserProps} />
           ) : (
-            <DriveListView {...browserProps} activeId={activeId} />
+            <DriveListView {...sharedBrowserProps} activeId={activeId} />
           )}
         </div>
 
-        {detailOpen && active ? (
-          <aside className="drive-detail-aside">
+        {showDesktopDetailAside && active ? (
+          <aside
+            className="drive-detail-aside"
+            data-open={desktopDetailOpen ? "true" : "false"}
+            inert={desktopDetailOpen ? undefined : true}
+          >
             <DriveDetailPanel
               {...buildDetailPanelProps({
                 labels,
                 file: active,
-                previewSrc: imagePreviewUrls[active.id],
+                preview: activePreview,
                 isStarred: !!starred[active.id],
                 inTrash: inTrashView,
                 operations,
                 showError,
-                onClose: () => setDetailOpen(false),
+                onClose: handleDetailClose,
                 onStar: () => toggleStar(active.id),
                 onRename: () => requestRenameItem(active),
                 onMove: () => requestMoveItem(active),
@@ -229,12 +292,12 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
             {...buildDetailPanelProps({
               labels,
               file: active,
-              previewSrc: imagePreviewUrls[active.id],
+              preview: activePreview,
               isStarred: !!starred[active.id],
               inTrash: inTrashView,
               operations,
               showError,
-              onClose: () => setDetailOpen(false),
+              onClose: handleDetailClose,
               onStar: () => toggleStar(active.id),
               onRename: () => requestRenameItem(active),
               onMove: () => requestMoveItem(active),
@@ -267,7 +330,7 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
 function buildDetailPanelProps({
   labels,
   file,
-  previewSrc,
+  preview,
   isStarred,
   inTrash,
   operations,
@@ -281,7 +344,7 @@ function buildDetailPanelProps({
 }: {
   labels: DriveUILabels;
   file: DriveFile;
-  previewSrc?: string;
+  preview?: FilePreviewPayload;
   isStarred: boolean;
   inTrash: boolean;
   operations?: DriveAPIOperations;
@@ -296,7 +359,7 @@ function buildDetailPanelProps({
   return {
     labels,
     file,
-    previewSrc,
+    preview,
     isStarred,
     inTrash,
     onClose,

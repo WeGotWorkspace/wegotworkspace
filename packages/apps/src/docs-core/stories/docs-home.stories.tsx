@@ -248,7 +248,6 @@ function OfflineCachedListingHarness() {
         loadingMore={false}
         hasMore={false}
         error={null}
-        offlineUnavailableIds={new Set([String(files[1]?.id ?? "")])}
         query=""
         onQueryChange={() => {}}
         viewMode="list"
@@ -274,8 +273,20 @@ export const Pane: StoryObj<typeof DocsHomePane> = {
   },
 };
 
-function DocsHomePaneHarness() {
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
+/** Grid tiles show indexed snippet previews from unified search. */
+export const GridTextPreviews: StoryObj<typeof DocsHomePane> = {
+  name: "Grid (text previews)",
+  tags: ["vitest-ci"],
+  render: () => <DocsHomePaneHarness initialViewMode="grid" />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(await canvas.findByRole("button", { name: "Roadmap 2026" })).toBeInTheDocument();
+    await expect(canvas.getByText(/Preview of Roadmap/i)).toBeInTheDocument();
+  },
+};
+
+function DocsHomePaneHarness({ initialViewMode = "list" }: { initialViewMode?: ViewMode }) {
+  const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
   const [query, setQuery] = useState("");
   const files = mapDocsHomeResults(FIXTURES, session.user.username ?? "alice");
   return (

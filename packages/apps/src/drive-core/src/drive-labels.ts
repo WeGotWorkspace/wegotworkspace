@@ -8,6 +8,7 @@ export const driveLabels = {
   searchViewTitle: "Search",
   listColumnName: "Name",
   listColumnActions: "Actions",
+  listColumnOffline: "Offline",
   emptyFolder: "This folder is empty",
   folderListingLoading: "Loading folder…",
   dropUploadHint: "Drop files to upload to",
@@ -21,6 +22,7 @@ export const driveLabels = {
   newPresentation: "New pptx",
   gridView: "Grid view",
   listView: "List view",
+  detailPanelToggle: "Details panel",
   selectionDone: "Done",
   selectionStar: "Star",
   selectionMove: "Move",
@@ -52,6 +54,11 @@ export const driveLabels = {
   createMarkdownDialogNamePlaceholder: "Name",
   createMarkdownDialogCancel: "Cancel",
   createMarkdownDialogConfirm: "Create",
+  offlineMakeAvailable: "Make available offline",
+  offlineRemoveCopy: "Remove offline copy",
+  offlineDownloading: "Downloading for offline use",
+  offlineAvailable: "Available offline",
+  offlinePendingSync: "Pending sync",
 } as const;
 
 export type DriveUILabels = typeof driveLabels;

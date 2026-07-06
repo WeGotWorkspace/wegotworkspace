@@ -1,4 +1,4 @@
-import { Mail as MailIcon, User, Users } from "lucide-react";
+import { HardDrive, Mail as MailIcon, User, Users } from "lucide-react";
 import type { SettingsSectionDescriptor } from "@/settings-core/src/settings-types";
 
 export function useSettingsSidebarModel(): Array<
@@ -22,6 +22,12 @@ export function useSettingsSidebarModel(): Array<
       label: "Mail",
       description: "IMAP & SMTP credentials",
       icon: <MailIcon className="size-3.5" />,
+    },
+    {
+      id: "offline",
+      label: "Offline",
+      description: "Offline content sync on this device",
+      icon: <HardDrive className="size-3.5" />,
     },
   ];
 }

@@ -1,0 +1,107 @@
+@import "../../styles.css" reference;
+
+.docs-file-preview {
+  @apply flex h-full w-full min-h-0 flex-col overflow-auto;
+  background-color: color-mix(in oklab, var(--color-background, #fff) 96%, transparent);
+}
+
+.docs-file-preview__editor {
+  @apply min-h-0 flex-1;
+}
+
+.docs-file-preview .text-editor-sheet {
+  @apply min-h-0;
+}
+
+.docs-file-preview .text-editor-sheet--fill {
+  @apply shadow-none;
+}
+
+.docs-file-preview--tile {
+  --docs-file-preview-tile-page-width: 8.5in;
+  --docs-file-preview-tile-scale: 1;
+  @apply overflow-hidden pointer-events-none;
+  background-color: var(--color-cream, #fff);
+}
+
+.docs-file-preview__tile-scale {
+  @apply absolute inset-0 h-full w-full overflow-hidden;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.docs-file-preview__tile-page {
+  width: var(--docs-file-preview-tile-page-width);
+  flex-shrink: 0;
+  transform: scale(var(--docs-file-preview-tile-scale));
+  transform-origin: top center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .docs-file-preview__tile-page {
+    transition: none;
+  }
+}
+
+.docs-file-preview--tile .docs-file-preview__editor,
+.docs-file-preview--tile .text-editor-sheet {
+  @apply h-auto w-full flex-none min-h-0;
+}
+
+.docs-file-preview--tile .text-editor-sheet__surface {
+  box-shadow: var(--text-editor-shadow-sheet);
+  border: 1px solid color-mix(in oklab, var(--foreground) 8%, transparent);
+}
+
+.drive-workspace .drive-file-tile__preview .docs-file-preview--tile,
+.drive-workspace .drive-file-tile__preview .file-preview__tile-docs-lazy {
+  @apply absolute inset-0 h-full w-full;
+}
+
+.drive-workspace .drive-detail-panel__preview .docs-file-preview,
+.drive-workspace .drive-detail-panel__preview .docs-file-preview__editor {
+  @apply absolute inset-0 h-full w-full;
+}
+
+/* Mobile detail overlay: centered letter-sized sheet with side margins. */
+.drive-workspace .drive-detail-overlay .drive-detail-panel__preview .docs-file-preview {
+  --docs-file-preview-mobile-sheet-width: min(100% - 2rem, 28rem);
+  background-color: transparent;
+  align-items: center;
+  padding: 1rem;
+}
+
+.drive-workspace .drive-detail-overlay .drive-detail-panel__preview .docs-file-preview__editor {
+  position: relative;
+  inset: auto;
+  height: auto;
+  width: min(100%, var(--docs-file-preview-mobile-sheet-width));
+  flex: none;
+  margin-inline: auto;
+}
+
+.drive-workspace
+  .drive-detail-overlay
+  .drive-detail-panel__preview
+  .docs-file-preview
+  .text-editor-sheet--fill {
+  align-items: center;
+  flex: none;
+  width: 100%;
+}
+
+.drive-workspace
+  .drive-detail-overlay
+  .drive-detail-panel__preview
+  .docs-file-preview
+  .text-editor-sheet--fill
+  .text-editor-sheet__surface {
+  width: 100%;
+  max-width: none;
+  flex: 0 1 auto;
+  min-height: auto;
+  margin-block: 0;
+  box-shadow: var(--text-editor-shadow-sheet);
+  border: 1px solid color-mix(in oklab, var(--foreground) 8%, transparent);
+}

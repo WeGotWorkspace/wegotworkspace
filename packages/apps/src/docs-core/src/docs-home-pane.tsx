@@ -13,6 +13,8 @@ import type { DriveFile } from "@/drive-core/src/drive-models";
 import { driveLabels } from "@/drive-core/src/drive-labels";
 import { useDriveSelectionBar } from "@/drive-core/src/use-drive-selection-bar";
 import type { DriveAPIOperations } from "@/drive-core/src/drive-types";
+import { useDriveGridPreviews } from "@/drive-core/src/use-drive-grid-previews";
+import { resolveGridFilePreview } from "@/lib/file-preview/file-preview-utils";
 import type { DocsUILabels } from "@/docs-core/src/docs-labels";
 
 /** The home list is server-driven; the controller never mutates items locally. */
@@ -27,8 +29,6 @@ export type DocsHomePaneProps = {
   loadingMore: boolean;
   hasMore: boolean;
   error: string | null;
-  /** Row ids that cannot be opened while offline (muted styling). */
-  offlineUnavailableIds?: ReadonlySet<string>;
   /** Row ids with pending offline sync (collab save, outbox, or body hydration). */
   offlinePendingSyncIds?: ReadonlySet<string>;
   offlineLabels?: {
@@ -56,6 +56,8 @@ export type DocsHomePaneProps = {
   requestDeleteSelected?: (ids: string[]) => void;
   /** Undo the latest queued trash mutation (toast or Cmd+Z). */
   onUndoQueuedAction?: () => boolean;
+  /** When false, the header search field is hidden (e.g. offline without live search). */
+  searchEnabled?: boolean;
 };
 
 export function DocsHomePane({
@@ -65,7 +67,6 @@ export function DocsHomePane({
   loadingMore,
   hasMore,
   error,
-  offlineUnavailableIds,
   offlinePendingSyncIds,
   offlineLabels,
   query,
@@ -87,6 +88,7 @@ export function DocsHomePane({
   requestMoveSelected,
   requestDeleteSelected,
   onUndoQueuedAction,
+  searchEnabled = true,
 }: DocsHomePaneProps) {
   const filesById = useMemo(() => {
     const map = new Map<string, DriveFile>();
@@ -100,6 +102,22 @@ export function DocsHomePane({
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const visibleIds = useMemo(() => files.map((file) => file.id), [files]);
+
+  const { filePreviews, richPreviews } = useDriveGridPreviews({
+    items: files,
+    operations,
+    enabled: viewMode === "grid",
+  });
+
+  const gridFilePreviews = useMemo(() => {
+    if (Object.keys(richPreviews).length === 0) return filePreviews;
+    const merged = { ...filePreviews };
+    for (const file of files) {
+      const resolved = resolveGridFilePreview(filePreviews, richPreviews, file.id);
+      if (resolved) merged[file.id] = resolved;
+    }
+    return merged;
+  }, [filePreviews, richPreviews, files]);
 
   // Reuse Drive's shared list controller so select/drag/keyboard behave identically.
   const {
@@ -179,9 +197,8 @@ export function DocsHomePane({
     onUndoQueuedAction: onUndoQueuedAction ?? noopUndo,
   });
 
-  const browserProps = {
+  const sharedBrowserProps = {
     items: files,
-    imagePreviewUrls: {},
     selectedIds,
     starred: starred ?? {},
     labels: driveLabels,
@@ -201,10 +218,11 @@ export function DocsHomePane({
     onRename: onRename ?? noop,
     onMove: onMove ?? noop,
     onTrash: onTrash ?? noop,
-    offlineUnavailableIds,
     offlinePendingSyncIds,
     offlineBadgeLabels: offlineLabels,
   };
+
+  const gridBrowserProps = { ...sharedBrowserProps, filePreviews: gridFilePreviews };
 
   return (
     <section className="docs-home-pane">
@@ -213,9 +231,9 @@ export function DocsHomePane({
           title={labels.homeTitle}
           sidebarOpen={sidebarOpen}
           onToggleSidebar={onToggleSidebar}
-          searchPlaceholder={labels.homeSearchPlaceholder}
-          searchValue={query}
-          onSearchInput={onQueryChange}
+          searchPlaceholder={searchEnabled ? labels.homeSearchPlaceholder : undefined}
+          searchValue={searchEnabled ? query : undefined}
+          onSearchInput={searchEnabled ? onQueryChange : undefined}
           searchInputRef={searchInputRef}
           actions={
             <ViewModeToggle
@@ -240,10 +258,10 @@ export function DocsHomePane({
         ) : (
           <>
             {viewMode === "grid" ? (
-              <DriveGridView {...browserProps} />
+              <DriveGridView {...gridBrowserProps} />
             ) : (
               <DriveListView
-                {...browserProps}
+                {...sharedBrowserProps}
                 activeId={activeId}
                 showKindColumn={false}
                 locationColumnLabel={labels.homeLocationColumn}

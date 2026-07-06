@@ -222,6 +222,8 @@
 
 .docs-dialog-surface {
   --docs-accent: #3b82f6;
+  --destination-picker-accent: var(--docs-accent);
+  --color-emerald: var(--docs-accent);
   --button-primary-bg: var(--docs-accent);
   --button-primary-fg: #ffffff;
   --primary: var(--docs-accent);

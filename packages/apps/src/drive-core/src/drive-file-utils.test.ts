@@ -60,6 +60,8 @@ describe("formatBytesCompact", () => {
     expect(formatBytesCompact(0)).toBe("0 B");
     expect(formatBytesCompact(1500)).toBe("1.5 KB");
     expect(formatBytesCompact(2048)).toBe("2.0 KB");
+    expect(formatBytesCompact(1024 * 1024)).toBe("1.0 MB");
+    expect(formatBytesCompact(1_500_000)).toBe("1.4 MB");
   });
 });
 

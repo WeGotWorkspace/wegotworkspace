@@ -1,7 +1,7 @@
 import { MoreHorizontal } from "lucide-react";
 import type { ActionBarAction } from "@/action-bar/src/action-bar";
-import { IconButton } from "@/button/src/button";
 import { DropdownMenu } from "@/menu-dropdown/src/dropdown-menu";
+import { DriveItemIconButton } from "@/drive-core/src/drive-item-icon-button";
 
 export function DriveFileItemActionsMenu({
   actions,
@@ -28,14 +28,11 @@ export function DriveFileItemActionsMenu({
             : "cursor-pointer gap-2.5",
       }))}
       trigger={
-        <IconButton
+        <DriveItemIconButton
           label="More actions"
           icon={<MoreHorizontal />}
-          size="sm"
-          variant="subtle"
           showTooltip={false}
           disabled={disabled}
-          onClick={(event) => event.stopPropagation()}
         />
       }
     />

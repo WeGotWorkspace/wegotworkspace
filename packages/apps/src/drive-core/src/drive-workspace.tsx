@@ -1,4 +1,9 @@
 import { TooltipProvider } from "@/ui/tooltip";
+import { useCallback, useEffect } from "react";
+import { PanelRight } from "lucide-react";
+import { IconButton } from "@/button/src/button";
+import { useAppToast } from "@/hooks/use-app-toast";
+import { useConnectivity } from "@/hooks/use-connectivity";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
 import {
@@ -17,6 +22,15 @@ import { useDocumentTitle } from "@/lib/document-title";
 import { useDriveSidebarModel } from "@/drive-core/src/use-drive-sidebar-model";
 import type { DriveWorkspaceProps } from "@/drive-core/src/drive-workspace-props";
 import { DriveWorkspaceModals } from "@/drive-core/src/drive-workspace-modals";
+import {
+  useDriveOfflineAvailability,
+  useDriveOfflineOpenGuard,
+} from "@/drive-core/src/use-drive-offline-availability";
+import { useDriveOfflineFileActions } from "@/drive-core/src/use-drive-offline-file-actions";
+import { getDriveSyncRunner } from "@/lib/offline/drive/drive-hybrid-operations";
+import { useOfflineReconnectFlush } from "@/lib/offline/use-offline-reconnect-flush";
+import { useOfflineSyncToast } from "@/lib/offline/use-offline-sync-toast";
+import type { DriveFile } from "@/drive-core/src/drive-models";
 import "@/drive-core/src/drive-workspace.css";
 
 export function DriveWorkspace({
@@ -24,6 +38,7 @@ export function DriveWorkspace({
   session,
   operations,
   listLoading = false,
+  offlineUsername = null,
   view,
   onViewChange,
   onOpenDocsFile,
@@ -31,6 +46,11 @@ export function DriveWorkspace({
   onLogout,
   className,
 }: DriveWorkspaceProps) {
+  const { showError } = useAppToast();
+  const { online } = useConnectivity();
+  const offlineEnabled = Boolean(offlineUsername);
+  const searchEnabled = !offlineEnabled || online;
+
   const controller = useDriveController({
     data,
     session,
@@ -41,6 +61,53 @@ export function DriveWorkspace({
     onOpenDocsFile,
     onNavigate,
   });
+
+  const {
+    offlineAvailableIds: rowOfflineAvailableIds,
+    offlinePendingSyncIds: rowOfflinePendingSyncIds,
+    refresh,
+  } = useDriveOfflineAvailability(controller.visibleItems, offlineEnabled, offlineUsername);
+
+  const canOpenOffline = useDriveOfflineOpenGuard(
+    controller.visibleItems,
+    rowOfflineAvailableIds,
+    offlineEnabled,
+  );
+
+  const { extraFileActions, pinOfflineFile, pinLoadingId } = useDriveOfflineFileActions({
+    username: offlineUsername,
+    offlineAvailableIds: rowOfflineAvailableIds,
+    onChanged: refresh,
+  });
+
+  const handleMakeOfflineAvailable = useCallback(
+    (file: DriveFile) => {
+      void pinOfflineFile(file);
+    },
+    [pinOfflineFile],
+  );
+
+  const guardedOpenFile = useCallback(
+    (file: DriveFile) => {
+      if (!canOpenOffline(file)) {
+        showError("This file is not available offline. Make it available while online.");
+        return;
+      }
+      controller.openFile(file);
+    },
+    [canOpenOffline, controller, showError],
+  );
+
+  const syncing = useOfflineReconnectFlush({
+    enabled: offlineEnabled,
+    flush: async () => {
+      if (!offlineUsername) return;
+      await getDriveSyncRunner(offlineUsername).flush();
+    },
+    afterFlush: refresh,
+  });
+
+  useOfflineSyncToast(syncing, "Changes synced");
   const { primarySidebarItems, groupSidebarItems } = useDriveSidebarModel({
     labels: controller.labels,
     view: controller.view,
@@ -50,9 +117,14 @@ export function DriveWorkspace({
     commitMoveToFolder: controller.commitMoveToFolder,
   });
 
-  const browserTitleContext = controller.searchQuery.trim()
-    ? controller.labels.searchViewTitle
-    : controller.viewLabel;
+  const { searchQuery, setSearchQuery } = controller;
+
+  useEffect(() => {
+    if (!searchEnabled && searchQuery) setSearchQuery("");
+  }, [searchEnabled, searchQuery, setSearchQuery]);
+
+  const browserTitleContext =
+    searchEnabled && searchQuery.trim() ? controller.labels.searchViewTitle : controller.viewLabel;
   useDocumentTitle(browserTitleContext);
 
   return (
@@ -70,9 +142,25 @@ export function DriveWorkspace({
           />
         }
         mainHeader={
-          <DriveMainHeader controller={controller} unifiedSearchEnabled={Boolean(operations)} />
+          <DriveMainHeader
+            controller={controller}
+            unifiedSearchEnabled={Boolean(operations)}
+            searchEnabled={searchEnabled}
+          />
         }
-        main={<DriveMainPane controller={controller} operations={operations} />}
+        main={
+          <DriveMainPane
+            controller={controller}
+            operations={operations}
+            openFile={guardedOpenFile}
+            offlineEnabled={offlineEnabled}
+            offlineAvailableIds={rowOfflineAvailableIds}
+            offlinePendingSyncIds={rowOfflinePendingSyncIds}
+            onMakeOfflineAvailable={handleMakeOfflineAvailable}
+            pinLoadingId={pinLoadingId}
+            extraFileActions={offlineEnabled ? extraFileActions : undefined}
+          />
+        }
       />
       <DriveWorkspaceModals controller={controller} />
       <input
@@ -152,9 +240,11 @@ function DriveSidebar({
 function DriveMainHeader({
   controller,
   unifiedSearchEnabled,
+  searchEnabled,
 }: {
   controller: DriveController;
   unifiedSearchEnabled: boolean;
+  searchEnabled: boolean;
 }) {
   const {
     labels,
@@ -167,19 +257,21 @@ function DriveMainHeader({
     setSearchQuery,
     searchInputRef,
     handleUnifiedSearchSelect,
+    detailOpen,
+    setDetailOpen,
   } = controller;
 
   return (
     <ViewHeader
       sidebarOpen={sidebarOpen}
       onToggleSidebar={() => setSidebarOpen((v) => !v)}
-      title={searchQuery.trim() ? labels.searchViewTitle : viewLabel}
-      searchPlaceholder={labels.searchPlaceholder}
-      searchValue={searchQuery}
-      onSearchInput={setSearchQuery}
+      title={searchEnabled && searchQuery.trim() ? labels.searchViewTitle : viewLabel}
+      searchPlaceholder={searchEnabled ? labels.searchPlaceholder : undefined}
+      searchValue={searchEnabled ? searchQuery : undefined}
+      onSearchInput={searchEnabled ? setSearchQuery : undefined}
       searchInputRef={searchInputRef}
       searchContent={
-        unifiedSearchEnabled ? (
+        searchEnabled && unifiedSearchEnabled ? (
           <UnifiedSearchApiDropdown
             className="drive-main-header__search-dropdown"
             query={searchQuery}
@@ -189,12 +281,22 @@ function DriveMainHeader({
         ) : null
       }
       actions={
-        <ViewModeToggle
-          value={viewMode}
-          onChange={setViewMode}
-          gridLabel={labels.gridView}
-          listLabel={labels.listView}
-        />
+        <div className="drive-main-header__actions">
+          <ViewModeToggle
+            value={viewMode}
+            onChange={setViewMode}
+            gridLabel={labels.gridView}
+            listLabel={labels.listView}
+          />
+          <IconButton
+            label={labels.detailPanelToggle}
+            icon={<PanelRight className="size-4" aria-hidden />}
+            size="sm"
+            variant="subtle"
+            active={detailOpen}
+            onClick={() => setDetailOpen((open) => !open)}
+          />
+        </div>
       }
     />
   );

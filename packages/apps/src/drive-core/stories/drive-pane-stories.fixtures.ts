@@ -3,6 +3,7 @@ import { DRIVE_MOCK_FILES } from "@/drive-core/src/drive-mock-files";
 import { driveLabels } from "@/drive-core/src/drive-labels";
 import type { DriveFile, FileKind } from "@/drive-core/src/drive-models";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
+import type { FilePreviewPayload } from "@/lib/file-preview/file-preview-types";
 import type { MenuItemProps } from "@/menu-item/src/menu-item";
 import { STORY_NOOP } from "@/drive-core/stories/drive-story-shared";
 
@@ -46,7 +47,7 @@ type FolderDropZoneProps = Pick<
 
 export type DriveBrowserStoryProps = {
   items: DriveFile[];
-  imagePreviewUrls: Record<string, string>;
+  filePreviews: Record<string, FilePreviewPayload>;
   selectedIds: string[];
   starred: Record<string, boolean>;
   selectionMode: boolean;
@@ -73,7 +74,7 @@ export function createDriveBrowserStoryProps(
 ): DriveBrowserStoryProps {
   return {
     items: getDriveStoryFilesInMyDrive(),
-    imagePreviewUrls: {},
+    filePreviews: {},
     selectedIds: [],
     starred: {},
     selectionMode: false,

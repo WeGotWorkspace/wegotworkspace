@@ -12,28 +12,25 @@ import {
   type DocsHomeFetcher,
 } from "@/docs-core/src/use-docs-home-list";
 import { getConnectivitySnapshot } from "@/lib/offline/core/browser-online";
-import { readMeta, writeMeta } from "@/lib/offline/core/meta-store";
+import {
+  isEligibleForAutoContentSync,
+  readOfflineDeviceContentSettings,
+} from "@/lib/offline/core/offline-device-settings";
+import {
+  emptyProgressiveSyncProgress,
+  readProgressiveSyncProgress,
+  runProgressiveSync,
+  type ProgressiveSyncProgress,
+} from "@/lib/offline/core/progressive-sync-runner";
 import { makeDocsOfflineAvailable } from "@/lib/offline/docs/docs-offline-pin-core";
 
 const DOCS_BODY_SYNC_META_KEY = "docs:auto-sync:body-progress";
 const DOCS_BODY_SYNC_CONCURRENCY = 4;
 
-export type DocsBodySyncProgress = {
-  running: boolean;
-  total: number;
-  synced: number;
-  failed: number;
-  updatedAt: number;
-};
+export type DocsBodySyncProgress = ProgressiveSyncProgress;
 
 function emptyProgress(): DocsBodySyncProgress {
-  return {
-    running: false,
-    total: 0,
-    synced: 0,
-    failed: 0,
-    updatedAt: Date.now(),
-  };
+  return emptyProgressiveSyncProgress();
 }
 
 function normalizeSourceKey(sourceKey: string): string {
@@ -68,22 +65,8 @@ function fileLocationFromSourceKey(sourceKey: string, username: string): string 
   return "Documents";
 }
 
-async function writeProgress(username: string, progress: DocsBodySyncProgress): Promise<void> {
-  await writeMeta(username, DOCS_BODY_SYNC_META_KEY, JSON.stringify(progress));
-}
-
 export async function readDocsBodySyncProgress(username: string): Promise<DocsBodySyncProgress> {
-  const raw = await readMeta(username, DOCS_BODY_SYNC_META_KEY);
-  if (!raw) return emptyProgress();
-  try {
-    return {
-      ...emptyProgress(),
-      ...(JSON.parse(raw) as Partial<DocsBodySyncProgress>),
-      updatedAt: Date.now(),
-    };
-  } catch {
-    return emptyProgress();
-  }
+  return readProgressiveSyncProgress(username, DOCS_BODY_SYNC_META_KEY);
 }
 
 export async function syncDocsBodiesFromListingResults(
@@ -92,56 +75,32 @@ export async function syncDocsBodiesFromListingResults(
   options?: { signal?: AbortSignal },
 ): Promise<DocsBodySyncProgress> {
   if (!username || !getConnectivitySnapshot()) return emptyProgress();
+  const settings = readOfflineDeviceContentSettings();
+  if (!settings.contentSyncEnabled) return emptyProgress();
+
   const signal = options?.signal;
   const newestFirst = sortDocsHomeResults(results);
-  const queue = newestFirst.filter((row) => isSupportedHomeDoc(row.sourceKey, username));
-  const progress: DocsBodySyncProgress = {
-    running: true,
-    total: queue.length,
-    synced: 0,
-    failed: 0,
-    updatedAt: Date.now(),
-  };
-  await writeProgress(username, progress);
-
-  let cursor = 0;
-  const next = (): WgwUnifiedSearchResult | undefined => {
-    const row = queue[cursor];
-    cursor += 1;
-    return row;
-  };
-
-  const worker = async () => {
-    while (true) {
-      if (signal?.aborted) return;
-      const row = next();
-      if (!row) return;
-      const apiPath = `/${normalizeSourceKey(row.sourceKey)}`;
-      try {
-        await makeDocsOfflineAvailable(
-          username,
-          apiPath,
-          fileLocationFromSourceKey(row.sourceKey, username),
-        );
-        progress.synced += 1;
-      } catch {
-        progress.failed += 1;
-      }
-      progress.updatedAt = Date.now();
-      await writeProgress(username, progress);
-    }
-  };
-
-  await Promise.all(
-    Array.from({ length: Math.min(DOCS_BODY_SYNC_CONCURRENCY, Math.max(queue.length, 1)) }, () =>
-      worker(),
-    ),
+  const queue = newestFirst.filter(
+    (row) =>
+      isSupportedHomeDoc(row.sourceKey, username) &&
+      isEligibleForAutoContentSync(row.size, settings),
   );
 
-  progress.running = false;
-  progress.updatedAt = Date.now();
-  await writeProgress(username, progress);
-  return progress;
+  return runProgressiveSync({
+    username,
+    metaKey: DOCS_BODY_SYNC_META_KEY,
+    items: queue,
+    concurrency: DOCS_BODY_SYNC_CONCURRENCY,
+    signal,
+    syncOne: async (row) => {
+      const apiPath = `/${normalizeSourceKey(row.sourceKey)}`;
+      await makeDocsOfflineAvailable(
+        username,
+        apiPath,
+        fileLocationFromSourceKey(row.sourceKey, username),
+      );
+    },
+  });
 }
 
 export async function syncDocsBodiesFromHomeListing(
