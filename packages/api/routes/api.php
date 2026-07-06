@@ -41,6 +41,7 @@ use App\Http\Controllers\Api\V1\Plugins\ActivationController as PluginsActivatio
 use App\Http\Controllers\Api\V1\Plugins\IndexController as PluginsIndexController;
 use App\Http\Controllers\Api\V1\Plugins\SessionController as PluginsSessionController;
 use App\Http\Controllers\Api\V1\Rooms\RoomSessionController;
+use App\Http\Controllers\Api\V1\Search\SearchDocumentsController;
 use App\Http\Controllers\Api\V1\Search\UnifiedSearchController;
 use App\Http\Controllers\Api\V1\Search\UnifiedSearchDownloadController;
 use App\Http\Controllers\Api\V1\Settings\MailController as SettingsMailController;
@@ -127,6 +128,8 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($filesS
     });
 
     Route::get('search/results', UnifiedSearchController::class);
+    Route::get('search/documents/changes', [SearchDocumentsController::class, 'changes']);
+    Route::get('search/documents', [SearchDocumentsController::class, 'index']);
     Route::get('search/results/{resultId}/content', [UnifiedSearchDownloadController::class, 'contentByResultId'])
         ->where('resultId', '.+');
 
