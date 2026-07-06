@@ -9,6 +9,8 @@ export type UseWorkspaceListKeyboardShortcutsOptions = {
   onRequestDeleteSelection: () => void;
   onNavigateList?: (direction: -1 | 1, extendSelection: boolean) => void;
   onUndoQueuedAction?: () => boolean;
+  /** When false, arrow/space/delete list shortcuts are suppressed. */
+  listNavigationEnabled?: boolean;
 };
 
 /**
@@ -23,6 +25,7 @@ export function useWorkspaceListKeyboardShortcuts({
   onRequestDeleteSelection,
   onNavigateList,
   onUndoQueuedAction,
+  listNavigationEnabled = true,
 }: UseWorkspaceListKeyboardShortcutsOptions) {
   useEffect(() => {
     const isMac =
@@ -58,6 +61,7 @@ export function useWorkspaceListKeyboardShortcuts({
         if (handled) e.preventDefault();
         return;
       }
+      if (!listNavigationEnabled) return;
       if (e.code === "Space") {
         spaceHeld = true;
       }
@@ -92,5 +96,6 @@ export function useWorkspaceListKeyboardShortcuts({
     onRequestDeleteSelection,
     onNavigateList,
     onUndoQueuedAction,
+    listNavigationEnabled,
   ]);
 }

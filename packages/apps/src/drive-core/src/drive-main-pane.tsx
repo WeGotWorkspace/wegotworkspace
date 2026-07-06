@@ -1,4 +1,4 @@
-import { useEffect, useState, type TransitionEvent } from "react";
+import { useEffect, useMemo, useState, type TransitionEvent } from "react";
 import { Cloud, Download } from "lucide-react";
 import { useConnectivity } from "@/hooks/use-connectivity";
 import { DriveViewIcon } from "@/drive-core/src/drive-view-icons";
@@ -12,6 +12,11 @@ import { DriveDetailPanel, DriveGridView, DriveListView } from "@/drive-core/src
 import type { DriveFile } from "@/drive-core/src/drive-models";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
 import type { DriveAPIOperations } from "@/drive-core/src/drive-types";
+import type { FilePreviewPayload } from "@/lib/file-preview/file-preview-types";
+import {
+  resolveDetailFilePreview,
+  resolveGridFilePreview,
+} from "@/lib/file-preview/file-preview-utils";
 import type { ActionBarAction } from "@/action-bar/src/action-bar";
 import type { useDriveController } from "@/drive-core/src/use-drive-controller";
 
@@ -50,7 +55,8 @@ export function DriveMainPane({
     selectView,
     visibleItems,
     viewMode,
-    imagePreviewUrls,
+    filePreviews,
+    richPreviews,
     selectedIds,
     starred,
     selectionMode,
@@ -97,9 +103,8 @@ export function DriveMainPane({
 
   const searchActive = Boolean(searchQuery.trim());
 
-  const browserProps = {
+  const sharedBrowserProps = {
     items: visibleItems,
-    imagePreviewUrls,
     selectedIds,
     starred,
     labels,
@@ -131,12 +136,27 @@ export function DriveMainPane({
     },
   };
 
+  const gridFilePreviews = useMemo(() => {
+    if (Object.keys(richPreviews).length === 0) return filePreviews;
+    const merged: Record<string, FilePreviewPayload> = { ...filePreviews };
+    for (const file of visibleItems) {
+      const resolved = resolveGridFilePreview(filePreviews, richPreviews, file.id);
+      if (resolved) merged[file.id] = resolved;
+    }
+    return merged;
+  }, [filePreviews, richPreviews, visibleItems]);
+
+  const gridBrowserProps = { ...sharedBrowserProps, filePreviews: gridFilePreviews };
+
   const dropTargetLabel =
     view.type === "folder"
       ? view.path.split("/").pop() || labels.sidebarMyDrive
       : labels.sidebarMyDrive;
 
   const showMobileDetail = Boolean(detailOpen && active);
+  const showMobileDetailOverlay = showMobileDetail;
+  const showDesktopDetailAside = Boolean(active);
+  const desktopDetailOpen = Boolean(detailOpen && active);
   const [mobileOverlayMount, setMobileOverlayMount] = useState(false);
   const [mobileOverlayVisible, setMobileOverlayVisible] = useState(false);
 
@@ -146,7 +166,7 @@ export function DriveMainPane({
       setMobileOverlayVisible(false);
       return;
     }
-    if (!showMobileDetail) {
+    if (!showMobileDetailOverlay) {
       setMobileOverlayVisible(false);
       return;
     }
@@ -159,7 +179,7 @@ export function DriveMainPane({
       cancelAnimationFrame(outerFrame);
       if (innerFrame !== undefined) cancelAnimationFrame(innerFrame);
     };
-  }, [showMobileDetail, active]);
+  }, [showMobileDetailOverlay, active]);
 
   const handleMobileOverlayTransitionEnd = (event: TransitionEvent<HTMLDivElement>) => {
     if (event.target !== event.currentTarget) return;
@@ -168,6 +188,14 @@ export function DriveMainPane({
       setMobileOverlayMount(false);
     }
   };
+
+  const handleDetailClose = () => {
+    setDetailOpen(false);
+  };
+
+  const activePreview = active
+    ? resolveDetailFilePreview(filePreviews, richPreviews, active.id)
+    : undefined;
 
   return (
     <section
@@ -217,24 +245,28 @@ export function DriveMainPane({
               {labels.emptyFolder}
             </CollectionState>
           ) : viewMode === "grid" ? (
-            <DriveGridView {...browserProps} />
+            <DriveGridView {...gridBrowserProps} />
           ) : (
-            <DriveListView {...browserProps} activeId={activeId} />
+            <DriveListView {...sharedBrowserProps} activeId={activeId} />
           )}
         </div>
 
-        {detailOpen && active ? (
-          <aside className="drive-detail-aside">
+        {showDesktopDetailAside && active ? (
+          <aside
+            className="drive-detail-aside"
+            data-open={desktopDetailOpen ? "true" : "false"}
+            inert={desktopDetailOpen ? undefined : true}
+          >
             <DriveDetailPanel
               {...buildDetailPanelProps({
                 labels,
                 file: active,
-                previewSrc: imagePreviewUrls[active.id],
+                preview: activePreview,
                 isStarred: !!starred[active.id],
                 inTrash: inTrashView,
                 operations,
                 showError,
-                onClose: () => setDetailOpen(false),
+                onClose: handleDetailClose,
                 onStar: () => toggleStar(active.id),
                 onRename: () => requestRenameItem(active),
                 onMove: () => requestMoveItem(active),
@@ -260,12 +292,12 @@ export function DriveMainPane({
             {...buildDetailPanelProps({
               labels,
               file: active,
-              previewSrc: imagePreviewUrls[active.id],
+              preview: activePreview,
               isStarred: !!starred[active.id],
               inTrash: inTrashView,
               operations,
               showError,
-              onClose: () => setDetailOpen(false),
+              onClose: handleDetailClose,
               onStar: () => toggleStar(active.id),
               onRename: () => requestRenameItem(active),
               onMove: () => requestMoveItem(active),
@@ -298,7 +330,7 @@ export function DriveMainPane({
 function buildDetailPanelProps({
   labels,
   file,
-  previewSrc,
+  preview,
   isStarred,
   inTrash,
   operations,
@@ -312,7 +344,7 @@ function buildDetailPanelProps({
 }: {
   labels: DriveUILabels;
   file: DriveFile;
-  previewSrc?: string;
+  preview?: FilePreviewPayload;
   isStarred: boolean;
   inTrash: boolean;
   operations?: DriveAPIOperations;
@@ -327,7 +359,7 @@ function buildDetailPanelProps({
   return {
     labels,
     file,
-    previewSrc,
+    preview,
     isStarred,
     inTrash,
     onClose,

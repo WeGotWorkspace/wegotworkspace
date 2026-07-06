@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useWorkspaceListKeyboardShortcuts } from "@/hooks/use-workspace-list-keyboard-shortcuts";
+import { isKeyboardFieldTarget } from "@/lib/keyboard/is-keyboard-field-target";
 import type { ViewKey } from "@/drive-core/src/drive-models";
 import type { DriveAPIOperations, DriveUIData } from "@/drive-core/src/drive-types";
 import { useDriveList } from "@/drive-core/src/use-drive-list";
@@ -52,9 +53,7 @@ export function useDriveController({
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      const inField =
-        !!target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
+      const inField = isKeyboardFieldTarget(e.target);
       if ((e.key === "k" && (e.metaKey || e.ctrlKey)) || (!inField && e.key === "/")) {
         e.preventDefault();
         shell.searchInputRef.current?.focus();
@@ -62,13 +61,54 @@ export function useDriveController({
         return;
       }
       if (inField) return;
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "i") {
+        e.preventDefault();
+        const opening = !list.detailOpen;
+        if (opening && !list.active) {
+          const focusId = list.activeId ?? list.selectedIds[0];
+          if (focusId) {
+            list.setActiveId(focusId);
+          }
+        }
+        list.setDetailOpen(opening);
+        return;
+      }
       if (e.key === "Escape" && list.detailOpen) {
         list.setDetailOpen(false);
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [list.detailOpen, list.setDetailOpen, shell.searchInputRef]);
+  }, [
+    list.active,
+    list.activeId,
+    list.detailOpen,
+    list.selectedIds,
+    list.setActiveId,
+    list.setDetailOpen,
+    shell.searchInputRef,
+  ]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (isKeyboardFieldTarget(e.target)) return;
+
+      if (
+        e.key === "Enter" &&
+        !e.repeat &&
+        list.active &&
+        list.selectedIds.length <= 1 &&
+        !mutations.renameDialog
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        mutations.requestRenameItem(list.active);
+        return;
+      }
+    };
+    window.addEventListener("keydown", handler, true);
+    return () => window.removeEventListener("keydown", handler, true);
+  }, [list.active, list.selectedIds.length, mutations.renameDialog, mutations.requestRenameItem]);
 
   useWorkspaceListKeyboardShortcuts({
     searchInputRef: shell.searchInputRef,
@@ -139,7 +179,8 @@ export function useDriveController({
     liveSearchResults: shell.liveSearchResults,
     starredItems: shell.starredItems,
     knownGroupRoots: shell.knownGroupRoots,
-    imagePreviewUrls: list.imagePreviewUrls,
+    filePreviews: list.filePreviews,
+    richPreviews: list.richPreviews,
     dropUploadActive: mutations.dropUploadActive,
     setDropUploadActive: mutations.setDropUploadActive,
     uploadProgress: mutations.uploadProgress,
@@ -157,6 +198,7 @@ export function useDriveController({
     groupRootNames: shell.groupRootNames,
     sidebarGroupPaths: shell.sidebarGroupPaths,
     openFile: list.openFile,
+    openDocsEditorFile: list.openDocsEditorFile,
     handleSelect: list.handleSelect,
     enterSelectionFor: list.enterSelectionFor,
     exitSelection: list.exitSelection,

@@ -13,6 +13,8 @@ import type { DriveFile } from "@/drive-core/src/drive-models";
 import { driveLabels } from "@/drive-core/src/drive-labels";
 import { useDriveSelectionBar } from "@/drive-core/src/use-drive-selection-bar";
 import type { DriveAPIOperations } from "@/drive-core/src/drive-types";
+import { useDriveGridPreviews } from "@/drive-core/src/use-drive-grid-previews";
+import { resolveGridFilePreview } from "@/lib/file-preview/file-preview-utils";
 import type { DocsUILabels } from "@/docs-core/src/docs-labels";
 
 /** The home list is server-driven; the controller never mutates items locally. */
@@ -101,6 +103,22 @@ export function DocsHomePane({
 
   const visibleIds = useMemo(() => files.map((file) => file.id), [files]);
 
+  const { filePreviews, richPreviews } = useDriveGridPreviews({
+    items: files,
+    operations,
+    enabled: viewMode === "grid",
+  });
+
+  const gridFilePreviews = useMemo(() => {
+    if (Object.keys(richPreviews).length === 0) return filePreviews;
+    const merged = { ...filePreviews };
+    for (const file of files) {
+      const resolved = resolveGridFilePreview(filePreviews, richPreviews, file.id);
+      if (resolved) merged[file.id] = resolved;
+    }
+    return merged;
+  }, [filePreviews, richPreviews, files]);
+
   // Reuse Drive's shared list controller so select/drag/keyboard behave identically.
   const {
     selectedIds,
@@ -179,9 +197,8 @@ export function DocsHomePane({
     onUndoQueuedAction: onUndoQueuedAction ?? noopUndo,
   });
 
-  const browserProps = {
+  const sharedBrowserProps = {
     items: files,
-    imagePreviewUrls: {},
     selectedIds,
     starred: starred ?? {},
     labels: driveLabels,
@@ -204,6 +221,8 @@ export function DocsHomePane({
     offlinePendingSyncIds,
     offlineBadgeLabels: offlineLabels,
   };
+
+  const gridBrowserProps = { ...sharedBrowserProps, filePreviews: gridFilePreviews };
 
   return (
     <section className="docs-home-pane">
@@ -239,10 +258,10 @@ export function DocsHomePane({
         ) : (
           <>
             {viewMode === "grid" ? (
-              <DriveGridView {...browserProps} />
+              <DriveGridView {...gridBrowserProps} />
             ) : (
               <DriveListView
-                {...browserProps}
+                {...sharedBrowserProps}
                 activeId={activeId}
                 showKindColumn={false}
                 locationColumnLabel={labels.homeLocationColumn}

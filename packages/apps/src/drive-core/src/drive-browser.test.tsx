@@ -33,7 +33,7 @@ function baseBrowserProps(overrides: Partial<Parameters<typeof DriveListView>[0]
     activeId: null,
     selectedIds: [],
     starred: {},
-    imagePreviewUrls: {},
+    filePreviews: {},
     labels: driveLabels,
     inTrash: false,
     selectionMode: false,

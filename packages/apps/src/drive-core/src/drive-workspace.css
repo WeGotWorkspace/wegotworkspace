@@ -53,31 +53,6 @@
   border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
 }
 
-/* Viewport-based ⋯ menu on mobile (Tailwind md); disable action-bar width container queries here */
-.drive-workspace .drive-detail-actions.action-bar {
-  container-type: normal;
-}
-
-@media (min-width: 768px) {
-  .drive-workspace .drive-detail-actions .action-bar__row {
-    display: flex;
-  }
-
-  .drive-workspace .drive-detail-actions .action-bar__menu {
-    display: none;
-  }
-}
-
-@media (max-width: 767px) {
-  .drive-workspace .drive-detail-actions .action-bar__row {
-    display: none;
-  }
-
-  .drive-workspace .drive-detail-actions .action-bar__menu {
-    display: inline-flex;
-  }
-}
-
 .drive-workspace .drive-main-pane {
   @apply flex min-h-0 flex-1 flex-col min-w-0 relative w-full;
   background-color: var(--color-cream, #ffffff);
@@ -153,6 +128,32 @@
   --unified-search-dropdown-width: 100%;
 }
 
+.drive-workspace .drive-main-header__actions {
+  @apply flex items-center gap-2;
+  --button-active-color: var(--segmented-control-active-fg, var(--color-ink));
+  --button-subtle-color: color-mix(in oklab, var(--color-ink) 55%, transparent);
+  --segmented-control-active-bg: var(--color-cream, #ffffff);
+  --segmented-control-active-fg: var(--color-ink);
+  --segmented-control-active-shadow: 0 1px 2px
+    color-mix(in oklab, var(--color-ink) 20%, transparent);
+}
+
+/* Match ViewModeToggle selected segment; override generic emerald icon-button--active tint. */
+.drive-workspace .drive-main-header__actions .button--variant-subtle.icon-button--active {
+  background-color: var(--segmented-control-active-bg);
+  color: var(--segmented-control-active-fg);
+  box-shadow: var(--segmented-control-active-shadow);
+}
+
+/* Lucide icons are stroke-based; icon-button--active fill would solidify them. */
+.drive-workspace
+  .drive-main-header__actions
+  .button--variant-subtle.icon-button--active
+  .button__icon
+  > svg {
+  fill: none;
+}
+
 /**
  * Portaled drive dialogs sit outside `.drive-workspace` in the DOM.
  * Repeat accent tokens here so {@link Button} and destination picker match the drive shell.
@@ -173,6 +174,18 @@
   @apply flex flex-1 min-h-0;
 }
 
+@media (min-width: 768px) {
+  .drive-workspace .drive-main-pane__body:has(.drive-detail-aside) {
+    display: grid;
+    grid-template-columns: 1fr 0fr;
+    transition: grid-template-columns 300ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .drive-workspace .drive-main-pane__body:has(.drive-detail-aside[data-open="true"]) {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
 @media (max-width: 767px) {
   .drive-workspace .drive-main-pane__body {
     transition: transform 300ms ease-out;
@@ -184,13 +197,35 @@
 }
 
 .drive-workspace .drive-main-pane__scroll {
-  @apply flex-[2] min-w-0 overflow-x-hidden overflow-y-auto;
+  @apply flex-1 min-h-0 min-w-0 w-full overflow-x-hidden overflow-y-auto;
+}
+
+.drive-workspace .drive-main-pane__scroll:has(> .collection-state) {
+  @apply flex flex-col items-center justify-center;
 }
 
 .drive-workspace .drive-detail-aside {
-  @apply hidden md:flex flex-1 min-w-0 shrink-0 border-l flex-col min-h-0;
+  @apply hidden md:flex min-w-0 overflow-hidden border-l flex-col min-h-0 will-change-transform transition-[translate,border-width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)];
   background-color: var(--color-cream, #ffffff);
   border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
+}
+
+.drive-workspace .drive-detail-aside[data-open="true"] {
+  @apply translate-x-0;
+}
+
+.drive-workspace .drive-detail-aside[data-open="false"] {
+  @apply translate-x-full border-l-0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drive-workspace .drive-main-pane__body:has(.drive-detail-aside) {
+    transition: none;
+  }
+
+  .drive-workspace .drive-detail-aside {
+    transition: none;
+  }
 }
 
 .drive-workspace .drive-detail-overlay {

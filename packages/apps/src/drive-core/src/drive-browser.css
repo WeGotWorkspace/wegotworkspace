@@ -207,20 +207,23 @@
 .drive-workspace .drive-file-tile__preview {
   @apply relative flex items-center justify-center overflow-hidden;
   aspect-ratio: 16 / 9;
-  background-color: color-mix(in oklab, var(--drive-sidebar) 8%, transparent);
+  background-color: var(--color-cream, #fff);
   color: var(--drive-sidebar);
 }
 
 .drive-workspace .drive-file-tile__preview > img,
 .drive-workspace .drive-file-tile__preview > video,
+.drive-workspace .drive-file-tile__preview .file-preview__fallback,
 .drive-workspace .drive-file-tile__preview .drive-media-preview__fallback {
   @apply absolute inset-0 h-full w-full;
 }
 
+.drive-workspace .file-preview__fallback,
 .drive-workspace .drive-media-preview__fallback {
   @apply flex h-full w-full min-h-0 items-center justify-center opacity-80;
 }
 
+.drive-workspace .file-preview__fallback svg,
 .drive-workspace .drive-media-preview__fallback svg {
   width: 3rem;
   height: 3rem;
@@ -424,7 +427,10 @@
 
 .drive-workspace .drive-detail-panel__preview > img,
 .drive-workspace .drive-detail-panel__preview > video,
-.drive-workspace .drive-detail-panel__preview .drive-media-preview__fallback {
+.drive-workspace .drive-detail-panel__preview .file-preview__fallback,
+.drive-workspace .drive-detail-panel__preview .drive-media-preview__fallback,
+.drive-workspace .drive-detail-panel__preview .file-preview-text-pane,
+.drive-workspace .drive-detail-panel__preview .docs-file-preview {
   @apply absolute inset-0 h-full w-full;
 }
 
@@ -433,6 +439,7 @@
   border-radius: var(--control-radius);
 }
 
+.drive-workspace .drive-detail-panel__preview .file-preview__fallback svg,
 .drive-workspace .drive-detail-panel__preview .drive-media-preview__fallback svg {
   width: 4rem;
   height: 4rem;
@@ -443,8 +450,8 @@
 }
 
 .drive-workspace .drive-detail-panel__title {
-  @apply text-2xl md:text-3xl leading-tight mb-4 tracking-tight break-words font-semibold;
-  font-family: var(--font-serif);
+  @apply text-base md:text-lg leading-tight mb-4 tracking-tight break-words font-semibold font-sans;
+  font-family: var(--font-sans);
   color: var(--color-ink);
 }
 
