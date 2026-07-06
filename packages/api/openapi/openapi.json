@@ -5286,48 +5286,6 @@
         "x-wgw-access": "user"
       }
     },
-    "/tasks/tasklists/changes": {
-      "get": {
-        "tags": [
-          "Tasks"
-        ],
-        "summary": "Incremental task list collection changes",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "since",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Task list changes",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/JmapTaskListChangesResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/JmapBadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/JmapForbidden"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
     "/tasks/tasklists": {
       "get": {
         "tags": [
@@ -5352,49 +5310,6 @@
           },
           "403": {
             "$ref": "#/components/responses/JmapForbidden"
-          }
-        },
-        "x-wgw-access": "user"
-      },
-      "post": {
-        "tags": [
-          "Tasks"
-        ],
-        "summary": "Create a task list",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TaskListCreate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Created task list",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TaskList"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/JmapBadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/JmapForbidden"
-          },
-          "413": {
-            "$ref": "#/components/responses/JmapPayloadTooLarge"
           }
         },
         "x-wgw-access": "user"
@@ -5437,169 +5352,6 @@
           },
           "404": {
             "$ref": "#/components/responses/JmapNotFound"
-          }
-        },
-        "x-wgw-access": "user"
-      },
-      "patch": {
-        "tags": [
-          "Tasks"
-        ],
-        "summary": "Update a task list",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "taskListId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TaskListPatch"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Updated task list",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TaskList"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/JmapBadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/JmapForbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/JmapNotFound"
-          },
-          "412": {
-            "$ref": "#/components/responses/JmapPreconditionFailed"
-          },
-          "413": {
-            "$ref": "#/components/responses/JmapPayloadTooLarge"
-          }
-        },
-        "x-wgw-access": "user"
-      },
-      "delete": {
-        "tags": [
-          "Tasks"
-        ],
-        "summary": "Delete a task list",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "taskListId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TaskListDeleteOptions"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Task list deleted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OkResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/JmapBadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/JmapForbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/JmapNotFound"
-          },
-          "409": {
-            "$ref": "#/components/responses/JmapConflict"
-          },
-          "412": {
-            "$ref": "#/components/responses/JmapPreconditionFailed"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/tasks/items/query": {
-      "post": {
-        "tags": [
-          "Tasks"
-        ],
-        "summary": "Query task item ids",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TaskItemQueryRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Matching task ids",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TaskItemQueryResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/JmapBadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/JmapForbidden"
-          },
-          "413": {
-            "$ref": "#/components/responses/JmapPayloadTooLarge"
           }
         },
         "x-wgw-access": "user"
@@ -5894,6 +5646,143 @@
           },
           "412": {
             "$ref": "#/components/responses/JmapPreconditionFailed"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/contacts/cards/set": {
+      "post": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "JMAP Contact/set batch mutations",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactCardSetRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contact/set result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactCardSetResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/JmapBadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/JmapForbidden"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/contacts/cards/import": {
+      "post": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "Import contact cards from a vCard file",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "addressBookId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "text/vcard": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Imported contact cards",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactCardImportResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/JmapBadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/JmapForbidden"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/contacts/cards/{cardId}/vcf": {
+      "get": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "Download raw vCard file for a contact",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cardId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Raw vCard file",
+            "content": {
+              "text/vcard": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/JmapForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/JmapNotFound"
           }
         },
         "x-wgw-access": "user"

@@ -14,7 +14,7 @@ final class EnsureTasksEnabled
     public function handle(Request $request, Closure $next): Response
     {
         $cfg = WgwSettings::normalized();
-        if (! (bool) ($cfg[WgwSettings::CALENDAR_ENABLED] ?? true)) {
+        if (! (bool) ($cfg[WgwSettings::TASKS_ENABLED] ?? true)) {
             return response()->json(['error' => 'Tasks are disabled.'], 403);
         }
 

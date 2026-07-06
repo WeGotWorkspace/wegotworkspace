@@ -34,9 +34,9 @@ final class TasksAccessControlTest extends WgwDatabaseTestCase
         $this->withBearer($token)->getJson('/api/v1/tasks/items?taskListId=default')->assertOk();
     }
 
-    public function test_calendar_disabled_returns_forbidden(): void
+    public function test_tasks_disabled_returns_forbidden(): void
     {
-        $this->setAppSetting(WgwSettings::CALENDAR_ENABLED, false);
+        $this->setAppSetting(WgwSettings::TASKS_ENABLED, false);
         $token = $this->userBearerToken();
 
         $this->withBearer($token)->getJson('/api/v1/tasks/tasklists')->assertForbidden();

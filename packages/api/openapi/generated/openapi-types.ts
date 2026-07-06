@@ -5374,34 +5374,7 @@ export interface paths {
             };
         };
         put?: never;
-        /** Create a task list */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["TaskListCreate"];
-                };
-            };
-            responses: {
-                /** @description Created task list */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["TaskList"];
-                    };
-                };
-                400: components["responses"]["JmapBadRequest"];
-                403: components["responses"]["JmapForbidden"];
-                413: components["responses"]["JmapPayloadTooLarge"];
-            };
-        };
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -5442,72 +5415,10 @@ export interface paths {
         };
         put?: never;
         post?: never;
-        /** Delete a task list */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    taskListId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["TaskListDeleteOptions"];
-                };
-            };
-            responses: {
-                /** @description Task list deleted */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["OkResponse"];
-                    };
-                };
-                400: components["responses"]["JmapBadRequest"];
-                403: components["responses"]["JmapForbidden"];
-                404: components["responses"]["JmapNotFound"];
-                409: components["responses"]["JmapConflict"];
-                412: components["responses"]["JmapPreconditionFailed"];
-            };
-        };
+        delete?: never;
         options?: never;
         head?: never;
-        /** Update a task list */
-        patch: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    taskListId: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["TaskListPatch"];
-                };
-            };
-            responses: {
-                /** @description Updated task list */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["TaskList"];
-                    };
-                };
-                400: components["responses"]["JmapBadRequest"];
-                403: components["responses"]["JmapForbidden"];
-                404: components["responses"]["JmapNotFound"];
-                412: components["responses"]["JmapPreconditionFailed"];
-                413: components["responses"]["JmapPayloadTooLarge"];
-            };
-        };
+        patch?: never;
         trace?: never;
     };
     "/tasks/items/query": {
@@ -5747,6 +5658,132 @@ export interface paths {
                 413: components["responses"]["JmapPayloadTooLarge"];
             };
         };
+        trace?: never;
+    };
+    "/contacts/cards/set": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** JMAP Contact/set batch mutations */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ContactCardSetRequest"];
+                };
+            };
+            responses: {
+                /** @description Contact/set result */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ContactCardSetResponse"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/contacts/cards/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import contact cards from a vCard file */
+        post: {
+            parameters: {
+                query: {
+                    addressBookId: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "text/vcard": string;
+                };
+            };
+            responses: {
+                /** @description Imported contact cards */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ContactCardImportResponse"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/contacts/cards/{cardId}/vcf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download raw vCard file for a contact */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    cardId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Raw vCard file */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/vcard": string;
+                    };
+                };
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
 }
@@ -6526,11 +6563,17 @@ export interface components {
             id: string;
             username: string;
             notebook: string;
-            title: string;
             body: string;
             tags: components["schemas"]["NoteTagList"];
             starred?: boolean | null;
             archived: boolean;
+            /**
+             * @description Storage scope: personal (users/{username}/.notes) or group (groups/{slug}/.notes).
+             * @enum {string}
+             */
+            scope: "personal" | "group";
+            /** @description Group slug when scope is group, null for personal notes. */
+            groupSlug: string | null;
             updatedAt: string;
         };
         NoteItemList: components["schemas"]["NoteItem"][];
@@ -6545,22 +6588,24 @@ export interface components {
          * @example {
          *       "id": "n123",
          *       "notebook": "General",
-         *       "title": "Roadmap",
          *       "body": "Draft roadmap",
          *       "tags": [
          *         "planning"
          *       ],
-         *       "starred": true
+         *       "starred": true,
+         *       "groupSlug": "team"
          *     }
          */
         NoteUpsertRequest: {
             id?: string;
             notebook: string;
-            title: string;
+            /** @description Optional. Omit the field entirely to update metadata only and preserve the existing body bytes on disk. Sending it (including an empty string) overwrites the body. */
             body?: string;
             tags?: components["schemas"]["NoteTagList"];
             starred?: boolean;
             archived?: boolean;
+            /** @description Target a shared group notebook (groups/{slug}/.notes). Omit or null for the caller's personal notes. Caller must be a group member. */
+            groupSlug?: string | null;
         };
         /**
          * @example {
@@ -6904,6 +6949,8 @@ export interface components {
             created?: components["schemas"]["JsContactUTCDateTime"];
             updated?: components["schemas"]["JsContactUTCDateTime"];
             etag?: components["schemas"]["DavEtag"];
+            /** @description Opaque JMAP state token for Contact/set ifInState (RFC 9610). */
+            state?: string;
             /**
              * @default individual
              * @enum {string}
@@ -8352,6 +8399,119 @@ export interface components {
             created: components["schemas"]["JmapId"][];
             updated: components["schemas"]["JmapId"][];
             destroyed: components["schemas"]["JmapId"][];
+        };
+        ContactCardImportError: {
+            index: number;
+            message: string;
+        };
+        /** @description REST response for POST /contacts/cards/import. */
+        ContactCardImportResponse: {
+            list: components["schemas"]["ContactCard"][];
+            errors: components["schemas"]["ContactCardImportError"][];
+        };
+        ContactCardSetRequest: {
+            create?: {
+                [key: string]: components["schemas"]["ContactCardCreate"];
+            };
+            update?: {
+                [key: string]: {
+                    ifInState?: string;
+                } & {
+                    [key: string]: unknown;
+                };
+            };
+            /** @description Card ids to destroy, or map of id to { ifInState }. */
+            destroy?: components["schemas"]["JsContactId"][] | {
+                [key: string]: {
+                    ifInState?: string;
+                };
+            };
+        };
+        ContactCardSetResponse: {
+            created: {
+                [key: string]: components["schemas"]["JsContactId"];
+            };
+            updated: {
+                [key: string]: string;
+            };
+            destroyed: components["schemas"]["JsContactId"][];
+            notCreated: {
+                [key: string]: Record<string, never>;
+            };
+            notUpdated: {
+                [key: string]: Record<string, never>;
+            };
+            notDestroyed: {
+                [key: string]: Record<string, never>;
+            };
+        };
+        /** @description A single unified search hit across files, notes, calendar, and contacts. */
+        UnifiedSearchResult: {
+            id: number;
+            sourceType: string;
+            sourceSubtype?: string | null;
+            sourceKey: string;
+            title: string;
+            extension?: string | null;
+            category?: string | null;
+            contentType?: string | null;
+            size: number;
+            modifiedAt: number;
+            snippet?: string | null;
+            tokenScore: number;
+            metadata: {
+                [key: string]: unknown;
+            };
+        };
+        /** @description Normalized filters echoed back on the search response. */
+        UnifiedSearchFilters: {
+            categories: string[];
+            extensions: string[];
+            modified_from: number | null;
+            modified_to: number | null;
+            path_prefix: string | null;
+        };
+        /** @description REST response for GET /search/results, including offset/hasMore pagination. */
+        UnifiedSearchResponse: {
+            data: {
+                query: string;
+                limit: number;
+                offset: number;
+                hasMore: boolean;
+                sources: string[];
+                filters: components["schemas"]["UnifiedSearchFilters"];
+                results: components["schemas"]["UnifiedSearchResult"][];
+            };
+        };
+        /** @description Auth-scoped search index row for offline client sync (includes bodyText). */
+        SearchDocumentSyncDto: {
+            id: number;
+            sourceType: string;
+            sourceSubtype?: string | null;
+            sourceKey: string;
+            ownerUsername?: string | null;
+            groupSlug?: string | null;
+            title: string;
+            extension?: string | null;
+            category?: string | null;
+            contentType?: string | null;
+            size: number;
+            modifiedAt: number;
+            bodyText?: string | null;
+            metadata: {
+                [key: string]: unknown;
+            };
+        };
+        /** @description JMAP-style delta for search index documents. */
+        SearchDocumentChangesResponse: {
+            oldState: string;
+            newState: string;
+            created: number[];
+            updated: number[];
+            destroyed: number[];
+        };
+        SearchDocumentsListResponse: {
+            list: components["schemas"]["SearchDocumentSyncDto"][];
         };
     };
     responses: {

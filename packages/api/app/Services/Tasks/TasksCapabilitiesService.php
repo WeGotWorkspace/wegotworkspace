@@ -20,7 +20,7 @@ final class TasksCapabilitiesService
         $cfg = WgwSettings::normalized();
 
         return [
-            'enabled' => (bool) ($cfg[WgwSettings::CALENDAR_ENABLED] ?? true),
+            'enabled' => (bool) ($cfg[WgwSettings::TASKS_ENABLED] ?? true),
             'jmapCapability' => 'urn:ietf:params:jmap:tasks',
             'supportedTaskProperties' => [
                 'title',

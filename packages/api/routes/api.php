@@ -172,18 +172,11 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($filesS
     Route::patch('notes/notebooks/{name}', [NotebooksController::class, 'update']);
     Route::delete('notes/notebooks/{name}', [NotebooksController::class, 'destroy']);
 
-    Route::middleware('wgw.calendars')->group(function (): void {
+    Route::middleware('wgw.tasks')->group(function (): void {
         Route::get('tasks/capabilities', TasksCapabilitiesController::class);
-        Route::get('tasks/tasklists/changes', [TaskCalendarsController::class, 'changes']);
         Route::get('tasks/tasklists', [TaskCalendarsController::class, 'index']);
-        Route::post('tasks/tasklists', [TaskCalendarsController::class, 'store']);
         Route::get('tasks/tasklists/{taskListId}', [TaskCalendarsController::class, 'show'])
             ->where('taskListId', '[a-z0-9_-]+');
-        Route::patch('tasks/tasklists/{taskListId}', [TaskCalendarsController::class, 'update'])
-            ->where('taskListId', '[a-z0-9_-]+');
-        Route::delete('tasks/tasklists/{taskListId}', [TaskCalendarsController::class, 'destroy'])
-            ->where('taskListId', '[a-z0-9_-]+');
-        Route::post('tasks/items/query', [TasksController::class, 'query']);
         Route::get('tasks/items', [TasksController::class, 'index']);
         Route::post('tasks/items', [TasksController::class, 'store']);
         Route::get('tasks/items/{taskId}', [TasksController::class, 'show'])

@@ -28,7 +28,7 @@ trait TasksTestFixtures
         $this->configureWgwJwtKeys();
         config(['wgw.auth_realm' => 'SabreDAV']);
         $this->setAppSetting('auth_realm', 'SabreDAV');
-        $this->setAppSetting(WgwSettings::CALENDAR_ENABLED, true);
+        $this->setAppSetting(WgwSettings::TASKS_ENABLED, true);
         $this->seedTasksRoleMatrix();
     }
 

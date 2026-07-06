@@ -2320,9 +2320,6 @@
                     "notebook": {
                         "type": "string"
                     },
-                    "title": {
-                        "type": "string"
-                    },
                     "body": {
                         "type": "string"
                     },
@@ -2338,6 +2335,21 @@
                     "archived": {
                         "type": "boolean"
                     },
+                    "scope": {
+                        "type": "string",
+                        "enum": [
+                            "personal",
+                            "group"
+                        ],
+                        "description": "Storage scope: personal (users/{username}/.notes) or group (groups/{slug}/.notes)."
+                    },
+                    "groupSlug": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Group slug when scope is group, null for personal notes."
+                    },
                     "updatedAt": {
                         "type": "string"
                     }
@@ -2346,10 +2358,11 @@
                     "id",
                     "username",
                     "notebook",
-                    "title",
                     "body",
                     "tags",
                     "archived",
+                    "scope",
+                    "groupSlug",
                     "updatedAt"
                 ]
             },
@@ -2397,11 +2410,9 @@
                     "notebook": {
                         "type": "string"
                     },
-                    "title": {
-                        "type": "string"
-                    },
                     "body": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Optional. Omit the field entirely to update metadata only and preserve the existing body bytes on disk. Sending it (including an empty string) overwrites the body."
                     },
                     "tags": {
                         "$ref": "#/components/schemas/NoteTagList"
@@ -2411,21 +2422,27 @@
                     },
                     "archived": {
                         "type": "boolean"
+                    },
+                    "groupSlug": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Target a shared group notebook (groups/{slug}/.notes). Omit or null for the caller's personal notes. Caller must be a group member."
                     }
                 },
                 "required": [
-                    "notebook",
-                    "title"
+                    "notebook"
                 ],
                 "example": {
                     "id": "n123",
                     "notebook": "General",
-                    "title": "Roadmap",
                     "body": "Draft roadmap",
                     "tags": [
                         "planning"
                     ],
-                    "starred": true
+                    "starred": true,
+                    "groupSlug": "team"
                 }
             },
             "NoteDeleteRequest": {
@@ -3228,6 +3245,10 @@
                     },
                     "etag": {
                         "$ref": "#/components/schemas/DavEtag"
+                    },
+                    "state": {
+                        "type": "string",
+                        "description": "Opaque JMAP state token for Contact/set ifInState (RFC 9610)."
                     },
                     "kind": {
                         "type": "string",
@@ -7178,6 +7199,444 @@
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/JmapId"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "ContactCardImportError": {
+                "type": "object",
+                "required": [
+                    "index",
+                    "message"
+                ],
+                "properties": {
+                    "index": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "ContactCardImportResponse": {
+                "type": "object",
+                "required": [
+                    "list",
+                    "errors"
+                ],
+                "properties": {
+                    "list": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ContactCard"
+                        }
+                    },
+                    "errors": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ContactCardImportError"
+                        }
+                    }
+                },
+                "additionalProperties": false,
+                "description": "REST response for POST /contacts/cards/import."
+            },
+            "ContactCardSetRequest": {
+                "type": "object",
+                "properties": {
+                    "create": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/ContactCardCreate"
+                        }
+                    },
+                    "update": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                                "ifInState": {
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": true
+                        }
+                    },
+                    "destroy": {
+                        "description": "Card ids to destroy, or map of id to { ifInState }.",
+                        "oneOf": [
+                            {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/JsContactId"
+                                }
+                            },
+                            {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "object",
+                                    "properties": {
+                                        "ifInState": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "additionalProperties": false
+                                }
+                            }
+                        ]
+                    }
+                },
+                "additionalProperties": false
+            },
+            "ContactCardSetResponse": {
+                "type": "object",
+                "required": [
+                    "created",
+                    "updated",
+                    "destroyed",
+                    "notCreated",
+                    "notUpdated",
+                    "notDestroyed"
+                ],
+                "properties": {
+                    "created": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/JsContactId"
+                        }
+                    },
+                    "updated": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "destroyed": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JsContactId"
+                        }
+                    },
+                    "notCreated": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object"
+                        }
+                    },
+                    "notUpdated": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object"
+                        }
+                    },
+                    "notDestroyed": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "UnifiedSearchResult": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "sourceType",
+                    "sourceKey",
+                    "title",
+                    "size",
+                    "modifiedAt",
+                    "tokenScore",
+                    "metadata"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "sourceType": {
+                        "type": "string"
+                    },
+                    "sourceSubtype": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "sourceKey": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "extension": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "category": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "contentType": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "size": {
+                        "type": "integer"
+                    },
+                    "modifiedAt": {
+                        "type": "integer"
+                    },
+                    "snippet": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "tokenScore": {
+                        "type": "integer"
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "additionalProperties": true
+                    }
+                },
+                "additionalProperties": false,
+                "description": "A single unified search hit across files, notes, calendar, and contacts."
+            },
+            "UnifiedSearchFilters": {
+                "type": "object",
+                "required": [
+                    "categories",
+                    "extensions",
+                    "modified_from",
+                    "modified_to",
+                    "path_prefix"
+                ],
+                "properties": {
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "extensions": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "modified_from": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "modified_to": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "path_prefix": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "additionalProperties": false,
+                "description": "Normalized filters echoed back on the search response."
+            },
+            "UnifiedSearchResponse": {
+                "type": "object",
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "object",
+                        "required": [
+                            "query",
+                            "limit",
+                            "offset",
+                            "hasMore",
+                            "sources",
+                            "filters",
+                            "results"
+                        ],
+                        "properties": {
+                            "query": {
+                                "type": "string"
+                            },
+                            "limit": {
+                                "type": "integer"
+                            },
+                            "offset": {
+                                "type": "integer"
+                            },
+                            "hasMore": {
+                                "type": "boolean"
+                            },
+                            "sources": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "filters": {
+                                "$ref": "#/components/schemas/UnifiedSearchFilters"
+                            },
+                            "results": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/UnifiedSearchResult"
+                                }
+                            }
+                        },
+                        "additionalProperties": false
+                    }
+                },
+                "additionalProperties": false,
+                "description": "REST response for GET /search/results, including offset/hasMore pagination."
+            },
+            "SearchDocumentSyncDto": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "sourceType",
+                    "sourceKey",
+                    "title",
+                    "size",
+                    "modifiedAt",
+                    "metadata"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "sourceType": {
+                        "type": "string"
+                    },
+                    "sourceSubtype": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "sourceKey": {
+                        "type": "string"
+                    },
+                    "ownerUsername": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "groupSlug": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "extension": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "category": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "contentType": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "size": {
+                        "type": "integer"
+                    },
+                    "modifiedAt": {
+                        "type": "integer"
+                    },
+                    "bodyText": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "additionalProperties": true
+                    }
+                },
+                "additionalProperties": false,
+                "description": "Auth-scoped search index row for offline client sync (includes bodyText)."
+            },
+            "SearchDocumentChangesResponse": {
+                "type": "object",
+                "required": [
+                    "oldState",
+                    "newState",
+                    "created",
+                    "updated",
+                    "destroyed"
+                ],
+                "properties": {
+                    "oldState": {
+                        "type": "string"
+                    },
+                    "newState": {
+                        "type": "string"
+                    },
+                    "created": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "updated": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "destroyed": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "additionalProperties": false,
+                "description": "JMAP-style delta for search index documents."
+            },
+            "SearchDocumentsListResponse": {
+                "type": "object",
+                "required": [
+                    "list"
+                ],
+                "properties": {
+                    "list": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SearchDocumentSyncDto"
                         }
                     }
                 },
@@ -12020,49 +12479,6 @@
                     }
                 },
                 "x-wgw-access": "user"
-            },
-            "post": {
-                "tags": [
-                    "Tasks"
-                ],
-                "summary": "Create a task list",
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/TaskListCreate"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Created task list",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/TaskList"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/JmapBadRequest"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/JmapForbidden"
-                    },
-                    "413": {
-                        "$ref": "#/components/responses/JmapPayloadTooLarge"
-                    }
-                },
-                "x-wgw-access": "user"
             }
         },
         "/tasks/tasklists/{taskListId}": {
@@ -12102,124 +12518,6 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/JmapNotFound"
-                    }
-                },
-                "x-wgw-access": "user"
-            },
-            "patch": {
-                "tags": [
-                    "Tasks"
-                ],
-                "summary": "Update a task list",
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-                "parameters": [
-                    {
-                        "name": "taskListId",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/TaskListPatch"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Updated task list",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/TaskList"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/JmapBadRequest"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/JmapForbidden"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/JmapNotFound"
-                    },
-                    "412": {
-                        "$ref": "#/components/responses/JmapPreconditionFailed"
-                    },
-                    "413": {
-                        "$ref": "#/components/responses/JmapPayloadTooLarge"
-                    }
-                },
-                "x-wgw-access": "user"
-            },
-            "delete": {
-                "tags": [
-                    "Tasks"
-                ],
-                "summary": "Delete a task list",
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-                "parameters": [
-                    {
-                        "name": "taskListId",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/TaskListDeleteOptions"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Task list deleted",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/OkResponse"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/JmapBadRequest"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/JmapForbidden"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/JmapNotFound"
-                    },
-                    "409": {
-                        "$ref": "#/components/responses/JmapConflict"
-                    },
-                    "412": {
-                        "$ref": "#/components/responses/JmapPreconditionFailed"
                     }
                 },
                 "x-wgw-access": "user"
@@ -12559,6 +12857,143 @@
                     },
                     "412": {
                         "$ref": "#/components/responses/JmapPreconditionFailed"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/contacts/cards/set": {
+            "post": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "JMAP Contact/set batch mutations",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactCardSetRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Contact/set result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactCardSetResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/contacts/cards/import": {
+            "post": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Import contact cards from a vCard file",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "addressBookId",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "text/vcard": {
+                            "schema": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Imported contact cards",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactCardImportResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/contacts/cards/{cardId}/vcf": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Download raw vCard file for a contact",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "cardId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Raw vCard file",
+                        "content": {
+                            "text/vcard": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
                     }
                 },
                 "x-wgw-access": "user"

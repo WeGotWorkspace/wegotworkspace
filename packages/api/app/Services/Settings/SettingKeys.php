@@ -20,6 +20,8 @@ final class SettingKeys
 
     public const CONTACTS_ENABLED = 'contacts_enabled';
 
+    public const TASKS_ENABLED = 'tasks_enabled';
+
     public const MAIL_ENABLED = 'mail_enabled';
 
     public const RTC_STUN_URL = 'rtc_stun_url';
@@ -55,6 +57,7 @@ final class SettingKeys
             self::FILES_ENABLED,
             self::CALENDAR_ENABLED,
             self::CONTACTS_ENABLED,
+            self::TASKS_ENABLED,
             self::MAIL_ENABLED,
             self::RTC_STUN_URL,
             self::RTC_TURN_URL,
