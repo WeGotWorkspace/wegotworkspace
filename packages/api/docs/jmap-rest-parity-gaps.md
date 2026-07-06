@@ -1,7 +1,8 @@
 # JMAP REST API — CalDAV/CardDAV parity gaps
 
 > **Epic:** [GitHub #137](https://github.com/WeGotWorkspace/wegotworkspace/issues/137)  
-> **Baseline PRs:** Contacts [#132](https://github.com/WeGotWorkspace/wegotworkspace/pull/132), Calendars [#135](https://github.com/WeGotWorkspace/wegotworkspace/pull/135), Tasks [#136](https://github.com/WeGotWorkspace/wegotworkspace/pull/136)
+> **Baseline PRs:** Contacts [#132](https://github.com/WeGotWorkspace/wegotworkspace/pull/132), Calendars [#135](https://github.com/WeGotWorkspace/wegotworkspace/pull/135), Tasks [#136](https://github.com/WeGotWorkspace/wegotworkspace/pull/136)  
+> **Tasks architecture:** [docs/architecture/tasks.md](../../../docs/architecture/tasks.md) ([#330](https://github.com/WeGotWorkspace/wegotworkspace/issues/330))
 
 This document summarizes what the v1 JMAP-shaped REST layers implement versus full CalDAV/CardDAV (and JMAP spec) expectations. Use it for planning; **track work in GitHub issues** linked below.
 
