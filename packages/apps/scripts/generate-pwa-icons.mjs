@@ -32,8 +32,18 @@ const sourceDir = join(packageDir, "src", "assets", "app-icons");
 const uiDir = join(publicDir, "app-icons");
 const pwaDir = join(publicDir, "pwa-icons");
 
-const WORKSPACE_APPS = ["admin", "contacts", "docs", "drive", "mail", "meet", "notes", "settings"];
-const FUTURE_APPS = ["calendar", "reminders", "tasks"];
+const WORKSPACE_APPS = [
+  "admin",
+  "contacts",
+  "docs",
+  "drive",
+  "mail",
+  "meet",
+  "notes",
+  "settings",
+  "tasks",
+];
+const FUTURE_APPS = ["calendar", "reminders"];
 /** Shell / suite PWA manifest (home.webmanifest) — vector only, no workspace grid tile. */
 const SHELL_APPS = ["home"];
 const ALL_APPS = [...WORKSPACE_APPS, ...FUTURE_APPS, ...SHELL_APPS];

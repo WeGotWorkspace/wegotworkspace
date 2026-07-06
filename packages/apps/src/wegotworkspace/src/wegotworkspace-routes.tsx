@@ -18,6 +18,8 @@ import { MailApp } from "@/mail-core/src/mail-app";
 import { MeetApp } from "@/meet-core/src/meet-app";
 import { createWgwMeetGuestApiSource } from "@/meet-core/src/meet-api-source";
 import { NotesApp } from "@/notes-core/src/notes-app";
+import { createDefaultTasksApiSource } from "@/tasks-core/src/tasks-api-source";
+import { TasksApp } from "@/tasks-core/src/tasks-app";
 import { SettingsApp } from "@/settings-core/src/settings-app";
 import { createAdminAppBootstrap } from "@/lib/api/mock/admin-bootstrap";
 import { createContactsAppBootstrap } from "@/lib/api/mock/contacts-bootstrap";
@@ -27,6 +29,7 @@ import { createMailAppBootstrap } from "@/lib/api/mock/mail-bootstrap";
 import { createMeetAppBootstrap } from "@/lib/api/mock/meet-bootstrap";
 import { createDocsAppBootstrap } from "@/lib/api/mock/docs-bootstrap";
 import { createNotesAppBootstrap } from "@/lib/api/mock/notes-bootstrap";
+import { createTasksAppBootstrap } from "@/lib/api/mock/tasks-bootstrap";
 import { createSettingsAppBootstrap } from "@/lib/api/mock/settings-bootstrap";
 import { folderTokenFromMailboxLabel } from "@/lib/mail/folder-token";
 import { AdminWorkspace } from "@/admin-core/src/admin-workspace";
@@ -39,6 +42,8 @@ import { MeetWorkspace } from "@/meet-core/src/meet-workspace";
 import { DocsWorkspace } from "@/docs-core/src/docs-workspace";
 import { NotesWorkspace } from "@/notes-core/src/notes-workspace";
 import { useNotesRouteSync } from "@/notes-core/src/use-notes-route-sync";
+import { TasksWorkspace } from "@/tasks-core/src/tasks-workspace";
+import { useTasksRouteSync } from "@/tasks-core/src/use-tasks-route-sync";
 import { SettingsWorkspace } from "@/settings-core/src/settings-workspace";
 import { WeGotWorkspaceHome } from "@/wegotworkspace/src/wegotworkspace-home";
 import { WeGotWorkspaceLiveHome } from "@/wegotworkspace/src/wegotworkspace-live-home";
@@ -75,6 +80,7 @@ const meetGuestPwaHead = () =>
   });
 const adminPwaHead = () => createWorkspacePwaHead("admin");
 const contactsPwaHead = () => createWorkspacePwaHead("contacts");
+const tasksPwaHead = () => createWorkspacePwaHead("tasks");
 
 const STORY_SYSTEM_MAILBOXES = [
   "Inbox",
@@ -170,6 +176,29 @@ function MockContactsRoute() {
       session={bootstrap.session}
       listLoading={false}
       onLogout={onLogout}
+    />
+  );
+}
+
+function MockTasksRoute() {
+  const onLogout = useWeGotWorkspaceLogout();
+  const bootstrap = useMemo(() => createTasksAppBootstrap(), []);
+  const { initialView, initialTaskId, handleViewChange, handleTaskChange } = useTasksRouteSync();
+  const operations = useMemo(
+    () => createDefaultTasksApiSource().createOperations(bootstrap),
+    [bootstrap],
+  );
+  return (
+    <TasksWorkspace
+      data={bootstrap.data}
+      session={bootstrap.session}
+      operations={operations}
+      listLoading={false}
+      onLogout={onLogout}
+      initialView={initialView}
+      initialTaskId={initialTaskId}
+      onViewChange={handleViewChange}
+      onTaskChange={handleTaskChange}
     />
   );
 }
@@ -402,6 +431,73 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
     component: ContactsComponent,
   });
 
+  const TasksComponent = isLive ? withWeGotWorkspaceAuth(TasksApp) : MockTasksRoute;
+
+  const tasksIndexRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/tasks",
+    head: tasksPwaHead,
+    beforeLoad: () => {
+      throw redirect({ to: "/tasks/state/all" });
+    },
+  });
+
+  const tasksStateAllRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/tasks/state/all",
+    head: tasksPwaHead,
+    component: TasksComponent,
+  });
+
+  const tasksStateAllTaskRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/tasks/state/all/$taskId",
+    head: tasksPwaHead,
+    component: TasksComponent,
+  });
+
+  const tasksStateRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/tasks/state/$stateSlug",
+    head: tasksPwaHead,
+    component: TasksComponent,
+  });
+
+  const tasksStateTaskRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/tasks/state/$stateSlug/$taskId",
+    head: tasksPwaHead,
+    component: TasksComponent,
+  });
+
+  const tasksTagRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/tasks/tags/$tagSlug",
+    head: tasksPwaHead,
+    component: TasksComponent,
+  });
+
+  const tasksTagTaskRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/tasks/tags/$tagSlug/$taskId",
+    head: tasksPwaHead,
+    component: TasksComponent,
+  });
+
+  const tasksListRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/tasks/lists/$listId",
+    head: tasksPwaHead,
+    component: TasksComponent,
+  });
+
+  const tasksListTaskRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/tasks/lists/$listId/$taskId",
+    head: tasksPwaHead,
+    component: TasksComponent,
+  });
+
   const installRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/install",
@@ -437,6 +533,15 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
     contactsAllContactRoute,
     contactsGroupRoute,
     contactsGroupContactRoute,
+    tasksIndexRoute,
+    tasksStateAllRoute,
+    tasksStateAllTaskRoute,
+    tasksStateRoute,
+    tasksStateTaskRoute,
+    tasksTagRoute,
+    tasksTagTaskRoute,
+    tasksListRoute,
+    tasksListTaskRoute,
     installRoute,
   ]);
 }

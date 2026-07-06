@@ -56,6 +56,12 @@ const WORKSPACE_PWA_META: Record<WorkspacePwaAppKey, WorkspacePwaMeta> = {
     appTitle: "Contacts",
     manifest: "/manifests/contacts.webmanifest",
   },
+  tasks: {
+    title: "Tasks",
+    description: "A calm to-do workspace for focused work.",
+    appTitle: "Tasks",
+    manifest: "/manifests/tasks.webmanifest",
+  },
   settings: {
     title: "Settings",
     description: "Manage your account, memberships, and mail.",
