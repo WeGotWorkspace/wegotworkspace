@@ -67,3 +67,79 @@
 .preview-lightbox__body .docs-file-preview {
   @apply min-h-[min(70vh,40rem)] px-4 py-4;
 }
+
+/* Mobile detail overlay & lightbox: centered letter-sized sheet with side margins. */
+.drive-workspace .drive-detail-overlay .drive-detail-panel__preview .docs-file-preview {
+  --docs-file-preview-mobile-sheet-width: min(100% - 2rem, 28rem);
+  background-color: transparent;
+  align-items: center;
+  padding: 1rem;
+}
+
+.drive-workspace .drive-detail-overlay .drive-detail-panel__preview .docs-file-preview__editor {
+  position: relative;
+  inset: auto;
+  height: auto;
+  width: min(100%, var(--docs-file-preview-mobile-sheet-width));
+  flex: none;
+  margin-inline: auto;
+}
+
+.drive-workspace
+  .drive-detail-overlay
+  .drive-detail-panel__preview
+  .docs-file-preview
+  .text-editor-sheet--fill {
+  align-items: center;
+  flex: none;
+  width: 100%;
+}
+
+.drive-workspace
+  .drive-detail-overlay
+  .drive-detail-panel__preview
+  .docs-file-preview
+  .text-editor-sheet--fill
+  .text-editor-sheet__surface {
+  width: 100%;
+  max-width: none;
+  flex: 0 1 auto;
+  min-height: auto;
+  margin-block: 0;
+  box-shadow: var(--text-editor-shadow-sheet);
+  border: 1px solid color-mix(in oklab, var(--foreground) 8%, transparent);
+}
+
+@media (max-width: 767px) {
+  .preview-lightbox__body .docs-file-preview {
+    --docs-file-preview-mobile-sheet-width: min(100% - 2rem, 28rem);
+    background-color: transparent;
+    align-items: center;
+    padding: 1rem;
+  }
+
+  .preview-lightbox__body .docs-file-preview__editor {
+    position: relative;
+    inset: auto;
+    height: auto;
+    width: min(100%, var(--docs-file-preview-mobile-sheet-width));
+    flex: none;
+    margin-inline: auto;
+  }
+
+  .preview-lightbox__body .docs-file-preview .text-editor-sheet--fill {
+    align-items: center;
+    flex: none;
+    width: 100%;
+  }
+
+  .preview-lightbox__body .docs-file-preview .text-editor-sheet--fill .text-editor-sheet__surface {
+    width: 100%;
+    max-width: none;
+    flex: 0 1 auto;
+    min-height: auto;
+    margin-block: 0;
+    box-shadow: var(--text-editor-shadow-sheet);
+    border: 1px solid color-mix(in oklab, var(--foreground) 8%, transparent);
+  }
+}
