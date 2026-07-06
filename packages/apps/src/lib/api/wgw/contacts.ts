@@ -71,6 +71,19 @@ export async function listAddressBooks(opts?: { signal?: AbortSignal }): Promise
   return parseAddressBooksPayload(json);
 }
 
+export async function getAddressBook(
+  addressBookId: string,
+  opts?: { signal?: AbortSignal },
+): Promise<AddressBook> {
+  const json = await requestContactsJson(
+    `/contacts/addressbooks/${encodeURIComponent(addressBookId)}`,
+    "GET",
+    undefined,
+    opts,
+  );
+  return json as AddressBook;
+}
+
 export async function listCards(opts?: {
   addressBookId?: string;
   signal?: AbortSignal;

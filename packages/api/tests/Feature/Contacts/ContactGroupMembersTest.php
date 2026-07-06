@@ -484,6 +484,114 @@ VCARD);
         $this->assertStringContainsString('X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:'.$joeUid, $raw);
     }
 
+    public function test_rest_patch_adding_group_member_reports_updated_in_card_changes(): void
+    {
+        [$groupId] = $this->seedGroupWithJaneAndJoeMembers();
+
+        $initial = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/contacts/cards/changes?addressBookId=default')
+            ->assertOk();
+
+        $state = $initial->json('newState');
+        $this->assertNotSame('', (string) $state);
+
+        $show = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/contacts/cards/'.$groupId)
+            ->assertOk()
+            ->assertJsonCount(1, 'members');
+
+        $joeUid = '07d442ce-49b5-4a59-bc01-d75b17b92c9a';
+
+        $this->withBearer($this->userBearerToken())
+            ->patchJson('/api/v1/contacts/cards/'.$groupId, [
+                'members' => [
+                    'urn:uuid:'.$joeUid => true,
+                ],
+            ], $this->ifMatchFromResponse($show))
+            ->assertOk();
+
+        $changes = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/contacts/cards/changes?addressBookId=default&since='.$state)
+            ->assertOk();
+
+        $this->assertContains($groupId, $changes->json('updated') ?? []);
+    }
+
+    public function test_contact_set_adding_group_member_reports_updated_in_card_changes(): void
+    {
+        [$groupId] = $this->seedGroupWithJaneAndJoeMembers();
+
+        $initial = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/contacts/cards/changes?addressBookId=default')
+            ->assertOk();
+
+        $state = $initial->json('newState');
+        $this->assertNotSame('', (string) $state);
+
+        $show = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/contacts/cards/'.$groupId)
+            ->assertOk()
+            ->assertJsonCount(1, 'members');
+
+        $cardState = (string) $show->json('state');
+        $this->assertNotSame('', $cardState);
+
+        $joeUid = '07d442ce-49b5-4a59-bc01-d75b17b92c9a';
+
+        $this->withBearer($this->userBearerToken())
+            ->postJson('/api/v1/contacts/cards/set', [
+                'update' => [
+                    $groupId => [
+                        'ifInState' => $cardState,
+                        'members' => [
+                            'urn:uuid:'.$joeUid => true,
+                        ],
+                    ],
+                ],
+            ])
+            ->assertOk()
+            ->assertJsonPath('updated.'.$groupId, fn ($next) => is_string($next) && $next !== '' && $next !== $cardState);
+
+        $changes = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/contacts/cards/changes?addressBookId=default&since='.$state)
+            ->assertOk();
+
+        $this->assertContains($groupId, $changes->json('updated') ?? []);
+    }
+
+    public function test_rest_patch_adding_group_member_bumps_addressbook_synctoken(): void
+    {
+        [$groupId] = $this->seedGroupWithJaneAndJoeMembers();
+
+        $initial = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/contacts/addressbooks/changes')
+            ->assertOk();
+
+        $state = $initial->json('newState');
+        $this->assertNotSame('', (string) $state);
+
+        $show = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/contacts/cards/'.$groupId)
+            ->assertOk()
+            ->assertJsonCount(1, 'members');
+
+        $joeUid = '07d442ce-49b5-4a59-bc01-d75b17b92c9a';
+
+        $this->withBearer($this->userBearerToken())
+            ->patchJson('/api/v1/contacts/cards/'.$groupId, [
+                'members' => [
+                    'urn:uuid:'.$joeUid => true,
+                ],
+            ], $this->ifMatchFromResponse($show))
+            ->assertOk();
+
+        $changes = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/contacts/addressbooks/changes?since='.$state)
+            ->assertOk();
+
+        $this->assertContains('default', $changes->json('updated') ?? []);
+    }
+
     public function test_rest_patch_add_member_with_stale_etag_returns_412(): void
     {
         $janeUid = 'c4cf6038-5da0-41be-9c2d-d8cb9b4af90f';
@@ -546,6 +654,45 @@ VCARD);
                 ],
             ], $this->ifMatchFromResponse($stale))
             ->assertStatus(412);
+    }
+
+    /**
+     * Seed Jane + Joe contacts and a Friends group with Jane as the sole member.
+     *
+     * @return array{0: string, 1: string, 2: string}
+     */
+    private function seedGroupWithJaneAndJoeMembers(): array
+    {
+        $janeUid = 'c4cf6038-5da0-41be-9c2d-d8cb9b4af90f';
+        $joeUid = '07d442ce-49b5-4a59-bc01-d75b17b92c9a';
+
+        $janeId = $this->seedCardViaPdo('bob', 'jane-doe.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Jane Doe
+UID:{$janeUid}
+END:VCARD
+VCARD);
+
+        $joeId = $this->seedCardViaPdo('bob', 'joe-example.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Joe Example
+UID:{$joeUid}
+END:VCARD
+VCARD);
+
+        $groupId = $this->seedCardViaPdo('bob', 'friends-group.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Friends
+X-ADDRESSBOOKSERVER-KIND:group
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:{$janeUid}
+UID:08430ef3-a2ce-4568-9d6c-f50a6cfd32ae
+END:VCARD
+VCARD);
+
+        return [$groupId, $janeId, $joeId];
     }
 
     private function findBobCard(string $cardId): ?Card

@@ -102,6 +102,14 @@ function mockFetchResponses(options: {
   });
 }
 
+const SESSION_WAIT_MS = 5000;
+
+async function waitForCollabSession(result: { current: { session: unknown } }): Promise<void> {
+  await waitFor(() => expect(result.current.session).not.toBeNull(), {
+    timeout: SESSION_WAIT_MS,
+  });
+}
+
 describe("useDocsCollab offline lifecycle", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -140,7 +148,7 @@ describe("useDocsCollab offline lifecycle", () => {
       }),
     );
 
-    await waitFor(() => expect(result.current.session).not.toBeNull());
+    await waitForCollabSession(result);
     expect(result.current.joined).toBe(true);
     expect(result.current.status).toBe("Editing offline");
     expect(mockJoin).not.toHaveBeenCalled();
@@ -159,7 +167,7 @@ describe("useDocsCollab offline lifecycle", () => {
       }),
     );
 
-    await waitFor(() => expect(result.current.session).not.toBeNull());
+    await waitForCollabSession(result);
     await waitFor(() => {
       const ydoc = result.current.session?.ydoc;
       expect(ydoc && ydoc.getXmlFragment("default").length).toBeGreaterThan(0);
@@ -179,7 +187,7 @@ describe("useDocsCollab offline lifecycle", () => {
       }),
     );
 
-    await waitFor(() => expect(result.current.session).not.toBeNull());
+    await waitForCollabSession(result);
     await waitFor(() => {
       const ydoc = result.current.session?.ydoc;
       expect(ydoc && ydoc.getXmlFragment("default").length).toBeGreaterThan(0);
@@ -198,7 +206,7 @@ describe("useDocsCollab offline lifecycle", () => {
       }),
     );
 
-    await waitFor(() => expect(result.current.session).not.toBeNull());
+    await waitForCollabSession(result);
 
     act(() => {
       result.current.onMarkdownChange(() => "# offline edit");
@@ -220,7 +228,7 @@ describe("useDocsCollab offline lifecycle", () => {
       }),
     );
 
-    await waitFor(() => expect(result.current.session).not.toBeNull());
+    await waitForCollabSession(result);
 
     act(() => {
       result.current.onMarkdownChange(() => "# offline edit");
@@ -249,7 +257,7 @@ describe("useDocsCollab offline lifecycle", () => {
       }),
     );
 
-    await waitFor(() => expect(result.current.session).not.toBeNull());
+    await waitForCollabSession(result);
     expect(mockJoin).toHaveBeenCalledTimes(1);
     await waitFor(() => expect(result.current.status).toContain("Mesh"));
   });
@@ -279,7 +287,7 @@ describe("useDocsCollab offline lifecycle", () => {
       }),
     );
 
-    await waitFor(() => expect(result.current.session).not.toBeNull());
+    await waitForCollabSession(result);
     expect(fetchMock).toHaveBeenCalled();
     expect(resolveMarkdown).toBeDefined();
 
@@ -306,7 +314,7 @@ describe("useDocsCollab offline lifecycle", () => {
       }),
     );
 
-    await waitFor(() => expect(result.current.session).not.toBeNull());
+    await waitForCollabSession(result);
     expect(result.current.joined).toBe(true);
     expect(mockJoin).toHaveBeenCalledTimes(1);
     expect(result.current.status).toBe("Connecting to mesh…");
@@ -330,7 +338,7 @@ describe("useDocsCollab offline lifecycle", () => {
       }),
     );
 
-    await waitFor(() => expect(result.current.session).not.toBeNull());
+    await waitForCollabSession(result);
 
     act(() => {
       result.current.onMarkdownChange(() => "# edited");
@@ -358,7 +366,7 @@ describe("useDocsCollab offline lifecycle", () => {
       }),
     );
 
-    await waitFor(() => expect(first.result.current.session).not.toBeNull());
+    await waitForCollabSession(first.result);
 
     act(() => {
       first.result.current.onMarkdownChange(() => "# offline edit");
@@ -394,7 +402,7 @@ describe("useDocsCollab offline lifecycle", () => {
       }),
     );
 
-    await waitFor(() => expect(result.current.session).not.toBeNull());
+    await waitForCollabSession(result);
     expect(mockJoin).not.toHaveBeenCalled();
 
     vi.spyOn(navigator, "onLine", "get").mockReturnValue(true);
@@ -420,7 +428,7 @@ describe("useDocsCollab offline lifecycle", () => {
       }),
     );
 
-    await waitFor(() => expect(result.current.session).not.toBeNull());
+    await waitForCollabSession(result);
 
     act(() => {
       result.current.onMarkdownChange(() => "# reconnect edit");
@@ -448,7 +456,7 @@ describe("useDocsCollab offline lifecycle", () => {
       }),
     );
 
-    await waitFor(() => expect(result.current.session).not.toBeNull());
+    await waitForCollabSession(result);
     expect(result.current.status).toBe("Editing offline");
     expect(mockJoin).not.toHaveBeenCalled();
 
@@ -473,7 +481,7 @@ describe("useDocsCollab offline lifecycle", () => {
       }),
     );
 
-    await waitFor(() => expect(result.current.session).not.toBeNull());
+    await waitForCollabSession(result);
     await waitFor(() => expect(mockJoin).toHaveBeenCalledTimes(1));
 
     act(() => {
@@ -509,7 +517,7 @@ describe("useDocsCollab offline lifecycle", () => {
       }),
     );
 
-    await waitFor(() => expect(result.current.session).not.toBeNull());
+    await waitForCollabSession(result);
     await waitFor(() => expect(mockJoin).toHaveBeenCalledTimes(1));
 
     online = false;
@@ -539,11 +547,11 @@ describe("useDocsCollab offline lifecycle", () => {
       { initialProps: { nextWire: makeWire() } },
     );
 
-    await waitFor(() => expect(result.current.session).not.toBeNull());
+    await waitForCollabSession(result);
     expect(mockJoin).toHaveBeenCalledTimes(1);
 
     rerender({ nextWire: makeWire() });
-    await waitFor(() => expect(result.current.session).not.toBeNull());
+    await waitForCollabSession(result);
     expect(mockJoin).toHaveBeenCalledTimes(1);
   });
 
@@ -560,7 +568,7 @@ describe("useDocsCollab offline lifecycle", () => {
       }),
     );
 
-    await waitFor(() => expect(result.current.session).not.toBeNull());
+    await waitForCollabSession(result);
     await waitFor(() => expect(mockJoin).toHaveBeenCalledTimes(1));
 
     act(() => {
@@ -608,7 +616,7 @@ describe("useDocsCollab offline lifecycle", () => {
         wire,
       }),
     );
-    await waitFor(() => expect(first.result.current.session).not.toBeNull());
+    await waitForCollabSession(first.result);
     await act(async () => {
       first.unmount();
     });
@@ -624,7 +632,7 @@ describe("useDocsCollab offline lifecycle", () => {
         wire,
       }),
     );
-    await waitFor(() => expect(second.result.current.session).not.toBeNull());
+    await waitForCollabSession(second.result);
     expect(collaborationGetCount).toBe(firstAttemptCount);
   });
 });

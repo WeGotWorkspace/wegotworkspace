@@ -149,6 +149,47 @@ export async function writeAddressBooksSyncToken(username: string, token: string
   await db.meta.put({ key: META_ADDRESS_BOOKS_STATE, value: token });
 }
 
+export async function upsertAddressBookInCache(username: string, book: AddressBook): Promise<void> {
+  const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
+  await contactsBooksTable(db).put({
+    id: book.id ?? "default",
+    data: JSON.stringify(book),
+  });
+}
+
+export async function removeAddressBookFromCache(username: string, bookId: string): Promise<void> {
+  const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
+  await contactsBooksTable(db).delete(bookId);
+  await db.meta.delete(metaKeyForBookState(bookId));
+}
+
+export async function readCachedAddressBooks(username: string): Promise<AddressBook[]> {
+  const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
+  const rows = await contactsBooksTable(db).toArray();
+  return rows.map((row) => JSON.parse(row.data) as AddressBook);
+}
+
+export async function listCachedAddressBookIds(username: string): Promise<string[]> {
+  const books = await readCachedAddressBooks(username);
+  return books.map((book) => book.id).filter((id): id is string => Boolean(id && id.length > 0));
+}
+
+export async function replaceAllAddressBooksInCache(
+  username: string,
+  books: AddressBook[],
+): Promise<void> {
+  const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
+  const table = contactsBooksTable(db);
+  await table.clear();
+  if (books.length === 0) return;
+  await table.bulkPut(
+    books.map((book) => ({
+      id: book.id ?? "default",
+      data: JSON.stringify(book),
+    })),
+  );
+}
+
 /** Card id targeted by an outbox row (update/delete `cardId`, or create `tempCardId`). */
 export function contactsOutboxCardId(row: OfflineOutboxRow): string | null {
   if (row.domain !== CONTACTS_DOMAIN) return null;

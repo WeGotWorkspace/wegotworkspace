@@ -1,12 +1,13 @@
 import type { ContactCardCreate, ContactCardPatch } from "@/contacts-core/src/contacts-types";
 import { contactCardSet, ContactStateMismatchError } from "@/lib/api/wgw/contacts-set";
-import { getCard, listAddressBooks } from "@/lib/api/wgw/contacts";
-import { syncAllContactBooks } from "@/lib/api/wgw/contacts-sync";
+import { getCard } from "@/lib/api/wgw/contacts";
+import { pullAddressBookChanges, syncAllContactBooks } from "@/lib/api/wgw/contacts-sync";
 import type { ContactsAppBootstrap } from "@/lib/api/mock/contacts-bootstrap";
 import { CONTACTS_DOMAIN } from "@/lib/offline/contacts/contacts-schema";
 import {
   listOutboxMutations,
   markOutboxError,
+  readCachedAddressBooks,
   readContactsBootstrapFromCache,
   removeOutboxMutation,
   removeContactCardFromCache,
@@ -83,10 +84,10 @@ export async function flushContactsOutbox(username: string): Promise<OutboxFlush
     }
   }
 
-  const books = cached.data.addressBooks.length
-    ? cached.data.addressBooks
-    : await listAddressBooks();
-  const bookIds = books.map((b) => b.id);
+  await pullAddressBookChanges(username);
+
+  const books = await readCachedAddressBooks(username);
+  const bookIds = books.map((b) => b.id).filter((id): id is string => Boolean(id && id.length > 0));
   if (bookIds.length > 0) {
     await syncAllContactBooks(username, bookIds);
   }
