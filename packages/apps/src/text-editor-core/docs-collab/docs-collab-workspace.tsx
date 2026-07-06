@@ -3,11 +3,12 @@ import type { Editor } from "@tiptap/react";
 import { Code2, MessageSquare, Printer } from "lucide-react";
 import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
-import { IconButton } from "@/button/src/button";
 import { docsLabels } from "@/docs-core/src/docs-labels";
+import { DocsDocStatus } from "@/docs-core/src/docs-doc-status";
+import { DocsEditorStatsFooter } from "@/docs-core/src/docs-stats-footer";
+import { DocsHeaderActions } from "@/docs-core/src/docs-header-actions";
 import { docsEditorFormatFromFileName } from "@/docs-core/src/docs-editor-format";
 import { DocsOutlineSidebar } from "@/docs-core/src/docs-outline-sidebar";
-import { Tag } from "@/tag/src/tag";
 import { focusOutlineHeading, parseMarkdownOutline } from "@/docs-core/src/docs-outline";
 import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
@@ -553,81 +554,73 @@ function DocsCollabWorkspaceInner({
               sidebarOpen={sidebarOpen}
               onToggleSidebar={() => setSidebarOpen((open) => !open)}
               actions={
-                <div className="docs-workspace__header-actions">
-                  {docStatus ? (
-                    <span className="docs-workspace__doc-status" role="status" aria-live="polite">
-                      {docStatus}
-                    </span>
-                  ) : null}
-                  {showPendingSyncIndicator ? (
-                    <span
-                      className="docs-workspace__pending-sync"
-                      role="status"
-                      aria-live="polite"
-                      aria-label={pendingSyncLabel}
-                    >
-                      <LoadingSpinner size="sm" />
-                    </span>
-                  ) : null}
-                  {collabSession ? (
-                    <DocsCollabPresence
-                      localUser={{
-                        displayName: collabSession.user.name,
-                      }}
-                      peers={presencePeers}
-                      connectingPeers={connectingPeers}
-                      warningPeers={warningPeers}
-                      className="mr-1"
-                    />
-                  ) : null}
-                  <IconButton
-                    label={
-                      sourceLockedByCollab
+                <DocsHeaderActions
+                  leading={
+                    <>
+                      {showPendingSyncIndicator ? (
+                        <span
+                          className="docs-workspace__pending-sync"
+                          role="status"
+                          aria-live="polite"
+                          aria-label={pendingSyncLabel}
+                        >
+                          <LoadingSpinner size="sm" />
+                        </span>
+                      ) : null}
+                      {collabSession ? (
+                        <DocsCollabPresence
+                          localUser={{
+                            displayName: collabSession.user.name,
+                          }}
+                          peers={presencePeers}
+                          connectingPeers={connectingPeers}
+                          warningPeers={warningPeers}
+                          className="mr-1"
+                        />
+                      ) : null}
+                    </>
+                  }
+                  actions={[
+                    {
+                      id: "view-source",
+                      label: sourceLockedByCollab
                         ? "Source view is disabled while collaborating"
                         : reviewPanelOpen
                           ? "Source view is disabled while review is open"
                           : viewSource
                             ? labels.hideSource
-                            : labels.viewSource
-                    }
-                    icon={<Code2 />}
-                    size="sm"
-                    variant="subtle"
-                    active={viewSource}
-                    aria-pressed={viewSource}
-                    disabled={!editor || sourceLockedByCollab || reviewPanelOpen}
-                    className={cn(viewSource && "docs-workspace__source-toggle--active")}
-                    onClick={() => setViewSource((on) => !on)}
-                  />
-                  <IconButton
-                    label={labels.print}
-                    icon={<Printer />}
-                    size="sm"
-                    variant="subtle"
-                    disabled={!editor}
-                    onClick={() => printTextEditorSheet(editor)}
-                  />
-                  <IconButton
-                    label={
-                      viewSource
+                            : labels.viewSource,
+                      icon: <Code2 />,
+                      active: viewSource,
+                      disabled: !editor || sourceLockedByCollab || reviewPanelOpen,
+                      className: cn(viewSource && "docs-workspace__source-toggle--active"),
+                      onClick: () => setViewSource((on) => !on),
+                    },
+                    {
+                      id: "print",
+                      label: labels.print,
+                      icon: <Printer />,
+                      disabled: !editor,
+                      onClick: () => printTextEditorSheet(editor),
+                    },
+                    {
+                      id: "review",
+                      label: viewSource
                         ? "Review is disabled in source view"
                         : reviewPanelOpen
                           ? labels.reviewToggleHide
                           : reviewItemCount > 0
                             ? `${labels.reviewToggleShow} (${reviewItemCount})`
-                            : labels.reviewToggleShow
-                    }
-                    icon={<MessageSquare />}
-                    size="sm"
-                    variant="subtle"
-                    active={reviewPanelOpen}
-                    aria-pressed={reviewPanelOpen}
-                    disabled={viewSource}
-                    className="docs-workspace__review-toggle"
-                    data-count={reviewItemCount > 0 ? reviewItemCount : undefined}
-                    onClick={handleToggleReview}
-                  />
-                </div>
+                            : labels.reviewToggleShow,
+                      icon: <MessageSquare />,
+                      active: reviewPanelOpen,
+                      disabled: viewSource,
+                      className: "docs-workspace__review-toggle",
+                      "data-count": reviewItemCount > 0 ? reviewItemCount : undefined,
+                      onClick: handleToggleReview,
+                    },
+                  ]}
+                />
               }
             />
           }
@@ -656,24 +649,13 @@ function DocsCollabWorkspaceInner({
                   commentControlLabels={labels}
                 />
               ) : null}
-              <footer className="docs-workspace__stats-footer" aria-live="polite">
-                <div className="docs-workspace__stats-footer-group">
-                  <Tag
-                    label={labels.statsWords(wordCount)}
-                    colors={{
-                      backgroundColor: "var(--docs-stat-tag-bg)",
-                      color: "var(--docs-stat-tag-color)",
-                    }}
-                  />
-                  <Tag
-                    label={labels.statsCharacters(characterCount)}
-                    colors={{
-                      backgroundColor: "var(--docs-stat-tag-bg)",
-                      color: "var(--docs-stat-tag-color)",
-                    }}
-                  />
-                </div>
-              </footer>
+              <DocsEditorStatsFooter
+                wordCount={wordCount}
+                characterCount={characterCount}
+                statsWordsLabel={labels.statsWords}
+                statsCharactersLabel={labels.statsCharacters}
+                status={docStatus ? <DocsDocStatus status={docStatus} /> : null}
+              />
             </div>
           }
         />
