@@ -216,6 +216,138 @@ Blocked on live [#134](https://github.com/WeGotWorkspace/wegotworkspace/issues/1
 | PWA | `public/manifests/tasks.webmanifest`, `workspace-pwa-head.ts` ([#305](https://github.com/WeGotWorkspace/wegotworkspace/issues/305) pattern) |
 | Home / switcher | `WORKSPACE_APP_IDS` includes `tasks` |
 
+Only the **`/tasks`** route ships in v0.9. `workspace-app-icons.ts` may still list a future `reminders` icon asset — that is not a separate app surface.
+
+---
+
+## UI architecture
+
+`tasks-core` mirrors the **Notes collection shell** — reuse layout and sidebar primitives; do not invent a new workspace layout. Blueprint: [notes-core/README.md](../../packages/apps/src/notes-core/README.md). Shell pattern: [workspace-shells.md](../../packages/apps/docs/workspace-shells.md) (Collection = list + detail + mobile back).
+
+### Shell and component reuse
+
+| Layer | Notes reference | Tasks equivalent |
+|-------|-----------------|------------------|
+| Layout | `WorkspaceApp` | Same — list + detail panes |
+| Sidebar chrome | `AppSidebar`, `SidebarSection`, `WorkspaceUserFooter` | Same imports as [notes-workspace.tsx](../../packages/apps/src/notes-core/src/notes-workspace.tsx) |
+| Sidebar model | `useNotesSidebarModel` | `useTasksSidebarModel` — `MenuItemProps[]` per section |
+| Controllers | `useNotesShell` / `useNotesList` / `useNotesMutations` | `useTasksShell` / `useTasksList` / `useTasksMutations` |
+
+Mock-tier Storybook ([#298](https://github.com/WeGotWorkspace/wegotworkspace/issues/298)) should render all three sidebar sections before live API.
+
+### Sidebar (top → bottom)
+
+```text
+AppSidebar
+├── [primary CTA: New task]
+├── SidebarSection — States
+├── SidebarSection — Tags          (title: "Tags")
+└── SidebarSection — Lists         (title: "Lists")
+    ├── Personal lists
+    └── Shared / group lists       (when #157 sharing ships)
+```
+
+#### States (client-side views — not CalDAV collections)
+
+Cross-list filters; map to a **`view` query / route segment** like Notes `all` / `starred` / `archive`.
+
+| State item | Filter logic | Protocol tie-in |
+|------------|--------------|-----------------|
+| All active | `STATUS !== COMPLETED && !== CANCELLED` (default) | Client filter across loaded tasks |
+| Today / Upcoming / Overdue | `DUE` date windows | Client filter |
+| Needs action / In process / Completed / Cancelled | `workflowStatus` ↔ `STATUS` | Kanban-aligned filters, not extra storage columns |
+
+View keys: `state:all`, `state:today`, `state:upcoming`, `state:overdue`, `state:needs-action`, `state:in-process`, `state:completed`, `state:cancelled`.
+
+#### Tags (cross-list — `CATEGORIES`)
+
+Same UX as Notes tags ([use-notes-sidebar-model.tsx](../../packages/apps/src/notes-core/src/use-notes-sidebar-model.tsx) `tagSidebarItems`):
+
+- Sidebar item per tag; selecting filters tasks **across all lists** where `categories` includes the tag.
+- Drag-drop onto a tag row assigns `CATEGORIES` (like Notes `assignTagToNotes`).
+- Canonical tag colors / autocomplete from the workspace/app table (Decision 4).
+
+View keys: `tag:{name}`
+
+#### Lists (CalDAV collections)
+
+Same UX as Notes **notebooks** (`notebookSidebarItems`):
+
+- One sidebar item per `TaskList` (VTODO-only CalDAV calendar).
+- Selecting a list scopes the list column (`GET /tasks/items?taskListId=`).
+- Drag-drop onto a list row moves the task via WebDAV `MOVE` (preserve `UID`).
+- Group / shared lists in the same section (or “Shared” sub-heading) when [#157](https://github.com/WeGotWorkspace/wegotworkspace/issues/157) lands; badge or indent for non-owned lists (`myRights` read-only vs read-write).
+
+View keys: `list:{taskListId}`
+
+### Single active view
+
+Like Notes, **one** sidebar selection drives the list column at a time. States, tags, and lists are peers — not combined filters in v0.9.
+
+### Main column
+
+- **Default:** list + detail panes (Collection pattern).
+- **Kanban (optional v0.9 / follow-up):** alternate **main-column layout** when viewing a list or certain states — four columns = four `STATUS` values. Not a fourth sidebar section.
+- **Detail pane:** status, priority, due date, tags, subtasks, “Remind me” picker ([#299](https://github.com/WeGotWorkspace/wegotworkspace/issues/299)).
+
+### Branding and theme
+
+Use existing [tasks.svg](../../packages/apps/src/assets/app-icons/tasks.svg) — circle + checkmark; `--wai-bg` **`#14b8a6`** (teal), `--wai-fg` white. Public copy: `/app-icons/tasks.svg`. Inline markup already in `WORKSPACE_FUTURE_APP_ICON_INLINE.tasks` — promote to `WORKSPACE_APP_ICON_INLINE` when wiring.
+
+| Surface | Action |
+|---------|--------|
+| CSS | `tasks-workspace.css`: `--tasks-accent: #14b8a6`, mirror Notes sidebar/button tokens |
+| Accents | `WORKSPACE_APP_ACCENT.tasks = "#14b8a6"` in [workspace-app-icons.ts](../../packages/apps/src/lib/workspace-app-icons.ts) |
+| PWA | `public/manifests/tasks.webmanifest` (`theme_color` / `background_color` `#14b8a6`); register in [workspace-pwa-head.ts](../../packages/apps/src/lib/workspace-pwa-head.ts) |
+| Icons | Run `generate-pwa-icons.mjs` for `tasks-180.png` ([#305](https://github.com/WeGotWorkspace/wegotworkspace/issues/305) pattern) |
+
+**Do not** use Calendar or Reminders icons/colors for the Tasks app surface.
+
+---
+
+## Offline and collaboration
+
+### Why Tasks ≠ Notes offline shape
+
+| | Notes | Tasks |
+|---|-------|-------|
+| Primary artifact | Long-form **markdown body** + metadata | Structured **entity** (title, status, due, tags, list) |
+| Offline path | **Dual-path:** Yjs + y-indexeddb (body) + Dexie outbox (metadata) | **Single-path:** whole task record like **Contacts** |
+| Transport | Body: `PUT /files/collaboration`; metadata: `PUT /notes/items` | `GET/POST/PATCH /tasks/items` + CalDAV blob via [#134](https://github.com/WeGotWorkspace/wegotworkspace/issues/134) |
+
+Tasks follow the **[Contacts offline reference](../../packages/apps/docs/offline-platform.md)** (bootstrap → cache → outbox → reconnect flush), not Notes dual-path — unless a field needs document-style CRDT (tier 2 below).
+
+### Tier 1 — Offline + shared-list sync (v0.9)
+
+**Offline (personal + cached shared lists):**
+
+- Claim Dexie block **`tasks: 40–49`** in `offline-version-allocation.ts` (next free after drive 30–39).
+- Plugin layout mirrors Contacts: `tasks-schema.ts`, `tasks-offline-store.ts`, `tasks-outbox-flush.ts`, `tasks-hybrid-operations.ts`; `use-tasks-api.ts` wires hybrid bootstrap + pending/failed sync indicators.
+- Cache task lists + items for sidebar/list column; outbox coalesces PATCH/POST/DELETE while offline.
+- **Conflict model:** ETag / `If-Match` ([#161](https://github.com/WeGotWorkspace/wegotworkspace/issues/161)) + optional conflict dialog — **not** Yjs CRDT for task fields.
+- **Incremental sync (online):** `GET /tasks/tasklists/changes`, `GET /tasks/items/changes?taskListId=` ([#158](https://github.com/WeGotWorkspace/wegotworkspace/issues/158)); bootstrap can start with full list fetch before `/changes` ships.
+
+Tracked in [#331](https://github.com/WeGotWorkspace/wegotworkspace/issues/331). [#313](https://github.com/WeGotWorkspace/wegotworkspace/issues/313) v0.9 DoD does not yet list Tasks offline — architecture commits to Contacts parity; schedule as v0.9 stretch after [#134](https://github.com/WeGotWorkspace/wegotworkspace/issues/134) lands.
+
+**Multi-user shared lists (tier 1 — sufficient for v0.9):**
+
+- Not live cursors; **eventual consistency** when teammates edit the same list:
+  - Online: poll `/changes` or refresh on focus/reconnect
+  - Offline edits queue in outbox; flush on reconnect
+  - Conflicts: ETag mismatch → user-facing retry/discard (Contacts pattern)
+- Depends on shared task lists ([#157](https://github.com/WeGotWorkspace/wegotworkspace/issues/157)); personal-list offline works without sharing.
+
+### Tier 2 — Yjs / RTC mesh (optional)
+
+Notes/Docs collab ([collab-hooks.md](../../.agents/skills/workspace/collab-hooks.md)) is Yjs + TipTap + `/files/collaboration` + RTC mesh for **continuous text editing**. Reuse **only** for rich-text fields — do not mount `useDocsCollab` for the whole task record.
+
+| Field | Tier 1 (REST + offline) | Tier 2 (Yjs) |
+|-------|-------------------------|--------------|
+| Title, status, due, priority, tags, list | ✅ | ❌ overkill |
+| Plain-text description | ✅ PATCH coalesced in outbox | optional |
+| Rich-text description (TipTap) | — | ✅ one collab room per task |
+| Structured checklist (checkboxes) | ✅ `icsProps` / REST PATCH | optional Y.Map room if live multi-user checklist needed |
+
 ---
 
 ## Property mapping (VTODO ↔ REST Task)
@@ -271,6 +403,7 @@ Full matrix: [`packages/api/docs/tasks/ics-jmap-task-conversion-matrix.md`](../p
 - **Apple Reminders.app** — no native CalDAV sync (Decision 2).
 - **Kanban** — four columns max without non-interop `X-` columns (Decision 6).
 - **Subtasks / checklists** — partial or non-interop (Decision 8).
+- **Non-interop extensions** — custom Kanban columns, WGW checklists, and `X-WGW-*` / unmapped `icsProps` may not round-trip to third-party CalDAV clients (Decisions 6, 8).
 - **Mixed default calendar** — until [#332](https://github.com/WeGotWorkspace/wegotworkspace/issues/332) migration.
 - **Recurrence UI** — may be v0.9 stretch; storage model still JMAP overrides (Decision 7).
 - **Single sidebar view** — no combined state + list filter in v0.9.
