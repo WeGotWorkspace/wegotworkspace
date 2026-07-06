@@ -197,7 +197,11 @@
 }
 
 .drive-workspace .drive-main-pane__scroll {
-  @apply min-w-0 overflow-x-hidden overflow-y-auto;
+  @apply flex-1 min-h-0 min-w-0 w-full overflow-x-hidden overflow-y-auto;
+}
+
+.drive-workspace .drive-main-pane__scroll:has(> .collection-state) {
+  @apply flex flex-col items-center justify-center;
 }
 
 .drive-workspace .drive-detail-aside {
