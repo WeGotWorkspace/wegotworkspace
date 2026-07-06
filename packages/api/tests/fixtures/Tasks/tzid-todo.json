@@ -1,0 +1,19 @@
+{
+  "@type": "Task",
+  "uid": "urn:uuid:tzid-task-001",
+  "title": "Timezone-aware task",
+  "description": null,
+  "start": "2026-06-15T09:00:00",
+  "due": "2026-06-15T17:00:00",
+  "completed": null,
+  "timeZone": "Europe/Amsterdam",
+  "workflowStatus": "needs-action",
+  "progress": null,
+  "priority": null,
+  "isDraft": false,
+  "sortOrder": 0,
+  "categories": [],
+  "privacy": null,
+  "created": null,
+  "updated": null
+}

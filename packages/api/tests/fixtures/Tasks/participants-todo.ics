@@ -1,0 +1,12 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//WeGotWorkspace//Tasks Test//EN
+BEGIN:VTODO
+UID:urn:uuid:participants-task-001
+SUMMARY:Delegated task
+DUE:20260615T090000
+STATUS:NEEDS-ACTION
+ORGANIZER;CN=Alice:mailto:alice@example.com
+ATTENDEE;CN=Bob;PARTSTAT=ACCEPTED:mailto:bob@example.com
+END:VTODO
+END:VCALENDAR

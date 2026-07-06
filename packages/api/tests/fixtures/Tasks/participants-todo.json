@@ -1,0 +1,33 @@
+{
+  "@type": "Task",
+  "uid": "urn:uuid:participants-task-001",
+  "title": "Delegated task",
+  "description": null,
+  "start": null,
+  "due": "2026-06-15T09:00:00",
+  "completed": null,
+  "workflowStatus": "needs-action",
+  "progress": null,
+  "priority": null,
+  "isDraft": false,
+  "sortOrder": 0,
+  "categories": [],
+  "privacy": null,
+  "created": null,
+  "updated": null,
+  "participants": {
+    "org": {
+      "@type": "Participant",
+      "name": "Alice",
+      "email": "alice@example.com",
+      "roles": ["owner"]
+    },
+    "att1": {
+      "@type": "Participant",
+      "name": "Bob",
+      "email": "bob@example.com",
+      "roles": ["attendee"],
+      "participationStatus": "accepted"
+    }
+  }
+}

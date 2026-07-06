@@ -76,6 +76,26 @@ function mergePathsFromSource(baseDoc, sourceDoc) {
   }
 }
 
+function mergeComponentsFromSource(baseDoc, sourceDoc) {
+  const sourceComponents = sourceDoc.components;
+  if (!sourceComponents || typeof sourceComponents !== "object" || Array.isArray(sourceComponents)) {
+    return;
+  }
+
+  baseDoc.components ??= {};
+  for (const section of ["parameters", "responses"]) {
+    const sourceSection = sourceComponents[section];
+    if (!sourceSection || typeof sourceSection !== "object" || Array.isArray(sourceSection)) {
+      continue;
+    }
+
+    baseDoc.components[section] = {
+      ...(baseDoc.components[section] ?? {}),
+      ...sourceSection,
+    };
+  }
+}
+
 /**
  * Resolve the OpenAPI document used for TypeScript typegen.
  *
@@ -105,6 +125,7 @@ export function buildOpenApiBuiltJson() {
   if (existsSync(sourcePath)) {
     const sourceDoc = JSON.parse(readFileSync(sourcePath, "utf8"));
     mergePathsFromSource(baseDoc, sourceDoc);
+    mergeComponentsFromSource(baseDoc, sourceDoc);
   }
 
   const modularSchemas = loadModularSchemas();

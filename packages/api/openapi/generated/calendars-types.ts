@@ -8,6 +8,8 @@ export type CalendarsPaths = {
 };
 
 export type Calendar = components["schemas"]["Calendar"];
+export type CalendarCreate = components["schemas"]["CalendarCreate"];
+export type CalendarDeleteOptions = components["schemas"]["CalendarDeleteOptions"];
 export type CalendarEvent = components["schemas"]["CalendarEvent"];
 export type CalendarEventAbsoluteAlertTrigger = components["schemas"]["CalendarEventAbsoluteAlertTrigger"];
 export type CalendarEventAlert = components["schemas"]["CalendarEventAlert"];
@@ -20,6 +22,7 @@ export type CalendarEventPatch = components["schemas"]["CalendarEventPatch"];
 export type CalendarEventRecurrenceOverride = components["schemas"]["CalendarEventRecurrenceOverride"];
 export type CalendarEventRelativeAlertTrigger = components["schemas"]["CalendarEventRelativeAlertTrigger"];
 export type CalendarListResponse = components["schemas"]["CalendarListResponse"];
+export type CalendarPatch = components["schemas"]["CalendarPatch"];
 export type CalendarRecurrenceRule = components["schemas"]["CalendarRecurrenceRule"];
 export type CalendarRights = components["schemas"]["CalendarRights"];
 export type CalendarTimeZone = components["schemas"]["CalendarTimeZone"];

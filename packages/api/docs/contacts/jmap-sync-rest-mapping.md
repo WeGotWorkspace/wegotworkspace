@@ -1,9 +1,9 @@
-# JMAP incremental sync — REST mapping (contacts pilot)
+# JMAP incremental sync — REST mapping
 
 > **Issue:** [#158](https://github.com/WeGotWorkspace/wegotworkspace/issues/158)  
 > **Spec:** [RFC 9610](https://www.rfc-editor.org/info/rfc9610) (Contacts), [RFC 8620](https://www.rfc-editor.org/info/rfc8620) (JMAP core `/changes`, `/query`)
 
-WeGotWorkspace exposes a **REST subset** of JMAP sync methods for contacts. Calendars and tasks document the same token strategy below; REST endpoints for those domains are planned after the contacts pilot.
+WeGotWorkspace exposes a **REST subset** of JMAP sync methods. Contacts were the pilot; calendars and tasks now expose collection `/changes` and tasks expose item `/query`.
 
 ## Sync tokens
 
@@ -11,16 +11,18 @@ WeGotWorkspace exposes a **REST subset** of JMAP sync methods for contacts. Cale
 |-----------|---------------|-------------------|
 | `AddressBook` | `GET /api/v1/contacts/addressbooks/changes?since=` | Composite `{count}:{uri:synctoken,...}` over owned books |
 | `ContactCard` | `GET /api/v1/contacts/cards/changes?addressBookId=&since=` | Sabre CardDAV `addressbooks.synctoken` + `addressbookchanges` |
+| `Calendar` | `GET /api/v1/calendars/calendars/changes?since=` | Composite `{count}:{uri:synctoken,...}` over owned VEVENT calendars |
+| `TaskList` | `GET /api/v1/tasks/tasklists/changes?since=` | Composite `{count}:{uri:synctoken,...}` over owned VTODO calendars |
 
-### Response shape (both endpoints)
+### Response shape (collection + card changes)
 
 ```json
 {
   "oldState": "5",
   "newState": "12",
-  "created": ["card-id"],
-  "updated": ["card-id"],
-  "destroyed": ["card-id"]
+  "created": ["id"],
+  "updated": ["id"],
+  "destroyed": ["id"]
 }
 ```
 
@@ -33,6 +35,8 @@ Maps to JMAP `/changes` (`oldState`, `newState`, `created`, `updated`, `destroye
 ### WebDAV alternative
 
 Clients may also use CardDAV **sync-collection REPORT** against `/addressbooks/{user}/{book}/` with `{http://sabredav.org/ns}sync-token`. REST `/changes` reads the same underlying `synctoken` / `addressbookchanges` tables.
+
+CalDAV calendar collections expose synctoken on `calendarinstances`; REST collection `/changes` reads the same `calendars.synctoken` values.
 
 ## ContactCard/query
 
@@ -66,23 +70,41 @@ POST /api/v1/contacts/cards/query
 
 Response: `{ "ids": ["…"], "total": 1 }` — fetch full cards via `GET /contacts/cards/{id}`.
 
-## Calendars and tasks (documented strategy)
+## Task/query
 
-Calendar collections and VEVENT/VTODO objects use the same Sabre pattern:
+| JMAP filter | REST support |
+|-------------|--------------|
+| `inTaskList` | **Required** on `POST /tasks/items/query` |
+| `uid` | **Supported** on query POST body |
+| Other filters | **Deferred** |
+
+### Query request (POST)
+
+```json
+POST /api/v1/tasks/items/query
+{
+  "filter": { "inTaskList": "default", "uid": "urn:uuid:…" },
+  "limit": 50
+}
+```
+
+Response: `{ "ids": ["…"], "total": 1 }` — fetch full tasks via `GET /tasks/items/{id}`.
+
+## Events and tasks (item-level sync)
+
+Calendar events and task items use per-calendar synctoken via `calendarchanges`, but REST item `/changes` endpoints are **not yet implemented**.
 
 | Store | Token column | Changes table |
 |-------|--------------|---------------|
-| Calendars | `calendarinstances.synctoken` (via backend) | `calendarchanges` |
+| Calendars / task lists | `calendars.synctoken` (via backend) | `calendarchanges` |
 | Events / tasks | per-calendar synctoken | `calendarchanges` rows |
 
-**Planned REST mapping (not yet implemented):**
+**Planned REST mapping (deferred):**
 
-- `GET /calendars/calendars/changes?since=`
 - `GET /calendars/events/changes?calendarId=&since=`
-- `GET /tasks/tasklists/changes?since=`
 - `GET /tasks/items/changes?taskListId=&since=`
 
-**ETag alternative:** `CalendarEvent` and `Task` responses already expose `etag` (from `calendarobjects.etag`). Clients may use `If-Match` on PUT/PATCH/DELETE for optimistic concurrency without polling `/changes`.
+**ETag alternative:** `CalendarEvent` and `Task` responses expose `etag` (from `calendarobjects.etag`). Clients may use `If-Match` on PUT/PATCH/DELETE for optimistic concurrency without polling `/changes`.
 
 ## Non-goals (v1)
 
