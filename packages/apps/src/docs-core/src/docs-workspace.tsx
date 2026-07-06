@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Editor } from "@tiptap/react";
 import { Code2, Pencil, Printer } from "lucide-react";
 import { TooltipProvider } from "@/ui/tooltip";
-import { IconButton } from "@/button/src/button";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import {
   WorkspaceAppLayout,
@@ -12,6 +11,7 @@ import { workspaceUserInitials, type WorkspaceSession } from "@/lib/workspace/wo
 import { ViewHeader } from "@/view-header/src/view-header";
 import { printTextEditorSheet } from "@/text-editor-core/src/text-editor-print";
 import { cn } from "@/lib/utils";
+import { DocsHeaderActions } from "@/docs-core/src/docs-header-actions";
 import { DocsMainPane } from "@/docs-core/src/docs-main-pane";
 import { DocsOutlineSidebar } from "@/docs-core/src/docs-outline-sidebar";
 import { DocsWorkspaceModals } from "@/docs-core/src/docs-workspace-modals";
@@ -191,35 +191,33 @@ function DocsMainHeader({
       onToggleSidebar={() => controller.setSidebarOpen((open) => !open)}
       actions={
         controller.hasFile ? (
-          <div className="docs-workspace__header-actions">
-            <IconButton
-              label={viewSource ? controller.labels.hideSource : controller.labels.viewSource}
-              icon={<Code2 />}
-              size="sm"
-              variant="subtle"
-              active={viewSource}
-              aria-pressed={viewSource}
-              disabled={!editor}
-              className={viewSource ? "docs-workspace__source-toggle--active" : undefined}
-              onClick={onToggleViewSource}
-            />
-            <IconButton
-              label={controller.labels.print}
-              icon={<Printer />}
-              size="sm"
-              variant="subtle"
-              disabled={!editor}
-              onClick={() => printTextEditorSheet(editor)}
-            />
-            <IconButton
-              label={controller.labels.rename}
-              icon={<Pencil />}
-              size="sm"
-              variant="subtle"
-              disabled={!controller.canRename}
-              onClick={controller.openRenameDialog}
-            />
-          </div>
+          <DocsHeaderActions
+            actions={[
+              {
+                id: "view-source",
+                label: viewSource ? controller.labels.hideSource : controller.labels.viewSource,
+                icon: <Code2 />,
+                active: viewSource,
+                disabled: !editor,
+                className: viewSource ? "docs-workspace__source-toggle--active" : undefined,
+                onClick: onToggleViewSource,
+              },
+              {
+                id: "print",
+                label: controller.labels.print,
+                icon: <Printer />,
+                disabled: !editor,
+                onClick: () => printTextEditorSheet(editor),
+              },
+              {
+                id: "rename",
+                label: controller.labels.rename,
+                icon: <Pencil />,
+                disabled: !controller.canRename,
+                onClick: controller.openRenameDialog,
+              },
+            ]}
+          />
         ) : null
       }
     />
