@@ -21,7 +21,7 @@ export default meta;
 type Story = StoryObj<typeof FilePreviewTextPane>;
 
 const SAMPLE =
-  "Meeting notes from Tuesday. We agreed to ship grid previews first, then wire the Quick Look lightbox and column view in follow-up phases.";
+  "Meeting notes from Tuesday. We agreed to ship grid previews first, then wire column view in follow-up phases.";
 
 export const ClampedTile: Story = {
   name: "Clamped (grid tile)",

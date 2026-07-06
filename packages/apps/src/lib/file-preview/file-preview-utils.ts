@@ -4,9 +4,6 @@ import type { FileKind } from "@/drive-core/src/drive-models";
 import { DOCS_EDITOR_EXTENSIONS } from "@/drive-core/src/drive-models";
 import type { FilePreviewPayload } from "@/lib/file-preview/file-preview-types";
 
-export const LIGHTBOX_DEFAULT_IMAGE_ASPECT = 4 / 3;
-export const LIGHTBOX_DEFAULT_VIDEO_ASPECT = 16 / 9;
-
 /** Extensions always treated as inline text previews (tier 1 allowlist). */
 export const TEXT_PREVIEW_EXTENSIONS = new Set([
   "md",
@@ -142,18 +139,6 @@ export function mediaAspectRatio(width?: number, height?: number): number | null
   return width / height;
 }
 
-export function lightboxFallbackAspectRatio(fileKind: FileKind): number {
-  return fileKind === "video" ? LIGHTBOX_DEFAULT_VIDEO_ASPECT : LIGHTBOX_DEFAULT_IMAGE_ASPECT;
-}
-
-export function blobPreviewAspectRatio(
-  preview: FilePreviewPayload | undefined,
-  fileKind: FileKind,
-): number | null {
-  if (preview?.kind !== "blob-url") return null;
-  return mediaAspectRatio(preview.width, preview.height) ?? lightboxFallbackAspectRatio(fileKind);
-}
-
 function readImageBlobDimensions(blob: Blob): Promise<{ width: number; height: number } | null> {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(blob);
@@ -198,7 +183,7 @@ function readVideoBlobDimensions(blob: Blob): Promise<{ width: number; height: n
   });
 }
 
-/** Decode intrinsic media dimensions from a fetched blob (grid/lightbox prefetch). */
+/** Decode intrinsic media dimensions from a fetched blob (grid prefetch). */
 export async function readBlobMediaDimensions(
   blob: Blob,
   fileKind: Extract<FileKind, "image" | "video">,

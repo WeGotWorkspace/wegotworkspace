@@ -73,10 +73,6 @@ export function useDriveController({
         list.setDetailOpen(opening);
         return;
       }
-      if (e.key === "Escape" && list.lightboxOpen) {
-        list.setLightboxOpen(false);
-        return;
-      }
       if (e.key === "Escape" && list.detailOpen) {
         list.setDetailOpen(false);
       }
@@ -87,40 +83,15 @@ export function useDriveController({
     list.active,
     list.activeId,
     list.detailOpen,
-    list.lightboxOpen,
     list.selectedIds,
     list.setActiveId,
     list.setDetailOpen,
-    list.setLightboxOpen,
     shell.searchInputRef,
   ]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (isKeyboardFieldTarget(e.target)) return;
-
-      if (list.lightboxOpen) {
-        if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-          e.preventDefault();
-          e.stopPropagation();
-          list.navigateLightbox(-1);
-          return;
-        }
-        if (e.key === "ArrowRight" || e.key === "ArrowDown") {
-          e.preventDefault();
-          e.stopPropagation();
-          list.navigateLightbox(1);
-          return;
-        }
-        if (e.key === "Enter" && list.active && list.active.kind !== "folder") {
-          e.preventDefault();
-          e.stopPropagation();
-          list.setLightboxOpen(false);
-          list.openDocsEditorFile(list.active);
-          return;
-        }
-        return;
-      }
 
       if (
         e.key === "Enter" &&
@@ -134,31 +105,10 @@ export function useDriveController({
         mutations.requestRenameItem(list.active);
         return;
       }
-
-      if (
-        e.code === "Space" &&
-        !e.repeat &&
-        (list.viewMode === "grid" || list.viewMode === "list") &&
-        list.active &&
-        list.active.kind !== "folder"
-      ) {
-        e.preventDefault();
-        list.setLightboxOpen(true);
-      }
     };
     window.addEventListener("keydown", handler, true);
     return () => window.removeEventListener("keydown", handler, true);
-  }, [
-    list.active,
-    list.lightboxOpen,
-    list.navigateLightbox,
-    list.openDocsEditorFile,
-    list.selectedIds.length,
-    list.setLightboxOpen,
-    list.viewMode,
-    mutations.renameDialog,
-    mutations.requestRenameItem,
-  ]);
+  }, [list.active, list.selectedIds.length, mutations.renameDialog, mutations.requestRenameItem]);
 
   useWorkspaceListKeyboardShortcuts({
     searchInputRef: shell.searchInputRef,
@@ -166,7 +116,6 @@ export function useDriveController({
     onRequestDeleteSelection: mutations.requestDeleteSelected,
     onNavigateList: list.navigateListByKeyboard,
     onUndoQueuedAction: list.undoLatest,
-    listNavigationEnabled: !list.lightboxOpen,
   });
 
   const handleUnifiedSearchSelect = useMemo(
@@ -203,10 +152,6 @@ export function useDriveController({
     setSidebarOpen: shell.setSidebarOpen,
     detailOpen: list.detailOpen,
     setDetailOpen: list.setDetailOpen,
-    lightboxOpen: list.lightboxOpen,
-    setLightboxOpen: list.setLightboxOpen,
-    previewableIds: list.previewableIds,
-    navigateLightbox: list.navigateLightbox,
     selectionMode: list.selectionMode,
     setSelectionMode: list.setSelectionMode,
     viewMode: list.viewMode,

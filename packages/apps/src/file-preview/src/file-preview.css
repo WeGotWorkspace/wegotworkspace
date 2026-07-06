@@ -53,17 +53,3 @@
 .drive-workspace .drive-detail-panel__preview .file-preview-text-pane__content {
   @apply text-sm;
 }
-
-.file-preview__lightbox-frame {
-  @apply relative mx-auto w-full max-h-[min(70vh,40rem)] max-w-full;
-}
-
-.file-preview__lightbox-frame > .file-preview__lightbox-media,
-.file-preview__lightbox-frame > img,
-.file-preview__lightbox-frame > video {
-  @apply block h-full w-full object-contain;
-}
-
-.file-preview__lightbox-frame > .file-preview__fallback {
-  @apply absolute inset-0 flex items-center justify-center;
-}

@@ -111,7 +111,7 @@ export const DetailPaneScrollable: Story = {
     preview: {
       kind: "text",
       content:
-        "Line one of the document.\nLine two continues the preview body.\nLine three shows scrollable pane mode for detail and future lightbox surfaces.",
+        "Line one of the document.\nLine two continues the preview body.\nLine three shows scrollable pane mode for detail surfaces.",
     },
     textMode: "scrollable",
   },

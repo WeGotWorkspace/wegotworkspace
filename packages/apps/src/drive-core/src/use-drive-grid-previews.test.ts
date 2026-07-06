@@ -160,7 +160,7 @@ describe("useDriveGridPreviews", () => {
     });
   });
 
-  it("fetches full docs preview for the active detail/lightbox file", async () => {
+  it("fetches full docs preview for the active detail file", async () => {
     const markdown = "# Hello\n\nPreview body for the detail pane.";
     const readFileBlob = vi.fn(async () => new Blob([markdown], { type: "text/markdown" }));
 

@@ -9,7 +9,6 @@ import { PathBreadcrumb } from "@/path-breadcrumb/src/path-breadcrumb";
 import { UploadProgress } from "@/upload-progress/src/upload-progress";
 import { cn } from "@/lib/utils";
 import { DriveDetailPanel, DriveGridView, DriveListView } from "@/drive-core/src/drive-browser";
-import { DrivePreviewLightbox } from "@/drive-core/src/drive-preview-lightbox";
 import type { DriveFile } from "@/drive-core/src/drive-models";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
 import type { DriveAPIOperations } from "@/drive-core/src/drive-types";
@@ -77,10 +76,6 @@ export function DriveMainPane({
     detailOpen,
     active,
     setDetailOpen,
-    lightboxOpen,
-    setLightboxOpen,
-    previewableIds,
-    navigateLightbox,
     isUnderTrash,
     setConfirmDelete,
     selectionBar,
@@ -328,15 +323,6 @@ export function DriveMainPane({
       ) : null}
 
       {selectionBar}
-
-      <DrivePreviewLightbox
-        open={lightboxOpen}
-        file={active?.kind === "folder" ? null : active}
-        preview={activePreview}
-        previewableIds={previewableIds}
-        onClose={() => setLightboxOpen(false)}
-        onNavigate={navigateLightbox}
-      />
     </section>
   );
 }

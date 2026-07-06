@@ -118,7 +118,7 @@ function DocsFilePreviewEditor({
   );
 }
 
-/** Read-only Docs editor surface for drive file previews (grid tiles / detail pane / lightbox). */
+/** Read-only Docs editor surface for drive file previews (grid tiles / detail pane). */
 export function DocsFilePreview({
   fileName,
   fileApiPath,

@@ -46,7 +46,6 @@ export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [viewMode, setViewMode] = usePersistedDriveViewMode("grid");
   const recentOpenRef = useRef<{ key: string; at: number } | null>(null);
   const isTouch = useIsTouch();
@@ -113,7 +112,6 @@ export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
   useEffect(() => {
     setActiveId(null);
     setDetailOpen(false);
-    setLightboxOpen(false);
     lastTouchTapRef.current = null;
   }, [viewResetKey]);
 
@@ -123,37 +121,14 @@ export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
         null) as DriveFile | null)
     : null;
 
-  const previewableItems = useMemo(
-    () => visibleItems.filter((file) => file.kind !== "folder"),
-    [visibleItems],
-  );
-  const previewableIds = useMemo(() => previewableItems.map((file) => file.id), [previewableItems]);
-
-  const detailPreviewFile =
-    active && (detailOpen || lightboxOpen || viewMode === "list") ? active : null;
+  const detailPreviewFile = active && (detailOpen || viewMode === "list") ? active : null;
 
   const { filePreviews, richPreviews } = useDriveGridPreviews({
     items: visibleItems,
     operations,
-    enabled: viewMode === "grid" || lightboxOpen || detailOpen,
+    enabled: viewMode === "grid" || detailOpen,
     extraFile: detailPreviewFile,
   });
-
-  const navigateLightbox = useCallback(
-    (direction: -1 | 1) => {
-      if (previewableIds.length === 0) return;
-      const currentIndex = activeId ? previewableIds.indexOf(activeId) : -1;
-      const fallbackIndex = direction > 0 ? 0 : previewableIds.length - 1;
-      const baseIndex = currentIndex >= 0 ? currentIndex : fallbackIndex;
-      const nextIndex = Math.min(previewableIds.length - 1, Math.max(0, baseIndex + direction));
-      const nextId = previewableIds[nextIndex];
-      if (!nextId) return;
-      setSelectionMode(false);
-      setSelectedIds([nextId]);
-      setActiveId(nextId);
-    },
-    [activeId, previewableIds, setActiveId, setSelectedIds, setSelectionMode],
-  );
 
   const openFile = (f: DriveFile) => {
     const openKey = f.apiPath ?? `${f.parent}/${f.title}`;
@@ -243,10 +218,6 @@ export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
     setSelectedIds,
     detailOpen,
     setDetailOpen,
-    lightboxOpen,
-    setLightboxOpen,
-    previewableIds,
-    navigateLightbox,
     selectionMode,
     setSelectionMode,
     viewMode,

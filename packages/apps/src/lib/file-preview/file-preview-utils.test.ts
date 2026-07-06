@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  blobPreviewAspectRatio,
   decodeDocsPreviewContent,
   decodeUtf8Preview,
   fileSupportsTextPreview,
@@ -9,7 +8,6 @@ import {
   isLikelyUtf8Text,
   isTextPreviewExtension,
   isUsableTextExcerpt,
-  lightboxFallbackAspectRatio,
   mediaAspectRatio,
   resolveDetailFilePreview,
   resolveGridFilePreview,
@@ -103,11 +101,5 @@ describe("file preview text helpers", () => {
   it("derives media aspect ratio from blob preview dimensions", () => {
     expect(mediaAspectRatio(1600, 900)).toBeCloseTo(16 / 9);
     expect(mediaAspectRatio(0, 900)).toBeNull();
-    expect(
-      blobPreviewAspectRatio({ kind: "blob-url", url: "blob:x", width: 120, height: 80 }, "image"),
-    ).toBe(1.5);
-    expect(blobPreviewAspectRatio({ kind: "blob-url", url: "blob:x" }, "video")).toBe(
-      lightboxFallbackAspectRatio("video"),
-    );
   });
 });

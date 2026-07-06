@@ -187,31 +187,6 @@ describe("useDriveController Enter rename shortcut", () => {
     expect(result.current.renameDialog).toBeNull();
     input.remove();
   });
-
-  it("does not open rename dialog while the preview lightbox is open", () => {
-    const bootstrap = createDriveAppBootstrap();
-    const file = DRIVE_MOCK_FILES.find((entry) => entry.kind === "image")!;
-    const { result } = renderHook(() =>
-      useDriveController({
-        data: bootstrap.data,
-        session: bootstrap.session,
-        operations: undefined,
-      }),
-    );
-
-    act(() => {
-      result.current.setFiles(DRIVE_MOCK_FILES);
-      result.current.setActiveId(file.id);
-      result.current.setSelectedIds([file.id]);
-      result.current.setLightboxOpen(true);
-    });
-
-    act(() => {
-      dispatchEnter();
-    });
-
-    expect(result.current.renameDialog).toBeNull();
-  });
 });
 
 describe("useDriveController detail panel toggle shortcut", () => {
@@ -358,30 +333,5 @@ describe("useDriveController detail panel toggle shortcut", () => {
 
     expect(result.current.detailOpen).toBe(false);
     input.remove();
-  });
-
-  it("still toggles the detail panel while the preview lightbox is open", () => {
-    const bootstrap = createDriveAppBootstrap();
-    const file = DRIVE_MOCK_FILES.find((entry) => entry.kind === "image")!;
-    const { result } = renderHook(() =>
-      useDriveController({
-        data: bootstrap.data,
-        session: bootstrap.session,
-        operations: undefined,
-      }),
-    );
-
-    act(() => {
-      result.current.setFiles(DRIVE_MOCK_FILES);
-      result.current.setActiveId(file.id);
-      result.current.setSelectedIds([file.id]);
-      result.current.setLightboxOpen(true);
-    });
-
-    act(() => {
-      dispatchDetailPanelToggle();
-    });
-
-    expect(result.current.detailOpen).toBe(true);
   });
 });

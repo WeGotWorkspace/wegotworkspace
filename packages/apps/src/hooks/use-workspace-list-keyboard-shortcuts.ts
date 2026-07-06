@@ -9,7 +9,7 @@ export type UseWorkspaceListKeyboardShortcutsOptions = {
   onRequestDeleteSelection: () => void;
   onNavigateList?: (direction: -1 | 1, extendSelection: boolean) => void;
   onUndoQueuedAction?: () => boolean;
-  /** When false, arrow/space/delete list shortcuts are suppressed (e.g. preview lightbox open). */
+  /** When false, arrow/space/delete list shortcuts are suppressed. */
   listNavigationEnabled?: boolean;
 };
 
