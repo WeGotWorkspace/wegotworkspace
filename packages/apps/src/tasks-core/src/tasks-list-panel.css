@@ -1,0 +1,19 @@
+.tasks-list-panel__meta {
+  font-size: 0.8125rem;
+  opacity: 0.75;
+}
+
+.tasks-list-panel__status {
+  font-weight: 500;
+}
+
+.tasks-list-panel__tag {
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--tasks-accent) 20%, transparent);
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.tasks-list-panel__empty {
+  color: color-mix(in oklab, var(--color-ink) 65%, transparent);
+}

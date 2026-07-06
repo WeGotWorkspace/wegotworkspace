@@ -1,0 +1,47 @@
+@import "../../workspace-shell/src/workspace-split-app.css";
+
+.tasks-workspace {
+  --tasks-accent: #14b8a6;
+  --tasks-sidebar: var(--tasks-accent);
+  --workspace-accent: var(--tasks-accent);
+  --color-emerald: var(--tasks-accent);
+  --workspace-root-bg: var(--color-cream, #ffffff);
+  --workspace-detail-bg: var(--color-cream, #ffffff);
+  --app-sidebar-bg: var(--tasks-sidebar);
+  --app-sidebar-border-color: color-mix(in oklab, var(--color-ink) 12%, transparent);
+  --app-sidebar-color: #ffffff;
+  --sidebar-logo-close-button-color: #ffffff;
+  --sidebar-badge-fg: var(--tasks-accent);
+  --workspace-sidebar-toggle-color: #ffffff;
+  --workspace-sidebar-toggle-bg: color-mix(in oklab, #ffffff 12%, transparent);
+  --workspace-user-footer-link-hover-bg: color-mix(in oklab, #ffffff 10%, transparent);
+  --workspace-user-footer-text-color: color-mix(in oklab, #ffffff 80%, transparent);
+  --workspace-user-footer-border-color: color-mix(in oklab, #ffffff 14%, transparent);
+  --workspace-user-footer-avatar-bg: color-mix(in oklab, #ffffff 16%, transparent);
+  --workspace-user-footer-avatar-color: #ffffff;
+  --workspace-user-footer-link-color: color-mix(in oklab, #ffffff 85%, transparent);
+  --workspace-user-footer-link-bg: color-mix(in oklab, #ffffff 8%, transparent);
+}
+
+.tasks-workspace .app-sidebar__scroll {
+  --button-primary-bg: #ffffff;
+  --button-primary-fg: var(--tasks-accent);
+  --button-subtle-color: #ffffff;
+  --button-subtle-background: color-mix(in oklab, #ffffff 12%, transparent);
+  --button-subtle-hover-background: color-mix(in oklab, #ffffff 18%, transparent);
+}
+
+.tasks-story-scope {
+  min-height: 100dvh;
+  background-color: var(--workspace-root-bg, var(--color-cream, #ffffff));
+}
+
+.tasks-story-scope--list-column {
+  display: flex;
+  min-height: 100dvh;
+  justify-content: center;
+}
+
+.tasks-story-scope--detail {
+  min-height: 100dvh;
+}
