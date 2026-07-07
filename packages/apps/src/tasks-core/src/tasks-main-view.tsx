@@ -8,7 +8,7 @@ import {
   type DragEvent,
   type FormEvent,
 } from "react";
-import { CheckCircle2, Circle, MoreVertical, Pencil, Tag, Trash2 } from "lucide-react";
+import { CheckCircle2, Circle, MoreVertical, Pencil, Plus, Tag, Trash2 } from "lucide-react";
 import { IconButton } from "@/button/src/button";
 import { Button } from "@/button/src/button";
 import { DropdownMenu } from "@/menu-dropdown/src/dropdown-menu";
@@ -194,6 +194,7 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
     ref,
   ) {
     const titleRef = useRef<HTMLInputElement>(null);
+    const composerFormRef = useRef<HTMLFormElement>(null);
     const [draft, setDraft] = useState(() => emptyForm(defaultListId));
     const [composerExpanded, setComposerExpanded] = useState(false);
 
@@ -263,9 +264,13 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
               />
             ))}
 
-            <form className="tasks-main-view__composer" onSubmit={handleSubmit}>
+            <form
+              ref={composerFormRef}
+              className="tasks-main-view__composer"
+              onSubmit={handleSubmit}
+            >
               <span className="tasks-main-view__composer-marker" aria-hidden>
-                <Circle />
+                <Plus />
               </span>
 
               <div className="tasks-main-view__composer-body">
@@ -288,6 +293,12 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
                     onChange={(event) =>
                       setDraft((prev) => ({ ...prev, description: event.target.value }))
                     }
+                    onKeyDown={(event) => {
+                      if (event.key !== "Enter" || event.shiftKey) return;
+                      event.preventDefault();
+                      if (!draft.title.trim()) return;
+                      composerFormRef.current?.requestSubmit();
+                    }}
                     placeholder={L.addTaskDescriptionPlaceholder}
                     aria-label={L.descriptionLabel}
                     rows={1}

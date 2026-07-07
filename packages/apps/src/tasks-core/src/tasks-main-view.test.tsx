@@ -122,4 +122,68 @@ describe("TasksMainView composer", () => {
       tag: "",
     });
   });
+
+  it("submits task when pressing Enter in description with non-empty title", () => {
+    const onCreateTask = vi.fn();
+    renderComposer(onCreateTask);
+
+    fireEvent.change(screen.getByLabelText(defaultTasksLabels.addTaskName), {
+      target: { value: "New task" },
+    });
+    fireEvent.focus(screen.getByLabelText(defaultTasksLabels.addTaskName));
+
+    const description = screen.getByLabelText(defaultTasksLabels.descriptionLabel);
+    fireEvent.change(description, { target: { value: "Details here" } });
+    fireEvent.keyDown(description, { key: "Enter", shiftKey: false });
+
+    expect(onCreateTask).toHaveBeenCalledTimes(1);
+    expect(onCreateTask).toHaveBeenCalledWith({
+      title: "New task",
+      description: "Details here",
+      listId: "default",
+      tag: "",
+    });
+    expect((screen.getByLabelText(defaultTasksLabels.addTaskName) as HTMLInputElement).value).toBe(
+      "",
+    );
+    expect(screen.queryByLabelText(defaultTasksLabels.descriptionLabel)).toBeNull();
+  });
+
+  it("does not submit when pressing Enter in description with empty title", () => {
+    const onCreateTask = vi.fn();
+    renderComposer(onCreateTask);
+
+    fireEvent.focus(screen.getByLabelText(defaultTasksLabels.addTaskName));
+
+    const description = screen.getByLabelText(defaultTasksLabels.descriptionLabel);
+    fireEvent.change(description, { target: { value: "Details only" } });
+    fireEvent.keyDown(description, { key: "Enter", shiftKey: false });
+
+    expect(onCreateTask).not.toHaveBeenCalled();
+    expect((description as HTMLTextAreaElement).value).toBe("Details only");
+  });
+
+  it("allows newline when pressing Shift+Enter in description", () => {
+    renderComposer();
+
+    fireEvent.focus(screen.getByLabelText(defaultTasksLabels.addTaskName));
+
+    const description = screen.getByLabelText(defaultTasksLabels.descriptionLabel);
+    fireEvent.change(description, { target: { value: "Line one" } });
+    fireEvent.keyDown(description, { key: "Enter", shiftKey: true });
+    fireEvent.change(description, { target: { value: "Line one\nLine two" } });
+
+    expect((description as HTMLTextAreaElement).value).toBe("Line one\nLine two");
+  });
+
+  it("shows a plus icon marker in the composer instead of a checkbox", () => {
+    renderComposer();
+
+    expect(screen.queryByRole("button", { name: defaultTasksLabels.markComplete })).toBeNull();
+
+    const composer = document.querySelector(".tasks-main-view__composer");
+    const marker = composer?.querySelector(".tasks-main-view__composer-marker svg");
+    expect(marker).toBeTruthy();
+    expect(marker?.classList.contains("lucide-plus")).toBe(true);
+  });
 });
