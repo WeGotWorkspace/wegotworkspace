@@ -54,6 +54,38 @@
   @apply flex flex-col;
 }
 
+/**
+ * Desktop: sidebar toggle stays at the main-pane left edge; title/actions share the
+ * same centered max-width column as `.workspace-app-layout__main-content`.
+ */
+@media (min-width: 768px) {
+  .tasks-workspace .workspace-app-layout__main-header > div:first-child {
+    display: grid;
+    grid-template-columns: 1fr minmax(0, var(--workspace-main-content-max-width)) 1fr;
+    align-items: start;
+    width: 100%;
+  }
+
+  .tasks-workspace .workspace-app-layout__main-header > div:first-child > :first-child {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+  }
+
+  .tasks-workspace .workspace-app-layout__main-header .view-header__main {
+    grid-column: 2;
+    grid-row: 1;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .tasks-workspace .workspace-app-layout__main-header .view-header__search-stack {
+    max-width: var(--workspace-main-content-max-width);
+    margin-inline: auto;
+    width: 100%;
+  }
+}
+
 .tasks-workspace .workspace-app-layout__main-content {
   /* Match header inset on small screens; md+ keeps row padding inside centered column. */
   @apply mx-auto flex min-h-full flex-1 flex-col w-full px-4 pt-6 pb-0 md:px-0;
