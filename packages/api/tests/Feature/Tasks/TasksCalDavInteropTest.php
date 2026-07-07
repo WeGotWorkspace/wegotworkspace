@@ -6,6 +6,7 @@ namespace Tests\Feature\Tasks;
 
 use App\Models\CalendarObject;
 use App\Services\Tasks\Conversion\IcsJmapTaskConverter;
+use App\Services\Tasks\InboxTaskListProvisioner;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Tests\Support\TasksTestFixtures;
@@ -29,7 +30,7 @@ final class TasksCalDavInteropTest extends WgwDatabaseTestCase
         $uid = 'urn:uuid:'.Str::uuid()->toString();
         $payload = [
             'uid' => $uid,
-            'taskListIds' => ['default' => true],
+            'taskListIds' => [InboxTaskListProvisioner::URI => true],
             'title' => 'Interop Task',
             'due' => '2026-06-15T09:00:00',
         ];
@@ -53,7 +54,7 @@ final class TasksCalDavInteropTest extends WgwDatabaseTestCase
     public function test_rest_create_updates_caldav_search_index(): void
     {
         $payload = [
-            'taskListIds' => ['default' => true],
+            'taskListIds' => [InboxTaskListProvisioner::URI => true],
             'title' => 'Searchable Interop Task',
         ];
 
@@ -65,7 +66,7 @@ final class TasksCalDavInteropTest extends WgwDatabaseTestCase
         $stored = $this->findBobTask($taskId);
         $this->assertNotNull($stored);
 
-        $sourceKey = $this->calendarDavSearchSourceKey('bob', 'default', (string) $stored->uri);
+        $sourceKey = $this->calendarDavSearchSourceKey('bob', InboxTaskListProvisioner::URI, (string) $stored->uri);
         $row = DB::connection('wgw')->table('search_documents')
             ->where('source_type', 'caldav')
             ->where('source_key', $sourceKey)
@@ -103,7 +104,7 @@ final class TasksCalDavInteropTest extends WgwDatabaseTestCase
             ->assertJsonPath('id', $taskId)
             ->assertJsonPath('@type', 'Task')
             ->assertJsonPath('uid', $uid)
-            ->assertJsonPath('taskListId', 'default')
+            ->assertJsonPath('taskListId', InboxTaskListProvisioner::URI)
             ->assertJsonPath('title', 'CalDAV Writer')
             ->assertJsonPath('workflowStatus', 'needs-action');
     }
@@ -144,7 +145,7 @@ final class TasksCalDavInteropTest extends WgwDatabaseTestCase
     public function test_rest_create_with_alert_visible_in_caldav_storage(): void
     {
         $payload = [
-            'taskListIds' => ['default' => true],
+            'taskListIds' => [InboxTaskListProvisioner::URI => true],
             'title' => 'Task with reminder',
             'due' => '2026-06-15T17:00:00',
             'alerts' => [
@@ -206,7 +207,7 @@ final class TasksCalDavInteropTest extends WgwDatabaseTestCase
     public function test_rest_create_with_ics_props_persists_to_caldav(): void
     {
         $payload = [
-            'taskListIds' => ['default' => true],
+            'taskListIds' => [InboxTaskListProvisioner::URI => true],
             'title' => 'Custom props task',
             'due' => '2026-06-15T09:00:00',
             'icsProps' => [

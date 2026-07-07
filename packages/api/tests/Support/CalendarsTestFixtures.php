@@ -64,7 +64,7 @@ trait CalendarsTestFixtures
 
         $caldav->createCalendar($principalUri, 'default', [
             '{DAV:}displayname' => 'Calendar',
-            '{urn:ietf:params:xml:ns:caldav}supported-calendar-component-set' => new SupportedCalendarComponentSet(['VEVENT', 'VTODO', 'VJOURNAL']),
+            '{urn:ietf:params:xml:ns:caldav}supported-calendar-component-set' => new SupportedCalendarComponentSet(['VEVENT', 'VJOURNAL']),
         ]);
     }
 

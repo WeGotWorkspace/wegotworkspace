@@ -112,8 +112,8 @@ final class TaskListRepository
         if ($instance === null) {
             throw new ApiHttpException(404, 'Task list not found.', 'not_found');
         }
-        if ((string) $instance->uri === 'default') {
-            throw new ApiHttpException(403, 'The default task list cannot be deleted.', 'forbidden');
+        if ((string) $instance->uri === InboxTaskListProvisioner::URI) {
+            throw new ApiHttpException(403, 'The Inbox task list cannot be deleted.', 'forbidden');
         }
         if ($instance->objects()->where('componenttype', 'VTODO')->exists() && ! ($options['onDestroyRemoveContents'] ?? false)) {
             throw new ApiHttpException(409, 'Task list contains tasks.', 'taskListHasContents');
@@ -182,7 +182,7 @@ final class TaskListRepository
     private function allocateTaskListUri(string $username, ?string $requestedId, string $name): string
     {
         if ($requestedId !== null && $requestedId !== '') {
-            if ($requestedId === 'default' || $this->findOwnedTaskList($username, $requestedId) !== null) {
+            if (in_array($requestedId, ['default', InboxTaskListProvisioner::URI], true) || $this->findOwnedTaskList($username, $requestedId) !== null) {
                 throw new ApiHttpException(409, 'Task list id already exists.', 'alreadyExists');
             }
 
@@ -245,12 +245,12 @@ final class TaskListRepository
 
         return [
             'id' => $uri,
-            'role' => $uri === 'default' ? 'inbox' : null,
+            'role' => $uri === InboxTaskListProvisioner::URI ? 'inbox' : null,
             'name' => $name,
             'description' => is_string($instance->description) && trim($instance->description) !== '' ? trim($instance->description) : null,
             'color' => is_string($instance->calendarcolor) && trim($instance->calendarcolor) !== '' ? trim($instance->calendarcolor) : null,
             'sortOrder' => (int) ($instance->calendarorder ?? $instance->id ?? 0),
-            'isDefault' => $uri === 'default',
+            'isDefault' => $uri === InboxTaskListProvisioner::URI,
             'isSubscribed' => true,
             'shareWith' => null,
             'myRights' => [
@@ -260,7 +260,7 @@ final class TaskListRepository
                 'mayUpdatePrivate' => true,
                 'mayRSVP' => true,
                 'mayAdmin' => false,
-                'mayDelete' => $uri !== 'default',
+                'mayDelete' => $uri !== InboxTaskListProvisioner::URI,
             ],
         ];
     }

@@ -7,11 +7,11 @@ namespace Tests\Support;
 use App\Models\Principal;
 use App\Models\User;
 use App\Services\Auth\AdminRoleResolver;
+use App\Services\Tasks\InboxTaskListProvisioner;
 use App\Support\WgwSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Sabre\CalDAV\Backend\PDO as CalPDO;
-use Sabre\CalDAV\Xml\Property\SupportedCalendarComponentSet;
 
 /**
  * Shared CalDAV PDO fixtures for Tasks REST feature tests.
@@ -47,32 +47,27 @@ trait TasksTestFixtures
         $adminGroup = $this->seedWgwGroup(AdminRoleResolver::ADMIN_GROUP_URI, 'Administrators');
         $this->addPrincipalToGroup($adminGroup, $alice);
 
-        $this->seedDefaultTaskListFor('bob');
-        $this->seedDefaultTaskListFor('carol');
+        $this->seedInboxTaskListFor('bob');
+        $this->seedInboxTaskListFor('carol');
     }
 
+    protected function seedInboxTaskListFor(string $username): void
+    {
+        $principalUri = 'principals/'.$username;
+        app(InboxTaskListProvisioner::class)->ensureForPrincipal($principalUri);
+    }
+
+    /** @deprecated Use seedInboxTaskListFor() */
     protected function seedDefaultTaskListFor(string $username): void
     {
-        $caldav = new CalPDO(DB::connection('wgw')->getPdo());
-        $principalUri = 'principals/'.$username;
-
-        foreach ($caldav->getCalendarsForUser($principalUri) as $calendar) {
-            if (($calendar['uri'] ?? '') === 'default') {
-                return;
-            }
-        }
-
-        $caldav->createCalendar($principalUri, 'default', [
-            '{DAV:}displayname' => 'Tasks',
-            '{urn:ietf:params:xml:ns:caldav}supported-calendar-component-set' => new SupportedCalendarComponentSet(['VEVENT', 'VTODO', 'VJOURNAL']),
-        ]);
+        $this->seedInboxTaskListFor($username);
     }
 
     protected function seedTaskViaPdo(
         string $username,
         string $objectUri,
         string $ics,
-        string $listUri = 'default',
+        string $listUri = InboxTaskListProvisioner::URI,
     ): string {
         $caldav = new CalPDO(DB::connection('wgw')->getPdo());
         $calendarId = $this->resolveCalendarIdPair($username, $listUri);
@@ -85,7 +80,7 @@ trait TasksTestFixtures
         string $username,
         string $objectUri,
         string $ics,
-        string $listUri = 'default',
+        string $listUri = InboxTaskListProvisioner::URI,
     ): void {
         $caldav = new CalPDO(DB::connection('wgw')->getPdo());
         $calendarId = $this->resolveCalendarIdPair($username, $listUri);
@@ -115,7 +110,7 @@ trait TasksTestFixtures
     /**
      * @return array<string, mixed>
      */
-    protected function sampleTaskCreatePayload(string $listId = 'default'): array
+    protected function sampleTaskCreatePayload(string $listId = InboxTaskListProvisioner::URI): array
     {
         return [
             'taskListIds' => [$listId => true],
@@ -125,7 +120,7 @@ trait TasksTestFixtures
     }
 
     /** @deprecated Use sampleTaskCreatePayload() */
-    protected function sampleTaskPayload(string $listId = 'default'): array
+    protected function sampleTaskPayload(string $listId = InboxTaskListProvisioner::URI): array
     {
         return $this->sampleTaskCreatePayload($listId);
     }

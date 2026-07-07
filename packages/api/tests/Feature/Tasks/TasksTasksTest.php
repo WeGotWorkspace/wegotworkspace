@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Tasks;
 
+use App\Services\Tasks\InboxTaskListProvisioner;
 use Tests\Support\OptimisticConcurrencyTestHelpers;
 use Tests\Support\TasksTestFixtures;
 use Tests\Support\WgwDatabaseTestCase;
@@ -24,13 +25,13 @@ final class TasksTasksTest extends WgwDatabaseTestCase
         $taskId = $this->seedTaskViaPdo('bob', 'buy-milk.ics', $this->sampleTodoIcs('Buy milk'));
 
         $response = $this->withBearer($this->userBearerToken())
-            ->getJson('/api/v1/tasks/items?taskListId=default');
+            ->getJson('/api/v1/tasks/items?taskListId='.InboxTaskListProvisioner::URI);
 
         $response->assertOk()
             ->assertJsonCount(1, 'list')
             ->assertJsonPath('list.0.id', $taskId)
             ->assertJsonPath('list.0.@type', 'Task')
-            ->assertJsonPath('list.0.taskListId', 'default')
+            ->assertJsonPath('list.0.taskListId', InboxTaskListProvisioner::URI)
             ->assertJsonPath('list.0.title', 'Buy milk');
     }
 
@@ -55,7 +56,7 @@ final class TasksTasksTest extends WgwDatabaseTestCase
 
         $response->assertCreated()
             ->assertJsonPath('@type', 'Task')
-            ->assertJsonPath('taskListId', 'default')
+            ->assertJsonPath('taskListId', InboxTaskListProvisioner::URI)
             ->assertJsonPath('title', 'New Task')
             ->assertJsonPath('due', '2026-06-15T09:00:00');
 
@@ -63,7 +64,7 @@ final class TasksTasksTest extends WgwDatabaseTestCase
         $this->assertNotSame('', $taskId);
 
         $list = $this->withBearer($this->userBearerToken())
-            ->getJson('/api/v1/tasks/items?taskListId=default');
+            ->getJson('/api/v1/tasks/items?taskListId='.InboxTaskListProvisioner::URI);
         $list->assertOk();
         $this->assertContains($taskId, array_column($list->json('list'), 'id'));
     }
@@ -132,7 +133,7 @@ final class TasksTasksTest extends WgwDatabaseTestCase
     {
         $this->withBearer($this->userBearerToken())
             ->postJson('/api/v1/tasks/items', [
-                'taskListIds' => ['default' => true],
+                'taskListIds' => [InboxTaskListProvisioner::URI => true],
                 'title' => 'Rejected',
                 'id' => 'client-id',
             ])
@@ -144,7 +145,7 @@ final class TasksTasksTest extends WgwDatabaseTestCase
     {
         $response = $this->withBearer($this->userBearerToken())
             ->postJson('/api/v1/tasks/items', [
-                'taskListIds' => ['default' => true],
+                'taskListIds' => [InboxTaskListProvisioner::URI => true],
                 'title' => 'Weekly review',
                 'due' => '2026-06-02T10:00:00',
                 'recurrenceRules' => [

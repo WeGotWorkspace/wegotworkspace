@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Tasks;
 
+use App\Services\Tasks\InboxTaskListProvisioner;
 use App\Support\WgwSettings;
 use Tests\Support\TasksTestFixtures;
 use Tests\Support\WgwDatabaseTestCase;
@@ -21,8 +22,8 @@ final class TasksAccessControlTest extends WgwDatabaseTestCase
     public function test_guest_cannot_access_tasks_endpoints(): void
     {
         $this->getJson('/api/v1/tasks/tasklists')->assertUnauthorized();
-        $this->getJson('/api/v1/tasks/tasklists/default')->assertUnauthorized();
-        $this->getJson('/api/v1/tasks/items?taskListId=default')->assertUnauthorized();
+        $this->getJson('/api/v1/tasks/tasklists/'.InboxTaskListProvisioner::URI)->assertUnauthorized();
+        $this->getJson('/api/v1/tasks/items?taskListId='.InboxTaskListProvisioner::URI)->assertUnauthorized();
         $this->postJson('/api/v1/tasks/items', [])->assertUnauthorized();
     }
 
@@ -31,7 +32,7 @@ final class TasksAccessControlTest extends WgwDatabaseTestCase
         $token = $this->userBearerToken();
 
         $this->withBearer($token)->getJson('/api/v1/tasks/tasklists')->assertOk();
-        $this->withBearer($token)->getJson('/api/v1/tasks/items?taskListId=default')->assertOk();
+        $this->withBearer($token)->getJson('/api/v1/tasks/items?taskListId='.InboxTaskListProvisioner::URI)->assertOk();
     }
 
     public function test_tasks_disabled_returns_forbidden(): void
@@ -40,7 +41,7 @@ final class TasksAccessControlTest extends WgwDatabaseTestCase
         $token = $this->userBearerToken();
 
         $this->withBearer($token)->getJson('/api/v1/tasks/tasklists')->assertForbidden();
-        $this->withBearer($token)->getJson('/api/v1/tasks/items?taskListId=default')->assertForbidden();
+        $this->withBearer($token)->getJson('/api/v1/tasks/items?taskListId='.InboxTaskListProvisioner::URI)->assertForbidden();
         $this->withBearer($token)->postJson('/api/v1/tasks/items', [])->assertForbidden();
     }
 }

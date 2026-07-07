@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Tasks\Conversion;
 
+use App\Services\Tasks\InboxTaskListProvisioner;
+
 /**
  * Facade for bidirectional iCalendar VTODO ↔ JMAP Task conversion.
  */
@@ -20,7 +22,7 @@ final class IcsJmapTaskConverter
     public function tasksFromIcs(
         string $ics,
         string $objectUri = '',
-        string $taskListId = 'default',
+        string $taskListId = InboxTaskListProvisioner::URI,
     ): array {
         $tasks = $this->reader->tasksFromIcs($ics);
         if ($tasks === [] || $objectUri === '') {

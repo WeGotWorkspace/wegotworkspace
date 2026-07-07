@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\JmapRest;
 
+use App\Services\Tasks\InboxTaskListProvisioner;
 use Tests\Support\CalendarsTestFixtures;
 use Tests\Support\ContactsTestFixtures;
 use Tests\Support\TasksTestFixtures;
@@ -164,7 +165,7 @@ final class JmapRestCrossUserAclTest extends WgwDatabaseTestCase
         $this->seedTaskViaPdo('carol', 'carol-list-task.ics', $this->sampleTodoIcs('Carol List Task'));
 
         $this->withBearer($this->userBearerToken())
-            ->getJson('/api/v1/tasks/items?taskListId=default')
+            ->getJson('/api/v1/tasks/items?taskListId='.InboxTaskListProvisioner::URI)
             ->assertOk()
             ->assertJsonPath('list', []);
     }

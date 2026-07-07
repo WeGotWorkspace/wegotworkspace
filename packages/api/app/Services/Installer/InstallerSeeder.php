@@ -8,6 +8,7 @@ use App\Models\GroupMember;
 use App\Models\Principal;
 use App\Models\User;
 use App\Services\Admin\AdminConstants;
+use App\Services\Tasks\InboxTaskListProvisioner;
 use App\Support\AppPaths;
 use Illuminate\Support\Facades\DB;
 use Sabre\CalDAV\Backend\PDO as CalPDO;
@@ -16,7 +17,10 @@ use Sabre\CardDAV\Backend\PDO as CardPDO;
 
 final class InstallerSeeder
 {
-    public function __construct(private AppPaths $paths) {}
+    public function __construct(
+        private AppPaths $paths,
+        private InboxTaskListProvisioner $inboxTaskLists,
+    ) {}
 
     public function seed(
         string $username,
@@ -60,8 +64,9 @@ final class InstallerSeeder
             $caldav = new CalPDO($pdo);
             $caldav->createCalendar($principalUri, 'default', [
                 '{DAV:}displayname' => 'Calendar',
-                '{urn:ietf:params:xml:ns:caldav}supported-calendar-component-set' => new SupportedCalendarComponentSet(['VEVENT', 'VTODO', 'VJOURNAL']),
+                '{urn:ietf:params:xml:ns:caldav}supported-calendar-component-set' => new SupportedCalendarComponentSet(['VEVENT', 'VJOURNAL']),
             ]);
+            $this->inboxTaskLists->ensureForPrincipal($principalUri);
         }
 
         if ($enableContacts) {

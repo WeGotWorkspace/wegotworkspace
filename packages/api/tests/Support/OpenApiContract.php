@@ -191,7 +191,7 @@ final class OpenApiContract
             '{blobId}' => '550e8400e29b41d4a716446655440000',
             '{calendarId}' => 'default',
             '{eventId}' => 'demo-event',
-            '{taskListId}' => 'default',
+            '{taskListId}' => 'inbox',
             '{taskId}' => 'demo-task',
         ];
 
@@ -245,7 +245,7 @@ final class OpenApiContract
             return 'since=0';
         }
         if ($openApiPath === '/tasks/items' && $method === 'GET') {
-            return 'taskListId=default';
+            return 'taskListId=inbox';
         }
         if ($openApiPath === '/tasks/tasklists/changes' && $method === 'GET') {
             return 'since=0';

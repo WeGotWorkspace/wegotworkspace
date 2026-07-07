@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Tasks;
 
+use App\Services\Tasks\InboxTaskListProvisioner;
 use Tests\Support\TasksTestFixtures;
 use Tests\Support\WgwDatabaseTestCase;
 
@@ -24,8 +25,8 @@ final class TasksTaskListsTest extends WgwDatabaseTestCase
 
         $response->assertOk()
             ->assertJsonCount(1, 'list')
-            ->assertJsonPath('list.0.id', 'default')
-            ->assertJsonPath('list.0.name', 'Tasks')
+            ->assertJsonPath('list.0.id', InboxTaskListProvisioner::URI)
+            ->assertJsonPath('list.0.name', InboxTaskListProvisioner::DISPLAY_NAME)
             ->assertJsonPath('list.0.isDefault', true)
             ->assertJsonPath('list.0.myRights.mayReadItems', true);
     }
@@ -33,10 +34,10 @@ final class TasksTaskListsTest extends WgwDatabaseTestCase
     public function test_show_task_list(): void
     {
         $response = $this->withBearer($this->userBearerToken())
-            ->getJson('/api/v1/tasks/tasklists/default');
+            ->getJson('/api/v1/tasks/tasklists/'.InboxTaskListProvisioner::URI);
 
         $response->assertOk()
-            ->assertJsonPath('id', 'default')
+            ->assertJsonPath('id', InboxTaskListProvisioner::URI)
             ->assertJsonPath('role', 'inbox')
             ->assertJsonPath('shareWith', null);
     }
