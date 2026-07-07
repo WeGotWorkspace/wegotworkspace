@@ -2,13 +2,13 @@
 @import "../../workspace-shell/src/workspace-split-app.css";
 
 /**
- * Tasks product shell: cream main pane + teal sidebar accent.
- * Black-on-green lockup matches {@link notes-workspace.css} (ink on gold).
+ * Tasks product shell: cream main pane + light teal sidebar tint.
+ * Ink-on-tint lockup matches {@link notes-workspace.css} (dark text on light accent wash).
  * Import only from {@link TasksWorkspace}.
  */
 .tasks-workspace {
   --tasks-accent: #14b8a6;
-  --tasks-sidebar: var(--tasks-accent);
+  --tasks-sidebar: color-mix(in oklab, var(--tasks-accent) 8%, var(--color-cream, #ffffff));
   --workspace-accent: var(--tasks-accent);
   --color-emerald: var(--tasks-accent);
   --workspace-root-bg: var(--color-cream, #ffffff);
