@@ -21,11 +21,13 @@ export function taskListTitle(task: Task, fallback: string): string {
 
 /** Preserve optimistic fields when the create API response omits them. */
 export function mergeCreatedTask(optimistic: Task, created: Task): Task {
+  const createdDue = parseDueDateValue(created.due);
   return {
     ...optimistic,
     ...created,
     workflowStatus: created.workflowStatus ?? optimistic.workflowStatus,
     priority: isTaskPriorityNone(created.priority) ? optimistic.priority : created.priority,
+    due: createdDue !== undefined ? created.due : optimistic.due,
   };
 }
 

@@ -121,6 +121,43 @@ describe("tasks-task-utils", () => {
     expect(mergeCreatedTask(optimistic, created).priority).toBe(5);
   });
 
+  it("mergeCreatedTask keeps optimistic due when API response omits it", () => {
+    const optimisticDue = "2026-07-08T00:00:00";
+    const optimistic = {
+      ...sampleTasks[0],
+      id: "pending-1",
+      due: optimisticDue,
+      priority: 1,
+    };
+    const created = {
+      ...sampleTasks[0],
+      id: "task-created",
+      due: null,
+      priority: null,
+    };
+
+    expect(mergeCreatedTask(optimistic, created)).toMatchObject({
+      id: "task-created",
+      due: optimisticDue,
+      priority: 1,
+    });
+  });
+
+  it("mergeCreatedTask uses API due when response includes it", () => {
+    const optimistic = {
+      ...sampleTasks[0],
+      id: "pending-1",
+      due: "2026-07-08T00:00:00",
+    };
+    const created = {
+      ...sampleTasks[0],
+      id: "task-created",
+      due: "2026-07-15T00:00:00",
+    };
+
+    expect(mergeCreatedTask(optimistic, created).due).toBe("2026-07-15T00:00:00");
+  });
+
   it("formatComposerDueDateLabel shows relative labels for today, yesterday, and tomorrow", () => {
     const now = new Date(2026, 6, 8, 12, 0, 0);
     const labels = {

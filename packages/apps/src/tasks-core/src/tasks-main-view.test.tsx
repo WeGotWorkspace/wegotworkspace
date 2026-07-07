@@ -566,6 +566,51 @@ describe("TasksMainView task rows", () => {
     expect(meta?.querySelector(`[aria-label="${defaultTasksLabels.priorityHigh}"]`)).toBeTruthy();
   });
 
+  it("shows due date label on task rows when due is set", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 6, 8, 12, 0, 0));
+
+    const task = {
+      ...bootstrap.data.tasks[0],
+      due: "2026-07-08T00:00:00",
+    };
+    renderMainView({ displayTasks: [task] });
+
+    const row = screen.getByText(task.title).closest(".tasks-main-view__row");
+    const meta = row?.querySelector(".tasks-main-view__meta");
+    expect(meta?.textContent).toContain(defaultTasksLabels.dueToday);
+    expect(meta?.querySelector(".lucide-calendar-days")).toBeTruthy();
+
+    vi.useRealTimers();
+  });
+
+  it("shows due date and priority on newly created optimistic task rows", () => {
+    installSvgCurrentColorOverride();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 6, 8, 12, 0, 0));
+
+    const task = {
+      ...bootstrap.data.tasks[0],
+      id: "pending-new-task",
+      title: "Due today urgent",
+      due: "2026-07-08T00:00:00",
+      priority: 1,
+      workflowStatus: "needs-action" as const,
+    };
+    renderMainView({ displayTasks: [task] });
+
+    const row = screen.getByText(task.title).closest(".tasks-main-view__row");
+    const meta = row?.querySelector(".tasks-main-view__meta");
+    const flag = meta?.querySelector(".tasks-priority-flag svg") as SVGElement | null;
+
+    expect(meta?.textContent).toContain(defaultTasksLabels.dueToday);
+    expect(meta?.querySelector(".lucide-calendar-days")).toBeTruthy();
+    expectPriorityFlagStroke(flag, TASK_PRIORITY_FLAG_COLORS.high);
+    expect(meta?.querySelector(`[aria-label="${defaultTasksLabels.priorityHigh}"]`)).toBeTruthy();
+
+    vi.useRealTimers();
+  });
+
   it("shows medium and low priority flags in task row meta", () => {
     installSvgCurrentColorOverride();
     const mediumTask = { ...bootstrap.data.tasks[0], id: "task-medium", priority: 5 };

@@ -9,7 +9,15 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
-import { CheckCircle2, Circle, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  CalendarDays,
+  CheckCircle2,
+  Circle,
+  MoreVertical,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { IconButton } from "@/button/src/button";
 import { Button } from "@/button/src/button";
 import { DropdownMenu } from "@/menu-dropdown/src/dropdown-menu";
@@ -18,7 +26,9 @@ import type { Task, TaskList } from "@/tasks-core/src/tasks-types";
 import type { TasksUILabels } from "@/tasks-core/src/tasks-labels";
 import { TaskListDot } from "@/tasks-core/src/tasks-list-dot";
 import {
+  formatComposerDueDateLabel,
   isTaskCompleted,
+  parseDueDateValue,
   taskListName,
   taskListTitle,
   type TaskWorkflowStatus,
@@ -128,6 +138,14 @@ function TaskRow({
   const listName = taskListName(task.taskListId, taskLists);
   const taskList = taskLists.find((list) => list.id === task.taskListId);
   const workflowStatus = (task.workflowStatus ?? "needs-action") as TaskWorkflowStatus;
+  const dueDate = parseDueDateValue(task.due);
+  const dueLabel = dueDate
+    ? formatComposerDueDateLabel(dueDate, {
+        dueToday: L.dueToday,
+        dueYesterday: L.dueYesterday,
+        dueTomorrow: L.dueTomorrow,
+      })
+    : null;
 
   useEffect(() => {
     if (!isExiting || !prefersReducedMotion()) return;
@@ -175,6 +193,12 @@ function TaskRow({
           <p className="tasks-main-view__description">{task.description}</p>
         ) : null}
         <div className="tasks-main-view__meta">
+          {dueLabel ? (
+            <span className="tasks-main-view__meta-item">
+              <CalendarDays className="size-3.5" aria-hidden />
+              <span>{dueLabel}</span>
+            </span>
+          ) : null}
           <span className="tasks-main-view__meta-item">
             <TaskListDot list={taskList ?? task.taskListId} />
             <span>{listName}</span>
