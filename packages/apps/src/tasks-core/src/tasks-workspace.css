@@ -51,8 +51,8 @@
 }
 
 /**
- * Desktop: sidebar toggle stays at the main-pane left edge; title/actions share the
- * same centered max-width column as `.workspace-app-layout__main-content`.
+ * Desktop: title/actions share the centered max-width column with task rows; toggle
+ * insets to the same left edge as row checkboxes (centered column + md:px-4).
  */
 @media (min-width: 768px) {
   .tasks-workspace .workspace-app-layout__main-header > div:first-child {
@@ -66,6 +66,14 @@
     grid-column: 1;
     grid-row: 1;
     justify-self: start;
+    /*
+     * Match `.tasks-main-view__row` md:px-4 inside `.workspace-app-layout__main-content`:
+     * centering offset + 1rem, minus header md:p-6 (1.5rem) when the column is full width.
+     */
+    margin-inline-start: max(
+      -0.5rem,
+      calc((100% - var(--workspace-main-content-max-width)) / 2 + 1rem)
+    );
   }
 
   .tasks-workspace .workspace-app-layout__main-header .view-header__main {
