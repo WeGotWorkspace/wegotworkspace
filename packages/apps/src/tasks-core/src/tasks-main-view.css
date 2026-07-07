@@ -17,7 +17,7 @@
 }
 
 .tasks-main-view__row {
-  @apply relative flex cursor-pointer items-start gap-3 px-0 py-3.5 md:px-4;
+  @apply relative flex items-start gap-3 px-0 py-3.5 md:px-4;
 }
 
 .tasks-main-view__row--completed .tasks-main-view__title {
@@ -68,7 +68,7 @@
 }
 
 .tasks-main-view__body {
-  @apply min-w-0 flex-1;
+  @apply min-w-0 flex-1 cursor-pointer;
 }
 
 .tasks-main-view__title {

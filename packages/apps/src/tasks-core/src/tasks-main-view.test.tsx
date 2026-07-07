@@ -116,35 +116,41 @@ describe("TasksMainView composer", () => {
     expect((description as HTMLTextAreaElement).value).toBe("Follow up tomorrow");
   });
 
-  it("toggles complete when clicking the task row body", () => {
+  it("opens edit when clicking the task row body", () => {
+    const onEditTask = vi.fn();
     const onToggleComplete = vi.fn();
     const task = bootstrap.data.tasks[0];
-    renderMainView({ displayTasks: [task], onToggleComplete });
+    renderMainView({ displayTasks: [task], onEditTask, onToggleComplete });
 
     fireEvent.click(screen.getByText(task.title));
 
-    expect(onToggleComplete).toHaveBeenCalledTimes(1);
-    expect(onToggleComplete).toHaveBeenCalledWith(task.id);
+    expect(onEditTask).toHaveBeenCalledTimes(1);
+    expect(onEditTask).toHaveBeenCalledWith(task.id);
+    expect(onToggleComplete).not.toHaveBeenCalled();
   });
 
-  it("toggles complete when clicking the checkbox without double-firing", () => {
+  it("toggles complete when clicking the checkbox", () => {
     const onToggleComplete = vi.fn();
+    const onEditTask = vi.fn();
     const task = bootstrap.data.tasks[0];
-    renderMainView({ displayTasks: [task], onToggleComplete });
+    renderMainView({ displayTasks: [task], onToggleComplete, onEditTask });
 
     fireEvent.click(screen.getByRole("button", { name: defaultTasksLabels.markComplete }));
 
     expect(onToggleComplete).toHaveBeenCalledTimes(1);
     expect(onToggleComplete).toHaveBeenCalledWith(task.id);
+    expect(onEditTask).not.toHaveBeenCalled();
   });
 
-  it("does not toggle complete when clicking task actions", () => {
+  it("does not open edit when clicking task actions", () => {
+    const onEditTask = vi.fn();
     const onToggleComplete = vi.fn();
     const task = bootstrap.data.tasks[0];
-    renderMainView({ displayTasks: [task], onToggleComplete });
+    renderMainView({ displayTasks: [task], onEditTask, onToggleComplete });
 
     fireEvent.click(screen.getByRole("button", { name: defaultTasksLabels.taskActions }));
 
+    expect(onEditTask).not.toHaveBeenCalled();
     expect(onToggleComplete).not.toHaveBeenCalled();
   });
 
@@ -671,15 +677,17 @@ describe("TasksMainView task rows", () => {
     expectPriorityFlagStroke(flag, TASK_PRIORITY_FLAG_COLORS.high);
   });
 
-  it("does not toggle complete when clicking task actions", () => {
+  it("does not open edit when clicking task actions", () => {
+    const onEditTask = vi.fn();
     const onToggleComplete = vi.fn();
     const task = bootstrap.data.tasks[0];
-    renderMainView({ displayTasks: [task], onToggleComplete });
+    renderMainView({ displayTasks: [task], onEditTask, onToggleComplete });
 
     const row = screen.getByText(task.title).closest(".tasks-main-view__row") as HTMLElement;
     fireEvent.mouseEnter(row);
     fireEvent.click(screen.getByRole("button", { name: defaultTasksLabels.taskActions }));
 
+    expect(onEditTask).not.toHaveBeenCalled();
     expect(onToggleComplete).not.toHaveBeenCalled();
   });
 

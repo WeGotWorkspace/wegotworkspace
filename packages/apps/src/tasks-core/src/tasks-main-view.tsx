@@ -115,24 +115,16 @@ function TaskRow({
     onTaskExitAnimationEnd(task.id);
   }, [isExiting, onTaskExitAnimationEnd, task.id]);
 
-  const handleRowClick = useCallback(
-    (event: MouseEvent<HTMLDivElement>) => {
-      if (isExiting) return;
-      const target = event.target as HTMLElement;
-      if (target.closest("button, a, input, textarea, select, [role='menu'], [role='menuitem']")) {
-        return;
-      }
-      onToggleComplete(task.id);
-    },
-    [isExiting, onToggleComplete, task.id],
-  );
+  const handleBodyClick = useCallback(() => {
+    if (isExiting) return;
+    onEditTask(task.id);
+  }, [isExiting, onEditTask, task.id]);
 
   return (
     <div
       role="listitem"
       className={`tasks-main-view__row${isExiting ? " tasks-main-view__row--exiting" : completed ? " tasks-main-view__row--completed" : ""}${isDragging ? " opacity-50" : ""}`}
       draggable={!isExiting}
-      onClick={handleRowClick}
       onDragStart={dragHandlers.onDragStart}
       onDragEnd={dragHandlers.onDragEnd}
       onAnimationEnd={(event) => {
@@ -150,7 +142,7 @@ function TaskRow({
         {completed ? <CheckCircle2 aria-hidden /> : <Circle aria-hidden />}
       </button>
 
-      <div className="tasks-main-view__body">
+      <div className="tasks-main-view__body" onClick={handleBodyClick}>
         <p className="tasks-main-view__title">{taskListTitle(task, L.untitledTask)}</p>
         {task.description?.trim() ? (
           <p className="tasks-main-view__description">{task.description}</p>
