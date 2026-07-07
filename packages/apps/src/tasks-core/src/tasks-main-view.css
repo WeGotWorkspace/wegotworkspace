@@ -82,8 +82,12 @@
 }
 
 .tasks-main-view__meta {
-  @apply mt-1.5 flex items-center gap-2 text-sm;
+  @apply mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm;
   color: color-mix(in oklab, var(--color-ink) 55%, transparent);
+}
+
+.tasks-main-view__meta-item {
+  @apply inline-flex items-center gap-1.5;
 }
 
 .tasks-main-view__actions {

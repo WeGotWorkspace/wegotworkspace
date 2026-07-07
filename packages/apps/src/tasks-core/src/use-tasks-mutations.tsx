@@ -47,16 +47,40 @@ export function useTasksMutations({ shell, list, exitAnimation }: UseTasksMutati
   const createTaskFromForm = useCallback(
     async ({ title, description, listId, workflowStatus }: TasksCreateInput) => {
       if (!operations || !title.trim()) return;
-      const created = await operations.createTask({
-        title: title.trim(),
-        description: description.trim() || null,
-        taskListIds: { [listId]: true },
-        workflowStatus,
-      });
-      setTasks((prev) => [...prev, created]);
-      shell.show(L.toastTaskAdded, { icon: <Plus className="size-4" /> });
+      const trimmedTitle = title.trim();
+      const trimmedDescription = description.trim() || null;
+      const status = workflowStatus ?? "needs-action";
+      const tempId = `pending-${crypto.randomUUID()}`;
+      const optimistic: Task = {
+        "@type": "Task",
+        id: tempId,
+        taskListId: listId,
+        uid: tempId,
+        title: trimmedTitle,
+        description: trimmedDescription,
+        workflowStatus: status,
+        isDraft: false,
+        sortOrder: Number.MAX_SAFE_INTEGER,
+        categories: [],
+      };
+
+      setTasks((prev) => [...prev, optimistic]);
+
+      try {
+        const created = await operations.createTask({
+          title: trimmedTitle,
+          description: trimmedDescription,
+          taskListIds: { [listId]: true },
+          workflowStatus: status,
+        });
+        setTasks((prev) => prev.map((task) => (task.id === tempId ? created : task)));
+        shell.show(L.toastTaskAdded, { icon: <Plus className="size-4" /> });
+      } catch {
+        setTasks((prev) => prev.filter((task) => task.id !== tempId));
+        showMutationError();
+      }
     },
-    [L.toastTaskAdded, operations, setTasks, shell],
+    [L.toastTaskAdded, operations, setTasks, shell, showMutationError],
   );
 
   const toggleTaskComplete = useCallback(

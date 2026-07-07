@@ -242,3 +242,43 @@ describe("TasksMainView composer", () => {
     });
   });
 });
+
+describe("TasksMainView task rows", () => {
+  beforeEach(() => {
+    cleanup();
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+  });
+
+  it("shows workflow status icon and label on task rows", () => {
+    const task = bootstrap.data.tasks.find((item) => item.workflowStatus === "in-process")!;
+    renderMainView({ displayTasks: [task] });
+
+    const row = screen.getByText(task.title).closest(".tasks-main-view__row");
+    expect(row).toBeTruthy();
+    const meta = row?.querySelector(".tasks-main-view__meta");
+    expect(meta?.textContent).toContain(defaultTasksLabels.stateInProcess);
+    expect(meta?.querySelector(".lucide-circle-dot")).toBeTruthy();
+  });
+
+  it("defaults missing workflowStatus to needs action on task rows", () => {
+    const task = { ...bootstrap.data.tasks[0], workflowStatus: undefined };
+    renderMainView({ displayTasks: [task] });
+
+    const row = screen.getByText(task.title).closest(".tasks-main-view__row");
+    const meta = row?.querySelector(".tasks-main-view__meta");
+    expect(meta?.textContent).toContain(defaultTasksLabels.stateNeedsAction);
+    expect(meta?.querySelector(".lucide-clock")).toBeTruthy();
+  });
+});

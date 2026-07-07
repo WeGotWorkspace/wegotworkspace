@@ -9,17 +9,7 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
-import {
-  CheckCircle2,
-  Circle,
-  CircleDot,
-  CircleX,
-  Clock,
-  MoreVertical,
-  Pencil,
-  Plus,
-  Trash2,
-} from "lucide-react";
+import { CheckCircle2, Circle, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
 import { IconButton } from "@/button/src/button";
 import { Button } from "@/button/src/button";
 import { DropdownMenu } from "@/menu-dropdown/src/dropdown-menu";
@@ -33,6 +23,7 @@ import {
   taskListTitle,
   type TaskWorkflowStatus,
 } from "@/tasks-core/src/tasks-task-utils";
+import { workflowStatusIcon, workflowStatusLabel } from "@/tasks-core/src/tasks-workflow-status";
 import "@/tasks-core/src/tasks-main-view.css";
 
 export type TasksCreateInput = {
@@ -72,32 +63,6 @@ const emptyForm = (listId: string): TasksCreateInput => ({
   listId,
   workflowStatus: DEFAULT_WORKFLOW_STATUS,
 });
-
-function sidebarStatusLabel(status: TaskWorkflowStatus, L: TasksUILabels): string {
-  switch (status) {
-    case "needs-action":
-      return L.stateNeedsAction;
-    case "in-process":
-      return L.stateInProcess;
-    case "completed":
-      return L.stateCompleted;
-    case "cancelled":
-      return L.stateCancelled;
-  }
-}
-
-function workflowStatusIcon(status: TaskWorkflowStatus) {
-  switch (status) {
-    case "needs-action":
-      return <Clock className="size-3.5" aria-hidden />;
-    case "in-process":
-      return <CircleDot className="size-3.5" aria-hidden />;
-    case "completed":
-      return <CheckCircle2 className="size-3.5" aria-hidden />;
-    case "cancelled":
-      return <CircleX className="size-3.5" aria-hidden />;
-  }
-}
 
 function ComposerSelectOption({ icon, label }: { icon: ReactNode; label: string }) {
   return (
@@ -145,6 +110,7 @@ function TaskRow({
   const completed = isTaskCompleted(task);
   const listName = taskListName(task.taskListId, taskLists);
   const taskList = taskLists.find((list) => list.id === task.taskListId);
+  const workflowStatus = (task.workflowStatus ?? "needs-action") as TaskWorkflowStatus;
 
   useEffect(() => {
     if (!isExiting || !prefersReducedMotion()) return;
@@ -192,8 +158,14 @@ function TaskRow({
           <p className="tasks-main-view__description">{task.description}</p>
         ) : null}
         <div className="tasks-main-view__meta">
-          <TaskListDot list={taskList ?? task.taskListId} />
-          <span>{listName}</span>
+          <span className="tasks-main-view__meta-item">
+            <TaskListDot list={taskList ?? task.taskListId} />
+            <span>{listName}</span>
+          </span>
+          <span className="tasks-main-view__meta-item">
+            {workflowStatusIcon(workflowStatus)}
+            <span>{workflowStatusLabel(workflowStatus, L)}</span>
+          </span>
         </div>
       </div>
 
@@ -400,7 +372,7 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
                         <SelectItem key={status} value={status}>
                           <ComposerSelectOption
                             icon={workflowStatusIcon(status)}
-                            label={sidebarStatusLabel(status, L)}
+                            label={workflowStatusLabel(status, L)}
                           />
                         </SelectItem>
                       ))}
