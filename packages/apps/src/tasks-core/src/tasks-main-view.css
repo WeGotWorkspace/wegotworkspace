@@ -177,6 +177,18 @@
   @apply overflow-hidden;
 }
 
+.tasks-main-view__composer-due-popover .rdp-button_previous svg,
+.tasks-main-view__composer-due-popover .rdp-button_next svg {
+  @apply size-5;
+}
+
+@media (pointer: coarse) {
+  .tasks-main-view__composer-due-popover .rdp-button_previous svg,
+  .tasks-main-view__composer-due-popover .rdp-button_next svg {
+    @apply size-6;
+  }
+}
+
 .tasks-main-view__composer-due-clear {
   @apply border-t p-2;
   border-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
