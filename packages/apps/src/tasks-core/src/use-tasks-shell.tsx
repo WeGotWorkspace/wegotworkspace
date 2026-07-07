@@ -5,7 +5,9 @@ import { normalizeTasksView } from "@/tasks-core/src/tasks-route-search";
 import {
   collectTaskTags,
   defaultTaskListId,
+  filterHiddenCompletedTasks,
   filterTasksByView,
+  shouldApplyCompletedTaskFilter,
 } from "@/tasks-core/src/tasks-task-utils";
 import type { Task, TasksAPIOperations, TasksUIData } from "@/tasks-core/src/tasks-types";
 
@@ -36,6 +38,7 @@ export function useTasksShell({
     if (typeof window === "undefined") return true;
     return !window.matchMedia("(max-width: 767px)").matches;
   });
+  const [showCompletedTasks, setShowCompletedTasks] = useState(false);
 
   const { show, showError } = useAppToast();
   const showMutationError = useCallback(
@@ -113,7 +116,17 @@ export function useTasksShell({
     onViewChange?.(view);
   }, [view, onViewChange]);
 
-  const visibleTasks = useMemo(() => filterTasksByView(tasks, view), [tasks, view]);
+  const showCompletedToggle = useMemo(() => shouldApplyCompletedTaskFilter(view), [view]);
+
+  const visibleTasks = useMemo(() => {
+    const byView = filterTasksByView(tasks, view);
+    if (!showCompletedToggle || showCompletedTasks) return byView;
+    return filterHiddenCompletedTasks(byView);
+  }, [showCompletedTasks, showCompletedToggle, tasks, view]);
+
+  const toggleShowCompletedTasks = useCallback(() => {
+    setShowCompletedTasks((current) => !current);
+  }, []);
 
   const createListId = useMemo(
     () => selectedListId ?? defaultTaskListId(taskLists),
@@ -131,6 +144,9 @@ export function useTasksShell({
     sidebarOpen,
     setSidebarOpen,
     visibleTasks,
+    showCompletedTasks,
+    showCompletedToggle,
+    toggleShowCompletedTasks,
     selectedListId,
     selectedTag,
     canCreateTask,

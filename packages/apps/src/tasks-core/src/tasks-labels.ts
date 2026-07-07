@@ -43,6 +43,8 @@ export type TasksUILabels = {
   remindCustom: string;
   kanbanToggle: string;
   listView: string;
+  showCompletedTasks: string;
+  hideCompletedTasks: string;
   addTaskName: string;
   addTaskNamePlaceholder: string;
   addTaskDescriptionPlaceholder: string;
@@ -123,6 +125,8 @@ export const defaultTasksLabels: TasksUILabels = {
   remindCustom: "Custom date & time",
   kanbanToggle: "Kanban",
   listView: "List",
+  showCompletedTasks: "Show completed",
+  hideCompletedTasks: "Hide completed",
   addTaskName: "Task name",
   addTaskNamePlaceholder: "Task name",
   addTaskDescriptionPlaceholder: "Description",

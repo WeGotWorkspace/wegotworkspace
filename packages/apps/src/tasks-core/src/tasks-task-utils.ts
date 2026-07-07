@@ -185,6 +185,15 @@ export function isTaskCompleted(task: Task): boolean {
   return task.workflowStatus === "completed" || task.workflowStatus === "cancelled";
 }
 
+/** Views where the header toggle can hide completed tasks from the list. */
+export function shouldApplyCompletedTaskFilter(view: string): boolean {
+  return view !== "state:completed" && view !== "state:cancelled";
+}
+
+export function filterHiddenCompletedTasks(tasks: Task[]): Task[] {
+  return tasks.filter((task) => !isTaskCompleted(task));
+}
+
 /** Views where a completed task would remain visible until explicitly hidden. */
 export function shouldHideCompletedTaskAfterExit(view: string): boolean {
   if (view === "state:all") return true;

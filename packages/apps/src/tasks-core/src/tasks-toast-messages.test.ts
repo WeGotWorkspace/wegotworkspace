@@ -7,6 +7,8 @@ import {
 } from "@/tasks-core/src/tasks-toast-messages";
 import {
   buildDisplayTasks,
+  filterHiddenCompletedTasks,
+  shouldApplyCompletedTaskFilter,
   shouldHideCompletedTaskAfterExit,
 } from "@/tasks-core/src/tasks-task-utils";
 import type { Task } from "@/tasks-core/src/tasks-types";
@@ -41,6 +43,20 @@ describe("shouldHideCompletedTaskAfterExit", () => {
   it("does not hide after exit in filtered status views", () => {
     expect(shouldHideCompletedTaskAfterExit("state:needs-action")).toBe(false);
     expect(shouldHideCompletedTaskAfterExit("state:today")).toBe(false);
+  });
+});
+
+describe("completed task visibility filter", () => {
+  it("shouldApplyCompletedTaskFilter excludes dedicated completed and cancelled views", () => {
+    expect(shouldApplyCompletedTaskFilter("state:all")).toBe(true);
+    expect(shouldApplyCompletedTaskFilter("list:inbox")).toBe(true);
+    expect(shouldApplyCompletedTaskFilter("state:completed")).toBe(false);
+    expect(shouldApplyCompletedTaskFilter("state:cancelled")).toBe(false);
+  });
+
+  it("filterHiddenCompletedTasks removes completed and cancelled tasks", () => {
+    const tasks = [task("open"), task("done", "completed"), task("dropped", "cancelled")];
+    expect(filterHiddenCompletedTasks(tasks).map((row) => row.id)).toEqual(["open"]);
   });
 });
 

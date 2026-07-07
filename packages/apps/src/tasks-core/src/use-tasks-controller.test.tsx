@@ -130,4 +130,33 @@ describe("useTasksController URL routing", () => {
     expect(result.current.view).toBe("state:all");
     expect(onViewChange).toHaveBeenLastCalledWith("state:all");
   });
+
+  it("hides completed tasks by default on all view and reveals them when toggled", () => {
+    const { result } = renderHook(() =>
+      useTasksController({ data: bootstrap.data, listLoading: false, initialView: "state:all" }),
+    );
+
+    expect(result.current.showCompletedToggle).toBe(true);
+    expect(result.current.displayTasks.some((task) => task.id === "task-done")).toBe(false);
+
+    act(() => {
+      result.current.toggleShowCompletedTasks();
+    });
+
+    expect(result.current.showCompletedTasks).toBe(true);
+    expect(result.current.displayTasks.some((task) => task.id === "task-done")).toBe(true);
+  });
+
+  it("does not offer completed toggle on the completed status view", () => {
+    const { result } = renderHook(() =>
+      useTasksController({
+        data: bootstrap.data,
+        listLoading: false,
+        initialView: "state:completed",
+      }),
+    );
+
+    expect(result.current.showCompletedToggle).toBe(false);
+    expect(result.current.displayTasks.some((task) => task.id === "task-done")).toBe(true);
+  });
 });

@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Plus, RefreshCw } from "lucide-react";
+import { CheckCircle2, Plus, RefreshCw } from "lucide-react";
 import { Button, IconButton } from "@/button/src/button";
 import { TooltipProvider } from "@/ui/tooltip";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
@@ -62,6 +62,9 @@ export function TasksWorkspace({
     moveToList,
     assignTagToTasks,
     createListId,
+    showCompletedTasks,
+    showCompletedToggle,
+    toggleShowCompletedTasks,
     exitingTaskIds,
     isItemDragging,
     itemDragHandlers,
@@ -138,21 +141,33 @@ export function TasksWorkspace({
             title={viewLabel}
             subtitle={L.listTasks(displayTasks.length)}
             actions={
-              onRefreshList ? (
-                <IconButton
-                  label={L.refreshList}
-                  onClick={onRefreshList}
-                  disabled={listLoading}
-                  icon={
-                    <RefreshCw
-                      className={cn("size-4", listLoading && "animate-spin")}
-                      aria-hidden
-                    />
-                  }
-                  size="sm"
-                  variant="subtle"
-                />
-              ) : null
+              <div className="tasks-workspace__header-actions flex items-center gap-2">
+                {showCompletedToggle ? (
+                  <IconButton
+                    label={showCompletedTasks ? L.hideCompletedTasks : L.showCompletedTasks}
+                    onClick={toggleShowCompletedTasks}
+                    icon={<CheckCircle2 className="size-4" aria-hidden />}
+                    size="sm"
+                    variant="subtle"
+                    active={showCompletedTasks}
+                  />
+                ) : null}
+                {onRefreshList ? (
+                  <IconButton
+                    label={L.refreshList}
+                    onClick={onRefreshList}
+                    disabled={listLoading}
+                    icon={
+                      <RefreshCw
+                        className={cn("size-4", listLoading && "animate-spin")}
+                        aria-hidden
+                      />
+                    }
+                    size="sm"
+                    variant="subtle"
+                  />
+                ) : null}
+              </div>
             }
           />
         }
