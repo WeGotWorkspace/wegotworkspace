@@ -10,6 +10,8 @@
 
 import { INBOX_TASK_LIST_ID, isInboxTaskList } from "@/tasks-core/src/tasks-task-utils";
 
+export const DEFAULT_TASKS_VIEW = `list:${INBOX_TASK_LIST_ID}`;
+
 export type TasksRouteParams = {
   stateSlug?: string;
   listId?: string;
@@ -25,7 +27,7 @@ type TaskListRouteEntry = {
 /** Derive the controller `view` string from the matched path and params. */
 export function tasksViewFromLocation(pathname: string, params: TasksRouteParams): string {
   const parts = pathname.split("/").filter(Boolean);
-  if (parts[0] !== "tasks") return "state:all";
+  if (parts[0] !== "tasks") return DEFAULT_TASKS_VIEW;
 
   const segment = parts[1] ? decodeURIComponent(parts[1]) : "state";
   const slugFromPath = parts[2] ? decodeURIComponent(parts[2]) : undefined;
@@ -35,10 +37,10 @@ export function tasksViewFromLocation(pathname: string, params: TasksRouteParams
     if (stateSlug) {
       return `state:${decodeURIComponent(stateSlug)}`;
     }
-    return "state:all";
+    return DEFAULT_TASKS_VIEW;
   }
   if (segment === "tags") {
-    return "state:all";
+    return DEFAULT_TASKS_VIEW;
   }
   if (segment === "lists") {
     const listId = slugFromPath ?? params.listId;
@@ -52,12 +54,12 @@ export function tasksViewFromLocation(pathname: string, params: TasksRouteParams
       return `priority:${decodeURIComponent(prioritySlug)}`;
     }
   }
-  return "state:all";
+  return DEFAULT_TASKS_VIEW;
 }
 
 /** Map inbox aliases (e.g. legacy `inbox` slug) to the canonical list id from bootstrap. */
 export function normalizeTasksView(view: string, taskLists: TaskListRouteEntry[]): string {
-  if (view.startsWith("tag:")) return "state:all";
+  if (view.startsWith("tag:")) view = DEFAULT_TASKS_VIEW;
   if (!view.startsWith("list:")) return view;
 
   const listId = view.slice(5);
@@ -85,7 +87,10 @@ export type TasksNavigateTarget = {
 
 export function tasksNavigateTarget(view: string): TasksNavigateTarget {
   if (view.startsWith("tag:")) {
-    return { to: "/tasks/state/all", params: {} };
+    return {
+      to: "/tasks/lists/$listId",
+      params: { listId: INBOX_TASK_LIST_ID },
+    };
   }
   if (view.startsWith("state:")) {
     const stateSlug = encodeURIComponent(view.slice(6));
@@ -102,5 +107,8 @@ export function tasksNavigateTarget(view: string): TasksNavigateTarget {
     const prioritySlug = encodeURIComponent(view.slice(9));
     return { to: "/tasks/priority/$prioritySlug", params: { prioritySlug } };
   }
-  return { to: "/tasks/state/all", params: {} };
+  return {
+    to: "/tasks/lists/$listId",
+    params: { listId: INBOX_TASK_LIST_ID },
+  };
 }

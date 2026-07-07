@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { mergeTasksLabels, type TasksUILabels } from "@/tasks-core/src/tasks-labels";
-import { normalizeTasksView } from "@/tasks-core/src/tasks-route-search";
+import { DEFAULT_TASKS_VIEW, normalizeTasksView } from "@/tasks-core/src/tasks-route-search";
 import {
   defaultTaskListId,
   filterHiddenCompletedTasks,
@@ -30,7 +30,7 @@ export function useTasksShell({
   const L = useMemo(() => mergeTasksLabels(labels), [labels]);
   const [tasks, setTasks] = useState<Task[]>(() => data.tasks);
   const [taskLists, setTaskLists] = useState(() => data.taskLists);
-  const [view, setView] = useState<string>(() => initialView ?? "state:all");
+  const [view, setView] = useState<string>(() => initialView ?? DEFAULT_TASKS_VIEW);
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     if (typeof window === "undefined") return true;
     return !window.matchMedia("(max-width: 767px)").matches;

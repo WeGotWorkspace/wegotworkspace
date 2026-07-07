@@ -17,13 +17,13 @@ describe("tasks-route-search", () => {
     ).toBe("list:work");
   });
 
-  it("redirects legacy tag paths to the all view", () => {
+  it("redirects legacy tag paths to the inbox view", () => {
     expect(
       tasksViewFromLocation("/tasks/tags/focus", {
         tagSlug: "focus",
       }),
-    ).toBe("state:all");
-    expect(tasksViewFromLocation("/tasks/tags/My%20Tag", {})).toBe("state:all");
+    ).toBe("list:inbox");
+    expect(tasksViewFromLocation("/tasks/tags/My%20Tag", {})).toBe("list:inbox");
   });
 
   it("prefers pathname slugs when route params are not yet available", () => {
@@ -45,7 +45,10 @@ describe("tasks-route-search", () => {
       to: "/tasks/state/$stateSlug",
       params: { stateSlug: "today" },
     });
-    expect(tasksNavigateTarget("tag:work")).toEqual({ to: "/tasks/state/all", params: {} });
+    expect(tasksNavigateTarget("tag:work")).toEqual({
+      to: "/tasks/lists/$listId",
+      params: { listId: "inbox" },
+    });
     expect(tasksNavigateTarget("list:personal")).toEqual({
       to: "/tasks/lists/$listId",
       params: { listId: "personal" },
@@ -66,6 +69,6 @@ describe("tasks-route-search", () => {
     expect(normalizeTasksView("list:tl-inbox-uuid", taskLists)).toBe("list:tl-inbox-uuid");
     expect(normalizeTasksView("list:work", taskLists)).toBe("list:work");
     expect(normalizeTasksView("state:today", taskLists)).toBe("state:today");
-    expect(normalizeTasksView("tag:work", taskLists)).toBe("state:all");
+    expect(normalizeTasksView("tag:work", taskLists)).toBe("list:tl-inbox-uuid");
   });
 });

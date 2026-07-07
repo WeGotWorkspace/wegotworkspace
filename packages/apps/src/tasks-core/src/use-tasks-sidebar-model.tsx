@@ -8,7 +8,6 @@ import {
   CircleX,
   Clock,
   Inbox as InboxIcon,
-  List,
 } from "lucide-react";
 import type { TasksUILabels } from "@/tasks-core/src/tasks-labels";
 import { TaskListDot } from "@/tasks-core/src/tasks-list-dot";
@@ -64,12 +63,6 @@ export function useTasksSidebarModel({
         selected: view === `list:${inboxListId}`,
         onClick: () => selectView(`list:${inboxListId}`),
         ...sidebarDropZoneProps(`list:${inboxListId}`, (ids) => moveToList(ids, inboxListId)),
-      },
-      {
-        label: labels.stateAll,
-        icon: <List className="size-3.5" />,
-        selected: view === "state:all",
-        onClick: () => selectView("state:all"),
       },
       {
         label: labels.stateToday,
