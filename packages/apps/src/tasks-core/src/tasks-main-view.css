@@ -136,11 +136,11 @@
 
 .tasks-main-view__composer-description {
   @apply mt-1 w-full resize-none overflow-y-hidden border-0 bg-transparent text-sm leading-5 outline-none;
-  color: color-mix(in oklab, var(--color-ink) 55%, transparent);
+  color: var(--color-ink);
 }
 
 .tasks-main-view__composer-description::placeholder {
-  color: color-mix(in oklab, var(--color-ink) 40%, transparent);
+  color: color-mix(in oklab, var(--color-ink) 45%, transparent);
 }
 
 .tasks-main-view__composer-description:disabled {
