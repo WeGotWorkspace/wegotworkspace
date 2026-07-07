@@ -60,6 +60,10 @@
 }
 
 /* Project dots must render at full color; menu-item icon slots default to reduced opacity. */
+.tasks-workspace .sidebar-section .menu-item__icon-slot .tasks-list-dot {
+  opacity: 1;
+}
+
 .tasks-workspace .sidebar-section .menu-item .menu-item__icon-slot:has(.tasks-list-dot) {
   opacity: 1;
 }
