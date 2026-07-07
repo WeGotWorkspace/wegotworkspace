@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check } from "lucide-react";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { mergeTasksLabels, type TasksUILabels } from "@/tasks-core/src/tasks-labels";
+import { normalizeTasksView } from "@/tasks-core/src/tasks-route-search";
 import {
   collectTaskTags,
   defaultTaskListId,
@@ -48,10 +49,26 @@ export function useTasksShell({
     setTaskLists(data.taskLists);
   }, [bootstrapRevision, data]);
 
+  const pendingViewRef = useRef<string | null>(null);
+  const lastInitialViewRef = useRef(initialView);
+
   useEffect(() => {
     if (initialView === undefined) return;
-    setView(initialView);
-  }, [initialView]);
+    const normalized = normalizeTasksView(initialView, taskLists);
+    const pending = pendingViewRef.current;
+    const initialViewChanged = lastInitialViewRef.current !== initialView;
+    lastInitialViewRef.current = initialView;
+
+    if (pending !== null) {
+      if (normalized === pending) {
+        pendingViewRef.current = null;
+      } else if (initialViewChanged) {
+        onViewChange?.(pending);
+      }
+      return;
+    }
+    setView((current) => (current === normalized ? current : normalized));
+  }, [initialView, onViewChange, taskLists]);
 
   const tags = useMemo(() => collectTaskTags(tasks), [tasks]);
 
@@ -76,12 +93,17 @@ export function useTasksShell({
   const selectedTag = view.startsWith("tag:") ? view.slice(4) : null;
   const canCreateTask = Boolean(operations);
 
-  const selectView = useCallback((nextView: string) => {
-    setView(nextView);
-    if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
-      setSidebarOpen(false);
-    }
-  }, []);
+  const selectView = useCallback(
+    (nextView: string) => {
+      const normalized = normalizeTasksView(nextView, taskLists);
+      pendingViewRef.current = normalized;
+      setView(normalized);
+      if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+        setSidebarOpen(false);
+      }
+    },
+    [taskLists],
+  );
 
   const viewSyncedRef = useRef(false);
   useEffect(() => {

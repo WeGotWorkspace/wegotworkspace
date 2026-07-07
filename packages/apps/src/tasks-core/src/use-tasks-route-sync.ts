@@ -25,11 +25,16 @@ export function useTasksRouteSync() {
 
   const handleViewChange = useCallback(
     (view: string) => {
+      const routeView = tasksViewFromLocation(location.pathname, params);
+      if (view === routeView) {
+        currentViewRef.current = view;
+        return;
+      }
       currentViewRef.current = view;
       const target = tasksNavigateTarget(view);
       void navigate({ ...target, replace: true });
     },
-    [navigate],
+    [location.pathname, navigate, params],
   );
 
   return {
