@@ -58,3 +58,11 @@
 .tasks-story-scope--main {
   min-height: 100dvh;
 }
+
+.tasks-sidebar__project-dot {
+  @apply size-2 shrink-0 rounded-full;
+}
+
+.tasks-workspace .menu-item__icon-slot:has(.tasks-sidebar__project-dot) {
+  opacity: 1;
+}

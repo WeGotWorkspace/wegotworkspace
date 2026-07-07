@@ -9,12 +9,17 @@ import {
   Tag,
 } from "lucide-react";
 import type { TasksUILabels } from "@/tasks-core/src/tasks-labels";
-import { INBOX_TASK_LIST_ID, isInboxTaskList } from "@/tasks-core/src/tasks-task-utils";
+import {
+  INBOX_TASK_LIST_ID,
+  isInboxTaskList,
+  taskListDotColor,
+} from "@/tasks-core/src/tasks-task-utils";
 
 type TaskListSidebarEntry = {
   id: string;
   name: string;
   role?: string | null;
+  color?: string | null;
 };
 
 type UseTasksSidebarModelArgs = {
@@ -116,7 +121,13 @@ export function useTasksSidebarModel({
     () =>
       projectTaskLists.map((list) => ({
         label: list.name,
-        icon: <List className="size-3.5" />,
+        icon: (
+          <span
+            className="tasks-sidebar__project-dot"
+            style={{ backgroundColor: taskListDotColor(list) }}
+            aria-hidden
+          />
+        ),
         selected: view === `list:${list.id}`,
         onClick: () => selectView(`list:${list.id}`),
         ...sidebarDropZoneProps(`list:${list.id}`, (ids) => moveToList(ids, list.id)),
