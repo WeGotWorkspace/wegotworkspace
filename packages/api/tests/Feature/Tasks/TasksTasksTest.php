@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Tasks;
 
+use App\Models\CalendarObject;
+use App\Services\Tasks\Conversion\IcsJmapTaskConverter;
 use App\Services\Tasks\InboxTaskListProvisioner;
 use Tests\Support\OptimisticConcurrencyTestHelpers;
 use Tests\Support\TasksTestFixtures;
@@ -67,6 +69,40 @@ final class TasksTasksTest extends WgwDatabaseTestCase
             ->getJson('/api/v1/tasks/items?taskListId='.InboxTaskListProvisioner::URI);
         $list->assertOk();
         $this->assertContains($taskId, array_column($list->json('list'), 'id'));
+    }
+
+    public function test_create_task_with_priority_persists_ical_priority(): void
+    {
+        $response = $this->withBearer($this->userBearerToken())
+            ->postJson('/api/v1/tasks/items', [
+                ...$this->sampleTaskCreatePayload(),
+                'priority' => 1,
+            ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('priority', 1);
+
+        $taskId = (string) $response->json('id');
+
+        $show = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/tasks/items/'.$taskId);
+        $show->assertOk()->assertJsonPath('priority', 1);
+
+        $stored = $this->findBobTaskObject($taskId);
+        $this->assertNotNull($stored);
+        $ics = is_string($stored->calendardata) ? $stored->calendardata : (string) $stored->calendardata;
+        $this->assertStringContainsString('PRIORITY:1', $ics);
+    }
+
+    public function test_read_task_with_ical_priority_returns_same_value(): void
+    {
+        $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//WeGotWorkspace//Tasks Test//EN\r\nBEGIN:VTODO\r\nUID:urn:uuid:prio-high\r\nSUMMARY:High priority task\r\nPRIORITY:1\r\nSTATUS:NEEDS-ACTION\r\nEND:VTODO\r\nEND:VCALENDAR\r\n";
+        $taskId = $this->seedTaskViaPdo('bob', 'high-priority.ics', $ics);
+
+        $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/tasks/items/'.$taskId)
+            ->assertOk()
+            ->assertJsonPath('priority', 1);
     }
 
     public function test_update_task(): void
@@ -161,5 +197,25 @@ final class TasksTasksTest extends WgwDatabaseTestCase
             ->assertJsonCount(1, 'recurrenceRules')
             ->assertJsonPath('recurrenceRules.0.frequency', 'weekly')
             ->assertJsonPath('recurrenceRules.0.byDay.0', 'MO');
+    }
+
+    private function findBobTaskObject(string $taskId): ?CalendarObject
+    {
+        $parsed = IcsJmapTaskConverter::parseTaskId($taskId);
+        $objectUri = $parsed['objectUri'];
+
+        $row = CalendarObject::query()
+            ->from('calendarobjects as o')
+            ->join('calendarinstances as i', 'i.calendarid', '=', 'o.calendarid')
+            ->where('o.uri', $objectUri)
+            ->where('i.principaluri', 'principals/bob')
+            ->select('o.id')
+            ->first();
+
+        if ($row === null) {
+            return null;
+        }
+
+        return CalendarObject::query()->find((int) $row->id);
     }
 }

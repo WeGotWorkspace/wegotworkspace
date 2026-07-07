@@ -141,8 +141,8 @@ final class JmapToIcsTaskConverter
             $properties['CLASS'] = $class;
         }
 
-        if (isset($task['priority']) && is_int($task['priority'])) {
-            $properties['PRIORITY'] = (string) max(1, min(9, 10 - $task['priority'] + 1));
+        if (isset($task['priority']) && is_int($task['priority']) && $task['priority'] > 0) {
+            $properties['PRIORITY'] = (string) max(1, min(9, $task['priority']));
         }
         if (isset($task['progress']) && is_int($task['progress'])) {
             $properties['PERCENT-COMPLETE'] = (string) max(0, min(100, $task['progress']));

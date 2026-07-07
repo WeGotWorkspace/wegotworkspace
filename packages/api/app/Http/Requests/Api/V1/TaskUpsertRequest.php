@@ -77,7 +77,7 @@ final class TaskUpsertRequest extends FormRequest
                 Rule::in(['needs-action', 'in-process', 'completed', 'cancelled', 'pending', 'failed']),
             ],
             'progress' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:100'],
-            'priority' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:10'],
+            'priority' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:9'],
             'categories' => ['sometimes', 'array'],
             'categories.*' => ['string', 'max:255'],
             'privacy' => [

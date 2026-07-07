@@ -235,13 +235,10 @@ final class IcsToJmapTaskConverter
 
     private static function normalizePriority(?int $priority): ?int
     {
-        if ($priority === null) {
-            return null;
-        }
-        if ($priority <= 0) {
+        if ($priority === null || $priority <= 0) {
             return null;
         }
 
-        return min(10, max(0, 10 - $priority + 1));
+        return min(9, max(1, $priority));
     }
 }

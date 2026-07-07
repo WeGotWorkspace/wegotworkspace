@@ -220,6 +220,33 @@ final class IcsJmapTaskConverterTest extends TestCase
         $this->assertSame('accepted', $roundTrip[0]['participants']['att1']['participationStatus']);
     }
 
+    public function test_priority_round_trip_preserves_ical_values(): void
+    {
+        $task = [
+            '@type' => 'Task',
+            'uid' => 'urn:uuid:priority-roundtrip',
+            'title' => 'Priority task',
+            'due' => '2026-06-15T17:00:00',
+            'priority' => 1,
+            'isDraft' => false,
+            'sortOrder' => 0,
+        ];
+
+        $ics = $this->converter->icsFromTask($task);
+        $this->assertStringContainsString('PRIORITY:1', $ics);
+
+        $roundTrip = $this->reader->tasksFromIcs($ics);
+        $this->assertSame(1, $roundTrip[0]['priority']);
+    }
+
+    public function test_read_ical_priority_maps_to_same_rest_value(): void
+    {
+        $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VTODO\r\nUID:urn:uuid:prio-medium\r\nSUMMARY:Medium\r\nPRIORITY:5\r\nEND:VTODO\r\nEND:VCALENDAR\r\n";
+        $tasks = $this->reader->tasksFromIcs($ics);
+
+        $this->assertSame(5, $tasks[0]['priority']);
+    }
+
     public function test_completed_always_normalized_to_utc_z(): void
     {
         $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VTODO\r\nUID:completed-tz\r\nSUMMARY:Done\r\nCOMPLETED:20260610T120000\r\nSTATUS:COMPLETED\r\nEND:VTODO\r\nEND:VCALENDAR\r\n";
