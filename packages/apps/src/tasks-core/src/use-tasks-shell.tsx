@@ -63,6 +63,9 @@ export function useTasksShell({
     if (view === "state:upcoming") return L.stateUpcoming;
     if (view === "state:overdue") return L.stateOverdue;
     if (view === "state:needs-action") return L.stateNeedsAction;
+    if (view === "state:in-process") return L.stateInProcess;
+    if (view === "state:completed") return L.stateCompleted;
+    if (view === "state:cancelled") return L.stateCancelled;
     if (view.startsWith("tag:")) return L.tagViewTitle(view.slice(4));
     if (view.startsWith("list:")) {
       const listId = view.slice(5);

@@ -59,6 +59,18 @@ export function filterTasksByView(tasks: Task[], view: string): Task[] {
     return tasks.filter((task) => task.workflowStatus === "needs-action");
   }
 
+  if (state === "in-process") {
+    return tasks.filter((task) => task.workflowStatus === "in-process");
+  }
+
+  if (state === "completed") {
+    return tasks.filter((task) => task.workflowStatus === "completed");
+  }
+
+  if (state === "cancelled") {
+    return tasks.filter((task) => task.workflowStatus === "cancelled");
+  }
+
   if (state === "today") {
     return tasks.filter((task) => {
       const due = parseDueDate(task);

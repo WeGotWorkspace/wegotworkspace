@@ -1,6 +1,7 @@
 export type TasksUILabels = {
   appName: string;
-  sidebarStates: string;
+  sidebarTime: string;
+  sidebarStatus: string;
   sidebarTags: string;
   sidebarInbox: string;
   sidebarProjects: string;
@@ -9,6 +10,9 @@ export type TasksUILabels = {
   stateUpcoming: string;
   stateOverdue: string;
   stateNeedsAction: string;
+  stateInProcess: string;
+  stateCompleted: string;
+  stateCancelled: string;
   newTask: string;
   listTasks: (count: number) => string;
   listSelected: (count: number) => string;
@@ -67,7 +71,8 @@ export type TasksUILabels = {
 
 export const defaultTasksLabels: TasksUILabels = {
   appName: "Tasks",
-  sidebarStates: "States",
+  sidebarTime: "Time",
+  sidebarStatus: "Status",
   sidebarTags: "Tags",
   sidebarInbox: "Inbox",
   sidebarProjects: "Projects",
@@ -76,6 +81,9 @@ export const defaultTasksLabels: TasksUILabels = {
   stateUpcoming: "Upcoming",
   stateOverdue: "Overdue",
   stateNeedsAction: "Needs action",
+  stateInProcess: "In progress",
+  stateCompleted: "Completed",
+  stateCancelled: "Cancelled",
   newTask: "New task",
   listTasks: (count) => (count === 1 ? "1 task" : `${count} tasks`),
   listSelected: (count) => (count === 1 ? "1 selected" : `${count} selected`),

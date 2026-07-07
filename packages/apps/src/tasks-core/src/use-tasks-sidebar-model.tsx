@@ -2,7 +2,10 @@ import { useMemo } from "react";
 import {
   Calendar,
   CalendarClock,
+  CheckCircle2,
   CircleAlert,
+  CircleDot,
+  CircleX,
   Clock,
   Inbox as InboxIcon,
   List,
@@ -69,7 +72,7 @@ export function useTasksSidebarModel({
     [inboxListId, labels.sidebarInbox, moveToList, selectView, sidebarDropZoneProps, view],
   );
 
-  const stateSidebarItems = useMemo(
+  const timeSidebarItems = useMemo(
     () => [
       {
         label: labels.stateAll,
@@ -95,11 +98,35 @@ export function useTasksSidebarModel({
         selected: view === "state:overdue",
         onClick: () => selectView("state:overdue"),
       },
+    ],
+    [labels, selectView, view],
+  );
+
+  const statusSidebarItems = useMemo(
+    () => [
       {
         label: labels.stateNeedsAction,
         icon: <Clock className="size-3.5" />,
         selected: view === "state:needs-action",
         onClick: () => selectView("state:needs-action"),
+      },
+      {
+        label: labels.stateInProcess,
+        icon: <CircleDot className="size-3.5" />,
+        selected: view === "state:in-process",
+        onClick: () => selectView("state:in-process"),
+      },
+      {
+        label: labels.stateCompleted,
+        icon: <CheckCircle2 className="size-3.5" />,
+        selected: view === "state:completed",
+        onClick: () => selectView("state:completed"),
+      },
+      {
+        label: labels.stateCancelled,
+        icon: <CircleX className="size-3.5" />,
+        selected: view === "state:cancelled",
+        onClick: () => selectView("state:cancelled"),
       },
     ],
     [labels, selectView, view],
@@ -137,7 +164,8 @@ export function useTasksSidebarModel({
 
   return {
     inboxSidebarItems,
-    stateSidebarItems,
+    timeSidebarItems,
+    statusSidebarItems,
     tagSidebarItems,
     projectSidebarItems,
   };
