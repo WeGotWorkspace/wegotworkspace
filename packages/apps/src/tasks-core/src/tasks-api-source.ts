@@ -2,7 +2,7 @@ import { createTasksAppBootstrap, type TasksAppBootstrap } from "@/lib/api/mock/
 import { createWorkspaceSource } from "@/lib/api/create-workspace-source";
 import { fetchTasksLiveBootstrap } from "@/lib/api/wgw/tasks";
 import { wgwLiveApiEnabled } from "@/lib/api/wgw/http";
-import type { Task, TaskPatch, TasksAPIOperations } from "@/tasks-core/src/tasks-types";
+import type { Task, TaskList, TaskPatch, TasksAPIOperations } from "@/tasks-core/src/tasks-types";
 import { taskAlertsFromList } from "@/tasks-core/src/tasks-task-utils";
 import * as tasksApi from "@/lib/api/wgw/tasks";
 
@@ -20,6 +20,9 @@ function createLiveTasksOperations(): TasksAPIOperations {
       const task = await tasksApi.patchTask(taskId, {} as TaskPatch, opts);
       return { ...task, taskListId };
     },
+    createTaskList: (body, opts) => tasksApi.createTaskList(body, opts),
+    patchTaskList: (taskListId, patch, opts) => tasksApi.patchTaskList(taskListId, patch, opts),
+    deleteTaskList: (taskListId, opts) => tasksApi.deleteTaskList(taskListId, opts),
   };
 }
 
@@ -32,6 +35,14 @@ function createMockTasksOperations(
     setBootstrap({
       ...current,
       data: { ...current.data, tasks: updater(current.data.tasks) },
+    });
+  };
+
+  const updateTaskLists = (updater: (lists: TaskList[]) => TaskList[]) => {
+    const current = getBootstrap();
+    setBootstrap({
+      ...current,
+      data: { ...current.data, taskLists: updater(current.data.taskLists) },
     });
   };
 
@@ -101,6 +112,36 @@ function createMockTasksOperations(
       );
       if (!updated) throw new Error("Task not found");
       return updated;
+    },
+    createTaskList: async (body) => {
+      const created: TaskList = {
+        "@type": "TaskList",
+        id: `list-${Date.now()}`,
+        name: body.name,
+        color: body.color ?? null,
+        role: body.role ?? null,
+        isDefault: false,
+      };
+      updateTaskLists((lists) => [...lists, created]);
+      return created;
+    },
+    patchTaskList: async (taskListId, patch) => {
+      let updated: TaskList | null = null;
+      updateTaskLists((lists) =>
+        lists.map((list) => {
+          if (list.id !== taskListId) return list;
+          updated = { ...list, ...patch };
+          return updated;
+        }),
+      );
+      if (!updated) throw new Error("Task list not found");
+      return updated;
+    },
+    deleteTaskList: async (taskListId, opts) => {
+      updateTaskLists((lists) => lists.filter((list) => list.id !== taskListId));
+      if (opts?.onDestroyRemoveContents) {
+        updateTasks((tasks) => tasks.filter((task) => task.taskListId !== taskListId));
+      }
     },
   };
 }

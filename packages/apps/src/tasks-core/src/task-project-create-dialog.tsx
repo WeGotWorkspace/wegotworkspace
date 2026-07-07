@@ -10,54 +10,44 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/ui/dialog";
-import type { TaskProjectDialogState } from "@/tasks-core/src/use-tasks-project-mutations";
 
-type TaskProjectDialogProps = {
-  dialog: TaskProjectDialogState;
+type TaskProjectCreateDialogProps = {
+  open: boolean;
   onClose: () => void;
-  onCreate: (name: string, color: string | null) => void;
-  onUpdate: (listId: string, name: string, color: string | null) => void;
+  onConfirm: (name: string, color: string | null) => void;
   labels: {
-    createTitle: string;
-    editTitle: string;
+    title: string;
     nameLabel: string;
     colorLabel: string;
     createButton: string;
-    saveButton: string;
     cancel: string;
   };
+  contentClassName?: string;
 };
 
-export function TaskProjectDialog({
-  dialog,
+export function TaskProjectCreateDialog({
+  open,
   onClose,
-  onCreate,
-  onUpdate,
+  onConfirm,
   labels,
-}: TaskProjectDialogProps) {
+  contentClassName,
+}: TaskProjectCreateDialogProps) {
   const [name, setName] = useState("");
   const [color, setColor] = useState("");
 
   useEffect(() => {
-    if (!dialog) return;
-    if (dialog.mode === "edit") {
-      setName(dialog.list.name);
-      setColor(dialog.list.color ?? "");
-      return;
-    }
+    if (!open) return;
     setName("");
     setColor("");
-  }, [dialog]);
+  }, [open]);
 
   const trimmedName = name.trim();
-  const open = dialog !== null;
-  const isEdit = dialog?.mode === "edit";
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent>
+      <DialogContent className={contentClassName}>
         <DialogHeader>
-          <DialogTitle>{isEdit ? labels.editTitle : labels.createTitle}</DialogTitle>
+          <DialogTitle>{labels.title}</DialogTitle>
           <DialogDescription>{labels.nameLabel}</DialogDescription>
         </DialogHeader>
         <form
@@ -65,12 +55,7 @@ export function TaskProjectDialog({
           onSubmit={(event) => {
             event.preventDefault();
             if (!trimmedName) return;
-            const nextColor = color.trim() || null;
-            if (dialog?.mode === "edit") {
-              onUpdate(dialog.list.id, trimmedName, nextColor);
-              return;
-            }
-            onCreate(trimmedName, nextColor);
+            onConfirm(trimmedName, color.trim() || null);
           }}
         >
           <div className="space-y-2">
@@ -96,7 +81,7 @@ export function TaskProjectDialog({
               {labels.cancel}
             </Button>
             <Button type="submit" disabled={!trimmedName}>
-              {isEdit ? labels.saveButton : labels.createButton}
+              {labels.createButton}
             </Button>
           </DialogFooter>
         </form>

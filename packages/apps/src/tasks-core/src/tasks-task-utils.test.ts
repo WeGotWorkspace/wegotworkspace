@@ -4,6 +4,7 @@ import {
   filterTasksByView,
   formatComposerDueDateLabel,
   INBOX_TASK_LIST_ID,
+  isProtectedTaskList,
   mergeCreatedTask,
   taskListDotColor,
 } from "./tasks-task-utils";
@@ -47,6 +48,14 @@ const sampleTasks: Task[] = [
 ];
 
 describe("tasks-task-utils", () => {
+  it("isProtectedTaskList guards inbox, home, and work roles", () => {
+    expect(isProtectedTaskList({ role: "inbox" })).toBe(true);
+    expect(isProtectedTaskList({ role: "home" })).toBe(true);
+    expect(isProtectedTaskList({ role: "work" })).toBe(true);
+    expect(isProtectedTaskList({ role: null })).toBe(false);
+    expect(isProtectedTaskList({ role: "custom" })).toBe(false);
+  });
+
   it("defaultTaskListId prefers inbox over other lists", () => {
     expect(
       defaultTaskListId([

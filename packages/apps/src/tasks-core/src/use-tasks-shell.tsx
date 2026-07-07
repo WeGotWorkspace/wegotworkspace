@@ -137,6 +137,7 @@ export function useTasksShell({
     tasks,
     setTasks,
     taskLists,
+    setTaskLists,
     view,
     viewLabel,
     sidebarOpen,

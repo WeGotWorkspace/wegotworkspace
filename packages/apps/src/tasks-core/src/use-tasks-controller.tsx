@@ -6,6 +6,7 @@ import { buildDisplayTasks } from "@/tasks-core/src/tasks-task-utils";
 import { useTasksExitAnimation } from "@/tasks-core/src/use-tasks-exit-animation";
 import { useTasksList } from "@/tasks-core/src/use-tasks-list";
 import { useTasksMutations } from "@/tasks-core/src/use-tasks-mutations";
+import { useTasksProjectMutations } from "@/tasks-core/src/use-tasks-project-mutations";
 import { useTasksShell } from "@/tasks-core/src/use-tasks-shell";
 
 type UseTasksControllerArgs = {
@@ -36,6 +37,7 @@ export function useTasksController({
   const list = useTasksList({ shell });
   const exitAnimation = useTasksExitAnimation();
   const mutations = useTasksMutations({ shell, list, exitAnimation });
+  const projectMutations = useTasksProjectMutations({ shell });
   const { clearHiddenTasks } = exitAnimation;
 
   const searchInputRef = useRef<HTMLInputElement | null>(null);
@@ -100,6 +102,15 @@ export function useTasksController({
     requestDeleteTask: mutations.requestDeleteTask,
     moveToList: mutations.moveToList,
     handleTaskExitAnimationEnd: mutations.handleTaskExitAnimationEnd,
+    canManageProjects: projectMutations.canManageProjects,
+    canRenameProject: projectMutations.canRenameProject,
+    selectedList: projectMutations.selectedList,
+    createProjectDialog: projectMutations.createProjectDialog,
+    setCreateProjectDialog: projectMutations.setCreateProjectDialog,
+    projectRenameDialog: projectMutations.projectRenameDialog,
+    setProjectRenameDialog: projectMutations.setProjectRenameDialog,
+    createProject: projectMutations.createProject,
+    renameProject: projectMutations.renameProject,
   };
 }
 

@@ -2,6 +2,8 @@ import type {
   Task,
   TaskCreate,
   TaskList,
+  TaskListCreate,
+  TaskListPatch,
   TaskPatch,
   TaskTaskListListResponse,
 } from "@wgw-api-generated/tasks-types";
@@ -97,6 +99,42 @@ export async function patchTask(
 
 export async function deleteTask(taskId: string, opts?: TasksRequestOpts): Promise<void> {
   await requestTasksJson(`/tasks/items/${encodeURIComponent(taskId)}`, "DELETE", undefined, opts);
+}
+
+export async function createTaskList(
+  body: TaskListCreate,
+  opts?: TasksRequestOpts,
+): Promise<TaskList> {
+  const json = await requestTasksJson("/tasks/tasklists", "POST", body, opts);
+  return json as TaskList;
+}
+
+export async function patchTaskList(
+  taskListId: string,
+  patch: TaskListPatch,
+  opts?: TasksRequestOpts,
+): Promise<TaskList> {
+  const json = await requestTasksJson(
+    `/tasks/tasklists/${encodeURIComponent(taskListId)}`,
+    "PATCH",
+    patch,
+    opts,
+  );
+  return json as TaskList;
+}
+
+export async function deleteTaskList(
+  taskListId: string,
+  opts?: TasksRequestOpts & { onDestroyRemoveContents?: boolean },
+): Promise<void> {
+  const body =
+    opts?.onDestroyRemoveContents === true ? { onDestroyRemoveContents: true } : undefined;
+  await requestTasksJson(
+    `/tasks/tasklists/${encodeURIComponent(taskListId)}`,
+    "DELETE",
+    body,
+    opts,
+  );
 }
 
 export async function fetchTasksLiveBootstrap(): Promise<TasksAppBootstrap> {

@@ -50,6 +50,14 @@ export type TasksUILabels = {
   addTaskNamePlaceholder: string;
   addTaskDescriptionPlaceholder: string;
   addTaskList: string;
+  newProject: string;
+  renameProject: string;
+  projectNameLabel: string;
+  projectColorLabel: string;
+  createProjectButton: string;
+  toastProjectCreated: string;
+  toastProjectRenamed: (name: string) => string;
+  toastProjectSaveFailed: string;
   addTaskStatus: string;
   addTaskButton: string;
   editTask: string;
@@ -134,6 +142,14 @@ export const defaultTasksLabels: TasksUILabels = {
   addTaskNamePlaceholder: "Task name",
   addTaskDescriptionPlaceholder: "Description",
   addTaskList: "List",
+  newProject: "New project",
+  renameProject: "Rename project",
+  projectNameLabel: "Project name",
+  projectColorLabel: "Color",
+  createProjectButton: "Create",
+  toastProjectCreated: "Project created",
+  toastProjectRenamed: (name) => `Renamed to ${name}`,
+  toastProjectSaveFailed: "Could not save project",
   addTaskStatus: "Status",
   addTaskButton: "Add task",
   editTask: "Edit",

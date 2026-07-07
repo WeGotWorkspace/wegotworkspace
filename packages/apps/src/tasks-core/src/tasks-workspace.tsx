@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { CheckCircle2, Plus, RefreshCw } from "lucide-react";
+import { CheckCircle2, Pencil, Plus, RefreshCw } from "lucide-react";
 import { Button, IconButton } from "@/button/src/button";
 import { TooltipProvider } from "@/ui/tooltip";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
@@ -9,11 +9,13 @@ import {
   WorkspaceUserFooter,
 } from "@/workspace-shell/src/workspace-app-layout";
 import { ViewHeader } from "@/view-header/src/view-header";
+import { EditDialog } from "@/dialogs/src/dialogs";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import { cn } from "@/lib/utils";
 import { useDocumentTitle } from "@/lib/document-title";
 import type { TasksWorkspaceProps } from "@/tasks-core/src/tasks-workspace-props";
 import { TasksMainView, type TasksMainViewHandle } from "@/tasks-core/src/tasks-main-view";
+import { TaskProjectCreateDialog } from "@/tasks-core/src/task-project-create-dialog";
 import { useTasksController } from "@/tasks-core/src/use-tasks-controller";
 import { useTasksSidebarModel } from "@/tasks-core/src/use-tasks-sidebar-model";
 import { TasksEditDialog } from "@/tasks-core/src/tasks-edit-dialog";
@@ -73,6 +75,15 @@ export function TasksWorkspace({
     itemDragHandlers,
     sidebarDropZoneProps,
     handleTaskExitAnimationEnd,
+    canManageProjects,
+    canRenameProject,
+    selectedList,
+    createProjectDialog,
+    setCreateProjectDialog,
+    projectRenameDialog,
+    setProjectRenameDialog,
+    createProject,
+    renameProject,
   } = controller;
 
   const { topSidebarItems, statusSidebarItems, prioritySidebarItems, projectSidebarItems } =
@@ -120,8 +131,13 @@ export function TasksWorkspace({
             }
           >
             <SidebarSection items={topSidebarItems} />
-            {projectSidebarItems.length > 0 ? (
-              <SidebarSection title={L.sidebarProjects} items={projectSidebarItems} />
+            {canManageProjects || projectSidebarItems.length > 0 ? (
+              <SidebarSection
+                title={L.sidebarProjects}
+                items={projectSidebarItems}
+                onAdd={canManageProjects ? () => setCreateProjectDialog(true) : undefined}
+                addLabel={L.newProject}
+              />
             ) : null}
             <SidebarSection title={L.sidebarStatus} items={statusSidebarItems} />
             <SidebarSection title={L.sidebarPriority} items={prioritySidebarItems} />
@@ -135,6 +151,16 @@ export function TasksWorkspace({
             subtitle={L.listTasks(displayTasks.length)}
             actions={
               <div className="tasks-workspace__header-actions flex items-center gap-2">
+                {canRenameProject && selectedList ? (
+                  <IconButton
+                    label={L.renameProject}
+                    onClick={() =>
+                      setProjectRenameDialog({ listId: selectedList.id, name: selectedList.name })
+                    }
+                    icon={<Pencil className="size-4" aria-hidden />}
+                    variant="subtle"
+                  />
+                ) : null}
                 {showCompletedToggle ? (
                   <IconButton
                     label={showCompletedTasks ? L.hideCompletedTasks : L.showCompletedTasks}
@@ -190,6 +216,29 @@ export function TasksWorkspace({
         onSave={(input) => {
           void saveEditedTask(input);
         }}
+      />
+      <TaskProjectCreateDialog
+        open={createProjectDialog}
+        onClose={() => setCreateProjectDialog(false)}
+        onConfirm={(name, color) => void createProject(name, color)}
+        labels={{
+          title: L.newProject,
+          nameLabel: L.projectNameLabel,
+          colorLabel: L.projectColorLabel,
+          createButton: L.createProjectButton,
+          cancel: L.cancel,
+        }}
+        contentClassName="tasks-dialog-surface"
+      />
+      <EditDialog
+        item={projectRenameDialog ? { kind: "project", name: projectRenameDialog.name } : null}
+        title={L.renameProject}
+        onClose={() => setProjectRenameDialog(null)}
+        onConfirm={(newName) => {
+          if (!projectRenameDialog) return;
+          void renameProject(projectRenameDialog.listId, newName);
+        }}
+        contentClassName="tasks-dialog-surface"
       />
     </TooltipProvider>
   );
