@@ -23,7 +23,7 @@
 }
 
 .tasks-main-view__row {
-  @apply group relative flex items-start gap-3 border-b px-4 py-3;
+  @apply relative flex items-start gap-3 border-b px-4 py-3;
   border-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
 }
 
