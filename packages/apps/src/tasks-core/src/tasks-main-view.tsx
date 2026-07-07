@@ -96,11 +96,24 @@ function TaskRow({
     onTaskExitAnimationEnd(task.id);
   }, [isExiting, onTaskExitAnimationEnd, task.id]);
 
+  const handleRowClick = useCallback(
+    (event: MouseEvent<HTMLDivElement>) => {
+      if (isExiting) return;
+      const target = event.target as HTMLElement;
+      if (target.closest("button, a, input, textarea, select, [role='menu'], [role='menuitem']")) {
+        return;
+      }
+      onToggleComplete(task.id);
+    },
+    [isExiting, onToggleComplete, task.id],
+  );
+
   return (
     <div
       role="listitem"
       className={`tasks-main-view__row${isExiting ? " tasks-main-view__row--exiting" : completed ? " tasks-main-view__row--completed" : ""}${isDragging ? " opacity-50" : ""}`}
       draggable={!isExiting}
+      onClick={handleRowClick}
       onDragStart={dragHandlers.onDragStart}
       onDragEnd={dragHandlers.onDragEnd}
       onAnimationEnd={(event) => {
@@ -182,7 +195,7 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
   ) {
     const titleRef = useRef<HTMLInputElement>(null);
     const [draft, setDraft] = useState(() => emptyForm(defaultListId));
-    const [titleFocused, setTitleFocused] = useState(false);
+    const [composerExpanded, setComposerExpanded] = useState(false);
 
     useImperativeHandle(
       ref,
@@ -197,7 +210,7 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
 
     const resetDraft = useCallback(() => {
       setDraft(emptyForm(defaultListId));
-      setTitleFocused(false);
+      setComposerExpanded(false);
     }, [defaultListId]);
 
     useEffect(() => {
@@ -228,7 +241,7 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
       draft.description.trim().length > 0 ||
       draft.tag.trim().length > 0;
 
-    const showDescription = titleFocused || draft.description.trim().length > 0;
+    const showDescription = composerExpanded || draft.description.trim().length > 0;
 
     return (
       <div className="tasks-main-view">
@@ -266,8 +279,7 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
                   className="tasks-main-view__composer-title"
                   value={draft.title}
                   onChange={(event) => setDraft((prev) => ({ ...prev, title: event.target.value }))}
-                  onFocus={() => setTitleFocused(true)}
-                  onBlur={() => setTitleFocused(false)}
+                  onFocus={() => setComposerExpanded(true)}
                   placeholder={L.addTaskNamePlaceholder}
                   aria-label={L.addTaskName}
                   disabled={!canCreate}
