@@ -56,7 +56,7 @@ export function useTasksMutations({ shell, list, exitAnimation }: UseTasksMutati
         taskListIds: { [listId]: true },
         ...(normalizedTag ? { categories: [normalizedTag] } : {}),
       });
-      setTasks((prev) => [created, ...prev]);
+      setTasks((prev) => [...prev, created]);
       shell.show(L.toastTaskAdded, { icon: <Plus className="size-4" /> });
     },
     [L.toastTaskAdded, operations, setTasks, shell],

@@ -38,6 +38,11 @@ function createMockTasksOperations(
   return {
     createTask: async (body) => {
       const listId = Object.keys(body.taskListIds).find((id) => body.taskListIds[id]) ?? "default";
+      const existingTasks = getBootstrap().data.tasks;
+      const sortOrder =
+        existingTasks
+          .filter((task) => task.taskListId === listId)
+          .reduce((max, task) => Math.max(max, task.sortOrder ?? 0), -1) + 1;
       const created: Task = {
         "@type": "Task",
         id: `task-${Date.now()}`,
@@ -49,7 +54,7 @@ function createMockTasksOperations(
         workflowStatus: body.workflowStatus ?? "needs-action",
         priority: body.priority ?? null,
         isDraft: false,
-        sortOrder: 0,
+        sortOrder,
         categories: body.categories ?? [],
         alerts: body.alerts
           ? taskAlertsFromList(
@@ -57,7 +62,7 @@ function createMockTasksOperations(
             )
           : undefined,
       };
-      updateTasks((tasks) => [created, ...tasks]);
+      updateTasks((tasks) => [...tasks, created]);
       return created;
     },
     patchTask: async (taskId, patch) => {
