@@ -119,9 +119,13 @@ export function isInboxTaskList(list: {
   return list.id === INBOX_TASK_LIST_ID || list.role === "inbox" || list.name === "Inbox";
 }
 
-export function defaultTaskListId(taskLists: { id: string; isDefault?: boolean }[]): string {
+export function defaultTaskListId(
+  taskLists: { id: string; isDefault?: boolean; role?: string | null }[],
+): string {
+  const inbox = taskLists.find(isInboxTaskList);
+  if (inbox) return inbox.id;
   const preferred = taskLists.find((list) => list.isDefault) ?? taskLists[0];
-  return preferred?.id ?? "default";
+  return preferred?.id ?? INBOX_TASK_LIST_ID;
 }
 
 const TASK_LIST_DOT_COLORS = [
@@ -133,12 +137,28 @@ const TASK_LIST_DOT_COLORS = [
   "#3b82f6",
 ] as const;
 
-export function taskListDotColor(listId: string): string {
+type TaskListColorSource = {
+  id: string;
+  color?: string | null;
+};
+
+function hashTaskListColor(seed: string): string {
   let hash = 0;
-  for (let index = 0; index < listId.length; index += 1) {
-    hash = (hash * 31 + listId.charCodeAt(index)) >>> 0;
+  for (let index = 0; index < seed.length; index += 1) {
+    hash = (hash * 31 + seed.charCodeAt(index)) >>> 0;
   }
   return TASK_LIST_DOT_COLORS[hash % TASK_LIST_DOT_COLORS.length] ?? TASK_LIST_DOT_COLORS[0];
+}
+
+export function taskListDotColor(list: string | TaskListColorSource): string {
+  if (typeof list === "string") {
+    return hashTaskListColor(list);
+  }
+
+  const explicitColor = list.color?.trim();
+  if (explicitColor) return explicitColor;
+
+  return hashTaskListColor(list.id);
 }
 
 export function taskListName(

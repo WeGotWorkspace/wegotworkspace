@@ -1,6 +1,7 @@
 import {
   forwardRef,
   useCallback,
+  useEffect,
   useImperativeHandle,
   useRef,
   useState,
@@ -99,6 +100,19 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
       setTitleFocused(false);
     }, [defaultListId]);
 
+    useEffect(() => {
+      setDraft((prev) => {
+        const hasContent =
+          prev.title.trim().length > 0 ||
+          prev.description.trim().length > 0 ||
+          prev.tag.trim().length > 0;
+        if (hasContent) return prev;
+        const listStillValid = taskLists.some((list) => list.id === prev.listId);
+        if (listStillValid && prev.listId === defaultListId) return prev;
+        return emptyForm(defaultListId);
+      });
+    }, [defaultListId, taskLists]);
+
     const handleSubmit = useCallback(
       (event: FormEvent) => {
         event.preventDefault();
@@ -146,7 +160,8 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
                   };
                   const completed = isTaskCompleted(task);
                   const listName = taskListName(task.taskListId, taskLists);
-                  const dotColor = taskListDotColor(task.taskListId);
+                  const taskList = taskLists.find((list) => list.id === task.taskListId);
+                  const dotColor = taskListDotColor(taskList ?? task.taskListId);
 
                   return (
                     <div
@@ -271,7 +286,7 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
                               <span className="tasks-main-view__list-select-option">
                                 <span
                                   className="tasks-main-view__list-dot"
-                                  style={{ backgroundColor: taskListDotColor(list.id) }}
+                                  style={{ backgroundColor: taskListDotColor(list) }}
                                   aria-hidden
                                 />
                                 {list.name}

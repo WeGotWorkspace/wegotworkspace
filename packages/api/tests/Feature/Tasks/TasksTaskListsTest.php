@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Tests\Feature\Tasks;
 
 use App\Services\Tasks\InboxTaskListProvisioner;
+use Illuminate\Support\Facades\DB;
+use Sabre\CalDAV\Backend\PDO;
+use Sabre\CalDAV\Xml\Property\SupportedCalendarComponentSet;
 use Tests\Support\TasksTestFixtures;
 use Tests\Support\WgwDatabaseTestCase;
 
@@ -29,6 +32,43 @@ final class TasksTaskListsTest extends WgwDatabaseTestCase
             ->assertJsonPath('list.0.name', InboxTaskListProvisioner::DISPLAY_NAME)
             ->assertJsonPath('list.0.isDefault', true)
             ->assertJsonPath('list.0.myRights.mayReadItems', true);
+    }
+
+    public function test_list_task_lists_excludes_legacy_mixed_calendar(): void
+    {
+        $caldav = new PDO(DB::connection('wgw')->getPdo());
+        $caldav->createCalendar('principals/bob', 'legacy-mixed', [
+            '{DAV:}displayname' => 'Calendar',
+            '{urn:ietf:params:xml:ns:caldav}supported-calendar-component-set' => new SupportedCalendarComponentSet(['VEVENT', 'VTODO', 'VJOURNAL']),
+        ]);
+
+        $response = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/tasks/tasklists');
+
+        $response->assertOk();
+        $ids = collect($response->json('list'))->pluck('id')->all();
+        $this->assertContains(InboxTaskListProvisioner::URI, $ids);
+        $this->assertNotContains('legacy-mixed', $ids);
+        $this->assertNotContains('default', $ids);
+    }
+
+    public function test_list_task_lists_provisions_inbox_when_missing(): void
+    {
+        $this->seedWgwUser('legacy-only', displayName: 'Legacy Only');
+        $token = $this->issueBearerTokenFor('legacy-only');
+
+        $this->assertFalse(
+            app(InboxTaskListProvisioner::class)->hasInboxCalendar('principals/legacy-only'),
+        );
+
+        $response = $this->withBearer($token)->getJson('/api/v1/tasks/tasklists');
+
+        $response->assertOk()
+            ->assertJsonPath('list.0.id', InboxTaskListProvisioner::URI)
+            ->assertJsonPath('list.0.role', 'inbox');
+        $this->assertTrue(
+            app(InboxTaskListProvisioner::class)->hasInboxCalendar('principals/legacy-only'),
+        );
     }
 
     public function test_show_task_list(): void

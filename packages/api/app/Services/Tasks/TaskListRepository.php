@@ -16,12 +16,17 @@ use Sabre\DAV\PropPatch;
 
 final class TaskListRepository
 {
+    public function __construct(private readonly InboxTaskListProvisioner $inboxProvisioner) {}
+
     public function list(string $username): array
     {
+        $principalUri = $this->principalUri($username);
+        $this->inboxProvisioner->ensureForPrincipal($principalUri);
+
         $instances = CalendarInstance::query()
             ->with('calendar')
-            ->where('principaluri', $this->principalUri($username))
-            ->whereHas('calendar', fn ($query) => $query->where('components', 'like', '%VTODO%'))
+            ->where('principaluri', $principalUri)
+            ->whereHas('calendar', fn ($query) => $query->where('components', 'VTODO'))
             ->orderBy('calendarorder')
             ->orderBy('id')
             ->get();
@@ -129,7 +134,7 @@ final class TaskListRepository
         $instances = CalendarInstance::query()
             ->with('calendar')
             ->where('principaluri', $this->principalUri($username))
-            ->whereHas('calendar', fn ($query) => $query->where('components', 'like', '%VTODO%'))
+            ->whereHas('calendar', fn ($query) => $query->where('components', 'VTODO'))
             ->orderBy('uri')
             ->get();
 
@@ -175,7 +180,7 @@ final class TaskListRepository
             ->with('calendar')
             ->where('principaluri', $this->principalUri($username))
             ->where('uri', $taskListId)
-            ->whereHas('calendar', fn ($query) => $query->where('components', 'like', '%VTODO%'))
+            ->whereHas('calendar', fn ($query) => $query->where('components', 'VTODO'))
             ->first();
     }
 

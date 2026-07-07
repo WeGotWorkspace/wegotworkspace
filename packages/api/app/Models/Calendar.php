@@ -40,4 +40,10 @@ final class Calendar extends Model
 
         return str_contains($components, 'VTODO');
     }
+
+    /** Task lists are VTODO-only collections (Decision 4 — excludes legacy mixed calendars). */
+    public function isVtodoOnlyTaskList(): bool
+    {
+        return (string) ($this->components ?? '') === 'VTODO';
+    }
 }
