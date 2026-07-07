@@ -1,6 +1,5 @@
 export type TasksUILabels = {
   appName: string;
-  sidebarTime: string;
   sidebarStatus: string;
   sidebarPriority: string;
   sidebarInbox: string;
@@ -79,7 +78,6 @@ export type TasksUILabels = {
 
 export const defaultTasksLabels: TasksUILabels = {
   appName: "Tasks",
-  sidebarTime: "Time",
   sidebarStatus: "Status",
   sidebarPriority: "Priority",
   sidebarInbox: "Inbox",

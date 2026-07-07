@@ -69,20 +69,15 @@ export function TasksWorkspace({
     handleTaskExitAnimationEnd,
   } = controller;
 
-  const {
-    inboxSidebarItems,
-    timeSidebarItems,
-    statusSidebarItems,
-    prioritySidebarItems,
-    projectSidebarItems,
-  } = useTasksSidebarModel({
-    labels: L,
-    view,
-    taskLists,
-    selectView,
-    sidebarDropZoneProps,
-    moveToList,
-  });
+  const { topSidebarItems, statusSidebarItems, prioritySidebarItems, projectSidebarItems } =
+    useTasksSidebarModel({
+      labels: L,
+      view,
+      taskLists,
+      selectView,
+      sidebarDropZoneProps,
+      moveToList,
+    });
 
   useDocumentTitle(viewLabel);
 
@@ -118,8 +113,7 @@ export function TasksWorkspace({
               />
             }
           >
-            <SidebarSection items={inboxSidebarItems} />
-            <SidebarSection title={L.sidebarTime} items={timeSidebarItems} />
+            <SidebarSection items={topSidebarItems} />
             {projectSidebarItems.length > 0 ? (
               <SidebarSection title={L.sidebarProjects} items={projectSidebarItems} />
             ) : null}

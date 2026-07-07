@@ -56,7 +56,7 @@ export function useTasksSidebarModel({
     [taskLists],
   );
 
-  const inboxSidebarItems = useMemo(
+  const topSidebarItems = useMemo(
     () => [
       {
         label: labels.sidebarInbox,
@@ -65,12 +65,6 @@ export function useTasksSidebarModel({
         onClick: () => selectView(`list:${inboxListId}`),
         ...sidebarDropZoneProps(`list:${inboxListId}`, (ids) => moveToList(ids, inboxListId)),
       },
-    ],
-    [inboxListId, labels.sidebarInbox, moveToList, selectView, sidebarDropZoneProps, view],
-  );
-
-  const timeSidebarItems = useMemo(
-    () => [
       {
         label: labels.stateAll,
         icon: <List className="size-3.5" />,
@@ -96,7 +90,7 @@ export function useTasksSidebarModel({
         onClick: () => selectView("state:overdue"),
       },
     ],
-    [labels, selectView, view],
+    [inboxListId, labels, moveToList, selectView, sidebarDropZoneProps, view],
   );
 
   const statusSidebarItems = useMemo(
@@ -153,8 +147,7 @@ export function useTasksSidebarModel({
   );
 
   return {
-    inboxSidebarItems,
-    timeSidebarItems,
+    topSidebarItems,
     statusSidebarItems,
     prioritySidebarItems,
     projectSidebarItems,
