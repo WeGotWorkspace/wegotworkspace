@@ -23,7 +23,7 @@ export function TasksWorkspace({
   session,
   labels,
   operations,
-  listLoading = false,
+  listRefreshing = false,
   bootstrapRevision = 0,
   onRefreshList,
   onLogout,
@@ -36,7 +36,6 @@ export function TasksWorkspace({
   const controller = useTasksController({
     data,
     labels,
-    listLoading,
     operations,
     bootstrapRevision,
     initialView,
@@ -156,10 +155,10 @@ export function TasksWorkspace({
                   <IconButton
                     label={L.refreshList}
                     onClick={onRefreshList}
-                    disabled={listLoading}
+                    disabled={listRefreshing}
                     icon={
                       <RefreshCw
-                        className={cn("size-4", listLoading && "animate-spin")}
+                        className={cn("size-4", listRefreshing && "animate-spin")}
                         aria-hidden
                       />
                     }
@@ -175,7 +174,6 @@ export function TasksWorkspace({
           <TasksMainView
             ref={composerRef}
             L={L}
-            listLoading={listLoading}
             displayTasks={displayTasks}
             exitingTaskIds={exitingTaskIds}
             taskLists={taskLists}

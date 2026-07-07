@@ -17,7 +17,7 @@ export function TasksApp({ apiSource }: TasksAppProps = {}) {
     retry,
     successVersion,
     bootstrapRevision,
-    listLoading,
+    listRefreshing,
     refreshList,
     data,
     session,
@@ -51,7 +51,7 @@ export function TasksApp({ apiSource }: TasksAppProps = {}) {
             data={data}
             session={session}
             operations={operations}
-            listLoading={listLoading}
+            listRefreshing={listRefreshing}
             bootstrapRevision={bootstrapRevision}
             onRefreshList={refreshList}
             initialView={initialView}

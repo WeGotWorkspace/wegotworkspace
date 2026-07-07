@@ -12,7 +12,6 @@ import { CheckCircle2, Circle, MoreVertical, Pencil, Tag, Trash2 } from "lucide-
 import { IconButton } from "@/button/src/button";
 import { Button } from "@/button/src/button";
 import { DropdownMenu } from "@/menu-dropdown/src/dropdown-menu";
-import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
 import type { Task, TaskList } from "@/tasks-core/src/tasks-types";
 import type { TasksUILabels } from "@/tasks-core/src/tasks-labels";
@@ -33,7 +32,6 @@ export type TasksMainViewHandle = {
 
 type TasksMainViewProps = {
   L: TasksUILabels;
-  listLoading: boolean;
   displayTasks: Task[];
   exitingTaskIds: ReadonlySet<string>;
   taskLists: TaskList[];
@@ -167,7 +165,6 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
   function TasksMainView(
     {
       L,
-      listLoading,
       displayTasks,
       exitingTaskIds,
       taskLists,
@@ -236,135 +233,125 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
     return (
       <div className="tasks-main-view">
         <div className="tasks-main-view__scroll">
-          {listLoading ? (
-            <div className="tasks-main-view__loading" aria-busy>
-              <LoadingSpinner size="lg" label={L.refreshList} />
-            </div>
-          ) : (
-            <>
-              {displayTasks.length === 0 ? (
-                <p className="tasks-main-view__empty">{L.emptyList}</p>
-              ) : null}
+          {displayTasks.length === 0 ? (
+            <p className="tasks-main-view__empty">{L.emptyList}</p>
+          ) : null}
 
-              <div className="tasks-main-view__list" role="list">
-                {displayTasks.map((task) => (
-                  <TaskRow
-                    key={task.id}
-                    task={task}
-                    L={L}
-                    taskLists={taskLists}
-                    isExiting={exitingTaskIds.has(task.id)}
-                    isDragging={isItemDragging(task.id)}
-                    onToggleComplete={onToggleComplete}
-                    onEditTask={onEditTask}
-                    onDeleteTask={onDeleteTask}
-                    onTaskExitAnimationEnd={onTaskExitAnimationEnd}
-                    itemDragHandlers={itemDragHandlers}
+          <div className="tasks-main-view__list" role="list">
+            {displayTasks.map((task) => (
+              <TaskRow
+                key={task.id}
+                task={task}
+                L={L}
+                taskLists={taskLists}
+                isExiting={exitingTaskIds.has(task.id)}
+                isDragging={isItemDragging(task.id)}
+                onToggleComplete={onToggleComplete}
+                onEditTask={onEditTask}
+                onDeleteTask={onDeleteTask}
+                onTaskExitAnimationEnd={onTaskExitAnimationEnd}
+                itemDragHandlers={itemDragHandlers}
+              />
+            ))}
+
+            <form className="tasks-main-view__composer" onSubmit={handleSubmit}>
+              <span className="tasks-main-view__composer-marker" aria-hidden>
+                <Circle />
+              </span>
+
+              <div className="tasks-main-view__composer-body">
+                <input
+                  ref={titleRef}
+                  type="text"
+                  className="tasks-main-view__composer-title"
+                  value={draft.title}
+                  onChange={(event) => setDraft((prev) => ({ ...prev, title: event.target.value }))}
+                  onFocus={() => setTitleFocused(true)}
+                  onBlur={() => setTitleFocused(false)}
+                  placeholder={L.addTaskNamePlaceholder}
+                  aria-label={L.addTaskName}
+                  disabled={!canCreate}
+                />
+
+                {showDescription ? (
+                  <textarea
+                    className="tasks-main-view__composer-description"
+                    value={draft.description}
+                    onChange={(event) =>
+                      setDraft((prev) => ({ ...prev, description: event.target.value }))
+                    }
+                    placeholder={L.addTaskDescriptionPlaceholder}
+                    aria-label={L.descriptionLabel}
+                    rows={1}
+                    disabled={!canCreate}
                   />
-                ))}
+                ) : null}
 
-                <form className="tasks-main-view__composer" onSubmit={handleSubmit}>
-                  <span className="tasks-main-view__composer-marker" aria-hidden>
-                    <Circle />
-                  </span>
+                <div className="tasks-main-view__composer-meta">
+                  <Select
+                    value={draft.listId}
+                    onValueChange={(listId) => setDraft((prev) => ({ ...prev, listId }))}
+                    disabled={!canCreate}
+                  >
+                    <SelectTrigger
+                      className="tasks-main-view__composer-list-select"
+                      aria-label={L.addTaskList}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {taskLists.map((list) => (
+                        <SelectItem key={list.id} value={list.id}>
+                          <span className="tasks-main-view__list-select-option">
+                            <TaskListDot list={list} />
+                            {list.name}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
-                  <div className="tasks-main-view__composer-body">
+                  <div className="tasks-main-view__composer-tag">
+                    <Tag className="tasks-main-view__composer-tag-icon" aria-hidden />
                     <input
-                      ref={titleRef}
                       type="text"
-                      className="tasks-main-view__composer-title"
-                      value={draft.title}
+                      className="tasks-main-view__composer-tag-input"
+                      value={draft.tag}
                       onChange={(event) =>
-                        setDraft((prev) => ({ ...prev, title: event.target.value }))
+                        setDraft((prev) => ({ ...prev, tag: event.target.value }))
                       }
-                      onFocus={() => setTitleFocused(true)}
-                      onBlur={() => setTitleFocused(false)}
-                      placeholder={L.addTaskNamePlaceholder}
-                      aria-label={L.addTaskName}
+                      placeholder={L.addTaskTagPlaceholder}
+                      aria-label={L.addTaskTag}
                       disabled={!canCreate}
                     />
-
-                    {showDescription ? (
-                      <textarea
-                        className="tasks-main-view__composer-description"
-                        value={draft.description}
-                        onChange={(event) =>
-                          setDraft((prev) => ({ ...prev, description: event.target.value }))
-                        }
-                        placeholder={L.addTaskDescriptionPlaceholder}
-                        aria-label={L.descriptionLabel}
-                        rows={1}
-                        disabled={!canCreate}
-                      />
-                    ) : null}
-
-                    <div className="tasks-main-view__composer-meta">
-                      <Select
-                        value={draft.listId}
-                        onValueChange={(listId) => setDraft((prev) => ({ ...prev, listId }))}
-                        disabled={!canCreate}
-                      >
-                        <SelectTrigger
-                          className="tasks-main-view__composer-list-select"
-                          aria-label={L.addTaskList}
-                        >
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {taskLists.map((list) => (
-                            <SelectItem key={list.id} value={list.id}>
-                              <span className="tasks-main-view__list-select-option">
-                                <TaskListDot list={list} />
-                                {list.name}
-                              </span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <div className="tasks-main-view__composer-tag">
-                        <Tag className="tasks-main-view__composer-tag-icon" aria-hidden />
-                        <input
-                          type="text"
-                          className="tasks-main-view__composer-tag-input"
-                          value={draft.tag}
-                          onChange={(event) =>
-                            setDraft((prev) => ({ ...prev, tag: event.target.value }))
-                          }
-                          placeholder={L.addTaskTagPlaceholder}
-                          aria-label={L.addTaskTag}
-                          disabled={!canCreate}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="tasks-main-view__composer-actions">
-                      {hasDraftContent ? (
-                        <Button
-                          type="button"
-                          variant="subtle"
-                          size="sm"
-                          onClick={resetDraft}
-                          disabled={!canCreate}
-                        >
-                          {L.cancel}
-                        </Button>
-                      ) : null}
-                      <Button
-                        type="submit"
-                        variant="primary"
-                        size="sm"
-                        className="tasks-main-view__add-submit"
-                        disabled={!canCreate || !draft.title.trim()}
-                      >
-                        {L.addTaskButton}
-                      </Button>
-                    </div>
                   </div>
-                </form>
+                </div>
+
+                <div className="tasks-main-view__composer-actions">
+                  {hasDraftContent ? (
+                    <Button
+                      type="button"
+                      variant="subtle"
+                      size="sm"
+                      onClick={resetDraft}
+                      disabled={!canCreate}
+                    >
+                      {L.cancel}
+                    </Button>
+                  ) : null}
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="sm"
+                    className="tasks-main-view__add-submit"
+                    disabled={!canCreate || !draft.title.trim()}
+                  >
+                    {L.addTaskButton}
+                  </Button>
+                </div>
               </div>
-            </>
-          )}
+            </form>
+          </div>
         </div>
       </div>
     );

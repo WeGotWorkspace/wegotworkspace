@@ -7,7 +7,7 @@ export type TasksWorkspaceProps = {
   session: WorkspaceSession;
   labels?: Partial<TasksUILabels>;
   operations?: TasksAPIOperations;
-  listLoading?: boolean;
+  listRefreshing?: boolean;
   bootstrapRevision?: number;
   onRefreshList?: () => void;
   onLogout?: () => void;

@@ -73,6 +73,8 @@ export type TasksUILabels = {
   toastDeleteUndone: string;
   toastMoveUndone: string;
   toastTagUndone: string;
+  toastListUpdated: string;
+  toastListRefreshFailed: string;
   createTaskTitle: string;
   untitledTask: string;
   subtasksLabel: string;
@@ -157,6 +159,8 @@ export const defaultTasksLabels: TasksUILabels = {
   toastDeleteUndone: "Deletion undone.",
   toastMoveUndone: "Move undone.",
   toastTagUndone: "Tag assignment undone.",
+  toastListUpdated: "List updated",
+  toastListRefreshFailed: "Could not refresh tasks. Please try again.",
   createTaskTitle: "New task",
   untitledTask: "Untitled task",
   subtasksLabel: "Subtasks",

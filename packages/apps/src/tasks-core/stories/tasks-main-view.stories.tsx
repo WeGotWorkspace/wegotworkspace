@@ -25,7 +25,6 @@ type Story = StoryObj<typeof TasksMainView>;
 export const MainView: Story = {
   args: {
     L: defaultTasksLabels,
-    listLoading: false,
     displayTasks: bootstrap.data.tasks,
     exitingTaskIds: new Set<string>(),
     taskLists: bootstrap.data.taskLists,

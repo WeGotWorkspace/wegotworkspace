@@ -49,7 +49,7 @@ describe("useTasksController URL routing", () => {
 
   it("initialView seeds the controller view on mount", () => {
     const { result } = renderHook(() =>
-      useTasksController({ data: bootstrap.data, listLoading: false, initialView: "state:today" }),
+      useTasksController({ data: bootstrap.data, initialView: "state:today" }),
     );
 
     expect(result.current.view).toBe("state:today");
@@ -58,7 +58,7 @@ describe("useTasksController URL routing", () => {
   it("syncs view when initialView changes from the URL", () => {
     const { result, rerender } = renderHook(
       ({ initialView }: { initialView: string }) =>
-        useTasksController({ data: bootstrap.data, listLoading: false, initialView }),
+        useTasksController({ data: bootstrap.data, initialView }),
       { initialProps: { initialView: "state:all" } },
     );
 
@@ -71,9 +71,7 @@ describe("useTasksController URL routing", () => {
 
   it("onViewChange is called when selectView is invoked (not on mount)", () => {
     const onViewChange = vi.fn();
-    const { result } = renderHook(() =>
-      useTasksController({ data: bootstrap.data, listLoading: false, onViewChange }),
-    );
+    const { result } = renderHook(() => useTasksController({ data: bootstrap.data, onViewChange }));
 
     expect(onViewChange).not.toHaveBeenCalled();
 
@@ -89,7 +87,7 @@ describe("useTasksController URL routing", () => {
     const onViewChange = vi.fn();
     const { result, rerender } = renderHook(
       ({ initialView }: { initialView: string }) =>
-        useTasksController({ data: bootstrap.data, listLoading: false, initialView, onViewChange }),
+        useTasksController({ data: bootstrap.data, initialView, onViewChange }),
       { initialProps: { initialView: "state:all" } },
     );
 
@@ -110,7 +108,7 @@ describe("useTasksController URL routing", () => {
     const onViewChange = vi.fn();
     const { result, rerender } = renderHook(
       ({ initialView }: { initialView: string }) =>
-        useTasksController({ data: bootstrap.data, listLoading: false, initialView, onViewChange }),
+        useTasksController({ data: bootstrap.data, initialView, onViewChange }),
       { initialProps: { initialView: "state:all" } },
     );
 
@@ -133,7 +131,7 @@ describe("useTasksController URL routing", () => {
 
   it("hides completed tasks by default on all view and reveals them when toggled", () => {
     const { result } = renderHook(() =>
-      useTasksController({ data: bootstrap.data, listLoading: false, initialView: "state:all" }),
+      useTasksController({ data: bootstrap.data, initialView: "state:all" }),
     );
 
     expect(result.current.showCompletedToggle).toBe(true);
@@ -151,7 +149,6 @@ describe("useTasksController URL routing", () => {
     const { result } = renderHook(() =>
       useTasksController({
         data: bootstrap.data,
-        listLoading: false,
         initialView: "state:completed",
       }),
     );

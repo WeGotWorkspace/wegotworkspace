@@ -11,7 +11,6 @@ import { useTasksShell } from "@/tasks-core/src/use-tasks-shell";
 type UseTasksControllerArgs = {
   data: TasksUIData;
   labels?: Partial<TasksUILabels>;
-  listLoading?: boolean;
   operations?: TasksAPIOperations;
   bootstrapRevision?: number;
   initialView?: string;
@@ -21,7 +20,6 @@ type UseTasksControllerArgs = {
 export function useTasksController({
   data,
   labels,
-  listLoading = false,
   operations,
   bootstrapRevision = 0,
   initialView,
@@ -30,7 +28,6 @@ export function useTasksController({
   const shell = useTasksShell({
     data,
     labels,
-    listLoading,
     operations,
     bootstrapRevision,
     initialView,
@@ -87,7 +84,6 @@ export function useTasksController({
     displayTasks,
     sidebarOpen: shell.sidebarOpen,
     setSidebarOpen: shell.setSidebarOpen,
-    listLoading: shell.listLoading,
     createListId: shell.createListId,
     exitingTaskIds: exitAnimation.exitingTaskIds,
     isItemDragging: list.isItemDragging,

@@ -14,7 +14,6 @@ import type { Task, TasksAPIOperations, TasksUIData } from "@/tasks-core/src/tas
 export type UseTasksShellArgs = {
   data: TasksUIData;
   labels?: Partial<TasksUILabels>;
-  listLoading?: boolean;
   operations?: TasksAPIOperations;
   bootstrapRevision?: number;
   initialView?: string;
@@ -24,7 +23,6 @@ export type UseTasksShellArgs = {
 export function useTasksShell({
   data,
   labels,
-  listLoading = false,
   operations,
   bootstrapRevision = 0,
   initialView,
@@ -151,7 +149,6 @@ export function useTasksShell({
     selectedTag,
     canCreateTask,
     selectView,
-    listLoading,
     operations,
     createListId,
     show,
