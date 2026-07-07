@@ -8463,6 +8463,8 @@ export interface components {
             name: string;
             description?: string | null;
             color?: string | null;
+            /** @description When set, create the task list on this group principal (groups/{slug}). Omit for personal scope. */
+            groupSlug?: string | null;
             id?: components["schemas"]["JmapId"];
         };
         TaskListPatch: {

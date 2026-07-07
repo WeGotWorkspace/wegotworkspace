@@ -6,6 +6,10 @@
       "name": { "type": "string", "minLength": 1, "maxLength": 255 },
       "description": { "type": ["string", "null"] },
       "color": { "type": ["string", "null"] },
+      "groupSlug": {
+        "type": ["string", "null"],
+        "description": "When set, create the task list on this group principal (groups/{slug}). Omit for personal scope."
+      },
       "id": { "$ref": "#/components/schemas/JmapId" }
     },
     "additionalProperties": false

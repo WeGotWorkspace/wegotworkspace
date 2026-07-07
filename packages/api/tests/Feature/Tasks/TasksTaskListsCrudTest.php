@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Tasks;
 
+use App\Models\Principal;
 use App\Services\Tasks\InboxTaskListProvisioner;
 use Tests\Support\TasksTestFixtures;
 use Tests\Support\WgwDatabaseTestCase;
@@ -59,6 +60,36 @@ final class TasksTaskListsCrudTest extends WgwDatabaseTestCase
             ->deleteJson('/api/v1/tasks/tasklists/'.InboxTaskListProvisioner::URI)
             ->assertForbidden()
             ->assertJsonPath('code', 'forbidden');
+    }
+
+    public function test_create_group_scoped_task_list(): void
+    {
+        $team = $this->seedWgwGroup('principals/groups/team', 'Team');
+        $bob = Principal::forUsername('bob');
+        $this->assertNotNull($bob);
+        $this->addPrincipalToGroup($team, $bob);
+
+        $response = $this->withBearer($this->userBearerToken())
+            ->postJson('/api/v1/tasks/tasklists', [
+                'name' => 'Roadmap',
+                'color' => '#22c55e',
+                'groupSlug' => 'team',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('name', 'Roadmap')
+            ->assertJsonPath('color', '#22c55e')
+            ->assertJsonPath('scope', 'group')
+            ->assertJsonPath('groupSlug', 'team')
+            ->assertJsonPath('id', 'roadmap');
+
+        $listId = (string) $response->json('id');
+        $this->assertNotSame('', $listId);
+
+        $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/tasks/tasklists/'.$listId)
+            ->assertOk()
+            ->assertJsonPath('scope', 'group')
+            ->assertJsonPath('groupSlug', 'team');
     }
 
     public function test_calendars_list_excludes_vtodo_only_inbox(): void

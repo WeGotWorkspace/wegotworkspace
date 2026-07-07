@@ -47,8 +47,8 @@ final class TaskListRepository
             ->all();
 
         foreach ($this->groups->allowedGroupSlugs($username) as $slug) {
-            $instance = $this->ensureGroupTaskListInstance($slug);
-            if ($instance !== null) {
+            $groupLists = $this->groupTaskListInstances($slug);
+            foreach ($groupLists as $instance) {
                 $lists[] = $this->mapTaskList($instance, $slug);
             }
         }
@@ -63,7 +63,8 @@ final class TaskListRepository
             throw new ApiHttpException(404, 'Task list not found.', 'not_found');
         }
 
-        $groupSlug = CalendarCollectionUris::parseGroupTaskListApiId($taskListId);
+        $groupSlug = CalendarCollectionUris::parseGroupTaskListApiId($taskListId)
+            ?? $this->groupSlugFromPrincipalUri((string) $instance->principaluri);
 
         return $this->mapTaskList($instance, $groupSlug);
     }
@@ -75,7 +76,35 @@ final class TaskListRepository
             throw new ApiHttpException(400, 'name is required.', 'bad_request');
         }
 
-        $uri = $this->allocateTaskListUri($username, isset($payload['id']) && is_string($payload['id']) ? $payload['id'] : null, $name);
+        $groupSlug = isset($payload['groupSlug']) && is_string($payload['groupSlug'])
+            ? trim($payload['groupSlug'])
+            : null;
+        if ($groupSlug === '') {
+            $groupSlug = null;
+        }
+
+        if ($groupSlug !== null) {
+            if (! in_array($groupSlug, $this->groups->allowedGroupSlugs($username), true)) {
+                throw new ApiHttpException(403, 'Not a member of this group.', 'forbidden');
+            }
+            $principalUri = AdminConstants::GROUP_PREFIX.$groupSlug;
+            $group = Principal::query()->where('uri', $principalUri)->first(['uri', 'displayname']);
+            if ($group === null) {
+                throw new ApiHttpException(404, 'Group not found.', 'not_found');
+            }
+            $this->calendarCollectionsProvisioner->ensureForGroupPrincipal(
+                (string) $group->uri,
+                (string) ($group->displayname ?? $groupSlug),
+            );
+        } else {
+            $principalUri = $this->principalUri($username);
+        }
+
+        $uri = $this->allocateTaskListUri(
+            $principalUri,
+            isset($payload['id']) && is_string($payload['id']) ? $payload['id'] : null,
+            $name,
+        );
         $properties = [
             '{DAV:}displayname' => $name,
             '{urn:ietf:params:xml:ns:caldav}supported-calendar-component-set' => new SupportedCalendarComponentSet(['VTODO']),
@@ -88,25 +117,26 @@ final class TaskListRepository
         }
 
         try {
-            $this->calBackend()->createCalendar($this->principalUri($username), $uri, $properties);
+            $this->calBackend()->createCalendar($principalUri, $uri, $properties);
         } catch (BadRequest $exception) {
             throw new ApiHttpException(400, $exception->getMessage(), 'invalidProperties');
         }
 
-        $instance = $this->findOwnedTaskList($username, $uri);
+        $instance = $this->findTaskListInstance($principalUri, $uri);
         if ($instance === null) {
             throw new ApiHttpException(500, 'Could not load created task list.', 'server_error');
         }
 
-        return $this->mapTaskList($instance);
+        return $this->mapTaskList($instance, $groupSlug);
     }
 
     public function update(string $username, string $taskListId, array $payload): array
     {
-        $instance = $this->findOwnedTaskList($username, $taskListId);
-        if ($instance === null) {
+        $resolved = $this->resolveWritableTaskList($username, $taskListId);
+        if ($resolved === null) {
             throw new ApiHttpException(404, 'Task list not found.', 'not_found');
         }
+        [$instance, $groupSlug] = $resolved;
 
         $mutations = [];
         if (array_key_exists('name', $payload)) {
@@ -132,15 +162,16 @@ final class TaskListRepository
 
         $instance->refresh();
 
-        return $this->mapTaskList($instance);
+        return $this->mapTaskList($instance, $groupSlug);
     }
 
     public function delete(string $username, string $taskListId, array $options = []): array
     {
-        $instance = $this->findOwnedTaskList($username, $taskListId);
-        if ($instance === null) {
+        $resolved = $this->resolveWritableTaskList($username, $taskListId);
+        if ($resolved === null) {
             throw new ApiHttpException(404, 'Task list not found.', 'not_found');
         }
+        [$instance] = $resolved;
         if ((string) $instance->uri === InboxTaskListProvisioner::URI) {
             throw new ApiHttpException(403, 'The Inbox task list cannot be deleted.', 'forbidden');
         }
@@ -163,8 +194,7 @@ final class TaskListRepository
             ->get();
 
         foreach ($this->groups->allowedGroupSlugs($username) as $slug) {
-            $groupInstance = $this->ensureGroupTaskListInstance($slug);
-            if ($groupInstance !== null) {
+            foreach ($this->groupTaskListInstances($slug) as $groupInstance) {
                 $instances->push($groupInstance);
             }
         }
@@ -211,12 +241,7 @@ final class TaskListRepository
             return null;
         }
 
-        return CalendarInstance::query()
-            ->with('calendar')
-            ->where('principaluri', $this->principalUri($username))
-            ->where('uri', $taskListId)
-            ->whereHas('calendar', fn ($query) => $query->vtodoOnly())
-            ->first();
+        return $this->findTaskListInstance($this->principalUri($username), $taskListId);
     }
 
     public function findAccessibleTaskList(string $username, string $taskListId): ?CalendarInstance
@@ -230,25 +255,70 @@ final class TaskListRepository
             return $this->ensureGroupTaskListInstance($groupSlug);
         }
 
-        return $this->findOwnedTaskList($username, $taskListId);
+        $owned = $this->findOwnedTaskList($username, $taskListId);
+        if ($owned !== null) {
+            return $owned;
+        }
+
+        foreach ($this->groups->allowedGroupSlugs($username) as $slug) {
+            $instance = $this->findTaskListInstance(AdminConstants::GROUP_PREFIX.$slug, $taskListId);
+            if ($instance !== null) {
+                return $instance;
+            }
+        }
+
+        return null;
     }
 
     public function apiIdForInstance(CalendarInstance $instance): string
     {
         $groupSlug = $this->groupSlugFromPrincipalUri((string) $instance->principaluri);
         if ($groupSlug !== null) {
-            return CalendarCollectionUris::groupTaskListApiId($groupSlug);
+            $uri = (string) $instance->uri;
+            if ($uri === CalendarCollectionUris::groupTaskListCalDavUri($groupSlug)) {
+                return CalendarCollectionUris::groupTaskListApiId($groupSlug);
+            }
         }
 
         return (string) $instance->uri;
     }
 
-    private function allocateTaskListUri(string $username, ?string $requestedId, string $name): string
+    /**
+     * @return array{0: CalendarInstance, 1: ?string}|null
+     */
+    private function resolveWritableTaskList(string $username, string $taskListId): ?array
+    {
+        $groupSlug = CalendarCollectionUris::parseGroupTaskListApiId($taskListId);
+        if ($groupSlug !== null) {
+            return null;
+        }
+
+        $owned = $this->findOwnedTaskList($username, $taskListId);
+        if ($owned !== null) {
+            return [$owned, null];
+        }
+
+        foreach ($this->groups->allowedGroupSlugs($username) as $slug) {
+            $instance = $this->findTaskListInstance(AdminConstants::GROUP_PREFIX.$slug, $taskListId);
+            if ($instance !== null) {
+                $uri = (string) $instance->uri;
+                if ($uri === CalendarCollectionUris::groupTaskListCalDavUri($slug)) {
+                    return null;
+                }
+
+                return [$instance, $slug];
+            }
+        }
+
+        return null;
+    }
+
+    private function allocateTaskListUri(string $principalUri, ?string $requestedId, string $name): string
     {
         if ($requestedId !== null && $requestedId !== '') {
             if (
                 in_array($requestedId, CalendarCollectionUris::reservedTaskUriSlugs(), true)
-                || $this->findOwnedTaskList($username, $requestedId) !== null
+                || $this->findTaskListInstance($principalUri, $requestedId) !== null
             ) {
                 throw new ApiHttpException(409, 'Task list id already exists.', 'alreadyExists');
             }
@@ -256,9 +326,15 @@ final class TaskListRepository
             return $requestedId;
         }
         $base = Str::slug($name, '-') ?: 'tasks';
+        if (str_starts_with($base, 'group-')) {
+            $base = 'project-'.substr($base, strlen('group-'));
+        }
+        if ($base === '' || in_array($base, CalendarCollectionUris::reservedTaskUriSlugs(), true)) {
+            $base = 'project';
+        }
         $candidate = $base;
         $suffix = 2;
-        while ($this->findOwnedTaskList($username, $candidate) !== null) {
+        while ($this->findTaskListInstance($principalUri, $candidate) !== null) {
             $candidate = $base.'-'.$suffix;
             $suffix++;
         }
@@ -310,11 +386,12 @@ final class TaskListRepository
         $uri = (string) $instance->uri;
         $name = trim((string) ($instance->displayname ?? '')) ?: $uri;
         $isGroup = $groupSlug !== null;
+        $isSharedGroupList = $isGroup && $uri === CalendarCollectionUris::groupTaskListCalDavUri($groupSlug);
 
         return [
-            'id' => $isGroup ? CalendarCollectionUris::groupTaskListApiId($groupSlug) : $uri,
+            'id' => $isSharedGroupList ? CalendarCollectionUris::groupTaskListApiId($groupSlug) : $uri,
             'role' => match (true) {
-                $isGroup => 'group',
+                $isSharedGroupList => 'group',
                 $uri === InboxTaskListProvisioner::URI => 'inbox',
                 $uri === CalendarCollectionUris::TASK_HOME => 'home',
                 $uri === CalendarCollectionUris::TASK_WORK => 'work',
@@ -336,17 +413,20 @@ final class TaskListRepository
                 'mayUpdatePrivate' => true,
                 'mayRSVP' => true,
                 'mayAdmin' => false,
-                'mayDelete' => ! $isGroup && $uri !== InboxTaskListProvisioner::URI,
+                'mayDelete' => ! $isSharedGroupList && $uri !== InboxTaskListProvisioner::URI,
             ],
         ];
     }
 
-    private function ensureGroupTaskListInstance(string $groupSlug): ?CalendarInstance
+    /**
+     * @return list<CalendarInstance>
+     */
+    private function groupTaskListInstances(string $groupSlug): array
     {
         $groupUri = AdminConstants::GROUP_PREFIX.$groupSlug;
         $group = Principal::query()->where('uri', $groupUri)->first(['uri', 'displayname']);
         if ($group === null) {
-            return null;
+            return [];
         }
 
         $this->calendarCollectionsProvisioner->ensureForGroupPrincipal(
@@ -357,9 +437,32 @@ final class TaskListRepository
         return CalendarInstance::query()
             ->with('calendar')
             ->where('principaluri', $groupUri)
-            ->where('uri', CalendarCollectionUris::groupTaskListCalDavUri($groupSlug))
+            ->whereHas('calendar', fn ($query) => $query->vtodoOnly())
+            ->orderBy('calendarorder')
+            ->orderBy('id')
+            ->get()
+            ->all();
+    }
+
+    private function findTaskListInstance(string $principalUri, string $taskListUri): ?CalendarInstance
+    {
+        return CalendarInstance::query()
+            ->with('calendar')
+            ->where('principaluri', $principalUri)
+            ->where('uri', $taskListUri)
             ->whereHas('calendar', fn ($query) => $query->vtodoOnly())
             ->first();
+    }
+
+    private function ensureGroupTaskListInstance(string $groupSlug): ?CalendarInstance
+    {
+        foreach ($this->groupTaskListInstances($groupSlug) as $instance) {
+            if ((string) $instance->uri === CalendarCollectionUris::groupTaskListCalDavUri($groupSlug)) {
+                return $instance;
+            }
+        }
+
+        return null;
     }
 
     private function groupSlugFromPrincipalUri(string $principalUri): ?string
