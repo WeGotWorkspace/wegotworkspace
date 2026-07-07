@@ -3,7 +3,7 @@
 
 /**
  * Tasks product shell: cream main pane + light warm sidebar tint.
- * Ink-on-tint lockup matches {@link notes-workspace.css} (dark text on light accent wash).
+ * Nav text stays ink-on-tint; primary CTA and app switcher logo use accent fill + light glyph.
  * Import only from {@link TasksWorkspace}.
  */
 .tasks-workspace {
@@ -34,11 +34,17 @@
 }
 
 .tasks-workspace .app-sidebar__scroll {
-  --button-primary-bg: var(--color-ink);
-  --button-primary-fg: var(--tasks-accent);
+  --button-primary-bg: var(--tasks-accent);
+  --button-primary-fg: var(--color-cream, #ffffff);
   --button-subtle-color: var(--color-ink);
   --button-subtle-background: color-mix(in oklab, var(--color-ink) 10%, transparent);
   --button-subtle-hover-background: color-mix(in oklab, var(--color-ink) 16%, transparent);
+}
+
+/** App switcher lockup: accent tile + cream checkmark (not ink tile). */
+.tasks-workspace .workspace-app-icon--switch-trigger {
+  --app-switch-icon-bg: var(--tasks-accent);
+  --app-switch-icon-fg: var(--color-cream, #ffffff);
 }
 
 .tasks-workspace .workspace-app-layout__main-scroll {
