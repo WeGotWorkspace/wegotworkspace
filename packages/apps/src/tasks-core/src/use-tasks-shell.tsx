@@ -78,6 +78,12 @@ export function useTasksShell({
     if (view === "state:in-process") return L.stateInProcess;
     if (view === "state:completed") return L.stateCompleted;
     if (view === "state:cancelled") return L.stateCancelled;
+    if (view.startsWith("priority:")) {
+      const slug = view.slice(9);
+      if (slug === "high") return L.priorityHigh;
+      if (slug === "medium") return L.priorityMedium;
+      if (slug === "low") return L.priorityLow;
+    }
     if (view.startsWith("list:")) {
       const listId = view.slice(5);
       return taskLists.find((list) => list.id === listId)?.name ?? listId;

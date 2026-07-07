@@ -120,6 +120,7 @@ describe("TasksMainView composer", () => {
       description: "Details here",
       listId: "default",
       workflowStatus: "needs-action",
+      priority: 0,
     });
   });
 
@@ -142,6 +143,7 @@ describe("TasksMainView composer", () => {
       description: "Details here",
       listId: "default",
       workflowStatus: "needs-action",
+      priority: 0,
     });
     expect((screen.getByLabelText(defaultTasksLabels.addTaskName) as HTMLInputElement).value).toBe(
       "",
@@ -239,6 +241,52 @@ describe("TasksMainView composer", () => {
       description: "",
       listId: "default",
       workflowStatus: "in-process",
+      priority: 0,
+    });
+  });
+
+  it("defaults priority to none in the composer", () => {
+    renderComposer();
+
+    const priorityTrigger = screen.getByLabelText(defaultTasksLabels.addTaskPriority);
+    expect(priorityTrigger.textContent).toContain(defaultTasksLabels.priorityNone);
+    expect(priorityTrigger.querySelector(".lucide-flag")).toBeTruthy();
+  });
+
+  it("shows only none, high, medium, and low in the composer priority dropdown", () => {
+    renderComposer();
+
+    fireEvent.click(screen.getByLabelText(defaultTasksLabels.addTaskPriority));
+
+    const options = screen.getAllByRole("option");
+    expect(options).toHaveLength(4);
+    expect(options.map((option) => option.textContent?.trim())).toEqual([
+      defaultTasksLabels.priorityNone,
+      defaultTasksLabels.priorityHigh,
+      defaultTasksLabels.priorityMedium,
+      defaultTasksLabels.priorityLow,
+    ]);
+  });
+
+  it("submits selected priority with createTask", () => {
+    const onCreateTask = vi.fn();
+    renderComposer(onCreateTask);
+
+    fireEvent.change(screen.getByLabelText(defaultTasksLabels.addTaskName), {
+      target: { value: "Urgent task" },
+    });
+
+    fireEvent.click(screen.getByLabelText(defaultTasksLabels.addTaskPriority));
+    fireEvent.click(screen.getByRole("option", { name: defaultTasksLabels.priorityHigh }));
+
+    fireEvent.click(screen.getByRole("button", { name: defaultTasksLabels.addTaskButton }));
+
+    expect(onCreateTask).toHaveBeenCalledWith({
+      title: "Urgent task",
+      description: "",
+      listId: "default",
+      workflowStatus: "needs-action",
+      priority: 1,
     });
   });
 });
@@ -280,5 +328,26 @@ describe("TasksMainView task rows", () => {
     const meta = row?.querySelector(".tasks-main-view__meta");
     expect(meta?.textContent).toContain(defaultTasksLabels.stateNeedsAction);
     expect(meta?.querySelector(".lucide-clock")).toBeTruthy();
+  });
+
+  it("shows priority flag in meta when task has priority", () => {
+    const task = { ...bootstrap.data.tasks[0], priority: 1 };
+    renderMainView({ displayTasks: [task] });
+
+    const row = screen.getByText(task.title).closest(".tasks-main-view__row");
+    const meta = row?.querySelector(".tasks-main-view__meta");
+    expect(meta?.textContent).toContain(defaultTasksLabels.priorityHigh);
+    expect(meta?.querySelector(".lucide-flag")).toBeTruthy();
+  });
+
+  it("hides priority meta when task priority is none", () => {
+    const task = { ...bootstrap.data.tasks[0], priority: null };
+    renderMainView({ displayTasks: [task] });
+
+    const row = screen.getByText(task.title).closest(".tasks-main-view__row");
+    const meta = row?.querySelector(".tasks-main-view__meta");
+    expect(meta?.textContent).not.toContain(defaultTasksLabels.priorityHigh);
+    expect(meta?.textContent).not.toContain(defaultTasksLabels.priorityMedium);
+    expect(meta?.textContent).not.toContain(defaultTasksLabels.priorityLow);
   });
 });

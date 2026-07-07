@@ -2,6 +2,7 @@ export type TasksUILabels = {
   appName: string;
   sidebarTime: string;
   sidebarStatus: string;
+  sidebarPriority: string;
   sidebarInbox: string;
   sidebarProjects: string;
   stateAll: string;
@@ -23,9 +24,11 @@ export type TasksUILabels = {
   statusInProcess: string;
   statusCompleted: string;
   statusCancelled: string;
+  priorityNone: string;
   priorityHigh: string;
-  priorityNormal: string;
+  priorityMedium: string;
   priorityLow: string;
+  addTaskPriority: string;
   dueLabel: string;
   noDue: string;
   descriptionLabel: string;
@@ -78,6 +81,7 @@ export const defaultTasksLabels: TasksUILabels = {
   appName: "Tasks",
   sidebarTime: "Time",
   sidebarStatus: "Status",
+  sidebarPriority: "Priority",
   sidebarInbox: "Inbox",
   sidebarProjects: "Projects",
   stateAll: "All",
@@ -99,9 +103,11 @@ export const defaultTasksLabels: TasksUILabels = {
   statusInProcess: "In progress",
   statusCompleted: "Completed",
   statusCancelled: "Cancelled",
+  priorityNone: "None",
   priorityHigh: "High",
-  priorityNormal: "Normal",
+  priorityMedium: "Medium",
   priorityLow: "Low",
+  addTaskPriority: "Priority",
   dueLabel: "Due",
   noDue: "No due date",
   descriptionLabel: "Notes",

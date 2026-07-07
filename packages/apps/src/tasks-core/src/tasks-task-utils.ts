@@ -1,4 +1,5 @@
 import type { Task, TaskAlert } from "@/tasks-core/src/tasks-types";
+import { priorityFromFilterSlug } from "@/tasks-core/src/tasks-priority";
 
 export const TASK_WORKFLOW_STATUSES = [
   "needs-action",
@@ -42,6 +43,12 @@ export function filterTasksByView(tasks: Task[], view: string): Task[] {
   if (view.startsWith("list:")) {
     const listId = view.slice(5);
     return tasks.filter((task) => task.taskListId === listId);
+  }
+
+  if (view.startsWith("priority:")) {
+    const priority = priorityFromFilterSlug(view.slice(9));
+    if (priority === null) return tasks;
+    return tasks.filter((task) => task.priority === priority);
   }
 
   if (!view.startsWith("state:")) {
@@ -197,7 +204,8 @@ export function filterHiddenCompletedTasks(tasks: Task[]): Task[] {
 /** Views where a completed task would remain visible until explicitly hidden. */
 export function shouldHideCompletedTaskAfterExit(view: string): boolean {
   if (view === "state:all") return true;
-  if (view.startsWith("tag:") || view.startsWith("list:")) return true;
+  if (view.startsWith("tag:") || view.startsWith("list:") || view.startsWith("priority:"))
+    return true;
   return false;
 }
 

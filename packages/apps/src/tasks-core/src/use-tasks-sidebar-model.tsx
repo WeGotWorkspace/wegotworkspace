@@ -13,6 +13,11 @@ import {
 import type { TasksUILabels } from "@/tasks-core/src/tasks-labels";
 import { TaskListDot } from "@/tasks-core/src/tasks-list-dot";
 import { INBOX_TASK_LIST_ID, isInboxTaskList } from "@/tasks-core/src/tasks-task-utils";
+import {
+  PRIORITY_FILTER_SLUGS,
+  priorityFilterIcon,
+  priorityFilterLabel,
+} from "@/tasks-core/src/tasks-priority";
 
 type TaskListSidebarEntry = {
   id: string;
@@ -124,6 +129,17 @@ export function useTasksSidebarModel({
     [labels, selectView, view],
   );
 
+  const prioritySidebarItems = useMemo(
+    () =>
+      PRIORITY_FILTER_SLUGS.map((slug) => ({
+        label: priorityFilterLabel(slug, labels),
+        icon: priorityFilterIcon(slug),
+        selected: view === `priority:${slug}`,
+        onClick: () => selectView(`priority:${slug}`),
+      })),
+    [labels, selectView, view],
+  );
+
   const projectSidebarItems = useMemo(
     () =>
       projectTaskLists.map((list) => ({
@@ -140,6 +156,7 @@ export function useTasksSidebarModel({
     inboxSidebarItems,
     timeSidebarItems,
     statusSidebarItems,
+    prioritySidebarItems,
     projectSidebarItems,
   };
 }

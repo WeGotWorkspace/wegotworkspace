@@ -31,6 +31,14 @@ describe("tasks-route-search", () => {
     expect(tasksViewFromLocation("/tasks/lists/inbox", {})).toBe("list:inbox");
   });
 
+  it("maps priority paths to controller view keys", () => {
+    expect(tasksViewFromLocation("/tasks/priority/high", { prioritySlug: "high" })).toBe(
+      "priority:high",
+    );
+    expect(tasksViewFromLocation("/tasks/priority/medium", {})).toBe("priority:medium");
+    expect(tasksViewFromLocation("/tasks/priority/low", {})).toBe("priority:low");
+  });
+
   it("builds navigation targets from controller view state", () => {
     expect(tasksNavigateTarget("state:all")).toEqual({ to: "/tasks/state/all", params: {} });
     expect(tasksNavigateTarget("state:today")).toEqual({
@@ -41,6 +49,10 @@ describe("tasks-route-search", () => {
     expect(tasksNavigateTarget("list:personal")).toEqual({
       to: "/tasks/lists/$listId",
       params: { listId: "personal" },
+    });
+    expect(tasksNavigateTarget("priority:high")).toEqual({
+      to: "/tasks/priority/$prioritySlug",
+      params: { prioritySlug: "high" },
     });
   });
 

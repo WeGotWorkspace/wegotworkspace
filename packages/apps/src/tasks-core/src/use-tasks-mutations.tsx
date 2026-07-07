@@ -7,6 +7,7 @@ import {
   shouldHideCompletedTaskAfterExit,
   taskListName,
 } from "@/tasks-core/src/tasks-task-utils";
+import { TASK_PRIORITY_NONE } from "@/tasks-core/src/tasks-priority";
 import {
   tasksCompleteToastMessage,
   tasksMoveToastMessage,
@@ -45,11 +46,12 @@ export function useTasksMutations({ shell, list, exitAnimation }: UseTasksMutati
   );
 
   const createTaskFromForm = useCallback(
-    async ({ title, description, listId, workflowStatus }: TasksCreateInput) => {
+    async ({ title, description, listId, workflowStatus, priority }: TasksCreateInput) => {
       if (!operations || !title.trim()) return;
       const trimmedTitle = title.trim();
       const trimmedDescription = description.trim() || null;
       const status = workflowStatus ?? "needs-action";
+      const taskPriority = priority === TASK_PRIORITY_NONE ? null : priority;
       const tempId = `pending-${crypto.randomUUID()}`;
       const optimistic: Task = {
         "@type": "Task",
@@ -59,6 +61,7 @@ export function useTasksMutations({ shell, list, exitAnimation }: UseTasksMutati
         title: trimmedTitle,
         description: trimmedDescription,
         workflowStatus: status,
+        priority: taskPriority,
         isDraft: false,
         sortOrder: Number.MAX_SAFE_INTEGER,
         categories: [],
@@ -72,6 +75,7 @@ export function useTasksMutations({ shell, list, exitAnimation }: UseTasksMutati
           description: trimmedDescription,
           taskListIds: { [listId]: true },
           workflowStatus: status,
+          priority: taskPriority,
         });
         setTasks((prev) => prev.map((task) => (task.id === tempId ? created : task)));
         shell.show(L.toastTaskAdded, { icon: <Plus className="size-4" /> });

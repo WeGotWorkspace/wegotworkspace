@@ -470,6 +470,13 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
     component: TasksComponent,
   });
 
+  const tasksPriorityRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/tasks/priority/$prioritySlug",
+    head: tasksPwaHead,
+    component: TasksComponent,
+  });
+
   const installRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/install",
@@ -510,6 +517,7 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
     tasksStateRoute,
     tasksTagRoute,
     tasksListRoute,
+    tasksPriorityRoute,
     installRoute,
   ]);
 }

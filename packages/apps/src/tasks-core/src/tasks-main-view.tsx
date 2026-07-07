@@ -24,6 +24,14 @@ import {
   type TaskWorkflowStatus,
 } from "@/tasks-core/src/tasks-task-utils";
 import { workflowStatusIcon, workflowStatusLabel } from "@/tasks-core/src/tasks-workflow-status";
+import {
+  COMPOSER_PRIORITY_VALUES,
+  isTaskPriorityNone,
+  priorityIcon,
+  priorityLabel,
+  TASK_PRIORITY_NONE,
+  type TaskPriorityValue,
+} from "@/tasks-core/src/tasks-priority";
 import "@/tasks-core/src/tasks-main-view.css";
 
 export type TasksCreateInput = {
@@ -31,6 +39,7 @@ export type TasksCreateInput = {
   description: string;
   listId: string;
   workflowStatus: TaskWorkflowStatus;
+  priority: TaskPriorityValue;
 };
 
 export type TasksMainViewHandle = {
@@ -62,6 +71,7 @@ const emptyForm = (listId: string): TasksCreateInput => ({
   description: "",
   listId,
   workflowStatus: DEFAULT_WORKFLOW_STATUS,
+  priority: TASK_PRIORITY_NONE,
 });
 
 function ComposerSelectOption({ icon, label }: { icon: ReactNode; label: string }) {
@@ -166,6 +176,12 @@ function TaskRow({
             {workflowStatusIcon(workflowStatus)}
             <span>{workflowStatusLabel(workflowStatus, L)}</span>
           </span>
+          {!isTaskPriorityNone(task.priority) ? (
+            <span className="tasks-main-view__meta-item">
+              {priorityIcon(task.priority)}
+              <span>{priorityLabel(task.priority as TaskPriorityValue, L)}</span>
+            </span>
+          ) : null}
         </div>
       </div>
 
@@ -373,6 +389,34 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
                           <ComposerSelectOption
                             icon={workflowStatusIcon(status)}
                             label={workflowStatusLabel(status, L)}
+                          />
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select
+                    value={String(draft.priority)}
+                    onValueChange={(priority) =>
+                      setDraft((prev) => ({
+                        ...prev,
+                        priority: Number(priority) as TaskPriorityValue,
+                      }))
+                    }
+                    disabled={!canCreate}
+                  >
+                    <SelectTrigger
+                      className="tasks-main-view__composer-select"
+                      aria-label={L.addTaskPriority}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COMPOSER_PRIORITY_VALUES.map((priority) => (
+                        <SelectItem key={priority} value={String(priority)}>
+                          <ComposerSelectOption
+                            icon={priorityIcon(priority)}
+                            label={priorityLabel(priority, L)}
                           />
                         </SelectItem>
                       ))}
