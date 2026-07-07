@@ -7,6 +7,9 @@
  * Import only from {@link TasksWorkspace}.
  */
 .tasks-workspace {
+  /* Readable todo column — matches contacts/mail detail measure (680px). */
+  --workspace-main-content-max-width: 42.5rem;
+
   --tasks-accent: #14b8a6;
   --tasks-sidebar: color-mix(in oklab, var(--tasks-accent) 12%, var(--color-cream, #ffffff));
   --workspace-accent: var(--tasks-accent);
@@ -42,8 +45,15 @@
   @apply flex flex-col;
 }
 
+.tasks-workspace .workspace-app-layout__main-header {
+  width: 100%;
+  max-width: var(--workspace-main-content-max-width);
+  margin-inline: auto;
+}
+
 .tasks-workspace .workspace-app-layout__main-content {
-  @apply mx-0 flex min-h-full flex-1 flex-col w-full max-w-none px-0 py-0;
+  @apply mx-auto flex min-h-full flex-1 flex-col w-full px-0 py-0;
+  max-width: var(--workspace-main-content-max-width);
 }
 
 .tasks-workspace .view-header__search-stack {
