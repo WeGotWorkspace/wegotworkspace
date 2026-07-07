@@ -458,7 +458,9 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/tasks/tags/$tagSlug",
     head: tasksPwaHead,
-    component: TasksComponent,
+    beforeLoad: () => {
+      throw redirect({ to: "/tasks/state/all" });
+    },
   });
 
   const tasksListRoute = createRoute({

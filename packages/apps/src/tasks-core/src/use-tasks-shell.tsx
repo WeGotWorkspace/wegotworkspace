@@ -3,7 +3,6 @@ import { useAppToast } from "@/hooks/use-app-toast";
 import { mergeTasksLabels, type TasksUILabels } from "@/tasks-core/src/tasks-labels";
 import { normalizeTasksView } from "@/tasks-core/src/tasks-route-search";
 import {
-  collectTaskTags,
   defaultTaskListId,
   filterHiddenCompletedTasks,
   filterTasksByView,
@@ -70,8 +69,6 @@ export function useTasksShell({
     setView((current) => (current === normalized ? current : normalized));
   }, [initialView, onViewChange, taskLists]);
 
-  const tags = useMemo(() => collectTaskTags(tasks), [tasks]);
-
   const viewLabel = useMemo(() => {
     if (view === "state:all") return L.stateAll;
     if (view === "state:today") return L.stateToday;
@@ -81,7 +78,6 @@ export function useTasksShell({
     if (view === "state:in-process") return L.stateInProcess;
     if (view === "state:completed") return L.stateCompleted;
     if (view === "state:cancelled") return L.stateCancelled;
-    if (view.startsWith("tag:")) return L.tagViewTitle(view.slice(4));
     if (view.startsWith("list:")) {
       const listId = view.slice(5);
       return taskLists.find((list) => list.id === listId)?.name ?? listId;
@@ -90,7 +86,6 @@ export function useTasksShell({
   }, [L, taskLists, view]);
 
   const selectedListId = view.startsWith("list:") ? view.slice(5) : null;
-  const selectedTag = view.startsWith("tag:") ? view.slice(4) : null;
   const canCreateTask = Boolean(operations);
 
   const selectView = useCallback(
@@ -136,7 +131,6 @@ export function useTasksShell({
     tasks,
     setTasks,
     taskLists,
-    tags,
     view,
     viewLabel,
     sidebarOpen,
@@ -146,7 +140,6 @@ export function useTasksShell({
     showCompletedToggle,
     toggleShowCompletedTasks,
     selectedListId,
-    selectedTag,
     canCreateTask,
     selectView,
     operations,

@@ -9,7 +9,6 @@ import {
   Clock,
   Inbox as InboxIcon,
   List,
-  Tag,
 } from "lucide-react";
 import type { TasksUILabels } from "@/tasks-core/src/tasks-labels";
 import { TaskListDot } from "@/tasks-core/src/tasks-list-dot";
@@ -25,7 +24,6 @@ type TaskListSidebarEntry = {
 type UseTasksSidebarModelArgs = {
   labels: TasksUILabels;
   view: string;
-  tags: string[];
   taskLists: TaskListSidebarEntry[];
   selectView: (view: string) => void;
   sidebarDropZoneProps: (
@@ -33,18 +31,15 @@ type UseTasksSidebarModelArgs = {
     onDrop: (ids: string[]) => void,
   ) => Record<string, unknown>;
   moveToList: (ids: string[], listId: string) => void;
-  assignTagToTasks: (ids: string[], tag: string) => void;
 };
 
 export function useTasksSidebarModel({
   labels,
   view,
-  tags,
   taskLists,
   selectView,
   sidebarDropZoneProps,
   moveToList,
-  assignTagToTasks,
 }: UseTasksSidebarModelArgs) {
   const inboxListId = useMemo(() => {
     const inboxList = taskLists.find(isInboxTaskList);
@@ -129,18 +124,6 @@ export function useTasksSidebarModel({
     [labels, selectView, view],
   );
 
-  const tagSidebarItems = useMemo(
-    () =>
-      tags.map((tag) => ({
-        label: tag,
-        icon: <Tag className="size-3.5" />,
-        selected: view === `tag:${tag}`,
-        onClick: () => selectView(`tag:${tag}`),
-        ...sidebarDropZoneProps(`tag:${tag}`, (ids) => assignTagToTasks(ids, tag)),
-      })),
-    [assignTagToTasks, selectView, sidebarDropZoneProps, tags, view],
-  );
-
   const projectSidebarItems = useMemo(
     () =>
       projectTaskLists.map((list) => ({
@@ -157,7 +140,6 @@ export function useTasksSidebarModel({
     inboxSidebarItems,
     timeSidebarItems,
     statusSidebarItems,
-    tagSidebarItems,
     projectSidebarItems,
   };
 }

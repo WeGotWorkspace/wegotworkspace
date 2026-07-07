@@ -73,7 +73,6 @@ export function useTasksController({
   return {
     L: shell.L,
     taskLists: shell.taskLists,
-    tags: shell.tags,
     view: shell.view,
     viewLabel: shell.viewLabel,
     canCreateTask: shell.canCreateTask,
@@ -96,7 +95,6 @@ export function useTasksController({
     editTask: mutations.editTask,
     requestDeleteTask: mutations.requestDeleteTask,
     moveToList: mutations.moveToList,
-    assignTagToTasks: mutations.assignTagToTasks,
     handleTaskExitAnimationEnd: mutations.handleTaskExitAnimationEnd,
   };
 }

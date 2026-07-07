@@ -4,7 +4,6 @@
  * URL structure:
  *   /tasks/state/all
  *   /tasks/state/today
- *   /tasks/tags/:tagSlug
  *   /tasks/lists/:listId
  */
 
@@ -12,7 +11,6 @@ import { INBOX_TASK_LIST_ID, isInboxTaskList } from "@/tasks-core/src/tasks-task
 
 export type TasksRouteParams = {
   stateSlug?: string;
-  tagSlug?: string;
   listId?: string;
 };
 
@@ -38,10 +36,7 @@ export function tasksViewFromLocation(pathname: string, params: TasksRouteParams
     return "state:all";
   }
   if (segment === "tags") {
-    const tagSlug = slugFromPath ?? params.tagSlug;
-    if (tagSlug) {
-      return `tag:${decodeURIComponent(tagSlug)}`;
-    }
+    return "state:all";
   }
   if (segment === "lists") {
     const listId = slugFromPath ?? params.listId;
@@ -54,6 +49,7 @@ export function tasksViewFromLocation(pathname: string, params: TasksRouteParams
 
 /** Map inbox aliases (e.g. legacy `inbox` slug) to the canonical list id from bootstrap. */
 export function normalizeTasksView(view: string, taskLists: TaskListRouteEntry[]): string {
+  if (view.startsWith("tag:")) return "state:all";
   if (!view.startsWith("list:")) return view;
 
   const listId = view.slice(5);
@@ -71,25 +67,20 @@ export function normalizeTasksView(view: string, taskLists: TaskListRouteEntry[]
 }
 
 export type TasksNavigateTarget = {
-  to:
-    | "/tasks/state/all"
-    | "/tasks/state/$stateSlug"
-    | "/tasks/tags/$tagSlug"
-    | "/tasks/lists/$listId";
+  to: "/tasks/state/all" | "/tasks/state/$stateSlug" | "/tasks/lists/$listId";
   params: Record<string, string>;
 };
 
 export function tasksNavigateTarget(view: string): TasksNavigateTarget {
+  if (view.startsWith("tag:")) {
+    return { to: "/tasks/state/all", params: {} };
+  }
   if (view.startsWith("state:")) {
     const stateSlug = encodeURIComponent(view.slice(6));
     if (stateSlug === "all") {
       return { to: "/tasks/state/all", params: {} };
     }
     return { to: "/tasks/state/$stateSlug", params: { stateSlug } };
-  }
-  if (view.startsWith("tag:")) {
-    const tagSlug = encodeURIComponent(view.slice(4));
-    return { to: "/tasks/tags/$tagSlug", params: { tagSlug } };
   }
   if (view.startsWith("list:")) {
     const listId = encodeURIComponent(view.slice(5));

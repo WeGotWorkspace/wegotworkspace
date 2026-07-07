@@ -51,7 +51,6 @@ export function TasksWorkspace({
     sidebarOpen,
     setSidebarOpen,
     confirmDialog,
-    tags,
     taskLists,
     selectView,
     createTaskFromForm,
@@ -59,7 +58,6 @@ export function TasksWorkspace({
     editTask,
     requestDeleteTask,
     moveToList,
-    assignTagToTasks,
     createListId,
     showCompletedTasks,
     showCompletedToggle,
@@ -71,22 +69,15 @@ export function TasksWorkspace({
     handleTaskExitAnimationEnd,
   } = controller;
 
-  const {
-    inboxSidebarItems,
-    timeSidebarItems,
-    statusSidebarItems,
-    tagSidebarItems,
-    projectSidebarItems,
-  } = useTasksSidebarModel({
-    labels: L,
-    view,
-    tags,
-    taskLists,
-    selectView,
-    sidebarDropZoneProps,
-    moveToList,
-    assignTagToTasks,
-  });
+  const { inboxSidebarItems, timeSidebarItems, statusSidebarItems, projectSidebarItems } =
+    useTasksSidebarModel({
+      labels: L,
+      view,
+      taskLists,
+      selectView,
+      sidebarDropZoneProps,
+      moveToList,
+    });
 
   useDocumentTitle(viewLabel);
 
@@ -125,9 +116,6 @@ export function TasksWorkspace({
             <SidebarSection items={inboxSidebarItems} />
             <SidebarSection title={L.sidebarTime} items={timeSidebarItems} />
             <SidebarSection title={L.sidebarStatus} items={statusSidebarItems} />
-            {tagSidebarItems.length > 0 ? (
-              <SidebarSection title={L.sidebarTags} items={tagSidebarItems} />
-            ) : null}
             {projectSidebarItems.length > 0 ? (
               <SidebarSection title={L.sidebarProjects} items={projectSidebarItems} />
             ) : null}

@@ -3,7 +3,6 @@ import { defaultTasksLabels } from "@/tasks-core/src/tasks-labels";
 import {
   tasksCompleteToastMessage,
   tasksMoveToastMessage,
-  tasksTagToastMessage,
 } from "@/tasks-core/src/tasks-toast-messages";
 import {
   buildDisplayTasks,
@@ -26,18 +25,16 @@ describe("tasks toast messages", () => {
     expect(tasksCompleteToastMessage(false, defaultTasksLabels)).toBe("Marked incomplete");
   });
 
-  it("formats move and tag toasts", () => {
+  it("formats move toasts", () => {
     expect(tasksMoveToastMessage(1, "Work", defaultTasksLabels)).toBe("Moved to Work");
     expect(tasksMoveToastMessage(2, "Work", defaultTasksLabels)).toBe("Moved 2 tasks to Work");
-    expect(tasksTagToastMessage(1, "urgent", defaultTasksLabels)).toBe("Tagged with urgent");
   });
 });
 
 describe("shouldHideCompletedTaskAfterExit", () => {
-  it("hides after exit in all, list, and tag views", () => {
+  it("hides after exit in all and list views", () => {
     expect(shouldHideCompletedTaskAfterExit("state:all")).toBe(true);
     expect(shouldHideCompletedTaskAfterExit("list:inbox")).toBe(true);
-    expect(shouldHideCompletedTaskAfterExit("tag:work")).toBe(true);
   });
 
   it("does not hide after exit in filtered status views", () => {

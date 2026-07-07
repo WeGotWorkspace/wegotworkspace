@@ -14,11 +14,3 @@ export function tasksMoveToastMessage(
 ): string {
   return labels.toastTaskMoved(count, listName);
 }
-
-export function tasksTagToastMessage(
-  count: number,
-  tag: string,
-  labels: Pick<TasksUILabels, "toastTaskTagged">,
-): string {
-  return labels.toastTaskTagged(count, tag);
-}
