@@ -50,10 +50,6 @@
   background-color: var(--app-switch-icon-bg);
 }
 
-.tasks-workspace .workspace-app-layout__main-scroll {
-  @apply flex flex-col;
-}
-
 /**
  * Desktop: sidebar toggle stays at the main-pane left edge; title/actions share the
  * same centered max-width column as `.workspace-app-layout__main-content`.
@@ -90,7 +86,7 @@
 
 .tasks-workspace .workspace-app-layout__main-content {
   /* Match header inset on small screens; md+ keeps row padding inside centered column. */
-  @apply mx-auto flex min-h-full flex-1 flex-col w-full px-4 pt-6 pb-0 md:px-0;
+  @apply mx-auto w-full px-4 pt-6 pb-8 md:px-0 md:pb-12;
   max-width: var(--workspace-main-content-max-width);
 }
 

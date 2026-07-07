@@ -1,11 +1,7 @@
 @import "../../styles.css" reference;
 
 .tasks-main-view {
-  @apply flex min-h-0 flex-1 flex-col bg-[var(--workspace-root-bg,var(--color-cream,#ffffff))];
-}
-
-.tasks-main-view__scroll {
-  @apply min-h-0 flex-1 overflow-y-auto;
+  @apply bg-[var(--workspace-root-bg,var(--color-cream,#ffffff))];
 }
 
 .tasks-main-view__empty {
