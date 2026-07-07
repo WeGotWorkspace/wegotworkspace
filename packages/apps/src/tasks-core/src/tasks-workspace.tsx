@@ -145,8 +145,7 @@ export function TasksWorkspace({
                   <IconButton
                     label={showCompletedTasks ? L.hideCompletedTasks : L.showCompletedTasks}
                     onClick={toggleShowCompletedTasks}
-                    icon={<CheckCircle2 className="size-4" aria-hidden />}
-                    size="sm"
+                    icon={<CheckCircle2 aria-hidden />}
                     variant="subtle"
                     active={showCompletedTasks}
                   />
@@ -157,12 +156,8 @@ export function TasksWorkspace({
                     onClick={onRefreshList}
                     disabled={listRefreshing}
                     icon={
-                      <RefreshCw
-                        className={cn("size-4", listRefreshing && "animate-spin")}
-                        aria-hidden
-                      />
+                      <RefreshCw className={cn(listRefreshing && "animate-spin")} aria-hidden />
                     }
-                    size="sm"
                     variant="subtle"
                   />
                 ) : null}

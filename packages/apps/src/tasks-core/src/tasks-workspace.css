@@ -92,6 +92,11 @@
   }
 }
 
+/** Header action icon buttons match {@link WorkspaceSidebarToggle} (size-9 / input-height). */
+.tasks-workspace .tasks-workspace__header-actions .button {
+  @apply size-9 shrink-0;
+}
+
 .tasks-workspace .workspace-app-layout__main-content {
   /* Match header inset on small screens; md+ keeps row padding inside centered column. */
   @apply mx-auto w-full px-4 pt-6 pb-8 md:px-0 md:pb-12;
