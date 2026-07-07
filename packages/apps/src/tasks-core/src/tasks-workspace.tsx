@@ -49,14 +49,12 @@ export function TasksWorkspace({
     viewLabel,
     visibleTasks,
     canCreateTask,
-    searchQuery,
     sidebarOpen,
     setSidebarOpen,
     confirmDialog,
     tags,
     taskLists,
     selectView,
-    setSearchQuery,
     createTaskFromForm,
     toggleTaskComplete,
     editTask,
@@ -137,9 +135,6 @@ export function TasksWorkspace({
             onToggleSidebar={() => setSidebarOpen((open) => !open)}
             title={viewLabel}
             subtitle={L.listTasks(visibleTasks.length)}
-            searchPlaceholder={L.searchPlaceholder}
-            searchValue={searchQuery}
-            onSearchInput={setSearchQuery}
             actions={
               onRefreshList ? (
                 <IconButton
@@ -167,8 +162,6 @@ export function TasksWorkspace({
             visibleTasks={visibleTasks}
             taskLists={taskLists}
             defaultListId={createListId}
-            searchQuery={searchQuery}
-            onSearchInput={setSearchQuery}
             canCreate={canCreateTask}
             onToggleComplete={toggleTaskComplete}
             onEditTask={editTask}

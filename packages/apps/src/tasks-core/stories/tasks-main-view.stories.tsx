@@ -29,8 +29,6 @@ export const MainView: Story = {
     visibleTasks: bootstrap.data.tasks,
     taskLists: bootstrap.data.taskLists,
     defaultListId: "default",
-    searchQuery: "",
-    onSearchInput: () => undefined,
     canCreate: true,
     onToggleComplete: () => undefined,
     onEditTask: () => undefined,

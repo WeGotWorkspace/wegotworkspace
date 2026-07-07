@@ -5,7 +5,6 @@ import { mergeTasksLabels, type TasksUILabels } from "@/tasks-core/src/tasks-lab
 import {
   collectTaskTags,
   defaultTaskListId,
-  filterTasksBySearch,
   filterTasksByView,
 } from "@/tasks-core/src/tasks-task-utils";
 import type { Task, TasksAPIOperations, TasksUIData } from "@/tasks-core/src/tasks-types";
@@ -33,7 +32,6 @@ export function useTasksShell({
   const [tasks, setTasks] = useState<Task[]>(() => data.tasks);
   const [taskLists, setTaskLists] = useState(() => data.taskLists);
   const [view, setView] = useState<string>(() => initialView ?? "state:all");
-  const [searchQuery, setSearchQuery] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     if (typeof window === "undefined") return true;
     return !window.matchMedia("(max-width: 767px)").matches;
@@ -94,10 +92,7 @@ export function useTasksShell({
     onViewChange?.(view);
   }, [view, onViewChange]);
 
-  const visibleTasks = useMemo(() => {
-    const byView = filterTasksByView(tasks, view);
-    return filterTasksBySearch(byView, searchQuery);
-  }, [searchQuery, tasks, view]);
+  const visibleTasks = useMemo(() => filterTasksByView(tasks, view), [tasks, view]);
 
   const createListId = useMemo(
     () => selectedListId ?? defaultTaskListId(taskLists),
@@ -116,8 +111,6 @@ export function useTasksShell({
     tags,
     view,
     viewLabel,
-    searchQuery,
-    setSearchQuery,
     sidebarOpen,
     setSidebarOpen,
     visibleTasks,

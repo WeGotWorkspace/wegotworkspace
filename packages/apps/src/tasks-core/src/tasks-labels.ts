@@ -16,7 +16,6 @@ export type TasksUILabels = {
   newTask: string;
   listTasks: (count: number) => string;
   listSelected: (count: number) => string;
-  searchPlaceholder: string;
   refreshList: string;
   emptyList: string;
   emptyDetail: string;
@@ -87,7 +86,6 @@ export const defaultTasksLabels: TasksUILabels = {
   newTask: "New task",
   listTasks: (count) => (count === 1 ? "1 task" : `${count} tasks`),
   listSelected: (count) => (count === 1 ? "1 selected" : `${count} selected`),
-  searchPlaceholder: "Search tasks",
   refreshList: "Refresh",
   emptyList: "No tasks in this view.",
   emptyDetail: "Select a task or create a new one.",

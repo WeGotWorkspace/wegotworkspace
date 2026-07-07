@@ -4,11 +4,6 @@
   @apply flex min-h-0 flex-1 flex-col bg-[var(--workspace-root-bg,var(--color-cream,#ffffff))];
 }
 
-.tasks-main-view__mobile-search {
-  @apply shrink-0 border-b px-4 py-3;
-  border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
-}
-
 .tasks-main-view__scroll {
   @apply min-h-0 flex-1 overflow-y-auto;
 }

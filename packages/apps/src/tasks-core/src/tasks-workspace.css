@@ -50,10 +50,6 @@
   max-width: var(--workspace-main-content-max-width);
 }
 
-.tasks-workspace .view-header__search-stack {
-  @apply hidden sm:block;
-}
-
 .tasks-story-scope {
   min-height: 100dvh;
   background-color: var(--workspace-root-bg, var(--color-cream, #ffffff));

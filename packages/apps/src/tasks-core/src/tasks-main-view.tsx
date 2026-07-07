@@ -11,7 +11,6 @@ import {
 import { CheckCircle2, Circle, MoreVertical, Pencil, Tag, Trash2 } from "lucide-react";
 import { IconButton } from "@/button/src/button";
 import { Button } from "@/button/src/button";
-import { CollectionSearchInput } from "@/collection-search-input/src/collection-search-input";
 import { DropdownMenu } from "@/menu-dropdown/src/dropdown-menu";
 import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
@@ -38,8 +37,6 @@ type TasksMainViewProps = {
   visibleTasks: Task[];
   taskLists: TaskList[];
   defaultListId: string;
-  searchQuery: string;
-  onSearchInput: (value: string) => void;
   canCreate: boolean;
   onToggleComplete: (taskId: string) => void;
   onEditTask: (taskId: string) => void;
@@ -64,8 +61,6 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
       visibleTasks,
       taskLists,
       defaultListId,
-      searchQuery,
-      onSearchInput,
       canCreate,
       onToggleComplete,
       onEditTask,
@@ -128,15 +123,6 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
 
     return (
       <div className="tasks-main-view">
-        <div className="tasks-main-view__mobile-search sm:hidden">
-          <CollectionSearchInput
-            value={searchQuery}
-            onChange={onSearchInput}
-            placeholder={L.searchPlaceholder}
-            aria-label={L.searchPlaceholder}
-          />
-        </div>
-
         <div className="tasks-main-view__scroll">
           {listLoading ? (
             <div className="tasks-main-view__loading" aria-busy>
