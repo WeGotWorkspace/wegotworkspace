@@ -3,7 +3,7 @@
 
 /**
  * Tasks product shell: cream main pane + light warm sidebar tint.
- * Nav text stays ink-on-tint; primary CTA and app switcher logo use accent fill + light glyph.
+ * Nav text stays ink-on-tint; primary CTA and app switcher logo use accent fill + ink glyph.
  * Import only from {@link TasksWorkspace}.
  */
 .tasks-workspace {
@@ -31,20 +31,23 @@
   --workspace-user-footer-link-color: color-mix(in oklab, var(--color-ink) 65%, transparent);
   --workspace-user-footer-link-bg: color-mix(in oklab, var(--color-ink) 6%, transparent);
   --field-label-color: color-mix(in oklab, var(--color-ink) 60%, transparent);
+  --button-primary-bg: var(--tasks-accent);
+  --button-primary-fg: var(--color-ink);
 }
 
 .tasks-workspace .app-sidebar__scroll {
   --button-primary-bg: var(--tasks-accent);
-  --button-primary-fg: var(--color-cream, #ffffff);
+  --button-primary-fg: var(--color-ink);
   --button-subtle-color: var(--color-ink);
   --button-subtle-background: color-mix(in oklab, var(--color-ink) 10%, transparent);
   --button-subtle-hover-background: color-mix(in oklab, var(--color-ink) 16%, transparent);
 }
 
-/** App switcher lockup: accent tile + cream checkmark (not ink tile). */
-.tasks-workspace .workspace-app-icon--switch-trigger {
+/** App switcher lockup: accent tile + ink checkmark (not default ink tile + accent glyph). */
+.tasks-workspace .app-sidebar__header .app-switch-button__icon.workspace-app-icon--switch-trigger {
   --app-switch-icon-bg: var(--tasks-accent);
-  --app-switch-icon-fg: var(--color-cream, #ffffff);
+  --app-switch-icon-fg: var(--color-ink);
+  background-color: var(--app-switch-icon-bg);
 }
 
 .tasks-workspace .workspace-app-layout__main-scroll {

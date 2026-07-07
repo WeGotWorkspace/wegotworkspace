@@ -168,3 +168,12 @@
 .tasks-main-view__composer-actions {
   @apply mt-2 flex justify-end gap-2;
 }
+
+.tasks-main-view__add-submit.button--variant-primary {
+  background-color: var(--tasks-accent);
+  color: var(--color-ink);
+}
+
+.tasks-main-view__add-submit.button--variant-primary:hover {
+  opacity: 0.9;
+}

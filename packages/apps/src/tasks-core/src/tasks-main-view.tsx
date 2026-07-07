@@ -297,6 +297,7 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
                         type="submit"
                         variant="primary"
                         size="sm"
+                        className="tasks-main-view__add-submit"
                         disabled={!canCreate || !draft.title.trim()}
                       >
                         {L.addTaskButton}
