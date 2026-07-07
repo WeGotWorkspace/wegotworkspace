@@ -1,5 +1,9 @@
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
-import type { TasksAPIOperations, TasksUIData } from "@/tasks-core/src/tasks-types";
+import type {
+  TasksAPIOperations,
+  TaskProjectGroupOption,
+  TasksUIData,
+} from "@/tasks-core/src/tasks-types";
 import type { TasksUILabels } from "@/tasks-core/src/tasks-labels";
 
 export type TasksWorkspaceProps = {
@@ -15,3 +19,15 @@ export type TasksWorkspaceProps = {
   initialView?: string;
   onViewChange?: (view: string) => void;
 };
+
+export function taskProjectGroupsFromBootstrap(data: TasksUIData): TaskProjectGroupOption[] {
+  return data.groups ?? [];
+}
+
+export function personalOwnerLabel(session: WorkspaceSession): string {
+  const displayName = session.user.displayName?.trim();
+  if (displayName) return displayName;
+  const username = session.user.username?.trim();
+  if (username) return username;
+  return "Me";
+}

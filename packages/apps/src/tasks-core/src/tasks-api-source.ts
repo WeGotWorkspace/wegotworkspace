@@ -120,6 +120,8 @@ function createMockTasksOperations(
         name: body.name,
         color: body.color ?? null,
         role: body.role ?? null,
+        scope: body.groupSlug ? "group" : "personal",
+        groupSlug: body.groupSlug ?? null,
         isDefault: false,
       };
       updateTaskLists((lists) => [...lists, created]);

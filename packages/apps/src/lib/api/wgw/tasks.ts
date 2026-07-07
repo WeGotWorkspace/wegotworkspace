@@ -8,6 +8,7 @@ import type {
   TaskTaskListListResponse,
 } from "@wgw-api-generated/tasks-types";
 import type { TasksAppBootstrap } from "@/lib/api/mock/tasks-bootstrap";
+import type { TaskProjectGroupOption } from "@/tasks-core/src/tasks-types";
 import { wgwFetch, wgwFetchPrincipal, wgwReadJson } from "@/lib/api/wgw/http";
 
 export class TasksRequestError extends Error {
@@ -137,16 +138,34 @@ export async function deleteTaskList(
   );
 }
 
+export function mapTaskProjectGroups(
+  groups: { id: string; displayName: string }[],
+): TaskProjectGroupOption[] {
+  return groups.map((group) => {
+    const prefix = "principals/groups/";
+    const slug = group.id.startsWith(prefix) ? group.id.slice(prefix.length) : group.id;
+    return {
+      slug,
+      displayName: group.displayName?.trim() || slug,
+    };
+  });
+}
+
 export async function fetchTasksLiveBootstrap(): Promise<TasksAppBootstrap> {
   const session = await wgwFetchPrincipal();
 
   const settingsRes = await wgwFetch("/settings/state");
+  let groups: TaskProjectGroupOption[] = [];
   if (settingsRes.ok) {
     const settings = (await wgwReadJson(settingsRes)) as {
       apps?: { tasks?: boolean };
+      groups?: { id: string; displayName: string }[];
     };
     if (settings.apps?.tasks === false) {
       throw new Error("TASKS_SETTINGS_MISSING");
+    }
+    if (Array.isArray(settings.groups)) {
+      groups = mapTaskProjectGroups(settings.groups);
     }
   }
 
@@ -157,7 +176,7 @@ export async function fetchTasksLiveBootstrap(): Promise<TasksAppBootstrap> {
   const tasks = taskListsResults.flat();
 
   return {
-    data: { taskLists, tasks },
+    data: { taskLists, tasks, groups },
     session,
   };
 }

@@ -9,13 +9,16 @@ import {
   WorkspaceUserFooter,
 } from "@/workspace-shell/src/workspace-app-layout";
 import { ViewHeader } from "@/view-header/src/view-header";
-import { EditDialog } from "@/dialogs/src/dialogs";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import { cn } from "@/lib/utils";
 import { useDocumentTitle } from "@/lib/document-title";
 import type { TasksWorkspaceProps } from "@/tasks-core/src/tasks-workspace-props";
+import {
+  personalOwnerLabel,
+  taskProjectGroupsFromBootstrap,
+} from "@/tasks-core/src/tasks-workspace-props";
 import { TasksMainView, type TasksMainViewHandle } from "@/tasks-core/src/tasks-main-view";
-import { TaskProjectCreateDialog } from "@/tasks-core/src/task-project-create-dialog";
+import { TaskProjectDialog } from "@/tasks-core/src/task-project-dialog";
 import { useTasksController } from "@/tasks-core/src/use-tasks-controller";
 import { useTasksSidebarModel } from "@/tasks-core/src/use-tasks-sidebar-model";
 import { TasksEditDialog } from "@/tasks-core/src/tasks-edit-dialog";
@@ -78,13 +81,16 @@ export function TasksWorkspace({
     canManageProjects,
     canRenameProject,
     selectedList,
-    createProjectDialog,
-    setCreateProjectDialog,
-    projectRenameDialog,
-    setProjectRenameDialog,
+    projectDialog,
+    setProjectDialog,
+    openCreateProjectDialog,
+    openEditProjectDialog,
     createProject,
-    renameProject,
+    updateProject,
   } = controller;
+
+  const projectGroups = taskProjectGroupsFromBootstrap(data);
+  const ownerLabel = personalOwnerLabel(session);
 
   const { topSidebarItems, statusSidebarItems, prioritySidebarItems, projectSidebarItems } =
     useTasksSidebarModel({
@@ -135,7 +141,7 @@ export function TasksWorkspace({
               <SidebarSection
                 title={L.sidebarProjects}
                 items={projectSidebarItems}
-                onAdd={canManageProjects ? () => setCreateProjectDialog(true) : undefined}
+                onAdd={canManageProjects ? openCreateProjectDialog : undefined}
                 addLabel={L.newProject}
               />
             ) : null}
@@ -154,9 +160,7 @@ export function TasksWorkspace({
                 {canRenameProject && selectedList ? (
                   <IconButton
                     label={L.renameProject}
-                    onClick={() =>
-                      setProjectRenameDialog({ listId: selectedList.id, name: selectedList.name })
-                    }
+                    onClick={() => openEditProjectDialog(selectedList.id)}
                     icon={<Pencil className="size-4" aria-hidden />}
                     variant="subtle"
                   />
@@ -218,26 +222,32 @@ export function TasksWorkspace({
           void saveEditedTask(input);
         }}
       />
-      <TaskProjectCreateDialog
-        open={createProjectDialog}
-        onClose={() => setCreateProjectDialog(false)}
-        onConfirm={(name, color) => void createProject(name, color)}
+      <TaskProjectDialog
+        dialog={projectDialog}
+        groups={projectGroups}
+        personalOwnerLabel={ownerLabel}
+        onClose={() => setProjectDialog(null)}
+        onConfirm={(input) => {
+          if (!projectDialog) return;
+          if (projectDialog.mode === "create") {
+            void createProject(input);
+            return;
+          }
+          void updateProject(projectDialog.listId, input);
+        }}
         labels={{
-          title: L.newProject,
+          createTitle: L.newProject,
+          editTitle: L.renameProject,
           nameLabel: L.projectNameLabel,
           colorLabel: L.projectColorLabel,
+          scopeLabel: L.projectScopeLabel,
+          scopePersonal: L.projectScopePersonal,
+          scopePersonalDescription: L.projectScopePersonalDescription,
+          scopeGroup: L.projectScopeGroup,
+          scopeReadOnlyLabel: L.projectScopeReadOnlyLabel,
           createButton: L.createProjectButton,
+          saveButton: L.saveProjectButton,
           cancel: L.cancel,
-        }}
-        contentClassName="tasks-dialog-surface"
-      />
-      <EditDialog
-        item={projectRenameDialog ? { kind: "project", name: projectRenameDialog.name } : null}
-        title={L.renameProject}
-        onClose={() => setProjectRenameDialog(null)}
-        onConfirm={(newName) => {
-          if (!projectRenameDialog) return;
-          void renameProject(projectRenameDialog.listId, newName);
         }}
         contentClassName="tasks-dialog-surface"
       />

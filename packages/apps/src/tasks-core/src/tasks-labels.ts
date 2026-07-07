@@ -54,7 +54,13 @@ export type TasksUILabels = {
   renameProject: string;
   projectNameLabel: string;
   projectColorLabel: string;
+  projectScopeLabel: string;
+  projectScopePersonal: (ownerLabel: string) => string;
+  projectScopePersonalDescription: string;
+  projectScopeGroup: (name: string) => string;
+  projectScopeReadOnlyLabel: string;
   createProjectButton: string;
+  saveProjectButton: string;
   toastProjectCreated: string;
   toastProjectRenamed: (name: string) => string;
   toastProjectSaveFailed: string;
@@ -146,7 +152,13 @@ export const defaultTasksLabels: TasksUILabels = {
   renameProject: "Rename project",
   projectNameLabel: "Project name",
   projectColorLabel: "Color",
+  projectScopeLabel: "Owner",
+  projectScopePersonal: (ownerLabel) => `Personal (${ownerLabel})`,
+  projectScopePersonalDescription: "Only you can manage this project.",
+  projectScopeGroup: (name) => `Group: ${name}`,
+  projectScopeReadOnlyLabel: "Owner",
   createProjectButton: "Create",
+  saveProjectButton: "Save",
   toastProjectCreated: "Project created",
   toastProjectRenamed: (name) => `Renamed to ${name}`,
   toastProjectSaveFailed: "Could not save project",

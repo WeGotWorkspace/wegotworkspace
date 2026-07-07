@@ -104,16 +104,91 @@ describe("useTasksProjectMutations", () => {
     });
 
     await act(async () => {
-      await result.current.createProject("Launch", "#6366f1");
+      await result.current.createProject({
+        name: "Launch",
+        color: "#6366f1",
+        groupSlug: null,
+      });
     });
 
-    expect(createTaskList).toHaveBeenCalledWith({ name: "Launch", color: "#6366f1" });
+    expect(createTaskList).toHaveBeenCalledWith({
+      name: "Launch",
+      color: "#6366f1",
+    });
     expect(shell.current.taskLists.some((list) => list.id === "list-new")).toBe(true);
     expect(shell.current.view).toBe("list:list-new");
-    expect(result.current.createProjectDialog).toBe(false);
+    expect(result.current.projectDialog).toBe(null);
   });
 
-  it("renameProject skips protected lists and unchanged names", async () => {
+  it("createProject forwards groupSlug to the API", async () => {
+    const createTaskList = vi.fn().mockResolvedValue({
+      "@type": "TaskList" as const,
+      id: "roadmap",
+      name: "Roadmap",
+      color: "#22c55e",
+      scope: "group",
+      groupSlug: "team",
+      isDefault: false,
+    });
+    const { result } = renderProjectMutations({
+      createTask: vi.fn(),
+      patchTask: vi.fn(),
+      deleteTask: vi.fn(),
+      moveTaskToList: vi.fn(),
+      createTaskList,
+      patchTaskList: vi.fn(),
+    });
+
+    await act(async () => {
+      await result.current.createProject({
+        name: "Roadmap",
+        color: "#22c55e",
+        groupSlug: "team",
+      });
+    });
+
+    expect(createTaskList).toHaveBeenCalledWith({
+      name: "Roadmap",
+      color: "#22c55e",
+      groupSlug: "team",
+    });
+  });
+
+  it("updateProject patches name and color", async () => {
+    const patchTaskList = vi.fn().mockResolvedValue({
+      "@type": "TaskList" as const,
+      id: "default",
+      name: "Client work",
+      color: "#22c55e",
+      isDefault: false,
+    });
+    const { result } = renderProjectMutations(
+      {
+        createTask: vi.fn(),
+        patchTask: vi.fn(),
+        deleteTask: vi.fn(),
+        moveTaskToList: vi.fn(),
+        createTaskList: vi.fn(),
+        patchTaskList,
+      },
+      "list:default",
+    );
+
+    await act(async () => {
+      await result.current.updateProject("default", {
+        name: "Client work",
+        color: "#22c55e",
+      });
+    });
+
+    expect(patchTaskList).toHaveBeenCalledWith("default", {
+      name: "Client work",
+      color: "#22c55e",
+    });
+    expect(result.current.projectDialog).toBe(null);
+  });
+
+  it("updateProject skips protected lists and unchanged payloads", async () => {
     const patchTaskList = vi.fn();
     const { result } = renderProjectMutations(
       {
@@ -128,7 +203,10 @@ describe("useTasksProjectMutations", () => {
     );
 
     await act(async () => {
-      await result.current.renameProject("inbox", "Inbox");
+      await result.current.updateProject("inbox", {
+        name: "Inbox",
+        color: null,
+      });
     });
 
     expect(patchTaskList).not.toHaveBeenCalled();

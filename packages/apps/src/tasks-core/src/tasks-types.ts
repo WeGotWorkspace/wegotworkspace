@@ -10,9 +10,15 @@ import type {
 
 export type { Task, TaskAlert, TaskCreate, TaskList, TaskListCreate, TaskListPatch, TaskPatch };
 
+export type TaskProjectGroupOption = {
+  slug: string;
+  displayName: string;
+};
+
 export type TasksUIData = {
   taskLists: TaskList[];
   tasks: Task[];
+  groups?: TaskProjectGroupOption[];
 };
 
 export type TasksMutationOpts = {

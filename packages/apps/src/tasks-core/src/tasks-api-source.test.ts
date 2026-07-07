@@ -10,12 +10,16 @@ vi.mock("@/lib/api/wgw/http", () => ({
   wgwLiveApiEnabled: () => true,
 }));
 
-vi.mock("@/lib/api/wgw/tasks", () => ({
-  fetchTasksLiveBootstrap: (...args: unknown[]) => mockFetchTasksLiveBootstrap(...args),
-  createTask: (...args: unknown[]) => mockCreateTask(...args),
-  patchTask: (...args: unknown[]) => mockPatchTask(...args),
-  deleteTask: (...args: unknown[]) => mockDeleteTask(...args),
-}));
+vi.mock("@/lib/api/wgw/tasks", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/api/wgw/tasks")>();
+  return {
+    ...actual,
+    fetchTasksLiveBootstrap: (...args: unknown[]) => mockFetchTasksLiveBootstrap(...args),
+    createTask: (...args: unknown[]) => mockCreateTask(...args),
+    patchTask: (...args: unknown[]) => mockPatchTask(...args),
+    deleteTask: (...args: unknown[]) => mockDeleteTask(...args),
+  };
+});
 
 vi.mock("@/lib/api/create-workspace-source", () => ({
   createWorkspaceSource: <TSource>({ createLiveSource }: { createLiveSource: () => TSource }) =>

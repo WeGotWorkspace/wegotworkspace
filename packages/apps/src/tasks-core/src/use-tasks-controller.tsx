@@ -105,12 +105,12 @@ export function useTasksController({
     canManageProjects: projectMutations.canManageProjects,
     canRenameProject: projectMutations.canRenameProject,
     selectedList: projectMutations.selectedList,
-    createProjectDialog: projectMutations.createProjectDialog,
-    setCreateProjectDialog: projectMutations.setCreateProjectDialog,
-    projectRenameDialog: projectMutations.projectRenameDialog,
-    setProjectRenameDialog: projectMutations.setProjectRenameDialog,
+    projectDialog: projectMutations.projectDialog,
+    setProjectDialog: projectMutations.setProjectDialog,
+    openCreateProjectDialog: projectMutations.openCreateProjectDialog,
+    openEditProjectDialog: projectMutations.openEditProjectDialog,
     createProject: projectMutations.createProject,
-    renameProject: projectMutations.renameProject,
+    updateProject: projectMutations.updateProject,
   };
 }
 

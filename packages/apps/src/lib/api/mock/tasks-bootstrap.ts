@@ -2,6 +2,8 @@ import type { Task, TaskList } from "@wgw-api-generated/tasks-types";
 import type { TasksUIData } from "@/tasks-core/src/tasks-types";
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
+import { mapTaskProjectGroups } from "@/lib/api/wgw/tasks";
+import { createSettingsAppBootstrap } from "@/lib/api/mock/settings-bootstrap";
 
 export type TasksAppBootstrap = {
   data: TasksUIData;
@@ -133,10 +135,12 @@ const mockTasks: Task[] = [
 ];
 
 export function createTasksAppBootstrap(overrides?: Partial<TasksAppBootstrap>): TasksAppBootstrap {
+  const settingsBootstrap = createSettingsAppBootstrap();
   return {
     data: {
       taskLists: mockTaskLists,
       tasks: mockTasks,
+      groups: mapTaskProjectGroups(settingsBootstrap.data.groups),
     },
     session: mockWorkspaceSession,
     ...overrides,

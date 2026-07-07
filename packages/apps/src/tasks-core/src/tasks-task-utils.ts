@@ -217,7 +217,7 @@ export function defaultTaskListId(
   return preferred?.id ?? INBOX_TASK_LIST_ID;
 }
 
-const TASK_LIST_DOT_COLORS = [
+export const TASK_LIST_DOT_COLORS = [
   "#ea8c72",
   "#6366f1",
   "#f59e0b",
@@ -225,6 +225,8 @@ const TASK_LIST_DOT_COLORS = [
   "#22c55e",
   "#3b82f6",
 ] as const;
+
+export const DEFAULT_TASK_LIST_COLOR = TASK_LIST_DOT_COLORS[1];
 
 type TaskListColorSource = {
   id: string;
