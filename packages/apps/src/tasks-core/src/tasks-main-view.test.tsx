@@ -443,6 +443,15 @@ describe("TasksMainView composer", () => {
       (screen.getByRole("button", { name: defaultTasksLabels.addTaskButton }) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
+
+    const dueTrigger = screen.getByLabelText(defaultTasksLabels.addTaskDue);
+    const listTrigger = screen.getByLabelText(defaultTasksLabels.addTaskList);
+    const dueStyles = window.getComputedStyle(dueTrigger);
+    const listStyles = window.getComputedStyle(listTrigger);
+
+    expect(dueStyles.opacity).toBe(listStyles.opacity);
+    expect(dueStyles.color).toBe(listStyles.color);
+    expect(dueStyles.backgroundColor).toBe(listStyles.backgroundColor);
   });
 
   describe("composer due date labels", () => {

@@ -152,7 +152,7 @@
 }
 
 .tasks-main-view__composer-select {
-  @apply h-8 w-auto gap-1.5 border px-2 text-xs shadow-none;
+  @apply flex h-8 w-auto items-center gap-1.5 border px-2 text-xs shadow-none;
   border-color: color-mix(in oklab, var(--color-ink) 12%, transparent);
   background-color: transparent;
   --input-height: 2rem;
@@ -171,6 +171,11 @@
 
 .tasks-main-view__composer-select:disabled {
   @apply cursor-not-allowed opacity-50;
+  color: var(--input-color-disabled, var(--color-muted-foreground));
+  background-color: var(
+    --input-background-disabled,
+    color-mix(in oklab, var(--color-muted) 30%, var(--color-background))
+  );
 }
 
 .tasks-main-view__composer-select-option {
