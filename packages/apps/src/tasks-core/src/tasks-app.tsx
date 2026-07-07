@@ -10,7 +10,7 @@ export type TasksAppProps = {
 };
 
 export function TasksApp({ apiSource }: TasksAppProps = {}) {
-  const { initialView, initialTaskId, handleViewChange, handleTaskChange } = useTasksRouteSync();
+  const { initialView, handleViewChange } = useTasksRouteSync();
   const {
     phase,
     error,
@@ -55,9 +55,7 @@ export function TasksApp({ apiSource }: TasksAppProps = {}) {
             bootstrapRevision={bootstrapRevision}
             onRefreshList={refreshList}
             initialView={initialView}
-            initialTaskId={initialTaskId}
             onViewChange={handleViewChange}
-            onTaskChange={handleTaskChange}
             onLogout={() => {
               window.location.assign("/logout");
             }}

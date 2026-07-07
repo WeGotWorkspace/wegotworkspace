@@ -183,7 +183,7 @@ function MockContactsRoute() {
 function MockTasksRoute() {
   const onLogout = useWeGotWorkspaceLogout();
   const bootstrap = useMemo(() => createTasksAppBootstrap(), []);
-  const { initialView, initialTaskId, handleViewChange, handleTaskChange } = useTasksRouteSync();
+  const { initialView, handleViewChange } = useTasksRouteSync();
   const operations = useMemo(
     () => createDefaultTasksApiSource().createOperations(bootstrap),
     [bootstrap],
@@ -196,9 +196,7 @@ function MockTasksRoute() {
       listLoading={false}
       onLogout={onLogout}
       initialView={initialView}
-      initialTaskId={initialTaskId}
       onViewChange={handleViewChange}
-      onTaskChange={handleTaskChange}
     />
   );
 }
@@ -449,23 +447,9 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
     component: TasksComponent,
   });
 
-  const tasksStateAllTaskRoute = createRoute({
-    getParentRoute: () => wegotworkspaceRootRoute,
-    path: "/tasks/state/all/$taskId",
-    head: tasksPwaHead,
-    component: TasksComponent,
-  });
-
   const tasksStateRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/tasks/state/$stateSlug",
-    head: tasksPwaHead,
-    component: TasksComponent,
-  });
-
-  const tasksStateTaskRoute = createRoute({
-    getParentRoute: () => wegotworkspaceRootRoute,
-    path: "/tasks/state/$stateSlug/$taskId",
     head: tasksPwaHead,
     component: TasksComponent,
   });
@@ -477,23 +461,9 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
     component: TasksComponent,
   });
 
-  const tasksTagTaskRoute = createRoute({
-    getParentRoute: () => wegotworkspaceRootRoute,
-    path: "/tasks/tags/$tagSlug/$taskId",
-    head: tasksPwaHead,
-    component: TasksComponent,
-  });
-
   const tasksListRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/tasks/lists/$listId",
-    head: tasksPwaHead,
-    component: TasksComponent,
-  });
-
-  const tasksListTaskRoute = createRoute({
-    getParentRoute: () => wegotworkspaceRootRoute,
-    path: "/tasks/lists/$listId/$taskId",
     head: tasksPwaHead,
     component: TasksComponent,
   });
@@ -535,13 +505,9 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
     contactsGroupContactRoute,
     tasksIndexRoute,
     tasksStateAllRoute,
-    tasksStateAllTaskRoute,
     tasksStateRoute,
-    tasksStateTaskRoute,
     tasksTagRoute,
-    tasksTagTaskRoute,
     tasksListRoute,
-    tasksListTaskRoute,
     installRoute,
   ]);
 }

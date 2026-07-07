@@ -39,6 +39,18 @@ export type TasksUILabels = {
   remindCustom: string;
   kanbanToggle: string;
   listView: string;
+  addTaskName: string;
+  addTaskNamePlaceholder: string;
+  addTaskDescriptionPlaceholder: string;
+  addTaskList: string;
+  addTaskTag: string;
+  addTaskTagPlaceholder: string;
+  addTaskButton: string;
+  editTask: string;
+  editTaskPrompt: string;
+  markComplete: string;
+  markIncomplete: string;
+  taskActions: string;
   delete: string;
   deleteConfirmTitle: string;
   deleteConfirmBody: string;
@@ -93,6 +105,18 @@ export const defaultTasksLabels: TasksUILabels = {
   remindCustom: "Custom date & time",
   kanbanToggle: "Kanban",
   listView: "List",
+  addTaskName: "Task name",
+  addTaskNamePlaceholder: "What needs to be done?",
+  addTaskDescriptionPlaceholder: "Add notes (optional)",
+  addTaskList: "List",
+  addTaskTag: "Tag",
+  addTaskTagPlaceholder: "Add a tag (optional)",
+  addTaskButton: "Add task",
+  editTask: "Edit",
+  editTaskPrompt: "Task title",
+  markComplete: "Mark complete",
+  markIncomplete: "Mark incomplete",
+  taskActions: "Task actions",
   delete: "Delete",
   deleteConfirmTitle: "Delete task?",
   deleteConfirmBody: "This task will be removed from your list.",

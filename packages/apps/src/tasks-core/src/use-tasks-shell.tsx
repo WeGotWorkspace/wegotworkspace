@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check } from "lucide-react";
 import { useAppToast } from "@/hooks/use-app-toast";
-import type { WorkspaceAppHandle } from "@/workspace-app/src/workspace-app";
 import { mergeTasksLabels, type TasksUILabels } from "@/tasks-core/src/tasks-labels";
 import {
   collectTaskTags,
@@ -35,9 +34,10 @@ export function useTasksShell({
   const [taskLists, setTaskLists] = useState(() => data.taskLists);
   const [view, setView] = useState<string>(() => initialView ?? "state:all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [kanbanMode, setKanbanMode] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement | null>(null);
-  const workspaceLayoutRef = useRef<WorkspaceAppHandle>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return !window.matchMedia("(max-width: 767px)").matches;
+  });
 
   const { show, showError } = useAppToast();
   const showMutationError = useCallback(
@@ -74,16 +74,11 @@ export function useTasksShell({
   const selectedListId = view.startsWith("list:") ? view.slice(5) : null;
   const selectedTag = view.startsWith("tag:") ? view.slice(4) : null;
   const canCreateTask = Boolean(operations);
-  const showKanbanToggle = view.startsWith("list:");
 
   const selectView = useCallback((nextView: string) => {
     setView(nextView);
-    if (!nextView.startsWith("list:")) {
-      setKanbanMode(false);
-    }
-    workspaceLayoutRef.current?.closeMobileDetail();
     if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
-      workspaceLayoutRef.current?.closeSidebar();
+      setSidebarOpen(false);
     }
   }, []);
 
@@ -120,15 +115,12 @@ export function useTasksShell({
     viewLabel,
     searchQuery,
     setSearchQuery,
-    searchInputRef,
-    workspaceLayoutRef,
+    sidebarOpen,
+    setSidebarOpen,
     visibleTasks,
     selectedListId,
     selectedTag,
     canCreateTask,
-    showKanbanToggle,
-    kanbanMode,
-    setKanbanMode,
     selectView,
     listLoading,
     operations,

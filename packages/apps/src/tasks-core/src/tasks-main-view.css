@@ -1,0 +1,99 @@
+@import "../../styles.css" reference;
+
+.tasks-main-view {
+  @apply flex min-h-0 flex-1 flex-col bg-[var(--workspace-root-bg,var(--color-cream,#ffffff))];
+}
+
+.tasks-main-view__mobile-search {
+  @apply shrink-0 border-b px-4 py-3;
+  border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
+}
+
+.tasks-main-view__scroll {
+  @apply min-h-0 flex-1 overflow-y-auto;
+}
+
+.tasks-main-view__empty {
+  @apply px-4 py-10 text-center text-sm;
+  color: color-mix(in oklab, var(--color-ink) 65%, transparent);
+}
+
+.tasks-main-view__loading {
+  @apply flex items-center justify-center px-4 py-16;
+}
+
+.tasks-main-view__row {
+  @apply group relative flex items-start gap-3 border-b px-4 py-3;
+  border-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
+}
+
+.tasks-main-view__row--completed .tasks-main-view__title {
+  @apply line-through opacity-60;
+}
+
+.tasks-main-view__complete {
+  @apply mt-0.5 shrink-0 rounded-full p-0.5 transition-colors;
+  color: color-mix(in oklab, var(--color-ink) 45%, transparent);
+}
+
+.tasks-main-view__complete:hover {
+  color: var(--tasks-accent);
+}
+
+.tasks-main-view__complete--done {
+  color: var(--tasks-accent);
+}
+
+.tasks-main-view__body {
+  @apply min-w-0 flex-1;
+}
+
+.tasks-main-view__title {
+  @apply text-sm font-medium;
+  color: var(--color-ink);
+}
+
+.tasks-main-view__description {
+  @apply mt-0.5 text-xs;
+  color: color-mix(in oklab, var(--color-ink) 55%, transparent);
+}
+
+.tasks-main-view__meta {
+  @apply mt-1.5 flex items-center gap-1.5 text-xs;
+  color: color-mix(in oklab, var(--color-ink) 55%, transparent);
+}
+
+.tasks-main-view__list-dot {
+  @apply size-2 shrink-0 rounded-full;
+}
+
+.tasks-main-view__actions {
+  @apply shrink-0 opacity-0 transition-opacity;
+}
+
+.tasks-main-view__row:hover .tasks-main-view__actions,
+.tasks-main-view__row:focus-within .tasks-main-view__actions {
+  @apply opacity-100;
+}
+
+.tasks-main-view__add {
+  @apply shrink-0 border-t px-4 py-4 md:px-6;
+  border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
+  background-color: color-mix(in oklab, var(--color-ink) 3%, var(--color-cream, #ffffff));
+}
+
+.tasks-main-view__add-fields {
+  @apply grid gap-3;
+}
+
+.tasks-main-view__add-row {
+  @apply grid gap-3 md:grid-cols-2;
+}
+
+.tasks-main-view__list-select-trigger {
+  @apply flex w-full items-center gap-2;
+}
+
+.tasks-main-view__add-actions {
+  @apply mt-3 flex justify-end gap-2;
+}

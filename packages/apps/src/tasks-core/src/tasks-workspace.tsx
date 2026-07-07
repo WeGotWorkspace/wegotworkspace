@@ -1,20 +1,20 @@
-import { Plus } from "lucide-react";
+import { RefreshCw } from "lucide-react";
+import { TooltipProvider } from "@/ui/tooltip";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
-import { Button } from "@/button/src/button";
-import { MultiSelectionView } from "@/multi-selection-view/src/multi-selection-view";
-import { WorkspaceApp } from "@/workspace-app/src/workspace-app";
-import { WorkspaceUserFooter } from "@/workspace-shell/src/workspace-app-layout";
+import { IconButton } from "@/button/src/button";
+import {
+  WorkspaceAppLayout,
+  WorkspaceUserFooter,
+} from "@/workspace-shell/src/workspace-app-layout";
+import { ViewHeader } from "@/view-header/src/view-header";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import { cn } from "@/lib/utils";
 import { useDocumentTitle } from "@/lib/document-title";
 import type { TasksWorkspaceProps } from "@/tasks-core/src/tasks-workspace-props";
-import { TasksDetailEmpty, TasksDetailView } from "@/tasks-core/src/tasks-detail-view";
-import { TasksKanbanPanel } from "@/tasks-core/src/tasks-kanban-panel";
-import { TasksListPanel } from "@/tasks-core/src/tasks-list-panel";
+import { TasksMainView } from "@/tasks-core/src/tasks-main-view";
 import { useTasksController } from "@/tasks-core/src/use-tasks-controller";
 import { useTasksSidebarModel } from "@/tasks-core/src/use-tasks-sidebar-model";
-import { taskListTitle } from "@/tasks-core/src/tasks-task-utils";
 import "@/tasks-core/src/tasks-workspace.css";
 
 export function TasksWorkspace({
@@ -28,16 +28,8 @@ export function TasksWorkspace({
   onLogout,
   className,
   initialView,
-  initialTaskId,
   onViewChange,
-  onTaskChange,
 }: TasksWorkspaceProps) {
-  const closeSidebarOnMobile = (closeSidebar: () => void) => {
-    if (typeof window === "undefined") return;
-    if (!window.matchMedia("(max-width: 767px)").matches) return;
-    closeSidebar();
-  };
-
   const controller = useTasksController({
     data,
     labels,
@@ -45,48 +37,33 @@ export function TasksWorkspace({
     operations,
     bootstrapRevision,
     initialView,
-    initialTaskId,
     onViewChange,
-    onTaskChange,
   });
 
   const {
     L,
-    active,
-    activeId,
     view,
     viewLabel,
     visibleTasks,
-    selectedIds,
-    selectionMode,
     canCreateTask,
-    showKanbanToggle,
-    kanbanMode,
-    setKanbanMode,
     searchQuery,
-    searchInputRef,
-    workspaceLayoutRef,
-    isTouch,
+    sidebarOpen,
+    setSidebarOpen,
     confirmDialog,
     tags,
     taskLists,
-    handleSelect,
-    enterSelectionFor,
     selectView,
     setSearchQuery,
-    createTask,
-    updateActiveTask,
+    createTaskFromForm,
+    toggleTaskComplete,
+    editTask,
+    requestDeleteTask,
     moveToList,
     assignTagToTasks,
-    toggleTaskTag,
-    setAlerts,
-    openDeleteConfirm,
-    selectionBar,
-    selectionBarButtons,
+    createListId,
     isItemDragging,
     itemDragHandlers,
     sidebarDropZoneProps,
-    dragToKanbanColumn,
   } = controller;
 
   const { stateSidebarItems, tagSidebarItems, listSidebarItems } = useTasksSidebarModel({
@@ -100,21 +77,16 @@ export function TasksWorkspace({
     assignTagToTasks,
   });
 
-  const browserTitleContext =
-    active && selectedIds.length <= 1 ? taskListTitle(active, L.untitledTask) : viewLabel;
-  useDocumentTitle(browserTitleContext);
+  useDocumentTitle(viewLabel);
 
   return (
-    <>
-      <WorkspaceApp
-        ref={workspaceLayoutRef}
-        workspaceRoot={{
-          className: cn("tasks-workspace", className),
-        }}
-        sidebar={(c) => (
+    <TooltipProvider delayDuration={300}>
+      <WorkspaceAppLayout
+        className={cn("tasks-workspace", className)}
+        sidebar={
           <AppSidebar
-            open={c.sidebarOpen}
-            onCloseMobile={c.closeSidebar}
+            open={sidebarOpen}
+            onCloseMobile={() => setSidebarOpen(false)}
             footer={
               <WorkspaceUserFooter
                 name={session.user.displayName}
@@ -123,22 +95,6 @@ export function TasksWorkspace({
                 onLogoutClick={onLogout}
               />
             }
-            primaryButton={
-              <Button
-                disabled={!canCreateTask}
-                onClick={() => {
-                  void createTask();
-                  closeSidebarOnMobile(c.closeSidebar);
-                }}
-                icon={<Plus className="size-4" />}
-                size="lg"
-                pill
-                variant="primary"
-                className="w-full"
-              >
-                {L.newTask}
-              </Button>
-            }
           >
             <SidebarSection title={L.sidebarStates} items={stateSidebarItems} />
             {tagSidebarItems.length > 0 ? (
@@ -146,105 +102,57 @@ export function TasksWorkspace({
             ) : null}
             <SidebarSection title={L.sidebarLists} items={listSidebarItems} />
           </AppSidebar>
-        )}
-        list={(c) => {
-          if (kanbanMode && showKanbanToggle) {
-            const panel = TasksListPanel({
-              L,
-              sidebarOpen: c.sidebarOpen,
-              onToggleSidebar: c.toggleSidebar,
-              viewLabel,
-              selectedIds,
-              selectionMode: selectionMode || selectedIds.length > 1,
-              listLoading,
-              visibleTasks,
-              searchQuery,
-              setSearchQuery,
-              searchInputRef,
-              activeId,
-              isTouch,
-              isItemDragging,
-              handleSelect,
-              enterSelectionFor,
-              itemDragHandlers,
-              selectionBar,
-              showKanbanToggle,
-              kanbanMode,
-              onKanbanModeChange: setKanbanMode,
-              onRefreshList,
-            });
-            return {
-              ...panel,
-              listContent: (
-                <TasksKanbanPanel
-                  labels={L}
-                  tasks={visibleTasks}
-                  activeId={activeId}
-                  onSelect={(taskId) =>
-                    handleSelect(taskId, {
-                      metaKey: false,
-                      ctrlKey: false,
-                      shiftKey: false,
-                    } as React.MouseEvent)
+        }
+        mainHeader={
+          <ViewHeader
+            sidebarOpen={sidebarOpen}
+            onToggleSidebar={() => setSidebarOpen((open) => !open)}
+            title={viewLabel}
+            subtitle={L.listTasks(visibleTasks.length)}
+            searchPlaceholder={L.searchPlaceholder}
+            searchValue={searchQuery}
+            onSearchInput={setSearchQuery}
+            actions={
+              onRefreshList ? (
+                <IconButton
+                  label={L.refreshList}
+                  onClick={onRefreshList}
+                  disabled={listLoading}
+                  icon={
+                    <RefreshCw
+                      className={cn("size-4", listLoading && "animate-spin")}
+                      aria-hidden
+                    />
                   }
-                  onMove={dragToKanbanColumn}
+                  size="sm"
+                  variant="subtle"
                 />
-              ),
-              hasItems: visibleTasks.length > 0,
-            };
-          }
-          return TasksListPanel({
-            L,
-            sidebarOpen: c.sidebarOpen,
-            onToggleSidebar: c.toggleSidebar,
-            viewLabel,
-            selectedIds,
-            selectionMode: selectionMode || selectedIds.length > 1,
-            listLoading,
-            visibleTasks,
-            searchQuery,
-            setSearchQuery,
-            searchInputRef,
-            activeId,
-            isTouch,
-            isItemDragging,
-            handleSelect,
-            enterSelectionFor,
-            itemDragHandlers,
-            selectionBar,
-            showKanbanToggle,
-            kanbanMode,
-            onKanbanModeChange: setKanbanMode,
-            onRefreshList,
-          });
-        }}
-        detail={() => {
-          if (selectedIds.length > 1) {
-            return (
-              <MultiSelectionView
-                count={selectedIds.length}
-                label="Multiple selection"
-                title={(count) => `${count} ${count === 1 ? "task" : "tasks"} selected`}
-                actions={selectionBarButtons}
-              />
-            );
-          }
-          if (!active) {
-            return <TasksDetailEmpty labels={L} />;
-          }
-          return (
-            <TasksDetailView
-              task={active}
-              labels={L}
-              onUpdate={updateActiveTask}
-              onDelete={openDeleteConfirm}
-              onToggleTag={toggleTaskTag}
-              onSetAlerts={setAlerts}
-            />
-          );
-        }}
+              ) : null
+            }
+          />
+        }
+        main={
+          <TasksMainView
+            L={L}
+            listLoading={listLoading}
+            visibleTasks={visibleTasks}
+            taskLists={taskLists}
+            defaultListId={createListId}
+            searchQuery={searchQuery}
+            onSearchInput={setSearchQuery}
+            canCreate={canCreateTask}
+            onToggleComplete={toggleTaskComplete}
+            onEditTask={editTask}
+            onDeleteTask={requestDeleteTask}
+            onCreateTask={(input) => {
+              void createTaskFromForm(input);
+            }}
+            itemDragHandlers={itemDragHandlers}
+            isItemDragging={isItemDragging}
+          />
+        }
       />
       {confirmDialog}
-    </>
+    </TooltipProvider>
   );
 }

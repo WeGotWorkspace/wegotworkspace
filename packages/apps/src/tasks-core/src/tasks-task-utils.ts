@@ -114,6 +114,35 @@ export function defaultTaskListId(taskLists: { id: string; isDefault?: boolean }
   return preferred?.id ?? "default";
 }
 
+const TASK_LIST_DOT_COLORS = [
+  "#14b8a6",
+  "#6366f1",
+  "#f59e0b",
+  "#ec4899",
+  "#22c55e",
+  "#3b82f6",
+] as const;
+
+export function taskListDotColor(listId: string): string {
+  let hash = 0;
+  for (let index = 0; index < listId.length; index += 1) {
+    hash = (hash * 31 + listId.charCodeAt(index)) >>> 0;
+  }
+  return TASK_LIST_DOT_COLORS[hash % TASK_LIST_DOT_COLORS.length] ?? TASK_LIST_DOT_COLORS[0];
+}
+
+export function taskListName(
+  listId: string | null | undefined,
+  taskLists: { id: string; name: string }[],
+): string {
+  if (!listId) return "";
+  return taskLists.find((list) => list.id === listId)?.name ?? listId;
+}
+
+export function isTaskCompleted(task: Task): boolean {
+  return task.workflowStatus === "completed" || task.workflowStatus === "cancelled";
+}
+
 export function formatTaskDue(task: Task): string | null {
   const due = parseDueDate(task);
   if (!due) return null;

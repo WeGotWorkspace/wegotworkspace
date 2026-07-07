@@ -1,5 +1,3 @@
-import { useCallback } from "react";
-import { useWorkspaceListKeyboardShortcuts } from "@/hooks/use-workspace-list-keyboard-shortcuts";
 import type { TasksUILabels } from "@/tasks-core/src/tasks-labels";
 import type { TasksAPIOperations, TasksUIData } from "@/tasks-core/src/tasks-types";
 import { useTasksList } from "@/tasks-core/src/use-tasks-list";
@@ -13,9 +11,7 @@ type UseTasksControllerArgs = {
   operations?: TasksAPIOperations;
   bootstrapRevision?: number;
   initialView?: string;
-  initialTaskId?: string;
   onViewChange?: (view: string) => void;
-  onTaskChange?: (taskId: string) => void;
 };
 
 export function useTasksController({
@@ -25,9 +21,7 @@ export function useTasksController({
   operations,
   bootstrapRevision = 0,
   initialView,
-  initialTaskId,
   onViewChange,
-  onTaskChange,
 }: UseTasksControllerArgs) {
   const shell = useTasksShell({
     data,
@@ -38,69 +32,36 @@ export function useTasksController({
     initialView,
     onViewChange,
   });
-  const list = useTasksList({ shell, initialTaskId, onTaskChange });
+  const list = useTasksList({ shell });
+  const mutations = useTasksMutations({ shell });
 
-  const selectView = useCallback(
-    (nextView: string) => {
-      list.setActiveId("");
-      shell.selectView(nextView);
-    },
-    [list, shell],
-  );
-
-  const mutations = useTasksMutations({ shell, list });
-
-  useWorkspaceListKeyboardShortcuts({
-    searchInputRef: shell.searchInputRef,
-    selectedCount: list.selectedIds.length,
-    selectionMode: list.selectionMode,
-    onRequestDeleteSelection: mutations.requestDeleteSelected,
-    onNavigateList: list.navigateListByKeyboard,
-    onUndoQueuedAction: list.undoLatest,
-  });
+  const selectView = shell.selectView;
 
   return {
     L: shell.L,
-    tasks: shell.tasks,
     taskLists: shell.taskLists,
     tags: shell.tags,
-    active: list.active,
-    activeId: list.activeId,
     view: shell.view,
     viewLabel: shell.viewLabel,
-    selectedIds: list.selectedIds,
-    selectionMode: list.selectionMode,
     canCreateTask: shell.canCreateTask,
-    selectedListId: shell.selectedListId,
-    selectedTag: shell.selectedTag,
-    showKanbanToggle: shell.showKanbanToggle,
-    kanbanMode: shell.kanbanMode,
-    setKanbanMode: shell.setKanbanMode,
     searchQuery: shell.searchQuery,
-    searchInputRef: shell.searchInputRef,
     visibleTasks: shell.visibleTasks,
-    workspaceLayoutRef: shell.workspaceLayoutRef,
-    isTouch: list.isTouch,
+    sidebarOpen: shell.sidebarOpen,
+    setSidebarOpen: shell.setSidebarOpen,
     listLoading: shell.listLoading,
+    createListId: shell.createListId,
     isItemDragging: list.isItemDragging,
     itemDragHandlers: list.itemDragHandlers,
     sidebarDropZoneProps: list.sidebarDropZoneProps,
-    selectionBar: mutations.selectionBar,
-    selectionBarButtons: mutations.selectionBarButtons,
     confirmDialog: mutations.confirmDialog,
-    handleSelect: list.handleSelect,
-    enterSelectionFor: list.enterSelectionFor,
     selectView,
     setSearchQuery: shell.setSearchQuery,
-    createTask: mutations.createTask,
-    updateActiveTask: mutations.updateActiveTask,
+    createTaskFromForm: mutations.createTaskFromForm,
+    toggleTaskComplete: mutations.toggleTaskComplete,
+    editTask: mutations.editTask,
+    requestDeleteTask: mutations.requestDeleteTask,
     moveToList: mutations.moveToList,
     assignTagToTasks: mutations.assignTagToTasks,
-    toggleTaskTag: mutations.toggleTaskTag,
-    setAlerts: mutations.setAlerts,
-    openDeleteConfirm: mutations.openDeleteConfirm,
-    requestDeleteSelected: mutations.requestDeleteSelected,
-    dragToKanbanColumn: mutations.dragToKanbanColumn,
   };
 }
 

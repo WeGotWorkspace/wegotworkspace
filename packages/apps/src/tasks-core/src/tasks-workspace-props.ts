@@ -13,7 +13,5 @@ export type TasksWorkspaceProps = {
   onLogout?: () => void;
   className?: string;
   initialView?: string;
-  initialTaskId?: string;
   onViewChange?: (view: string) => void;
-  onTaskChange?: (taskId: string) => void;
 };

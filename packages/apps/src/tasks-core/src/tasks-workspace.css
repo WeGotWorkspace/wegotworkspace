@@ -1,3 +1,4 @@
+@import "../../styles.css" reference;
 @import "../../workspace-shell/src/workspace-split-app.css";
 
 /**
@@ -37,17 +38,23 @@
   --button-subtle-hover-background: color-mix(in oklab, var(--color-ink) 16%, transparent);
 }
 
+.tasks-workspace .workspace-app-layout__main-scroll {
+  @apply flex flex-col;
+}
+
+.tasks-workspace .workspace-app-layout__main-content {
+  @apply mx-0 flex min-h-full flex-1 flex-col w-full max-w-none px-0 py-0;
+}
+
+.tasks-workspace .view-header__search-stack {
+  @apply hidden sm:block;
+}
+
 .tasks-story-scope {
   min-height: 100dvh;
   background-color: var(--workspace-root-bg, var(--color-cream, #ffffff));
 }
 
-.tasks-story-scope--list-column {
-  display: flex;
-  min-height: 100dvh;
-  justify-content: center;
-}
-
-.tasks-story-scope--detail {
+.tasks-story-scope--main {
   min-height: 100dvh;
 }
