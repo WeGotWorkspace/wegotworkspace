@@ -33,10 +33,11 @@ Planned incremental sync ([#158](https://github.com/WeGotWorkspace/wegotworkspac
 - Task list REST CRUD (CalDAV-only — [#157](https://github.com/WeGotWorkspace/wegotworkspace/issues/157))
 - Server-side recurrence instance expansion
 
-## Implementation
+## Persistence
 
 - Converters: `app/Services/Tasks/Conversion/`
 - Persistence: Sabre CalDAV PDO (`calendarobjects`, `calendarinstances`)
 - Feature gate: `tasks_enabled` setting (mirror `contacts_enabled`)
+- Default task list: VTODO-only CalDAV collection uri `inbox` (display name "Inbox"), provisioned on install and upgrade via `InboxTaskListProvisioner` / `wgw:tasks:provision-inbox`
 
 Conversion detail: [ics-jmap-task-conversion-matrix.md](./ics-jmap-task-conversion-matrix.md) (filled in with #134).

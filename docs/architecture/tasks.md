@@ -392,7 +392,7 @@ Full matrix: [`packages/api/docs/tasks/ics-jmap-task-conversion-matrix.md`](../p
 - **ACL:** `calendarinstances.access` (1=owner, 2=read, 3=read-write); CalDAV sharing plugin.
 - **REST paths (canonical):** `/api/v1/tasks/tasklists`, `/api/v1/tasks/items` ([#134](https://github.com/WeGotWorkspace/wegotworkspace/issues/134) — not `/tasks/tasks`).
 
-**Installer note:** Fresh installs should seed separate VEVENT calendar + VTODO task list ([#332](https://github.com/WeGotWorkspace/wegotworkspace/issues/332)). Legacy mixed default calendar (`VEVENT,VTODO,VJOURNAL`) may exist until migration.
+**Installer note:** Fresh installs seed a VEVENT calendar (`default`, uri slug `default`) plus a VTODO-only **Inbox** task list (`inbox`, display name "Inbox"). Upgrade path: wgw migration `2026_07_07_000130_wgw_provision_inbox_task_lists` and artisan `wgw:tasks:provision-inbox` (idempotent). Legacy mixed default calendar (`VEVENT,VTODO,VJOURNAL`) may still appear as a task list until [#332](https://github.com/WeGotWorkspace/wegotworkspace/issues/332) migration renames or splits it.
 
 **Synctoken / changes:** Per-collection `calendarchanges` + `synctoken` — same as Calendar ([jmap-sync-rest-mapping.md](../packages/api/docs/contacts/jmap-sync-rest-mapping.md)).
 

@@ -4,6 +4,7 @@ use App\Services\Contacts\GroupMemberUriBackfill;
 use App\Services\Installer\DevInstallBootstrap;
 use App\Services\Installer\InstallerJwtKeyGenerator;
 use App\Services\Installer\WgwSchemaMigrator;
+use App\Services\Tasks\InboxTaskListProvisioner;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 
@@ -56,3 +57,15 @@ Artisan::command('wgw:contacts:sanitize-group-member-uris', function (GroupMembe
 
     return self::SUCCESS;
 })->purpose('Repair macOS-corrupt group member URIs in stored contact vCards');
+
+Artisan::command('wgw:tasks:provision-inbox', function (InboxTaskListProvisioner $provisioner): int {
+    $result = $provisioner->ensureForAllUsers();
+    $this->info(sprintf(
+        'Scanned %d user(s); created Inbox for %d; skipped %d (already present).',
+        $result['scanned'],
+        $result['created'],
+        $result['skipped'],
+    ));
+
+    return self::SUCCESS;
+})->purpose('Ensure each user has a VTODO-only Inbox task list (idempotent)');
