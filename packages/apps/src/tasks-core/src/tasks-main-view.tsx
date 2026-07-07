@@ -355,6 +355,14 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
                 ) : null}
 
                 <div className="tasks-main-view__composer-meta">
+                  <TasksComposerDuePicker
+                    labels={L}
+                    value={draft.due}
+                    onChange={(due) => setDraft((prev) => ({ ...prev, due }))}
+                    disabled={!canCreate}
+                    triggerClassName={COMPOSER_SELECT_TRIGGER_CLASS}
+                  />
+
                   <Select
                     value={draft.listId}
                     onValueChange={(listId) => setDraft((prev) => ({ ...prev, listId }))}
@@ -445,14 +453,6 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
                       ))}
                     </SelectContent>
                   </Select>
-
-                  <TasksComposerDuePicker
-                    labels={L}
-                    value={draft.due}
-                    onChange={(due) => setDraft((prev) => ({ ...prev, due }))}
-                    disabled={!canCreate}
-                    triggerClassName={COMPOSER_SELECT_TRIGGER_CLASS}
-                  />
                 </div>
 
                 <div className="tasks-main-view__composer-actions">

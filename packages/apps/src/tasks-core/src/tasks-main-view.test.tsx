@@ -352,6 +352,25 @@ describe("TasksMainView composer", () => {
     expect(dueTrigger.querySelector(".lucide-calendar-days")).toBeTruthy();
   });
 
+  it("renders due date before list, status, and priority in the composer", () => {
+    renderComposer();
+
+    const meta = document.querySelector(".tasks-main-view__composer-meta");
+    expect(meta).toBeTruthy();
+
+    const controls = meta!.querySelectorAll(
+      "button[aria-label], button.select-trigger[aria-label]",
+    );
+    const labels = Array.from(controls).map((control) => control.getAttribute("aria-label"));
+
+    expect(labels).toEqual([
+      defaultTasksLabels.addTaskDue,
+      defaultTasksLabels.addTaskList,
+      defaultTasksLabels.addTaskStatus,
+      defaultTasksLabels.addTaskPriority,
+    ]);
+  });
+
   it("submits optional due date with createTask when selected", () => {
     const onCreateTask = vi.fn();
     renderComposer(onCreateTask);
