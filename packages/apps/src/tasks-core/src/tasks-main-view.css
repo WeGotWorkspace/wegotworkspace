@@ -137,7 +137,7 @@
   @apply mt-2 flex flex-wrap items-center gap-2;
 }
 
-.tasks-main-view__composer-list-select {
+.tasks-main-view__composer-select {
   @apply h-8 w-auto gap-1.5 border px-2 text-xs shadow-none;
   border-color: color-mix(in oklab, var(--color-ink) 12%, transparent);
   background-color: transparent;
@@ -146,36 +146,13 @@
   height: 2rem;
 }
 
-.tasks-main-view__composer-list-select:focus,
-.tasks-main-view__composer-list-select[data-state="open"] {
+.tasks-main-view__composer-select:focus,
+.tasks-main-view__composer-select[data-state="open"] {
   background-color: transparent;
 }
 
-.tasks-main-view__list-select-option {
+.tasks-main-view__composer-select-option {
   @apply flex items-center gap-2;
-}
-
-.tasks-main-view__composer-tag {
-  @apply flex items-center gap-1 rounded-md border px-2 py-1;
-  border-color: color-mix(in oklab, var(--color-ink) 12%, transparent);
-}
-
-.tasks-main-view__composer-tag-icon {
-  @apply size-3 shrink-0;
-  color: color-mix(in oklab, var(--color-ink) 55%, transparent);
-}
-
-.tasks-main-view__composer-tag-input {
-  @apply w-16 border-0 bg-transparent text-xs outline-none;
-  color: var(--color-ink);
-}
-
-.tasks-main-view__composer-tag-input::placeholder {
-  color: color-mix(in oklab, var(--color-ink) 40%, transparent);
-}
-
-.tasks-main-view__composer-tag-input:disabled {
-  @apply cursor-not-allowed opacity-50;
 }
 
 .tasks-main-view__composer-actions {
