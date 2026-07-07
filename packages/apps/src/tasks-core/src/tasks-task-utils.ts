@@ -141,7 +141,7 @@ export function defaultTaskListId(
 }
 
 const TASK_LIST_DOT_COLORS = [
-  "#14b8a6",
+  "#f97316",
   "#6366f1",
   "#f59e0b",
   "#ec4899",

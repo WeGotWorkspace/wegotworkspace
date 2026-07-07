@@ -5,17 +5,17 @@
   "scope": "/tasks",
   "id": "/tasks",
   "display": "standalone",
-  "background_color": "#14b8a6",
-  "theme_color": "#14b8a6",
+  "background_color": "#f97316",
+  "theme_color": "#f97316",
   "icons": [
     {
-      "src": "/app-icons/tasks.svg?v=2",
+      "src": "/app-icons/tasks.svg?v=3",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "/pwa-icons/tasks-180.png?v=2",
+      "src": "/pwa-icons/tasks-180.png?v=3",
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"

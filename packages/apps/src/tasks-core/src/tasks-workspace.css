@@ -2,7 +2,7 @@
 @import "../../workspace-shell/src/workspace-split-app.css";
 
 /**
- * Tasks product shell: cream main pane + light teal sidebar tint.
+ * Tasks product shell: cream main pane + light warm sidebar tint.
  * Ink-on-tint lockup matches {@link notes-workspace.css} (dark text on light accent wash).
  * Import only from {@link TasksWorkspace}.
  */
@@ -10,7 +10,7 @@
   /* Readable todo column — matches contacts/mail detail measure (680px). */
   --workspace-main-content-max-width: 42.5rem;
 
-  --tasks-accent: #14b8a6;
+  --tasks-accent: #f97316;
   --tasks-sidebar: color-mix(in oklab, var(--tasks-accent) 12%, var(--color-cream, #ffffff));
   --workspace-accent: var(--tasks-accent);
   --color-emerald: var(--tasks-accent);
