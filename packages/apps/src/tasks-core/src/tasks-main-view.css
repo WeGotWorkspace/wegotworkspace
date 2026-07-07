@@ -155,8 +155,33 @@
   background-color: transparent;
 }
 
+.tasks-main-view__composer-select:focus-visible {
+  @apply ring-2 ring-ring ring-offset-1;
+}
+
 .tasks-main-view__composer-select-option {
   @apply flex items-center gap-2;
+}
+
+@media (pointer: coarse) {
+  .tasks-main-view__composer-meta {
+    gap: 0.5rem;
+  }
+
+  .tasks-main-view__composer-select {
+    --input-height: 2.75rem;
+    min-height: 2.75rem;
+    height: 2.75rem;
+    padding-inline: 0.75rem;
+    font-size: 0.875rem;
+    gap: 0.5rem;
+  }
+
+  .tasks-main-view__composer-select-item {
+    min-height: 2.75rem;
+    padding-block: 0.625rem;
+    font-size: 0.875rem;
+  }
 }
 
 .tasks-main-view__composer-actions {
