@@ -8265,6 +8265,13 @@ export interface components {
             sortOrder: number;
             isDefault: boolean;
             isSubscribed: boolean;
+            /**
+             * @description Storage scope: personal (users/{username}) or group (groups/{slug}).
+             * @enum {string}
+             */
+            scope: "personal" | "group";
+            /** @description Group slug when scope is group; null for personal task lists. */
+            groupSlug: string | null;
             shareWith?: Record<string, never> | null;
             myRights: components["schemas"]["TaskListRights"];
         };

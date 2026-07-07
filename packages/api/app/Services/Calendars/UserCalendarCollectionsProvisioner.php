@@ -143,7 +143,21 @@ final class UserCalendarCollectionsProvisioner
         $existingUris = $this->calendarUrisForPrincipal($caldav, $groupPrincipalUri);
         $name = trim($displayName) !== '' ? trim($displayName) : $slug;
 
-        return $this->ensureEventCalendar($caldav, $groupPrincipalUri, $slug, $name, $existingUris);
+        $created = false;
+        if ($this->ensureEventCalendar($caldav, $groupPrincipalUri, $slug, $name, $existingUris)) {
+            $created = true;
+        }
+        if ($this->ensureTaskList(
+            $caldav,
+            $groupPrincipalUri,
+            CalendarCollectionUris::groupTaskListCalDavUri($slug),
+            $name,
+            $existingUris,
+        )) {
+            $created = true;
+        }
+
+        return $created;
     }
 
     /**

@@ -6,6 +6,7 @@ namespace App\Services\Admin;
 
 use App\Models\GroupMember;
 use App\Models\Principal;
+use App\Services\Calendars\UserCalendarCollectionsProvisioner;
 use App\Services\Installer\InstallerSeeder;
 use App\Services\Settings\GroupDirectoryService;
 use App\Support\AppPaths;
@@ -15,6 +16,7 @@ final class AdminGroupManagementService
     public function __construct(
         private GroupDirectoryService $groups,
         private InstallerSeeder $installerSeeder,
+        private UserCalendarCollectionsProvisioner $calendarCollections,
         private AppPaths $paths,
     ) {}
 
@@ -36,6 +38,7 @@ final class AdminGroupManagementService
         ]);
 
         $this->ensureGroupFilesDirectory($slug);
+        $this->calendarCollections->ensureForGroupPrincipal($uri, $displayName !== '' ? $displayName : $slug);
 
         return $uri;
     }

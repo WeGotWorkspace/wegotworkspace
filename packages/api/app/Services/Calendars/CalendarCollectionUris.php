@@ -40,4 +40,23 @@ final class CalendarCollectionUris
     {
         return array_merge(self::reservedTaskUris(), self::reservedEventUris());
     }
+
+    public static function groupTaskListCalDavUri(string $groupSlug): string
+    {
+        return 'tasks-'.$groupSlug;
+    }
+
+    public static function groupTaskListApiId(string $groupSlug): string
+    {
+        return 'group-'.$groupSlug;
+    }
+
+    public static function parseGroupTaskListApiId(string $taskListId): ?string
+    {
+        if (preg_match('#^group-([A-Za-z0-9._-]{1,190})$#', $taskListId, $matches) !== 1) {
+            return null;
+        }
+
+        return $matches[1];
+    }
 }

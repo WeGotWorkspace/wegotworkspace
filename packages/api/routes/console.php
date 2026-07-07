@@ -102,4 +102,4 @@ Artisan::command('wgw:calendars:provision-collections', function (UserCalendarCo
     ));
 
     return self::SUCCESS;
-})->purpose('Provision home/work VEVENT calendars, tasks-home/tasks-work/inbox VTODO lists, and group VEVENT calendars (idempotent)');
+})->purpose('Provision home/work VEVENT calendars, tasks-home/tasks-work/inbox VTODO lists, and group VEVENT + VTODO calendars (idempotent)');

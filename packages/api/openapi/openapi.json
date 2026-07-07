@@ -573,6 +573,8 @@
           "sortOrder",
           "isDefault",
           "isSubscribed",
+          "scope",
+          "groupSlug",
           "myRights"
         ],
         "properties": {
@@ -608,6 +610,21 @@
           },
           "isSubscribed": {
             "type": "boolean"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "personal",
+              "group"
+            ],
+            "description": "Storage scope: personal (users/{username}) or group (groups/{slug})."
+          },
+          "groupSlug": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Group slug when scope is group; null for personal task lists."
           },
           "shareWith": {
             "type": [

@@ -60,7 +60,7 @@ final class UserCalendarCollectionsProvisionerTest extends WgwDatabaseTestCase
         $this->assertSame(0, $second['created']);
     }
 
-    public function test_group_provisioner_creates_vevent_calendar_for_group_slug(): void
+    public function test_group_provisioner_creates_vevent_and_vtodo_calendars_for_group_slug(): void
     {
         $group = $this->seedWgwGroup('principals/groups/engineering', 'Engineering');
         $this->assertTrue(
@@ -77,7 +77,9 @@ final class UserCalendarCollectionsProvisionerTest extends WgwDatabaseTestCase
         }
 
         $this->assertArrayHasKey('engineering', $byUri);
+        $this->assertArrayHasKey('tasks-engineering', $byUri);
         $this->assertSame(['VEVENT', 'VJOURNAL'], $this->componentSetFor($byUri['engineering']));
+        $this->assertSame(['VTODO'], $this->componentSetFor($byUri['tasks-engineering']));
     }
 
     /**

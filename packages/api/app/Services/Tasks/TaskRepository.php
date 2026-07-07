@@ -8,6 +8,8 @@ use App\Exceptions\ApiHttpException;
 use App\Http\Support\OptimisticConcurrency;
 use App\Models\CalendarInstance;
 use App\Models\CalendarObject;
+use App\Services\Admin\AdminConstants;
+use App\Services\Drive\DriveGroupResolver;
 use App\Services\Search\BestEffortSearchIndexSync;
 use App\Services\Search\SearchIndexerService;
 use App\Services\Tasks\Conversion\ConversionSupport;
@@ -22,6 +24,7 @@ final class TaskRepository
         private readonly TaskMapper $mapper,
         private readonly TaskListRepository $taskLists,
         private readonly SearchIndexerService $searchIndexer,
+        private readonly DriveGroupResolver $groups,
         private readonly BestEffortSearchIndexSync $searchIndexSync = new BestEffortSearchIndexSync,
     ) {}
 
@@ -30,7 +33,7 @@ final class TaskRepository
      */
     public function list(string $username, string $taskListId): array
     {
-        $instance = $this->taskLists->findOwnedTaskList($username, $taskListId);
+        $instance = $this->taskLists->findAccessibleTaskList($username, $taskListId);
         if ($instance === null) {
             throw new ApiHttpException(404, 'Task list not found.', 'not_found');
         }
@@ -58,7 +61,7 @@ final class TaskRepository
             throw new ApiHttpException(400, 'filter.inTaskList is required.', 'bad_request');
         }
 
-        $instance = $this->taskLists->findOwnedTaskList($username, $taskListId);
+        $instance = $this->taskLists->findAccessibleTaskList($username, $taskListId);
         if ($instance === null) {
             throw new ApiHttpException(404, 'Task list not found.', 'not_found');
         }
@@ -137,7 +140,8 @@ final class TaskRepository
             throw new ApiHttpException(500, 'Could not load created task.', 'server_error');
         }
 
-        $task = $this->mapper->toTask($object, (string) $instance->uri);
+        $taskListId = $this->taskListUriForInstance($instance);
+        $task = $this->mapper->toTask($object, $taskListId);
         if ($task === null) {
             throw new ApiHttpException(500, 'Could not load created task.', 'server_error');
         }
@@ -166,14 +170,15 @@ final class TaskRepository
         $instance = $located['instance'];
         $object = $located['object'];
         $objectUri = (string) $object->uri;
-        $existingTask = $this->mapper->toTask($object, (string) $instance->uri, $located['vtodoUid']);
+        $taskListId = $this->taskListUriForInstance($instance);
+        $existingTask = $this->mapper->toTask($object, $taskListId, $located['vtodoUid']);
         if ($existingTask === null) {
             throw new ApiHttpException(404, 'Task not found.', 'not_found');
         }
 
         $taskPayload = $this->normalizeTaskPayload($payload, $existingTask);
         $taskPayload['id'] = $existingTask['id'];
-        $taskPayload['taskListId'] = (string) $instance->uri;
+        $taskPayload['taskListId'] = $this->taskLists->apiIdForInstance($instance);
         $taskPayload['uid'] = $existingTask['uid'];
 
         $raw = is_string($object->calendardata) ? $object->calendardata : (string) $object->calendardata;
@@ -199,7 +204,7 @@ final class TaskRepository
             throw new ApiHttpException(500, 'Could not load updated task.', 'server_error');
         }
 
-        $task = $this->mapper->toTask($updated, (string) $instance->uri, $located['vtodoUid']);
+        $task = $this->mapper->toTask($updated, $taskListId, $located['vtodoUid']);
         if ($task === null) {
             throw new ApiHttpException(500, 'Could not load updated task.', 'server_error');
         }
@@ -228,7 +233,8 @@ final class TaskRepository
         $instance = $located['instance'];
         $object = $located['object'];
         $objectUri = (string) $object->uri;
-        $existingTask = $this->mapper->toTask($object, (string) $instance->uri, $located['vtodoUid']);
+        $taskListId = $this->taskListUriForInstance($instance);
+        $existingTask = $this->mapper->toTask($object, $taskListId, $located['vtodoUid']);
         if ($existingTask === null) {
             throw new ApiHttpException(404, 'Task not found.', 'not_found');
         }
@@ -236,7 +242,7 @@ final class TaskRepository
         $merged = ConversionSupport::deepMergeTaskPatch($existingTask, $patch);
         $taskPayload = $this->normalizeTaskPayload($merged, $existingTask);
         $taskPayload['id'] = $existingTask['id'];
-        $taskPayload['taskListId'] = (string) $instance->uri;
+        $taskPayload['taskListId'] = $this->taskLists->apiIdForInstance($instance);
         $taskPayload['uid'] = $existingTask['uid'];
 
         $raw = is_string($object->calendardata) ? $object->calendardata : (string) $object->calendardata;
@@ -262,7 +268,7 @@ final class TaskRepository
             throw new ApiHttpException(500, 'Could not load patched task.', 'server_error');
         }
 
-        $task = $this->mapper->toTask($updated, (string) $instance->uri, $located['vtodoUid']);
+        $task = $this->mapper->toTask($updated, $taskListId, $located['vtodoUid']);
         if ($task === null) {
             throw new ApiHttpException(500, 'Could not load patched task.', 'server_error');
         }
@@ -347,7 +353,7 @@ final class TaskRepository
             throw new ApiHttpException(400, 'taskListIds is required.', 'bad_request');
         }
 
-        $instance = $this->taskLists->findOwnedTaskList($username, $listUri);
+        $instance = $this->taskLists->findAccessibleTaskList($username, $listUri);
         if ($instance === null) {
             throw new ApiHttpException(404, 'Task list not found.', 'not_found');
         }
@@ -412,7 +418,7 @@ final class TaskRepository
             ->join('calendars as c', 'c.id', '=', 'o.calendarid')
             ->join('calendarinstances as i', 'i.calendarid', '=', 'c.id')
             ->where('o.uri', $objectUri)
-            ->where('i.principaluri', $this->principalUri($username))
+            ->whereIn('i.principaluri', $this->accessiblePrincipalUris($username))
             ->where('c.components', 'like', '%VTODO%')
             ->select([
                 'o.id',
@@ -442,9 +448,22 @@ final class TaskRepository
         return [
             'object' => $object,
             'instance' => $instance,
-            'taskListUri' => (string) $row->list_uri,
+            'taskListUri' => $this->taskLists->apiIdForInstance($instance),
             'vtodoUid' => $vtodoUid,
         ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function accessiblePrincipalUris(string $username): array
+    {
+        $uris = [$this->principalUri($username)];
+        foreach ($this->groups->allowedGroupSlugs($username) as $slug) {
+            $uris[] = AdminConstants::GROUP_PREFIX.$slug;
+        }
+
+        return $uris;
     }
 
     private function findOwnedInstance(string $username, string $taskListId): ?CalendarInstance
@@ -468,6 +487,11 @@ final class TaskRepository
     private function calendarDavPath(string $username, string $calendarUri, string $objectUri): string
     {
         return 'calendars/'.$username.'/'.$calendarUri.'/'.$objectUri;
+    }
+
+    private function taskListUriForInstance(CalendarInstance $instance): string
+    {
+        return $this->taskLists->apiIdForInstance($instance);
     }
 
     private function principalUri(string $username): string

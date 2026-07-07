@@ -31,6 +31,8 @@ final class TasksTaskListsTest extends WgwDatabaseTestCase
             ->assertJsonPath('list.0.id', InboxTaskListProvisioner::URI)
             ->assertJsonPath('list.0.name', InboxTaskListProvisioner::DISPLAY_NAME)
             ->assertJsonPath('list.0.isDefault', true)
+            ->assertJsonPath('list.0.scope', 'personal')
+            ->assertJsonPath('list.0.groupSlug', null)
             ->assertJsonPath('list.0.myRights.mayReadItems', true);
     }
 
@@ -97,6 +99,8 @@ final class TasksTaskListsTest extends WgwDatabaseTestCase
         $response->assertOk()
             ->assertJsonPath('id', InboxTaskListProvisioner::URI)
             ->assertJsonPath('role', 'inbox')
+            ->assertJsonPath('scope', 'personal')
+            ->assertJsonPath('groupSlug', null)
             ->assertJsonPath('shareWith', null);
     }
 
