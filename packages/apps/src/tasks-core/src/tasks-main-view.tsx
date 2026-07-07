@@ -66,6 +66,10 @@ const DEFAULT_WORKFLOW_STATUS: TaskWorkflowStatus = "needs-action";
 
 const COMPOSER_WORKFLOW_STATUSES: TaskWorkflowStatus[] = ["needs-action", "in-process"];
 
+const COMPOSER_SELECT_TRIGGER_CLASS = "tasks-main-view__composer-select";
+const COMPOSER_SELECT_CONTENT_CLASS = "tasks-main-view__composer-select-content";
+const COMPOSER_SELECT_ITEM_CLASS = "tasks-main-view__composer-select-item";
+
 const emptyForm = (listId: string): TasksCreateInput => ({
   title: "",
   description: "",
@@ -350,14 +354,18 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
                     disabled={!canCreate}
                   >
                     <SelectTrigger
-                      className="tasks-main-view__composer-select"
+                      className={COMPOSER_SELECT_TRIGGER_CLASS}
                       aria-label={L.addTaskList}
                     >
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className={COMPOSER_SELECT_CONTENT_CLASS}>
                       {taskLists.map((list) => (
-                        <SelectItem key={list.id} value={list.id}>
+                        <SelectItem
+                          key={list.id}
+                          value={list.id}
+                          className={COMPOSER_SELECT_ITEM_CLASS}
+                        >
                           <ComposerSelectOption
                             icon={<TaskListDot list={list} />}
                             label={list.name}
@@ -378,14 +386,18 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
                     disabled={!canCreate}
                   >
                     <SelectTrigger
-                      className="tasks-main-view__composer-select"
+                      className={COMPOSER_SELECT_TRIGGER_CLASS}
                       aria-label={L.addTaskStatus}
                     >
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className={COMPOSER_SELECT_CONTENT_CLASS}>
                       {COMPOSER_WORKFLOW_STATUSES.map((status) => (
-                        <SelectItem key={status} value={status}>
+                        <SelectItem
+                          key={status}
+                          value={status}
+                          className={COMPOSER_SELECT_ITEM_CLASS}
+                        >
                           <ComposerSelectOption
                             icon={workflowStatusIcon(status)}
                             label={workflowStatusLabel(status, L)}
@@ -406,14 +418,18 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
                     disabled={!canCreate}
                   >
                     <SelectTrigger
-                      className="tasks-main-view__composer-select"
+                      className={COMPOSER_SELECT_TRIGGER_CLASS}
                       aria-label={L.addTaskPriority}
                     >
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className={COMPOSER_SELECT_CONTENT_CLASS}>
                       {COMPOSER_PRIORITY_VALUES.map((priority) => (
-                        <SelectItem key={priority} value={String(priority)}>
+                        <SelectItem
+                          key={priority}
+                          value={String(priority)}
+                          className={COMPOSER_SELECT_ITEM_CLASS}
+                        >
                           <ComposerSelectOption
                             icon={priorityIcon(priority)}
                             label={priorityLabel(priority, L)}

@@ -330,7 +330,7 @@ describe("TasksMainView task rows", () => {
     expect(meta?.querySelector(".lucide-clock")).toBeTruthy();
   });
 
-  it("shows priority flag in meta when task has priority", () => {
+  it("shows priority flag and label in meta when task has priority", () => {
     const task = { ...bootstrap.data.tasks[0], priority: 1 };
     renderMainView({ displayTasks: [task] });
 
@@ -338,6 +338,40 @@ describe("TasksMainView task rows", () => {
     const meta = row?.querySelector(".tasks-main-view__meta");
     expect(meta?.textContent).toContain(defaultTasksLabels.priorityHigh);
     expect(meta?.querySelector(".lucide-flag")).toBeTruthy();
+  });
+
+  it("shows priority flag and label on newly created optimistic task rows", () => {
+    const task = {
+      ...bootstrap.data.tasks[0],
+      id: "pending-new-task",
+      title: "Urgent task",
+      priority: 1,
+      workflowStatus: "needs-action" as const,
+    };
+    renderMainView({ displayTasks: [task] });
+
+    const row = screen.getByText(task.title).closest(".tasks-main-view__row");
+    const meta = row?.querySelector(".tasks-main-view__meta");
+
+    expect(meta?.textContent).toContain(defaultTasksLabels.priorityHigh);
+    expect(meta?.querySelector(".lucide-flag")).toBeTruthy();
+  });
+
+  it("shows medium and low priority labels in task row meta", () => {
+    const mediumTask = { ...bootstrap.data.tasks[0], id: "task-medium", priority: 5 };
+    const lowTask = { ...bootstrap.data.tasks[1], id: "task-low", priority: 9 };
+
+    renderMainView({ displayTasks: [mediumTask, lowTask] });
+
+    const mediumRow = screen.getByText(mediumTask.title).closest(".tasks-main-view__row");
+    const lowRow = screen.getByText(lowTask.title).closest(".tasks-main-view__row");
+
+    expect(mediumRow?.querySelector(".tasks-main-view__meta")?.textContent).toContain(
+      defaultTasksLabels.priorityMedium,
+    );
+    expect(lowRow?.querySelector(".tasks-main-view__meta")?.textContent).toContain(
+      defaultTasksLabels.priorityLow,
+    );
   });
 
   it("hides priority meta when task priority is none", () => {

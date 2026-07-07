@@ -3,6 +3,7 @@ import {
   defaultTaskListId,
   filterTasksByView,
   INBOX_TASK_LIST_ID,
+  mergeCreatedTask,
   taskListDotColor,
 } from "./tasks-task-utils";
 import type { Task } from "./tasks-types";
@@ -80,5 +81,41 @@ describe("tasks-task-utils", () => {
       "t2",
     ]);
     expect(filterTasksByView(sampleTasks, "priority:low")).toEqual([]);
+  });
+
+  it("mergeCreatedTask keeps optimistic priority when API response omits it", () => {
+    const optimistic = {
+      ...sampleTasks[0],
+      id: "pending-1",
+      priority: 1,
+      workflowStatus: "in-process" as const,
+    };
+    const created = {
+      ...sampleTasks[0],
+      id: "task-created",
+      priority: null,
+      workflowStatus: undefined,
+    };
+
+    expect(mergeCreatedTask(optimistic, created)).toMatchObject({
+      id: "task-created",
+      priority: 1,
+      workflowStatus: "in-process",
+    });
+  });
+
+  it("mergeCreatedTask uses API priority when response includes it", () => {
+    const optimistic = {
+      ...sampleTasks[0],
+      id: "pending-1",
+      priority: 1,
+    };
+    const created = {
+      ...sampleTasks[0],
+      id: "task-created",
+      priority: 5,
+    };
+
+    expect(mergeCreatedTask(optimistic, created).priority).toBe(5);
   });
 });

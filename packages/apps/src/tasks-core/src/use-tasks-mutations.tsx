@@ -4,6 +4,7 @@ import { useConfirmDialog } from "@/hooks/use-confirm-dialog";
 import type { Task, TaskPatch } from "@/tasks-core/src/tasks-types";
 import {
   isTaskCompleted,
+  mergeCreatedTask,
   shouldHideCompletedTaskAfterExit,
   taskListName,
 } from "@/tasks-core/src/tasks-task-utils";
@@ -77,7 +78,9 @@ export function useTasksMutations({ shell, list, exitAnimation }: UseTasksMutati
           workflowStatus: status,
           priority: taskPriority,
         });
-        setTasks((prev) => prev.map((task) => (task.id === tempId ? created : task)));
+        setTasks((prev) =>
+          prev.map((task) => (task.id === tempId ? mergeCreatedTask(optimistic, created) : task)),
+        );
         shell.show(L.toastTaskAdded, { icon: <Plus className="size-4" /> });
       } catch {
         setTasks((prev) => prev.filter((task) => task.id !== tempId));

@@ -1,5 +1,5 @@
 import type { Task, TaskAlert } from "@/tasks-core/src/tasks-types";
-import { priorityFromFilterSlug } from "@/tasks-core/src/tasks-priority";
+import { isTaskPriorityNone, priorityFromFilterSlug } from "@/tasks-core/src/tasks-priority";
 
 export const TASK_WORKFLOW_STATUSES = [
   "needs-action",
@@ -17,6 +17,16 @@ export function normalizeTag(tag: string): string {
 export function taskListTitle(task: Task, fallback: string): string {
   const title = task.title?.trim();
   return title || fallback;
+}
+
+/** Preserve optimistic fields when the create API response omits them. */
+export function mergeCreatedTask(optimistic: Task, created: Task): Task {
+  return {
+    ...optimistic,
+    ...created,
+    workflowStatus: created.workflowStatus ?? optimistic.workflowStatus,
+    priority: isTaskPriorityNone(created.priority) ? optimistic.priority : created.priority,
+  };
 }
 
 function parseDueDate(task: Task): Date | null {
