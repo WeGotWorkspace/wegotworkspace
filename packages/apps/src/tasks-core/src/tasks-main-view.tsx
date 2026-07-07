@@ -29,7 +29,6 @@ import type { TasksUILabels } from "@/tasks-core/src/tasks-labels";
 import { TaskListDot } from "@/tasks-core/src/tasks-list-dot";
 import {
   isTaskCompleted,
-  TASK_WORKFLOW_STATUSES,
   taskListName,
   taskListTitle,
   type TaskWorkflowStatus,
@@ -64,6 +63,8 @@ type TasksMainViewProps = {
 };
 
 const DEFAULT_WORKFLOW_STATUS: TaskWorkflowStatus = "needs-action";
+
+const COMPOSER_WORKFLOW_STATUSES: TaskWorkflowStatus[] = ["needs-action", "in-process"];
 
 const emptyForm = (listId: string): TasksCreateInput => ({
   title: "",
@@ -395,7 +396,7 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {TASK_WORKFLOW_STATUSES.map((status) => (
+                      {COMPOSER_WORKFLOW_STATUSES.map((status) => (
                         <SelectItem key={status} value={status}>
                           <ComposerSelectOption
                             icon={workflowStatusIcon(status)}

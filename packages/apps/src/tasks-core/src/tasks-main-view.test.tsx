@@ -195,10 +195,17 @@ describe("TasksMainView composer", () => {
     expect(statusTrigger.querySelector(".lucide-clock")).toBeTruthy();
   });
 
-  it("shows status icons in the composer dropdown options", () => {
+  it("shows only needs-action and in-process in the composer status dropdown", () => {
     renderComposer();
 
     fireEvent.click(screen.getByLabelText(defaultTasksLabels.addTaskStatus));
+
+    const options = screen.getAllByRole("option");
+    expect(options).toHaveLength(2);
+    expect(options.map((option) => option.textContent?.trim())).toEqual([
+      defaultTasksLabels.stateNeedsAction,
+      defaultTasksLabels.stateInProcess,
+    ]);
 
     expect(
       screen
@@ -210,16 +217,8 @@ describe("TasksMainView composer", () => {
         .getByRole("option", { name: defaultTasksLabels.stateInProcess })
         .querySelector(".lucide-circle-dot"),
     ).toBeTruthy();
-    expect(
-      screen
-        .getByRole("option", { name: defaultTasksLabels.stateCompleted })
-        .querySelector(".lucide-circle-check"),
-    ).toBeTruthy();
-    expect(
-      screen
-        .getByRole("option", { name: defaultTasksLabels.stateCancelled })
-        .querySelector(".lucide-circle-x"),
-    ).toBeTruthy();
+    expect(screen.queryByRole("option", { name: defaultTasksLabels.stateCompleted })).toBeNull();
+    expect(screen.queryByRole("option", { name: defaultTasksLabels.stateCancelled })).toBeNull();
   });
 
   it("submits selected workflowStatus with createTask", () => {
