@@ -45,12 +45,6 @@
   @apply flex flex-col;
 }
 
-.tasks-workspace .workspace-app-layout__main-header {
-  width: 100%;
-  max-width: var(--workspace-main-content-max-width);
-  margin-inline: auto;
-}
-
 .tasks-workspace .workspace-app-layout__main-content {
   @apply mx-auto flex min-h-full flex-1 flex-col w-full px-0 py-0;
   max-width: var(--workspace-main-content-max-width);
