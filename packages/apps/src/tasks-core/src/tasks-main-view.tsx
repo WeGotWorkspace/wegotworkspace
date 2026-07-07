@@ -181,9 +181,11 @@ function TaskRow({
             <span>{workflowStatusLabel(workflowStatus, L)}</span>
           </span>
           {!isTaskPriorityNone(task.priority) ? (
-            <span className="tasks-main-view__meta-item">
+            <span
+              className="tasks-main-view__meta-item tasks-main-view__meta-item--priority"
+              aria-label={priorityLabel(task.priority as TaskPriorityValue, L)}
+            >
               {priorityIcon(task.priority)}
-              <span>{priorityLabel(task.priority as TaskPriorityValue, L)}</span>
             </span>
           ) : null}
         </div>

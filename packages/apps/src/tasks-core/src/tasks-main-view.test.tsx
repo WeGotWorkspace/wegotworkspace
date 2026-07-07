@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createTasksAppBootstrap } from "@/lib/api/mock/tasks-bootstrap";
 import { TasksMainView } from "@/tasks-core/src/tasks-main-view";
 import { defaultTasksLabels } from "@/tasks-core/src/tasks-labels";
+import { TASK_PRIORITY_FLAG_COLORS } from "@/tasks-core/src/tasks-priority";
 import { TooltipProvider } from "@/ui/tooltip";
 
 const bootstrap = createTasksAppBootstrap();
@@ -330,17 +331,20 @@ describe("TasksMainView task rows", () => {
     expect(meta?.querySelector(".lucide-clock")).toBeTruthy();
   });
 
-  it("shows priority flag and label in meta when task has priority", () => {
+  it("shows priority flag only in meta when task has priority", () => {
     const task = { ...bootstrap.data.tasks[0], priority: 1 };
     renderMainView({ displayTasks: [task] });
 
     const row = screen.getByText(task.title).closest(".tasks-main-view__row");
     const meta = row?.querySelector(".tasks-main-view__meta");
-    expect(meta?.textContent).toContain(defaultTasksLabels.priorityHigh);
-    expect(meta?.querySelector(".lucide-flag")).toBeTruthy();
+    const flag = meta?.querySelector(".lucide-flag") as SVGElement | null;
+    expect(meta?.textContent).not.toContain(defaultTasksLabels.priorityHigh);
+    expect(flag).toBeTruthy();
+    expect(flag?.getAttribute("stroke")).toBe(TASK_PRIORITY_FLAG_COLORS.high);
+    expect(meta?.querySelector(`[aria-label="${defaultTasksLabels.priorityHigh}"]`)).toBeTruthy();
   });
 
-  it("shows priority flag and label on newly created optimistic task rows", () => {
+  it("shows priority flag on newly created optimistic task rows", () => {
     const task = {
       ...bootstrap.data.tasks[0],
       id: "pending-new-task",
@@ -352,12 +356,14 @@ describe("TasksMainView task rows", () => {
 
     const row = screen.getByText(task.title).closest(".tasks-main-view__row");
     const meta = row?.querySelector(".tasks-main-view__meta");
+    const flag = meta?.querySelector(".lucide-flag") as SVGElement | null;
 
-    expect(meta?.textContent).toContain(defaultTasksLabels.priorityHigh);
-    expect(meta?.querySelector(".lucide-flag")).toBeTruthy();
+    expect(flag).toBeTruthy();
+    expect(flag?.getAttribute("stroke")).toBe(TASK_PRIORITY_FLAG_COLORS.high);
+    expect(meta?.querySelector(`[aria-label="${defaultTasksLabels.priorityHigh}"]`)).toBeTruthy();
   });
 
-  it("shows medium and low priority labels in task row meta", () => {
+  it("shows medium and low priority flags in task row meta", () => {
     const mediumTask = { ...bootstrap.data.tasks[0], id: "task-medium", priority: 5 };
     const lowTask = { ...bootstrap.data.tasks[1], id: "task-low", priority: 9 };
 
@@ -365,13 +371,15 @@ describe("TasksMainView task rows", () => {
 
     const mediumRow = screen.getByText(mediumTask.title).closest(".tasks-main-view__row");
     const lowRow = screen.getByText(lowTask.title).closest(".tasks-main-view__row");
+    const mediumFlag = mediumRow?.querySelector(".lucide-flag") as SVGElement | null;
+    const lowFlag = lowRow?.querySelector(".lucide-flag") as SVGElement | null;
 
-    expect(mediumRow?.querySelector(".tasks-main-view__meta")?.textContent).toContain(
-      defaultTasksLabels.priorityMedium,
-    );
-    expect(lowRow?.querySelector(".tasks-main-view__meta")?.textContent).toContain(
-      defaultTasksLabels.priorityLow,
-    );
+    expect(mediumFlag?.getAttribute("stroke")).toBe(TASK_PRIORITY_FLAG_COLORS.medium);
+    expect(lowFlag?.getAttribute("stroke")).toBe(TASK_PRIORITY_FLAG_COLORS.low);
+    expect(
+      mediumRow?.querySelector(`[aria-label="${defaultTasksLabels.priorityMedium}"]`),
+    ).toBeTruthy();
+    expect(lowRow?.querySelector(`[aria-label="${defaultTasksLabels.priorityLow}"]`)).toBeTruthy();
   });
 
   it("hides priority meta when task priority is none", () => {

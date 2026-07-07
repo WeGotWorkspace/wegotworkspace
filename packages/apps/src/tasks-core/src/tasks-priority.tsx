@@ -57,30 +57,39 @@ export function priorityLabel(priority: TaskPriorityValue, L: TasksUILabels): st
   }
 }
 
-function priorityFlagStyle(priority: number): React.CSSProperties {
-  switch (priority) {
+export function normalizeTaskPriority(priority: number | string | null | undefined): number | null {
+  if (priority == null) return null;
+  const value = typeof priority === "string" ? Number(priority) : priority;
+  if (!Number.isFinite(value) || value === TASK_PRIORITY_NONE) return null;
+  return value;
+}
+
+export function priorityFlagColor(priority: number | string | null | undefined): string {
+  switch (normalizeTaskPriority(priority)) {
     case TASK_PRIORITY_HIGH:
-      return { color: TASK_PRIORITY_FLAG_COLORS.high };
+      return TASK_PRIORITY_FLAG_COLORS.high;
     case TASK_PRIORITY_MEDIUM:
-      return { color: TASK_PRIORITY_FLAG_COLORS.medium };
+      return TASK_PRIORITY_FLAG_COLORS.medium;
     case TASK_PRIORITY_LOW:
-      return { color: TASK_PRIORITY_FLAG_COLORS.low, fill: "#ffffff" };
+      return TASK_PRIORITY_FLAG_COLORS.low;
     default:
-      return { color: TASK_PRIORITY_FLAG_COLORS.none };
+      return TASK_PRIORITY_FLAG_COLORS.none;
   }
 }
 
 export function priorityIcon(priority: number | null | undefined): ReactNode {
-  if (isTaskPriorityNone(priority)) {
-    return <Flag className="size-3.5" style={priorityFlagStyle(TASK_PRIORITY_NONE)} aria-hidden />;
+  const normalized = normalizeTaskPriority(priority);
+  if (isTaskPriorityNone(normalized)) {
+    return <Flag className="size-3.5" color={TASK_PRIORITY_FLAG_COLORS.none} aria-hidden />;
   }
 
+  const flagColor = priorityFlagColor(normalized);
   return (
     <Flag
       className="size-3.5"
-      style={priorityFlagStyle(priority!)}
+      color={flagColor}
+      fill={normalized === TASK_PRIORITY_LOW ? "#ffffff" : flagColor}
       aria-hidden
-      fill={priority === TASK_PRIORITY_LOW ? "#ffffff" : "currentColor"}
     />
   );
 }
