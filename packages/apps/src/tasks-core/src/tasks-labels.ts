@@ -17,7 +17,6 @@ export type TasksUILabels = {
   listTasks: (count: number) => string;
   listSelected: (count: number) => string;
   refreshList: string;
-  emptyList: string;
   emptyDetail: string;
   selectTask: string;
   fallbackViewTitle: string;
@@ -101,7 +100,6 @@ export const defaultTasksLabels: TasksUILabels = {
   listTasks: (count) => (count === 1 ? "1 task" : `${count} tasks`),
   listSelected: (count) => (count === 1 ? "1 selected" : `${count} selected`),
   refreshList: "Refresh",
-  emptyList: "No tasks in this view.",
   emptyDetail: "Select a task or create a new one.",
   selectTask: "Select a task",
   fallbackViewTitle: "Tasks",

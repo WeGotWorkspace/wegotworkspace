@@ -246,10 +246,6 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
     return (
       <div className="tasks-main-view">
         <div className="tasks-main-view__scroll">
-          {displayTasks.length === 0 ? (
-            <p className="tasks-main-view__empty">{L.emptyList}</p>
-          ) : null}
-
           <div className="tasks-main-view__list" role="list">
             {displayTasks.map((task) => (
               <TaskRow
