@@ -39,7 +39,6 @@ import {
   type TasksCreateInput,
   type TasksTaskFormValue,
 } from "@/tasks-core/src/tasks-task-form";
-import "./tasks-main-view.css";
 
 export type { TasksCreateInput, TasksTaskFormValue };
 

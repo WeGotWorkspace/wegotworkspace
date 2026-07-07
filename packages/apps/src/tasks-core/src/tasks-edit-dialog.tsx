@@ -9,7 +9,6 @@ import {
   TasksTaskFormFields,
   type TasksTaskFormValue,
 } from "@/tasks-core/src/tasks-task-form";
-import "./tasks-main-view.css";
 
 export type TaskEditDialogState = null | { taskId: string };
 

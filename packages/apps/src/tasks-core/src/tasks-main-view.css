@@ -186,6 +186,7 @@
   @apply w-full justify-center;
 }
 
+/* Touch: 32px (2rem) composer dropdown targets — matches desktop compact height. */
 @media (pointer: coarse) {
   .tasks-main-view__composer-meta {
     gap: 0.375rem;
