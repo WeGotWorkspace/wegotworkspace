@@ -7,6 +7,7 @@ namespace App\Services\Tasks;
 use App\Exceptions\ApiHttpException;
 use App\Models\CalendarInstance;
 use App\Services\Calendars\CalendarCollectionUris;
+use App\Services\Calendars\UserCalendarCollectionsProvisioner;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Sabre\CalDAV\Backend\PDO as CalPDO;
@@ -19,12 +20,14 @@ final class TaskListRepository
 {
     private const CALENDAR_COLOR_PROPERTY = '{http://apple.com/ns/ical/}calendar-color';
 
-    public function __construct(private readonly InboxTaskListProvisioner $inboxProvisioner) {}
+    public function __construct(
+        private readonly UserCalendarCollectionsProvisioner $calendarCollectionsProvisioner,
+    ) {}
 
     public function list(string $username): array
     {
         $principalUri = $this->principalUri($username);
-        $this->inboxProvisioner->ensureForPrincipal($principalUri);
+        $this->calendarCollectionsProvisioner->ensureForPrincipal($principalUri);
 
         $instances = CalendarInstance::query()
             ->with('calendar')
