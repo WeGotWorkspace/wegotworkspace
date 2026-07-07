@@ -53,7 +53,9 @@ export type TasksUILabels = {
   addTaskStatus: string;
   addTaskButton: string;
   editTask: string;
+  editTaskTitle: string;
   editTaskPrompt: string;
+  saveTaskButton: string;
   markComplete: string;
   markIncomplete: string;
   taskActions: string;
@@ -135,7 +137,9 @@ export const defaultTasksLabels: TasksUILabels = {
   addTaskStatus: "Status",
   addTaskButton: "Add task",
   editTask: "Edit",
+  editTaskTitle: "Edit task",
   editTaskPrompt: "Task title",
+  saveTaskButton: "Save",
   markComplete: "Mark complete",
   markIncomplete: "Mark incomplete",
   taskActions: "Task actions",

@@ -7,7 +7,6 @@ import {
   useState,
   type DragEvent,
   type FormEvent,
-  type ReactNode,
 } from "react";
 import {
   CalendarDays,
@@ -21,7 +20,6 @@ import {
 import { IconButton } from "@/button/src/button";
 import { Button } from "@/button/src/button";
 import { DropdownMenu } from "@/menu-dropdown/src/dropdown-menu";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
 import type { Task, TaskList } from "@/tasks-core/src/tasks-types";
 import type { TasksUILabels } from "@/tasks-core/src/tasks-labels";
 import { TaskListDot } from "@/tasks-core/src/tasks-list-dot";
@@ -34,25 +32,16 @@ import {
   type TaskWorkflowStatus,
 } from "@/tasks-core/src/tasks-task-utils";
 import { workflowStatusIcon, workflowStatusLabel } from "@/tasks-core/src/tasks-workflow-status";
+import { isTaskPriorityNone, priorityIcon, priorityLabel } from "@/tasks-core/src/tasks-priority";
 import {
-  COMPOSER_PRIORITY_VALUES,
-  isTaskPriorityNone,
-  priorityIcon,
-  priorityLabel,
-  TASK_PRIORITY_NONE,
-  type TaskPriorityValue,
-} from "@/tasks-core/src/tasks-priority";
-import { TasksComposerDuePicker } from "@/tasks-core/src/tasks-composer-due-picker";
+  emptyTaskForm,
+  TasksTaskFormFields,
+  type TasksCreateInput,
+  type TasksTaskFormValue,
+} from "@/tasks-core/src/tasks-task-form";
 import "@/tasks-core/src/tasks-main-view.css";
 
-export type TasksCreateInput = {
-  title: string;
-  description: string;
-  listId: string;
-  workflowStatus: TaskWorkflowStatus;
-  priority: TaskPriorityValue;
-  due: string | null;
-};
+export type { TasksCreateInput, TasksTaskFormValue };
 
 export type TasksMainViewHandle = {
   focusComposerTitle: () => void;
@@ -73,32 +62,6 @@ type TasksMainViewProps = {
   itemDragHandlers: (id: string) => Record<string, unknown>;
   isItemDragging: (id: string) => boolean;
 };
-
-const DEFAULT_WORKFLOW_STATUS: TaskWorkflowStatus = "needs-action";
-
-const COMPOSER_WORKFLOW_STATUSES: TaskWorkflowStatus[] = ["needs-action", "in-process"];
-
-const COMPOSER_SELECT_TRIGGER_CLASS = "tasks-main-view__composer-select";
-const COMPOSER_SELECT_CONTENT_CLASS = "tasks-main-view__composer-select-content";
-const COMPOSER_SELECT_ITEM_CLASS = "tasks-main-view__composer-select-item";
-
-const emptyForm = (listId: string): TasksCreateInput => ({
-  title: "",
-  description: "",
-  listId,
-  workflowStatus: DEFAULT_WORKFLOW_STATUS,
-  priority: TASK_PRIORITY_NONE,
-  due: null,
-});
-
-function ComposerSelectOption({ icon, label }: { icon: ReactNode; label: string }) {
-  return (
-    <span className="tasks-main-view__composer-select-option">
-      {icon}
-      {label}
-    </span>
-  );
-}
 
 function prefersReducedMotion(): boolean {
   if (typeof window === "undefined") return false;
@@ -271,7 +234,7 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
   ) {
     const titleRef = useRef<HTMLInputElement>(null);
     const composerFormRef = useRef<HTMLFormElement>(null);
-    const [draft, setDraft] = useState(() => emptyForm(defaultListId));
+    const [draft, setDraft] = useState(() => emptyTaskForm(defaultListId));
     const [composerExpanded, setComposerExpanded] = useState(false);
 
     useImperativeHandle(
@@ -286,7 +249,7 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
     );
 
     const resetDraft = useCallback(() => {
-      setDraft(emptyForm(defaultListId));
+      setDraft(emptyTaskForm(defaultListId));
       setComposerExpanded(false);
     }, [defaultListId]);
 
@@ -297,7 +260,7 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
         if (hasContent) return prev;
         const listStillValid = taskLists.some((list) => list.id === prev.listId);
         if (listStillValid && prev.listId === defaultListId) return prev;
-        return emptyForm(defaultListId);
+        return emptyTaskForm(defaultListId);
       });
     }, [defaultListId, taskLists]);
 
@@ -346,138 +309,23 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
               </span>
 
               <div className="tasks-main-view__composer-body">
-                <input
-                  ref={titleRef}
-                  type="text"
-                  className="tasks-main-view__composer-title"
-                  value={draft.title}
-                  onChange={(event) => setDraft((prev) => ({ ...prev, title: event.target.value }))}
-                  onFocus={() => setComposerExpanded(true)}
-                  placeholder={L.addTaskNamePlaceholder}
-                  aria-label={L.addTaskName}
+                <TasksTaskFormFields
+                  L={L}
+                  value={draft}
+                  onChange={setDraft}
+                  taskLists={taskLists}
+                  mode="create"
                   disabled={!canCreate}
+                  showDescription={showDescription}
+                  titleRef={titleRef}
+                  onTitleFocus={() => setComposerExpanded(true)}
+                  onDescriptionKeyDown={(event) => {
+                    if (event.key !== "Enter" || event.shiftKey) return;
+                    event.preventDefault();
+                    if (!draft.title.trim()) return;
+                    composerFormRef.current?.requestSubmit();
+                  }}
                 />
-
-                {showDescription ? (
-                  <textarea
-                    className="tasks-main-view__composer-description"
-                    value={draft.description}
-                    onChange={(event) =>
-                      setDraft((prev) => ({ ...prev, description: event.target.value }))
-                    }
-                    onKeyDown={(event) => {
-                      if (event.key !== "Enter" || event.shiftKey) return;
-                      event.preventDefault();
-                      if (!draft.title.trim()) return;
-                      composerFormRef.current?.requestSubmit();
-                    }}
-                    placeholder={L.addTaskDescriptionPlaceholder}
-                    aria-label={L.descriptionLabel}
-                    rows={1}
-                    disabled={!canCreate}
-                  />
-                ) : null}
-
-                <div className="tasks-main-view__composer-meta">
-                  <TasksComposerDuePicker
-                    labels={L}
-                    value={draft.due}
-                    onChange={(due) => setDraft((prev) => ({ ...prev, due }))}
-                    disabled={!canCreate}
-                    triggerClassName={COMPOSER_SELECT_TRIGGER_CLASS}
-                  />
-
-                  <Select
-                    value={draft.listId}
-                    onValueChange={(listId) => setDraft((prev) => ({ ...prev, listId }))}
-                    disabled={!canCreate}
-                  >
-                    <SelectTrigger
-                      className={COMPOSER_SELECT_TRIGGER_CLASS}
-                      aria-label={L.addTaskList}
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className={COMPOSER_SELECT_CONTENT_CLASS}>
-                      {taskLists.map((list) => (
-                        <SelectItem
-                          key={list.id}
-                          value={list.id}
-                          className={COMPOSER_SELECT_ITEM_CLASS}
-                        >
-                          <ComposerSelectOption
-                            icon={<TaskListDot list={list} />}
-                            label={list.name}
-                          />
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <Select
-                    value={draft.workflowStatus}
-                    onValueChange={(workflowStatus) =>
-                      setDraft((prev) => ({
-                        ...prev,
-                        workflowStatus: workflowStatus as TaskWorkflowStatus,
-                      }))
-                    }
-                    disabled={!canCreate}
-                  >
-                    <SelectTrigger
-                      className={COMPOSER_SELECT_TRIGGER_CLASS}
-                      aria-label={L.addTaskStatus}
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className={COMPOSER_SELECT_CONTENT_CLASS}>
-                      {COMPOSER_WORKFLOW_STATUSES.map((status) => (
-                        <SelectItem
-                          key={status}
-                          value={status}
-                          className={COMPOSER_SELECT_ITEM_CLASS}
-                        >
-                          <ComposerSelectOption
-                            icon={workflowStatusIcon(status)}
-                            label={workflowStatusLabel(status, L)}
-                          />
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <Select
-                    value={String(draft.priority)}
-                    onValueChange={(priority) =>
-                      setDraft((prev) => ({
-                        ...prev,
-                        priority: Number(priority) as TaskPriorityValue,
-                      }))
-                    }
-                    disabled={!canCreate}
-                  >
-                    <SelectTrigger
-                      className={COMPOSER_SELECT_TRIGGER_CLASS}
-                      aria-label={L.addTaskPriority}
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className={COMPOSER_SELECT_CONTENT_CLASS}>
-                      {COMPOSER_PRIORITY_VALUES.map((priority) => (
-                        <SelectItem
-                          key={priority}
-                          value={String(priority)}
-                          className={COMPOSER_SELECT_ITEM_CLASS}
-                        >
-                          <ComposerSelectOption
-                            icon={priorityIcon(priority)}
-                            label={priorityLabel(priority, L)}
-                          />
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
 
                 <div className="tasks-main-view__composer-actions">
                   {hasDraftContent ? (

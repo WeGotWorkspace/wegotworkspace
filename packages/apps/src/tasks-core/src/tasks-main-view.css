@@ -218,3 +218,15 @@
 .tasks-main-view__add-submit.button--variant-primary:hover {
   opacity: 0.9;
 }
+
+.tasks-edit-dialog__content {
+  @apply max-w-lg;
+}
+
+.tasks-edit-dialog__form {
+  @apply flex flex-col gap-4;
+}
+
+.tasks-edit-dialog__fields {
+  @apply flex flex-col gap-2;
+}

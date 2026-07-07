@@ -1,19 +1,21 @@
-import { useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Check, CheckCircle2, Circle, Plus, Trash2 } from "lucide-react";
 import { useConfirmDialog } from "@/hooks/use-confirm-dialog";
 import type { Task, TaskPatch } from "@/tasks-core/src/tasks-types";
+import type { TaskEditDialogState } from "@/tasks-core/src/tasks-edit-dialog";
+import type { TasksTaskFormValue } from "@/tasks-core/src/tasks-task-form";
+import { normalizeTaskPriority, TASK_PRIORITY_NONE } from "@/tasks-core/src/tasks-priority";
 import {
   isTaskCompleted,
   mergeCreatedTask,
   shouldHideCompletedTaskAfterExit,
   taskListName,
 } from "@/tasks-core/src/tasks-task-utils";
-import { TASK_PRIORITY_NONE } from "@/tasks-core/src/tasks-priority";
 import {
   tasksCompleteToastMessage,
   tasksMoveToastMessage,
 } from "@/tasks-core/src/tasks-toast-messages";
-import type { TasksCreateInput } from "@/tasks-core/src/tasks-main-view";
+import type { TasksCreateInput } from "@/tasks-core/src/tasks-task-form";
 import type { TasksShellState } from "@/tasks-core/src/use-tasks-shell";
 import type { TasksExitAnimationState } from "@/tasks-core/src/use-tasks-exit-animation";
 import type { TasksListState } from "@/tasks-core/src/use-tasks-list";
@@ -32,6 +34,7 @@ export function useTasksMutations({ shell, list, exitAnimation }: UseTasksMutati
   const { confirmDialog, requestConfirm } = useConfirmDialog({
     contentClassName: "tasks-dialog-surface",
   });
+  const [editDialog, setEditDialog] = useState<TaskEditDialogState>(null);
 
   const patchTask = useCallback(
     async (taskId: string, patch: TaskPatch, opts?: { signal?: AbortSignal }) => {
@@ -140,25 +143,86 @@ export function useTasksMutations({ shell, list, exitAnimation }: UseTasksMutati
     [L, beginTaskExit, cancelTaskExit, operations, patchTask, queueMutation, setTasks, tasks],
   );
 
-  const editTask = useCallback(
-    (taskId: string) => {
+  const editTask = useCallback((taskId: string) => {
+    setEditDialog({ taskId });
+  }, []);
+
+  const closeEditTask = useCallback(() => {
+    setEditDialog(null);
+  }, []);
+
+  const editingTask = useMemo(() => {
+    if (!editDialog) return null;
+    return tasks.find((item) => item.id === editDialog.taskId) ?? null;
+  }, [editDialog, tasks]);
+
+  const saveEditedTask = useCallback(
+    async (input: TasksTaskFormValue) => {
+      if (!editDialog || !operations) return;
+      const taskId = editDialog.taskId;
       const task = tasks.find((item) => item.id === taskId);
-      const next = window.prompt(L.editTaskPrompt, task?.title ?? "");
-      if (!next?.trim()) return;
-      const trimmed = next.trim();
-      const beforeTitle = task?.title ?? "";
-      setTasks((prev) =>
-        prev.map((item) => (item.id === taskId ? { ...item, title: trimmed } : item)),
-      );
+      if (!task || !input.title.trim()) return;
+
+      const trimmedTitle = input.title.trim();
+      const trimmedDescription = input.description.trim() || null;
+      const status = input.workflowStatus ?? "needs-action";
+      const taskPriority = input.priority === TASK_PRIORITY_NONE ? null : input.priority;
+      const taskDue = input.due ?? null;
+      const listChanged = input.listId !== task.taskListId;
+
+      const patch: TaskPatch = {};
+      if (trimmedTitle !== (task.title ?? "")) patch.title = trimmedTitle;
+      if (trimmedDescription !== (task.description?.trim() || null)) {
+        patch.description = trimmedDescription;
+      }
+      if (taskDue !== (task.due ?? null)) patch.due = taskDue;
+      if (status !== (task.workflowStatus ?? "needs-action")) patch.workflowStatus = status;
+      const beforePriority = normalizeTaskPriority(task.priority);
+      if (taskPriority !== beforePriority) patch.priority = taskPriority;
+
+      const hasPatch = Object.keys(patch).length > 0;
+      if (!hasPatch && !listChanged) {
+        setEditDialog(null);
+        return;
+      }
+
+      const snapshot = task;
+      const optimistic: Task = {
+        ...task,
+        title: trimmedTitle,
+        description: trimmedDescription,
+        due: taskDue,
+        workflowStatus: status,
+        priority: taskPriority,
+        taskListId: input.listId,
+      };
+
+      setTasks((prev) => prev.map((item) => (item.id === taskId ? optimistic : item)));
+      setEditDialog(null);
       shell.show(L.toastTaskUpdated, { icon: <Check className="size-4" /> });
-      void patchTask(taskId, { title: trimmed }).catch(() => {
-        setTasks((prev) =>
-          prev.map((item) => (item.id === taskId ? { ...item, title: beforeTitle } : item)),
-        );
+
+      try {
+        if (listChanged) {
+          await operations.moveTaskToList(taskId, input.listId);
+        }
+        if (hasPatch) {
+          await patchTask(taskId, patch);
+        }
+      } catch {
+        setTasks((prev) => prev.map((item) => (item.id === taskId ? snapshot : item)));
         showMutationError();
-      });
+      }
     },
-    [L.editTaskPrompt, L.toastTaskUpdated, patchTask, setTasks, shell, showMutationError, tasks],
+    [
+      editDialog,
+      L.toastTaskUpdated,
+      operations,
+      patchTask,
+      setTasks,
+      shell,
+      showMutationError,
+      tasks,
+    ],
   );
 
   const deleteTasks = useCallback(
@@ -268,6 +332,10 @@ export function useTasksMutations({ shell, list, exitAnimation }: UseTasksMutati
     createTaskFromForm,
     toggleTaskComplete,
     editTask,
+    editDialog,
+    editingTask,
+    closeEditTask,
+    saveEditedTask,
     requestDeleteTask,
     moveToList,
     confirmDialog,
