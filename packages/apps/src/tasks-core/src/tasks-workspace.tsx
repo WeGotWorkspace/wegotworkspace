@@ -16,6 +16,7 @@ import type { TasksWorkspaceProps } from "@/tasks-core/src/tasks-workspace-props
 import { TasksMainView, type TasksMainViewHandle } from "@/tasks-core/src/tasks-main-view";
 import { useTasksController } from "@/tasks-core/src/use-tasks-controller";
 import { useTasksSidebarModel } from "@/tasks-core/src/use-tasks-sidebar-model";
+import { TasksEditDialog } from "@/tasks-core/src/tasks-edit-dialog";
 import "@/tasks-core/src/tasks-workspace.css";
 
 export function TasksWorkspace({
@@ -51,6 +52,10 @@ export function TasksWorkspace({
     sidebarOpen,
     setSidebarOpen,
     confirmDialog,
+    editDialog,
+    editingTask,
+    closeEditTask,
+    saveEditedTask,
     taskLists,
     selectView,
     createTaskFromForm,
@@ -175,6 +180,16 @@ export function TasksWorkspace({
         }
       />
       {confirmDialog}
+      <TasksEditDialog
+        dialog={editDialog}
+        task={editingTask}
+        taskLists={taskLists}
+        labels={L}
+        onClose={closeEditTask}
+        onSave={(input) => {
+          void saveEditedTask(input);
+        }}
+      />
     </TooltipProvider>
   );
 }
