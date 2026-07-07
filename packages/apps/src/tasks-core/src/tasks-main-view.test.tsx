@@ -6,8 +6,42 @@ import { TasksMainView } from "@/tasks-core/src/tasks-main-view";
 import { defaultTasksLabels } from "@/tasks-core/src/tasks-labels";
 import { TASK_PRIORITY_FLAG_COLORS } from "@/tasks-core/src/tasks-priority";
 import { TooltipProvider } from "@/ui/tooltip";
+import "@/tasks-core/src/tasks-main-view.css";
 
 const bootstrap = createTasksAppBootstrap();
+
+/** Reproduces global svg { stroke: currentColor } rules that mute Lucide attrs in meta. */
+function installSvgCurrentColorOverride(): void {
+  const style = document.createElement("style");
+  style.setAttribute("data-testid", "svg-current-color-override");
+  style.textContent = "svg { stroke: currentColor; }";
+  document.head.appendChild(style);
+}
+
+function installPriorityFlagStyles(): void {
+  const style = document.createElement("style");
+  style.setAttribute("data-testid", "tasks-priority-flag-styles");
+  style.textContent = `
+    .tasks-priority-flag svg {
+      stroke: var(--tasks-priority-flag-stroke) !important;
+      fill: var(--tasks-priority-flag-fill) !important;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+function normalizedStrokeColor(value: string): string {
+  const probe = document.createElement("span");
+  probe.style.color = value;
+  return probe.style.color;
+}
+
+function expectPriorityFlagStroke(flag: SVGElement | null | undefined, color: string): void {
+  expect(flag).toBeTruthy();
+  const wrapper = flag!.closest(".tasks-priority-flag") as HTMLElement | null;
+  expect(wrapper?.style.getPropertyValue("--tasks-priority-flag-stroke")).toBe(color);
+  expect(flag!.style.stroke).not.toBe("");
+}
 
 function renderMainView(
   overrides: Partial<React.ComponentProps<typeof TasksMainView>> = {},
@@ -122,6 +156,7 @@ describe("TasksMainView composer", () => {
       listId: "default",
       workflowStatus: "needs-action",
       priority: 0,
+      due: null,
     });
   });
 
@@ -145,6 +180,7 @@ describe("TasksMainView composer", () => {
       listId: "default",
       workflowStatus: "needs-action",
       priority: 0,
+      due: null,
     });
     expect((screen.getByLabelText(defaultTasksLabels.addTaskName) as HTMLInputElement).value).toBe(
       "",
@@ -243,15 +279,31 @@ describe("TasksMainView composer", () => {
       listId: "default",
       workflowStatus: "in-process",
       priority: 0,
+      due: null,
     });
   });
 
   it("defaults priority to none in the composer", () => {
+    installSvgCurrentColorOverride();
     renderComposer();
 
     const priorityTrigger = screen.getByLabelText(defaultTasksLabels.addTaskPriority);
+    const flag = priorityTrigger.querySelector(".tasks-priority-flag svg") as SVGElement | null;
     expect(priorityTrigger.textContent).toContain(defaultTasksLabels.priorityNone);
-    expect(priorityTrigger.querySelector(".lucide-flag")).toBeTruthy();
+    expect(flag).toBeTruthy();
+    expectPriorityFlagStroke(flag, TASK_PRIORITY_FLAG_COLORS.none);
+  });
+
+  it("shows high priority flag color in composer after selection", () => {
+    installSvgCurrentColorOverride();
+    renderComposer();
+
+    fireEvent.click(screen.getByLabelText(defaultTasksLabels.addTaskPriority));
+    fireEvent.click(screen.getByRole("option", { name: defaultTasksLabels.priorityHigh }));
+
+    const priorityTrigger = screen.getByLabelText(defaultTasksLabels.addTaskPriority);
+    const flag = priorityTrigger.querySelector(".tasks-priority-flag svg") as SVGElement | null;
+    expectPriorityFlagStroke(flag, TASK_PRIORITY_FLAG_COLORS.high);
   });
 
   it("shows only none, high, medium, and low in the composer priority dropdown", () => {
@@ -288,6 +340,78 @@ describe("TasksMainView composer", () => {
       listId: "default",
       workflowStatus: "needs-action",
       priority: 1,
+      due: null,
+    });
+  });
+
+  it("defaults due date to none in the composer", () => {
+    renderComposer();
+
+    const dueTrigger = screen.getByLabelText(defaultTasksLabels.addTaskDue);
+    expect(dueTrigger.textContent).toContain(defaultTasksLabels.noDue);
+    expect(dueTrigger.querySelector(".lucide-calendar-days")).toBeTruthy();
+  });
+
+  it("submits optional due date with createTask when selected", () => {
+    const onCreateTask = vi.fn();
+    renderComposer(onCreateTask);
+
+    fireEvent.change(screen.getByLabelText(defaultTasksLabels.addTaskName), {
+      target: { value: "Due task" },
+    });
+
+    fireEvent.click(screen.getByLabelText(defaultTasksLabels.addTaskDue));
+
+    const targetDay = new Date();
+    targetDay.setDate(targetDay.getDate() + 3);
+    const dataDay = `${targetDay.getMonth() + 1}/${targetDay.getDate()}/${targetDay.getFullYear()}`;
+    const dayButton = document.querySelector(`button[data-day="${dataDay}"]`);
+    expect(dayButton).toBeTruthy();
+    fireEvent.click(dayButton!);
+
+    fireEvent.click(screen.getByRole("button", { name: defaultTasksLabels.addTaskButton }));
+
+    const expectedDue = `${targetDay.getFullYear()}-${String(targetDay.getMonth() + 1).padStart(2, "0")}-${String(targetDay.getDate()).padStart(2, "0")}T00:00:00`;
+
+    expect(onCreateTask).toHaveBeenCalledWith({
+      title: "Due task",
+      description: "",
+      listId: "default",
+      workflowStatus: "needs-action",
+      priority: 0,
+      due: expectedDue,
+    });
+  });
+
+  it("clears selected due date from the composer", () => {
+    const onCreateTask = vi.fn();
+    renderComposer(onCreateTask);
+
+    fireEvent.change(screen.getByLabelText(defaultTasksLabels.addTaskName), {
+      target: { value: "Clear due task" },
+    });
+
+    fireEvent.click(screen.getByLabelText(defaultTasksLabels.addTaskDue));
+
+    const targetDay = new Date();
+    targetDay.setDate(targetDay.getDate() + 5);
+    const dataDay = `${targetDay.getMonth() + 1}/${targetDay.getDate()}/${targetDay.getFullYear()}`;
+    const dayButton = document.querySelector(`button[data-day="${dataDay}"]`);
+    expect(dayButton).toBeTruthy();
+    fireEvent.click(dayButton!);
+
+    fireEvent.click(screen.getByLabelText(defaultTasksLabels.addTaskDue));
+    fireEvent.click(screen.getByRole("button", { name: defaultTasksLabels.noDue }));
+
+    fireEvent.click(screen.getByRole("button", { name: defaultTasksLabels.addTaskButton }));
+
+    expect(onCreateTask).toHaveBeenCalledWith({
+      title: "Clear due task",
+      description: "",
+      listId: "default",
+      workflowStatus: "needs-action",
+      priority: 0,
+      due: null,
     });
   });
 });
@@ -295,6 +419,11 @@ describe("TasksMainView composer", () => {
 describe("TasksMainView task rows", () => {
   beforeEach(() => {
     cleanup();
+    document.head
+      .querySelectorAll(
+        '[data-testid="svg-current-color-override"], [data-testid="tasks-priority-flag-styles"]',
+      )
+      .forEach((node) => node.remove());
     Object.defineProperty(window, "matchMedia", {
       writable: true,
       value: vi.fn().mockImplementation((query: string) => ({
@@ -332,19 +461,20 @@ describe("TasksMainView task rows", () => {
   });
 
   it("shows priority flag only in meta when task has priority", () => {
+    installSvgCurrentColorOverride();
     const task = { ...bootstrap.data.tasks[0], priority: 1 };
     renderMainView({ displayTasks: [task] });
 
     const row = screen.getByText(task.title).closest(".tasks-main-view__row");
     const meta = row?.querySelector(".tasks-main-view__meta");
-    const flag = meta?.querySelector(".lucide-flag") as SVGElement | null;
+    const flag = meta?.querySelector(".tasks-priority-flag svg") as SVGElement | null;
     expect(meta?.textContent).not.toContain(defaultTasksLabels.priorityHigh);
-    expect(flag).toBeTruthy();
-    expect(flag?.getAttribute("stroke")).toBe(TASK_PRIORITY_FLAG_COLORS.high);
+    expectPriorityFlagStroke(flag, TASK_PRIORITY_FLAG_COLORS.high);
     expect(meta?.querySelector(`[aria-label="${defaultTasksLabels.priorityHigh}"]`)).toBeTruthy();
   });
 
   it("shows priority flag on newly created optimistic task rows", () => {
+    installSvgCurrentColorOverride();
     const task = {
       ...bootstrap.data.tasks[0],
       id: "pending-new-task",
@@ -356,14 +486,14 @@ describe("TasksMainView task rows", () => {
 
     const row = screen.getByText(task.title).closest(".tasks-main-view__row");
     const meta = row?.querySelector(".tasks-main-view__meta");
-    const flag = meta?.querySelector(".lucide-flag") as SVGElement | null;
+    const flag = meta?.querySelector(".tasks-priority-flag svg") as SVGElement | null;
 
-    expect(flag).toBeTruthy();
-    expect(flag?.getAttribute("stroke")).toBe(TASK_PRIORITY_FLAG_COLORS.high);
+    expectPriorityFlagStroke(flag, TASK_PRIORITY_FLAG_COLORS.high);
     expect(meta?.querySelector(`[aria-label="${defaultTasksLabels.priorityHigh}"]`)).toBeTruthy();
   });
 
   it("shows medium and low priority flags in task row meta", () => {
+    installSvgCurrentColorOverride();
     const mediumTask = { ...bootstrap.data.tasks[0], id: "task-medium", priority: 5 };
     const lowTask = { ...bootstrap.data.tasks[1], id: "task-low", priority: 9 };
 
@@ -371,15 +501,32 @@ describe("TasksMainView task rows", () => {
 
     const mediumRow = screen.getByText(mediumTask.title).closest(".tasks-main-view__row");
     const lowRow = screen.getByText(lowTask.title).closest(".tasks-main-view__row");
-    const mediumFlag = mediumRow?.querySelector(".lucide-flag") as SVGElement | null;
-    const lowFlag = lowRow?.querySelector(".lucide-flag") as SVGElement | null;
+    const mediumFlag = mediumRow?.querySelector(".tasks-priority-flag svg") as SVGElement | null;
+    const lowFlag = lowRow?.querySelector(".tasks-priority-flag svg") as SVGElement | null;
 
-    expect(mediumFlag?.getAttribute("stroke")).toBe(TASK_PRIORITY_FLAG_COLORS.medium);
-    expect(lowFlag?.getAttribute("stroke")).toBe(TASK_PRIORITY_FLAG_COLORS.low);
+    expectPriorityFlagStroke(mediumFlag, TASK_PRIORITY_FLAG_COLORS.medium);
+    expectPriorityFlagStroke(lowFlag, TASK_PRIORITY_FLAG_COLORS.low);
     expect(
       mediumRow?.querySelector(`[aria-label="${defaultTasksLabels.priorityMedium}"]`),
     ).toBeTruthy();
     expect(lowRow?.querySelector(`[aria-label="${defaultTasksLabels.priorityLow}"]`)).toBeTruthy();
+  });
+
+  it("enforces priority flag stroke over meta currentColor inheritance", () => {
+    installSvgCurrentColorOverride();
+    installPriorityFlagStyles();
+    const task = { ...bootstrap.data.tasks[0], priority: 1 };
+    renderMainView({ displayTasks: [task] });
+
+    const row = screen.getByText(task.title).closest(".tasks-main-view__row");
+    const meta = row?.querySelector(".tasks-main-view__meta") as HTMLElement | null;
+    const flag = meta?.querySelector(".tasks-priority-flag svg") as SVGElement | null;
+
+    expectPriorityFlagStroke(flag, TASK_PRIORITY_FLAG_COLORS.high);
+    expect(normalizedStrokeColor(window.getComputedStyle(flag!).stroke)).toBe(
+      normalizedStrokeColor(TASK_PRIORITY_FLAG_COLORS.high),
+    );
+    expect(window.getComputedStyle(flag!).stroke).not.toBe(window.getComputedStyle(meta!).color);
   });
 
   it("hides priority meta when task priority is none", () => {

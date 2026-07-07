@@ -28,6 +28,7 @@ export type TasksUILabels = {
   priorityMedium: string;
   priorityLow: string;
   addTaskPriority: string;
+  addTaskDue: string;
   dueLabel: string;
   noDue: string;
   descriptionLabel: string;
@@ -106,6 +107,7 @@ export const defaultTasksLabels: TasksUILabels = {
   priorityMedium: "Medium",
   priorityLow: "Low",
   addTaskPriority: "Priority",
+  addTaskDue: "Due date",
   dueLabel: "Due",
   noDue: "No due date",
   descriptionLabel: "Notes",

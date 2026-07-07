@@ -90,6 +90,15 @@
   @apply inline-flex items-center gap-1.5;
 }
 
+.tasks-priority-flag {
+  @apply inline-flex shrink-0 items-center;
+}
+
+.tasks-priority-flag svg {
+  stroke: var(--tasks-priority-flag-stroke) !important;
+  fill: var(--tasks-priority-flag-fill) !important;
+}
+
 .tasks-main-view__actions {
   @apply shrink-0 opacity-0 transition-opacity;
 }
@@ -161,6 +170,19 @@
 
 .tasks-main-view__composer-select-option {
   @apply flex items-center gap-2;
+}
+
+.tasks-main-view__composer-due-popover {
+  @apply overflow-hidden;
+}
+
+.tasks-main-view__composer-due-clear {
+  @apply border-t p-2;
+  border-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
+}
+
+.tasks-main-view__composer-due-clear-button {
+  @apply w-full justify-center;
 }
 
 @media (pointer: coarse) {

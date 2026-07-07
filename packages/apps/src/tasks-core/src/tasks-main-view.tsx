@@ -32,6 +32,7 @@ import {
   TASK_PRIORITY_NONE,
   type TaskPriorityValue,
 } from "@/tasks-core/src/tasks-priority";
+import { TasksComposerDuePicker } from "@/tasks-core/src/tasks-composer-due-picker";
 import "@/tasks-core/src/tasks-main-view.css";
 
 export type TasksCreateInput = {
@@ -40,6 +41,7 @@ export type TasksCreateInput = {
   listId: string;
   workflowStatus: TaskWorkflowStatus;
   priority: TaskPriorityValue;
+  due: string | null;
 };
 
 export type TasksMainViewHandle = {
@@ -76,6 +78,7 @@ const emptyForm = (listId: string): TasksCreateInput => ({
   listId,
   workflowStatus: DEFAULT_WORKFLOW_STATUS,
   priority: TASK_PRIORITY_NONE,
+  due: null,
 });
 
 function ComposerSelectOption({ icon, label }: { icon: ReactNode; label: string }) {
@@ -265,7 +268,8 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
 
     useEffect(() => {
       setDraft((prev) => {
-        const hasContent = prev.title.trim().length > 0 || prev.description.trim().length > 0;
+        const hasContent =
+          prev.title.trim().length > 0 || prev.description.trim().length > 0 || prev.due !== null;
         if (hasContent) return prev;
         const listStillValid = taskLists.some((list) => list.id === prev.listId);
         if (listStillValid && prev.listId === defaultListId) return prev;
@@ -283,7 +287,8 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
       [draft, onCreateTask, resetDraft],
     );
 
-    const hasDraftContent = draft.title.trim().length > 0 || draft.description.trim().length > 0;
+    const hasDraftContent =
+      draft.title.trim().length > 0 || draft.description.trim().length > 0 || draft.due !== null;
 
     const showDescription = composerExpanded || draft.description.trim().length > 0;
 
@@ -440,6 +445,14 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
                       ))}
                     </SelectContent>
                   </Select>
+
+                  <TasksComposerDuePicker
+                    labels={L}
+                    value={draft.due}
+                    onChange={(due) => setDraft((prev) => ({ ...prev, due }))}
+                    disabled={!canCreate}
+                    triggerClassName={COMPOSER_SELECT_TRIGGER_CLASS}
+                  />
                 </div>
 
                 <div className="tasks-main-view__composer-actions">

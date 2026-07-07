@@ -30,10 +30,29 @@ export function mergeCreatedTask(optimistic: Task, created: Task): Task {
 }
 
 function parseDueDate(task: Task): Date | null {
-  const raw = task.due?.trim();
-  if (!raw) return null;
-  const date = new Date(raw);
-  return Number.isNaN(date.getTime()) ? null : date;
+  return parseDueDateValue(task.due) ?? null;
+}
+
+export function parseDueDateValue(raw: string | null | undefined): Date | undefined {
+  const trimmed = raw?.trim();
+  if (!trimmed) return undefined;
+  const date = new Date(trimmed);
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
+export function dueDateToApiValue(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}T00:00:00`;
+}
+
+export function formatDueDateShort(date: Date): string {
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 function startOfLocalDay(date: Date): Date {

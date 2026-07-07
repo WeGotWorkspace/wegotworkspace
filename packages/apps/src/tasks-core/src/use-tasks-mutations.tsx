@@ -47,12 +47,13 @@ export function useTasksMutations({ shell, list, exitAnimation }: UseTasksMutati
   );
 
   const createTaskFromForm = useCallback(
-    async ({ title, description, listId, workflowStatus, priority }: TasksCreateInput) => {
+    async ({ title, description, listId, workflowStatus, priority, due }: TasksCreateInput) => {
       if (!operations || !title.trim()) return;
       const trimmedTitle = title.trim();
       const trimmedDescription = description.trim() || null;
       const status = workflowStatus ?? "needs-action";
       const taskPriority = priority === TASK_PRIORITY_NONE ? null : priority;
+      const taskDue = due ?? null;
       const tempId = `pending-${crypto.randomUUID()}`;
       const optimistic: Task = {
         "@type": "Task",
@@ -61,6 +62,7 @@ export function useTasksMutations({ shell, list, exitAnimation }: UseTasksMutati
         uid: tempId,
         title: trimmedTitle,
         description: trimmedDescription,
+        due: taskDue,
         workflowStatus: status,
         priority: taskPriority,
         isDraft: false,
@@ -77,6 +79,7 @@ export function useTasksMutations({ shell, list, exitAnimation }: UseTasksMutati
           taskListIds: { [listId]: true },
           workflowStatus: status,
           priority: taskPriority,
+          due: taskDue,
         });
         setTasks((prev) =>
           prev.map((task) => (task.id === tempId ? mergeCreatedTask(optimistic, created) : task)),
