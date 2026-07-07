@@ -186,16 +186,20 @@
   @apply overflow-hidden;
 }
 
-.tasks-main-view__composer-due-popover .rdp-button_previous svg,
-.tasks-main-view__composer-due-popover .rdp-button_next svg {
-  @apply size-5;
+.tasks-main-view__composer-due-popover .rdp-nav .rdp-button_previous,
+.tasks-main-view__composer-due-popover .rdp-nav .rdp-button_next {
+  width: 2rem !important;
+  height: 2rem !important;
+  min-width: 2rem !important;
+  min-height: 2rem !important;
 }
 
-@media (pointer: coarse) {
-  .tasks-main-view__composer-due-popover .rdp-button_previous svg,
-  .tasks-main-view__composer-due-popover .rdp-button_next svg {
-    @apply size-6;
-  }
+.tasks-main-view__composer-due-popover .rdp-chevron,
+.tasks-main-view__composer-due-popover .rdp-button_previous svg,
+.tasks-main-view__composer-due-popover .rdp-button_next svg {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  flex-shrink: 0;
 }
 
 .tasks-main-view__composer-due-clear {
