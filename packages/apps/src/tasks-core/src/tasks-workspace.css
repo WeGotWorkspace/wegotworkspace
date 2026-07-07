@@ -10,7 +10,7 @@
   /* Readable todo column — matches contacts/mail detail measure (680px). */
   --workspace-main-content-max-width: 42.5rem;
 
-  --tasks-accent: #f97316;
+  --tasks-accent: #ea8c72;
   --tasks-sidebar: color-mix(in oklab, var(--tasks-accent) 12%, var(--color-cream, #ffffff));
   --workspace-accent: var(--tasks-accent);
   --color-emerald: var(--tasks-accent);

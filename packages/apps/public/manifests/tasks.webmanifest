@@ -5,8 +5,8 @@
   "scope": "/tasks",
   "id": "/tasks",
   "display": "standalone",
-  "background_color": "#f97316",
-  "theme_color": "#f97316",
+  "background_color": "#ea8c72",
+  "theme_color": "#ea8c72",
   "icons": [
     {
       "src": "/app-icons/tasks.svg?v=3",
