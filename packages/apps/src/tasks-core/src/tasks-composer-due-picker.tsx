@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CalendarDays } from "lucide-react";
 import { Button } from "@/button/src/button";
+import { cn } from "@/lib/utils";
 import { Calendar } from "@/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/ui/popover";
 import type { TasksUILabels } from "@/tasks-core/src/tasks-labels";
@@ -32,11 +33,17 @@ export function TasksComposerDuePicker({
     : labels.noDue;
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={disabled ? false : open}
+      onOpenChange={(next) => {
+        if (disabled) return;
+        setOpen(next);
+      }}
+    >
       <PopoverTrigger asChild>
         <button
           type="button"
-          className={triggerClassName}
+          className={cn("select-trigger", triggerClassName)}
           aria-label={labels.addTaskDue}
           disabled={disabled}
         >

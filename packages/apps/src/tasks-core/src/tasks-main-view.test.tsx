@@ -437,6 +437,9 @@ describe("TasksMainView composer", () => {
       (screen.getByLabelText(defaultTasksLabels.addTaskName) as HTMLInputElement).disabled,
     ).toBe(true);
     expect(
+      (screen.getByLabelText(defaultTasksLabels.addTaskDue) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(
       (screen.getByRole("button", { name: defaultTasksLabels.addTaskButton }) as HTMLButtonElement)
         .disabled,
     ).toBe(true);

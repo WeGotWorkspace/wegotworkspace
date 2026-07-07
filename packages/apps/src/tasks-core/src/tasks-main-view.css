@@ -169,6 +169,10 @@
   @apply ring-2 ring-ring ring-offset-1;
 }
 
+.tasks-main-view__composer-select:disabled {
+  @apply cursor-not-allowed opacity-50;
+}
+
 .tasks-main-view__composer-select-option {
   @apply flex items-center gap-2;
 }
