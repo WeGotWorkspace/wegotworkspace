@@ -39,5 +39,10 @@ Planned incremental sync ([#158](https://github.com/WeGotWorkspace/wegotworkspac
 - Persistence: Sabre CalDAV PDO (`calendarobjects`, `calendarinstances`)
 - Feature gate: `tasks_enabled` setting (mirror `contacts_enabled`)
 - Default task list: VTODO-only CalDAV collection uri `inbox` (display name "Inbox"), provisioned on install and upgrade via `InboxTaskListProvisioner` / `wgw:tasks:provision-inbox`
+- Strict separation: task list REST returns **VTODO-only** collections; calendar REST returns **VEVENT** collections only
+- Provisioning: `home` / `work` VEVENT calendars plus `tasks-home` / `tasks-work` / `inbox` VTODO lists (display names Home, Work, Inbox) via `UserCalendarCollectionsProvisioner` / migration `2026_07_07_000150_wgw_provision_user_calendar_collections`
+- Legacy mixed `default` calendar: migration `2026_07_07_000140_wgw_migrate_default_mixed_calendar_vtodos` moves VTODOs to `inbox` and strips VTODO from `default`
+- Task list CRUD: `POST/PATCH/DELETE /tasks/tasklists` (VTODO-only collections)
+- Calendar create via REST remains VEVENT-only; mixed collections are not supported going forward
 
 Conversion detail: [ics-jmap-task-conversion-matrix.md](./ics-jmap-task-conversion-matrix.md) (filled in with #134).

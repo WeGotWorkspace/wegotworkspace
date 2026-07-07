@@ -1,9 +1,11 @@
 <?php
 
+use App\Services\Calendars\UserCalendarCollectionsProvisioner;
 use App\Services\Contacts\GroupMemberUriBackfill;
 use App\Services\Installer\DevInstallBootstrap;
 use App\Services\Installer\InstallerJwtKeyGenerator;
 use App\Services\Installer\WgwSchemaMigrator;
+use App\Services\Tasks\DefaultMixedCalendarMigrator;
 use App\Services\Tasks\InboxTaskListProvisioner;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -69,3 +71,35 @@ Artisan::command('wgw:tasks:provision-inbox', function (InboxTaskListProvisioner
 
     return self::SUCCESS;
 })->purpose('Ensure each user has a VTODO-only Inbox task list (idempotent)');
+
+Artisan::command('wgw:tasks:migrate-default-vtodos', function (DefaultMixedCalendarMigrator $migrator): int {
+    $result = $migrator->migrateAllUsers();
+    $this->info(sprintf(
+        'Scanned %d user(s); migrated %d mixed default calendar(s); moved %d VTODO object(s); skipped %d.',
+        $result['scanned'],
+        $result['migrated'],
+        $result['movedObjects'],
+        $result['skipped'],
+    ));
+
+    return self::SUCCESS;
+})->purpose('Move VTODOs from mixed default calendars into Inbox and strip VTODO from default (idempotent)');
+
+Artisan::command('wgw:calendars:provision-collections', function (UserCalendarCollectionsProvisioner $provisioner): int {
+    $users = $provisioner->ensureForAllUsers();
+    $groups = $provisioner->ensureForAllGroups();
+    $this->info(sprintf(
+        'Users: scanned %d, created %d collection(s), skipped %d.',
+        $users['scanned'],
+        $users['created'],
+        $users['skipped'],
+    ));
+    $this->info(sprintf(
+        'Groups: scanned %d, created %d calendar(s), skipped %d.',
+        $groups['scanned'],
+        $groups['created'],
+        $groups['skipped'],
+    ));
+
+    return self::SUCCESS;
+})->purpose('Provision home/work VEVENT calendars, tasks-home/tasks-work/inbox VTODO lists, and group VEVENT calendars (idempotent)');

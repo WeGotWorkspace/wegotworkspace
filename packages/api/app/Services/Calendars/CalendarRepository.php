@@ -19,7 +19,9 @@ final class CalendarRepository
     public function list(string $username): array
     {
         $instances = CalendarInstance::query()
+            ->with('calendar')
             ->where('principaluri', $this->principalUri($username))
+            ->whereHas('calendar', fn ($query) => $query->supportsVevent())
             ->orderBy('calendarorder')
             ->orderBy('id')
             ->get();
@@ -150,6 +152,7 @@ final class CalendarRepository
         $instances = CalendarInstance::query()
             ->with('calendar')
             ->where('principaluri', $this->principalUri($username))
+            ->whereHas('calendar', fn ($query) => $query->supportsVevent())
             ->orderBy('uri')
             ->get();
 
@@ -202,8 +205,10 @@ final class CalendarRepository
     private function findOwnedCalendar(string $username, string $calendarId): ?CalendarInstance
     {
         return CalendarInstance::query()
+            ->with('calendar')
             ->where('principaluri', $this->principalUri($username))
             ->where('uri', $calendarId)
+            ->whereHas('calendar', fn ($query) => $query->supportsVevent())
             ->first();
     }
 

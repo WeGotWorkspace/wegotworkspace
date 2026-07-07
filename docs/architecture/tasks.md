@@ -392,7 +392,15 @@ Full matrix: [`packages/api/docs/tasks/ics-jmap-task-conversion-matrix.md`](../p
 - **ACL:** `calendarinstances.access` (1=owner, 2=read, 3=read-write); CalDAV sharing plugin.
 - **REST paths (canonical):** `/api/v1/tasks/tasklists`, `/api/v1/tasks/items` ([#134](https://github.com/WeGotWorkspace/wegotworkspace/issues/134) — not `/tasks/tasks`).
 
-**Installer note:** Fresh installs seed a VEVENT calendar (`default`, uri slug `default`) plus a VTODO-only **Inbox** task list (`inbox`, display name "Inbox"). Upgrade path: wgw migration `2026_07_07_000130_wgw_provision_inbox_task_lists` and artisan `wgw:tasks:provision-inbox` (idempotent). Legacy mixed default calendar (`VEVENT,VTODO,VJOURNAL`) may still appear as a task list until [#332](https://github.com/WeGotWorkspace/wegotworkspace/issues/332) migration renames or splits it.
+**Installer note:** Fresh installs seed VEVENT calendars (`default`, `home`, `work`) plus VTODO-only task lists (`inbox`, `tasks-home`, `tasks-work`). Upgrade path:
+
+- `2026_07_07_000130_wgw_provision_inbox_task_lists` — Inbox for existing users
+- `2026_07_07_000140_wgw_migrate_default_mixed_calendar_vtodos` — move VTODOs from mixed `default` → `inbox`, strip VTODO from `default`
+- `2026_07_07_000150_wgw_provision_user_calendar_collections` — home/work VEVENT + tasks-home/tasks-work VTODO + group VEVENT calendars
+
+Artisan (idempotent): `wgw:tasks:migrate-default-vtodos`, `wgw:calendars:provision-collections`, `wgw:tasks:provision-inbox`.
+
+**Calendar app constraint (roadmap):** new calendar creation must remain VEVENT-only; do not expose VTODO-capable collections in the calendar UI.
 
 **Synctoken / changes:** Per-collection `calendarchanges` + `synctoken` — same as Calendar ([jmap-sync-rest-mapping.md](../packages/api/docs/contacts/jmap-sync-rest-mapping.md)).
 
@@ -404,7 +412,7 @@ Full matrix: [`packages/api/docs/tasks/ics-jmap-task-conversion-matrix.md`](../p
 - **Kanban** — four columns max without non-interop `X-` columns (Decision 6).
 - **Subtasks / checklists** — partial or non-interop (Decision 8).
 - **Non-interop extensions** — custom Kanban columns, WGW checklists, and `X-WGW-*` / unmapped `icsProps` may not round-trip to third-party CalDAV clients (Decisions 6, 8).
-- **Mixed default calendar** — until [#332](https://github.com/WeGotWorkspace/wegotworkspace/issues/332) migration.
+- **Mixed default calendar** — resolved by migration `2026_07_07_000140_wgw_migrate_default_mixed_calendar_vtodos` ([#332](https://github.com/WeGotWorkspace/wegotworkspace/issues/332))
 - **Recurrence UI** — may be v0.9 stretch; storage model still JMAP overrides (Decision 7).
 - **Single sidebar view** — no combined state + list filter in v0.9.
 - **Tasks offline** — architecture committed ([#331](https://github.com/WeGotWorkspace/wegotworkspace/issues/331)); v0.9 scheduling per [#313](https://github.com/WeGotWorkspace/wegotworkspace/issues/313).

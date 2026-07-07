@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Tasks;
 
 use App\Models\User;
+use App\Services\Calendars\CalendarCollectionUris;
 use App\Services\Installer\InstallerSeeder;
 use App\Services\Tasks\InboxTaskListProvisioner;
 use Illuminate\Support\Facades\Artisan;
@@ -37,12 +38,15 @@ final class InboxTaskListProvisionerTest extends WgwDatabaseTestCase
         }
 
         $this->assertArrayHasKey('default', $byUri);
+        $this->assertArrayHasKey(CalendarCollectionUris::EVENT_HOME, $byUri);
         $this->assertArrayHasKey(InboxTaskListProvisioner::URI, $byUri);
+        $this->assertArrayHasKey(CalendarCollectionUris::TASK_HOME, $byUri);
         $this->assertSame(
             ['VEVENT', 'VJOURNAL'],
             $this->componentSetFor($byUri['default']),
         );
         $this->assertSame(['VTODO'], $this->componentSetFor($byUri[InboxTaskListProvisioner::URI]));
+        $this->assertSame(['VTODO'], $this->componentSetFor($byUri[CalendarCollectionUris::TASK_HOME]));
         $this->assertSame(
             InboxTaskListProvisioner::DISPLAY_NAME,
             (string) ($byUri[InboxTaskListProvisioner::URI]['{DAV:}displayname'] ?? ''),

@@ -42,6 +42,23 @@ final class Calendar extends Model
         return str_contains($components, 'VTODO');
     }
 
+    public function supportsVevent(): bool
+    {
+        $components = (string) ($this->components ?? '');
+
+        return str_contains($components, 'VEVENT');
+    }
+
+    public function isVtodoOnly(): bool
+    {
+        return $this->supportsVtodo() && ! $this->supportsVevent();
+    }
+
+    public function isMixed(): bool
+    {
+        return $this->supportsVtodo() && $this->supportsVevent();
+    }
+
     /**
      * Calendars whose supported component set includes VTODO (legacy mixed or VTODO-only).
      *
@@ -50,5 +67,26 @@ final class Calendar extends Model
     public function scopeSupportsVtodo(Builder $query): void
     {
         $query->where('components', 'like', '%VTODO%');
+    }
+
+    /**
+     * VTODO-only collections (strict task lists).
+     *
+     * @param  Builder<Calendar>  $query
+     */
+    public function scopeVtodoOnly(Builder $query): void
+    {
+        $query->where('components', 'like', '%VTODO%')
+            ->where('components', 'not like', '%VEVENT%');
+    }
+
+    /**
+     * Calendars that can store VEVENT (excludes VTODO-only collections).
+     *
+     * @param  Builder<Calendar>  $query
+     */
+    public function scopeSupportsVevent(Builder $query): void
+    {
+        $query->where('components', 'like', '%VEVENT%');
     }
 }

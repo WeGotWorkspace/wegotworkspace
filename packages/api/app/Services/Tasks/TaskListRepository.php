@@ -6,6 +6,7 @@ namespace App\Services\Tasks;
 
 use App\Exceptions\ApiHttpException;
 use App\Models\CalendarInstance;
+use App\Services\Calendars\CalendarCollectionUris;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Sabre\CalDAV\Backend\PDO as CalPDO;
@@ -16,6 +17,8 @@ use Sabre\DAV\PropPatch;
 
 final class TaskListRepository
 {
+    private const CALENDAR_COLOR_PROPERTY = '{http://apple.com/ns/ical/}calendar-color';
+
     public function __construct(private readonly InboxTaskListProvisioner $inboxProvisioner) {}
 
     public function list(string $username): array
@@ -26,7 +29,7 @@ final class TaskListRepository
         $instances = CalendarInstance::query()
             ->with('calendar')
             ->where('principaluri', $principalUri)
-            ->whereHas('calendar', fn ($query) => $query->supportsVtodo())
+            ->whereHas('calendar', fn ($query) => $query->vtodoOnly())
             ->orderBy('calendarorder')
             ->orderBy('id')
             ->get();
@@ -60,7 +63,7 @@ final class TaskListRepository
             $properties['{'.CalDAVPlugin::NS_CALDAV.'}calendar-description'] = is_string($payload['description']) ? $payload['description'] : null;
         }
         if (array_key_exists('color', $payload) && is_string($payload['color']) && trim($payload['color']) !== '') {
-            $properties['{'.CalDAVPlugin::NS_CALDAV.'}calendar-color'] = trim($payload['color']);
+            $properties[self::CALENDAR_COLOR_PROPERTY] = trim($payload['color']);
         }
 
         try {
@@ -97,7 +100,7 @@ final class TaskListRepository
         }
         if (array_key_exists('color', $payload)) {
             $color = $payload['color'];
-            $mutations['{'.CalDAVPlugin::NS_CALDAV.'}calendar-color'] = is_string($color) && trim($color) !== '' ? trim($color) : null;
+            $mutations[self::CALENDAR_COLOR_PROPERTY] = is_string($color) && trim($color) !== '' ? trim($color) : null;
         }
 
         if ($mutations !== []) {
@@ -134,7 +137,7 @@ final class TaskListRepository
         $instances = CalendarInstance::query()
             ->with('calendar')
             ->where('principaluri', $this->principalUri($username))
-            ->whereHas('calendar', fn ($query) => $query->supportsVtodo())
+            ->whereHas('calendar', fn ($query) => $query->vtodoOnly())
             ->orderBy('uri')
             ->get();
 
@@ -180,14 +183,17 @@ final class TaskListRepository
             ->with('calendar')
             ->where('principaluri', $this->principalUri($username))
             ->where('uri', $taskListId)
-            ->whereHas('calendar', fn ($query) => $query->supportsVtodo())
+            ->whereHas('calendar', fn ($query) => $query->vtodoOnly())
             ->first();
     }
 
     private function allocateTaskListUri(string $username, ?string $requestedId, string $name): string
     {
         if ($requestedId !== null && $requestedId !== '') {
-            if (in_array($requestedId, ['default', InboxTaskListProvisioner::URI], true) || $this->findOwnedTaskList($username, $requestedId) !== null) {
+            if (
+                in_array($requestedId, CalendarCollectionUris::reservedTaskUriSlugs(), true)
+                || $this->findOwnedTaskList($username, $requestedId) !== null
+            ) {
                 throw new ApiHttpException(409, 'Task list id already exists.', 'alreadyExists');
             }
 
@@ -250,7 +256,12 @@ final class TaskListRepository
 
         return [
             'id' => $uri,
-            'role' => $uri === InboxTaskListProvisioner::URI ? 'inbox' : null,
+            'role' => match ($uri) {
+                InboxTaskListProvisioner::URI => 'inbox',
+                CalendarCollectionUris::TASK_HOME => 'home',
+                CalendarCollectionUris::TASK_WORK => 'work',
+                default => null,
+            },
             'name' => $name,
             'description' => is_string($instance->description) && trim($instance->description) !== '' ? trim($instance->description) : null,
             'color' => is_string($instance->calendarcolor) && trim($instance->calendarcolor) !== '' ? trim($instance->calendarcolor) : null,
