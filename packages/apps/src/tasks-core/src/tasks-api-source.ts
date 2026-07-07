@@ -2,7 +2,7 @@ import { createTasksAppBootstrap, type TasksAppBootstrap } from "@/lib/api/mock/
 import { createWorkspaceSource } from "@/lib/api/create-workspace-source";
 import { fetchTasksLiveBootstrap } from "@/lib/api/wgw/tasks";
 import { wgwLiveApiEnabled } from "@/lib/api/wgw/http";
-import type { Task, TaskCreate, TaskPatch, TasksAPIOperations } from "@/tasks-core/src/tasks-types";
+import type { Task, TaskPatch, TasksAPIOperations } from "@/tasks-core/src/tasks-types";
 import { taskAlertsFromList } from "@/tasks-core/src/tasks-task-utils";
 import * as tasksApi from "@/lib/api/wgw/tasks";
 
@@ -11,28 +11,13 @@ export type TasksApiSource = {
   createOperations: (bootstrap?: TasksAppBootstrap) => TasksAPIOperations | undefined;
 };
 
-function createLiveTasksOperations(refresh: () => Promise<TasksAppBootstrap>): TasksAPIOperations {
+function createLiveTasksOperations(): TasksAPIOperations {
   return {
-    createTask: async (body: TaskCreate) => {
-      const task = await tasksApi.createTask(body);
-      await refresh();
-      return task;
-    },
-    patchTask: async (taskId: string, patch: TaskPatch, opts) => {
-      const task = await tasksApi.patchTask(taskId, patch, opts);
-      await refresh();
-      return task;
-    },
-    deleteTask: async (taskId: string, opts) => {
-      await tasksApi.deleteTask(taskId, opts);
-      await refresh();
-    },
-    moveTaskToList: async (taskId: string, taskListId: string, opts) => {
-      await tasksApi.patchTask(taskId, {} as TaskPatch, opts);
-      await refresh();
-      const cached = await refresh();
-      const task = cached.data.tasks.find((item) => item.id === taskId);
-      if (!task) throw new Error("Task not found");
+    createTask: (body, opts) => tasksApi.createTask(body, opts),
+    patchTask: (taskId, patch, opts) => tasksApi.patchTask(taskId, patch, opts),
+    deleteTask: (taskId, opts) => tasksApi.deleteTask(taskId, opts),
+    moveTaskToList: async (taskId, taskListId, opts) => {
+      const task = await tasksApi.patchTask(taskId, {} as TaskPatch, opts);
       return { ...task, taskListId };
     },
   };
@@ -130,16 +115,9 @@ export function createDefaultTasksApiSource(): TasksApiSource {
           },
         ),
     }),
-    createLiveSource: () => {
-      let cached: TasksAppBootstrap | undefined;
-      const refresh = async () => {
-        cached = await fetchTasksLiveBootstrap();
-        return cached;
-      };
-      return {
-        loadBootstrap: refresh,
-        createOperations: () => createLiveTasksOperations(refresh),
-      };
-    },
+    createLiveSource: () => ({
+      loadBootstrap: fetchTasksLiveBootstrap,
+      createOperations: () => createLiveTasksOperations(),
+    }),
   });
 }
