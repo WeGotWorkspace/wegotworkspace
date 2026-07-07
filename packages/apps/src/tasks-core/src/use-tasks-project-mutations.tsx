@@ -31,7 +31,7 @@ export function useTasksProjectMutations({ shell }: UseTasksProjectMutationsArgs
 
   const canRenameProject = useMemo(() => {
     if (!canManageProjects || !selectedList) return false;
-    if (isProtectedTaskList(selectedList) || selectedList.role === "group") return false;
+    if (isProtectedTaskList(selectedList)) return false;
     return true;
   }, [canManageProjects, selectedList]);
 
@@ -63,7 +63,7 @@ export function useTasksProjectMutations({ shell }: UseTasksProjectMutationsArgs
       if (!operations?.patchTaskList) return;
       const trimmed = name.trim();
       const list = taskLists.find((entry) => entry.id === listId);
-      if (!trimmed || !list || isProtectedTaskList(list) || list.role === "group") return;
+      if (!trimmed || !list || isProtectedTaskList(list)) return;
 
       const patch: { name?: string; color?: string | null } = {};
       if (trimmed !== list.name) patch.name = trimmed;
@@ -95,7 +95,7 @@ export function useTasksProjectMutations({ shell }: UseTasksProjectMutationsArgs
   const openEditProjectDialog = useCallback(
     (listId: string) => {
       const list = taskLists.find((entry) => entry.id === listId);
-      if (!list || isProtectedTaskList(list) || list.role === "group") return;
+      if (!list || isProtectedTaskList(list)) return;
       setProjectDialog({
         mode: "edit",
         listId: list.id,

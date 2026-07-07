@@ -49,12 +49,13 @@ const sampleTasks: Task[] = [
 ];
 
 describe("tasks-task-utils", () => {
-  it("isProtectedTaskList guards inbox, home, and work roles", () => {
-    expect(isProtectedTaskList({ role: "inbox" })).toBe(true);
-    expect(isProtectedTaskList({ role: "home" })).toBe(true);
-    expect(isProtectedTaskList({ role: "work" })).toBe(true);
-    expect(isProtectedTaskList({ role: null })).toBe(false);
-    expect(isProtectedTaskList({ role: "custom" })).toBe(false);
+  it("isProtectedTaskList guards only inbox lists", () => {
+    expect(isProtectedTaskList({ id: "inbox", role: "inbox", name: "Inbox" })).toBe(true);
+    expect(isProtectedTaskList({ id: "tl-inbox-uuid", role: "inbox", name: "Inbox" })).toBe(true);
+    expect(isProtectedTaskList({ id: "tasks-home", role: "home", name: "Home" })).toBe(false);
+    expect(isProtectedTaskList({ id: "tasks-work", role: "work", name: "Work" })).toBe(false);
+    expect(isProtectedTaskList({ id: "group-team", role: "group", name: "Team" })).toBe(false);
+    expect(isProtectedTaskList({ id: "custom", role: null, name: "Custom" })).toBe(false);
   });
 
   it("defaultTaskListId prefers inbox over other lists", () => {

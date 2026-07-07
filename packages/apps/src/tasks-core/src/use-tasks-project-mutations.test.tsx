@@ -85,6 +85,51 @@ describe("useTasksProjectMutations", () => {
     expect(result.current.canRenameProject).toBe(false);
   });
 
+  it("canRenameProject is true for home, work, and group lists", () => {
+    const operations = {
+      createTask: vi.fn(),
+      patchTask: vi.fn(),
+      deleteTask: vi.fn(),
+      moveTaskToList: vi.fn(),
+      createTaskList: vi.fn(),
+      patchTaskList: vi.fn(),
+    };
+    const data = {
+      ...bootstrap.data,
+      taskLists: [
+        ...bootstrap.data.taskLists,
+        {
+          id: "tasks-home",
+          role: "home",
+          name: "Home",
+          isDefault: false,
+        },
+        {
+          id: "group-team",
+          role: "group",
+          name: "Team",
+          scope: "group" as const,
+          groupSlug: "team",
+          isDefault: false,
+        },
+      ],
+    };
+
+    for (const listId of ["tasks-home", "work", "group-team"] as const) {
+      const { result: shellResult } = renderHook(() =>
+        useTasksShell({
+          data,
+          operations,
+          initialView: `list:${listId}`,
+        }),
+      );
+      const { result } = renderHook(({ shell }) => useTasksProjectMutations({ shell }), {
+        initialProps: { shell: shellResult.current },
+      });
+      expect(result.current.canRenameProject).toBe(true);
+    }
+  });
+
   it("createProject appends list and navigates to it", async () => {
     const created = {
       "@type": "TaskList" as const,

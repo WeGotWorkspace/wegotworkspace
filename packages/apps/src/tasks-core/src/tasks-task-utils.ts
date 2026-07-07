@@ -203,9 +203,12 @@ export function isInboxTaskList(list: {
   return list.id === INBOX_TASK_LIST_ID || list.role === "inbox" || list.name === "Inbox";
 }
 
-export function isProtectedTaskList(list: { role?: string | null }): boolean {
-  const role = list.role?.trim();
-  return role === "inbox" || role === "home" || role === "work";
+export function isProtectedTaskList(list: {
+  id: string;
+  name?: string;
+  role?: string | null;
+}): boolean {
+  return isInboxTaskList(list);
 }
 
 export function defaultTaskListId(
