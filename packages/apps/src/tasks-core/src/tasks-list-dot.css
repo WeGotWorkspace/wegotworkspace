@@ -1,0 +1,5 @@
+@import "../../styles.css" reference;
+
+.tasks-list-dot {
+  @apply size-2.5 shrink-0 rounded-full;
+}

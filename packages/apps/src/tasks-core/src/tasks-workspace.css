@@ -59,10 +59,7 @@
   min-height: 100dvh;
 }
 
-.tasks-sidebar__project-dot {
-  @apply size-2 shrink-0 rounded-full;
-}
-
-.tasks-workspace .menu-item__icon-slot:has(.tasks-sidebar__project-dot) {
+/* Project dots must render at full color; menu-item icon slots default to reduced opacity. */
+.tasks-workspace .sidebar-section .menu-item .menu-item__icon-slot:has(.tasks-list-dot) {
   opacity: 1;
 }

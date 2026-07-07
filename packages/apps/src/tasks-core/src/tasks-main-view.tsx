@@ -17,12 +17,8 @@ import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
 import type { Task, TaskList } from "@/tasks-core/src/tasks-types";
 import type { TasksUILabels } from "@/tasks-core/src/tasks-labels";
-import {
-  isTaskCompleted,
-  taskListDotColor,
-  taskListName,
-  taskListTitle,
-} from "@/tasks-core/src/tasks-task-utils";
+import { TaskListDot } from "@/tasks-core/src/tasks-list-dot";
+import { isTaskCompleted, taskListName, taskListTitle } from "@/tasks-core/src/tasks-task-utils";
 import "@/tasks-core/src/tasks-main-view.css";
 
 export type TasksCreateInput = {
@@ -161,7 +157,6 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
                   const completed = isTaskCompleted(task);
                   const listName = taskListName(task.taskListId, taskLists);
                   const taskList = taskLists.find((list) => list.id === task.taskListId);
-                  const dotColor = taskListDotColor(taskList ?? task.taskListId);
 
                   return (
                     <div
@@ -189,11 +184,7 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
                           <p className="tasks-main-view__description">{task.description}</p>
                         ) : null}
                         <div className="tasks-main-view__meta">
-                          <span
-                            className="tasks-main-view__list-dot"
-                            style={{ backgroundColor: dotColor }}
-                            aria-hidden
-                          />
+                          <TaskListDot list={taskList ?? task.taskListId} />
                           <span>{listName}</span>
                         </div>
                       </div>
@@ -280,11 +271,7 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
                           {taskLists.map((list) => (
                             <SelectItem key={list.id} value={list.id}>
                               <span className="tasks-main-view__list-select-option">
-                                <span
-                                  className="tasks-main-view__list-dot"
-                                  style={{ backgroundColor: taskListDotColor(list) }}
-                                  aria-hidden
-                                />
+                                <TaskListDot list={list} />
                                 {list.name}
                               </span>
                             </SelectItem>

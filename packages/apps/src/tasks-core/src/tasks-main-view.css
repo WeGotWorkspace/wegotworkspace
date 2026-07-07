@@ -72,10 +72,6 @@
   color: color-mix(in oklab, var(--color-ink) 55%, transparent);
 }
 
-.tasks-main-view__list-dot {
-  @apply size-2.5 shrink-0 rounded-full;
-}
-
 .tasks-main-view__actions {
   @apply shrink-0 opacity-0 transition-opacity;
 }
