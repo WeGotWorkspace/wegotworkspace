@@ -181,7 +181,7 @@ function TaskRow({
         </div>
       </div>
 
-      <div className="tasks-main-view__actions">
+      <div className="tasks-main-view__actions" onClick={(event) => event.stopPropagation()}>
         <DropdownMenu
           align="end"
           trigger={

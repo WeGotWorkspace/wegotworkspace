@@ -670,4 +670,42 @@ describe("TasksMainView task rows", () => {
     const flag = meta?.querySelector(".tasks-priority-flag svg") as SVGElement | null;
     expectPriorityFlagStroke(flag, TASK_PRIORITY_FLAG_COLORS.high);
   });
+
+  it("does not toggle complete when clicking task actions", () => {
+    const onToggleComplete = vi.fn();
+    const task = bootstrap.data.tasks[0];
+    renderMainView({ displayTasks: [task], onToggleComplete });
+
+    const row = screen.getByText(task.title).closest(".tasks-main-view__row") as HTMLElement;
+    fireEvent.mouseEnter(row);
+    fireEvent.click(screen.getByRole("button", { name: defaultTasksLabels.taskActions }));
+
+    expect(onToggleComplete).not.toHaveBeenCalled();
+  });
+
+  it("keeps actions visible while the menu trigger is open", () => {
+    const style = document.createElement("style");
+    style.setAttribute("data-testid", "tasks-actions-visibility-styles");
+    style.textContent = `
+      .tasks-main-view__actions { opacity: 0; }
+      .tasks-main-view__actions:has([data-state="open"]) { opacity: 1; }
+    `;
+    document.head.appendChild(style);
+
+    const task = bootstrap.data.tasks[0];
+    renderMainView({ displayTasks: [task] });
+
+    const row = screen.getByText(task.title).closest(".tasks-main-view__row") as HTMLElement;
+    const actions = row.querySelector(".tasks-main-view__actions") as HTMLElement;
+    const actionsButton = screen.getByRole("button", { name: defaultTasksLabels.taskActions });
+
+    expect(window.getComputedStyle(actions).opacity).toBe("0");
+
+    actionsButton.setAttribute("data-state", "open");
+
+    expect(window.getComputedStyle(actions).opacity).toBe("1");
+    expect(screen.getByRole("button", { name: defaultTasksLabels.taskActions })).toBeTruthy();
+
+    style.remove();
+  });
 });

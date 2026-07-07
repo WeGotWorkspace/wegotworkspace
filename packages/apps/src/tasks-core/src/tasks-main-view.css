@@ -104,7 +104,8 @@
 }
 
 .tasks-main-view__row:hover .tasks-main-view__actions,
-.tasks-main-view__row:focus-within .tasks-main-view__actions {
+.tasks-main-view__row:focus-within .tasks-main-view__actions,
+.tasks-main-view__actions:has([data-state="open"]) {
   @apply opacity-100;
 }
 
