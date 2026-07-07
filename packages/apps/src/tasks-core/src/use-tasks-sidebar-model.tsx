@@ -1,12 +1,27 @@
 import { useMemo } from "react";
-import { Calendar, CalendarClock, CircleAlert, Clock, List, Tag } from "lucide-react";
+import {
+  Calendar,
+  CalendarClock,
+  CircleAlert,
+  Clock,
+  Inbox as InboxIcon,
+  List,
+  Tag,
+} from "lucide-react";
 import type { TasksUILabels } from "@/tasks-core/src/tasks-labels";
+import { INBOX_TASK_LIST_ID, isInboxTaskList } from "@/tasks-core/src/tasks-task-utils";
+
+type TaskListSidebarEntry = {
+  id: string;
+  name: string;
+  role?: string | null;
+};
 
 type UseTasksSidebarModelArgs = {
   labels: TasksUILabels;
   view: string;
   tags: string[];
-  taskLists: { id: string; name: string }[];
+  taskLists: TaskListSidebarEntry[];
   selectView: (view: string) => void;
   sidebarDropZoneProps: (
     target: string,
@@ -26,6 +41,29 @@ export function useTasksSidebarModel({
   moveToList,
   assignTagToTasks,
 }: UseTasksSidebarModelArgs) {
+  const inboxListId = useMemo(() => {
+    const inboxList = taskLists.find(isInboxTaskList);
+    return inboxList?.id ?? INBOX_TASK_LIST_ID;
+  }, [taskLists]);
+
+  const projectTaskLists = useMemo(
+    () => taskLists.filter((list) => !isInboxTaskList(list)),
+    [taskLists],
+  );
+
+  const inboxSidebarItems = useMemo(
+    () => [
+      {
+        label: labels.sidebarInbox,
+        icon: <InboxIcon className="size-3.5" />,
+        selected: view === `list:${inboxListId}`,
+        onClick: () => selectView(`list:${inboxListId}`),
+        ...sidebarDropZoneProps(`list:${inboxListId}`, (ids) => moveToList(ids, inboxListId)),
+      },
+    ],
+    [inboxListId, labels.sidebarInbox, moveToList, selectView, sidebarDropZoneProps, view],
+  );
+
   const stateSidebarItems = useMemo(
     () => [
       {
@@ -74,21 +112,22 @@ export function useTasksSidebarModel({
     [assignTagToTasks, selectView, sidebarDropZoneProps, tags, view],
   );
 
-  const listSidebarItems = useMemo(
+  const projectSidebarItems = useMemo(
     () =>
-      taskLists.map((list) => ({
+      projectTaskLists.map((list) => ({
         label: list.name,
         icon: <List className="size-3.5" />,
         selected: view === `list:${list.id}`,
         onClick: () => selectView(`list:${list.id}`),
         ...sidebarDropZoneProps(`list:${list.id}`, (ids) => moveToList(ids, list.id)),
       })),
-    [moveToList, selectView, sidebarDropZoneProps, taskLists, view],
+    [moveToList, projectTaskLists, selectView, sidebarDropZoneProps, view],
   );
 
   return {
+    inboxSidebarItems,
     stateSidebarItems,
     tagSidebarItems,
-    listSidebarItems,
+    projectSidebarItems,
   };
 }

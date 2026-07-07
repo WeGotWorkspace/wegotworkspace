@@ -109,6 +109,16 @@ export function collectTaskTags(tasks: Task[]): string[] {
   return [...tags].sort((a, b) => a.localeCompare(b));
 }
 
+export const INBOX_TASK_LIST_ID = "inbox";
+
+export function isInboxTaskList(list: {
+  id: string;
+  name?: string;
+  role?: string | null;
+}): boolean {
+  return list.id === INBOX_TASK_LIST_ID || list.role === "inbox" || list.name === "Inbox";
+}
+
 export function defaultTaskListId(taskLists: { id: string; isDefault?: boolean }[]): string {
   const preferred = taskLists.find((list) => list.isDefault) ?? taskLists[0];
   return preferred?.id ?? "default";

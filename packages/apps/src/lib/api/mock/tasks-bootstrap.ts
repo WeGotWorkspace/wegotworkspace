@@ -20,8 +20,9 @@ const fullRights: TaskList["myRights"] = {
 
 const mockTaskLists: TaskList[] = [
   {
-    id: "default",
-    name: "Personal",
+    id: "inbox",
+    role: "inbox",
+    name: "Inbox",
     description: null,
     sortOrder: 0,
     isDefault: true,
@@ -30,10 +31,20 @@ const mockTaskLists: TaskList[] = [
     myRights: fullRights,
   },
   {
+    id: "default",
+    name: "Personal",
+    description: null,
+    sortOrder: 1,
+    isDefault: false,
+    isSubscribed: true,
+    shareWith: null,
+    myRights: fullRights,
+  },
+  {
     id: "work",
     name: "Work",
     description: null,
-    sortOrder: 1,
+    sortOrder: 2,
     isDefault: false,
     isSubscribed: true,
     shareWith: null,
@@ -42,6 +53,19 @@ const mockTaskLists: TaskList[] = [
 ];
 
 const mockTasks: Task[] = [
+  {
+    "@type": "Task",
+    id: "task-inbox-demo",
+    taskListId: "inbox",
+    uid: "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
+    title: "Quick capture",
+    description: "Default inbox task",
+    workflowStatus: "needs-action",
+    isDraft: false,
+    sortOrder: 0,
+    categories: [],
+    alerts: undefined,
+  },
   {
     "@type": "Task",
     id: "task-buy-milk",

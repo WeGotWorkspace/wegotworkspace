@@ -2,7 +2,8 @@ export type TasksUILabels = {
   appName: string;
   sidebarStates: string;
   sidebarTags: string;
-  sidebarLists: string;
+  sidebarInbox: string;
+  sidebarProjects: string;
   stateAll: string;
   stateToday: string;
   stateUpcoming: string;
@@ -68,7 +69,8 @@ export const defaultTasksLabels: TasksUILabels = {
   appName: "Tasks",
   sidebarStates: "States",
   sidebarTags: "Tags",
-  sidebarLists: "Lists",
+  sidebarInbox: "Inbox",
+  sidebarProjects: "Projects",
   stateAll: "All",
   stateToday: "Today",
   stateUpcoming: "Upcoming",

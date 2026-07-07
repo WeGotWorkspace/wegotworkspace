@@ -69,16 +69,17 @@ export function TasksWorkspace({
     sidebarDropZoneProps,
   } = controller;
 
-  const { stateSidebarItems, tagSidebarItems, listSidebarItems } = useTasksSidebarModel({
-    labels: L,
-    view,
-    tags,
-    taskLists,
-    selectView,
-    sidebarDropZoneProps,
-    moveToList,
-    assignTagToTasks,
-  });
+  const { inboxSidebarItems, stateSidebarItems, tagSidebarItems, projectSidebarItems } =
+    useTasksSidebarModel({
+      labels: L,
+      view,
+      tags,
+      taskLists,
+      selectView,
+      sidebarDropZoneProps,
+      moveToList,
+      assignTagToTasks,
+    });
 
   useDocumentTitle(viewLabel);
 
@@ -114,11 +115,14 @@ export function TasksWorkspace({
               />
             }
           >
+            <SidebarSection items={inboxSidebarItems} />
             <SidebarSection title={L.sidebarStates} items={stateSidebarItems} />
             {tagSidebarItems.length > 0 ? (
               <SidebarSection title={L.sidebarTags} items={tagSidebarItems} />
             ) : null}
-            <SidebarSection title={L.sidebarLists} items={listSidebarItems} />
+            {projectSidebarItems.length > 0 ? (
+              <SidebarSection title={L.sidebarProjects} items={projectSidebarItems} />
+            ) : null}
           </AppSidebar>
         }
         mainHeader={
