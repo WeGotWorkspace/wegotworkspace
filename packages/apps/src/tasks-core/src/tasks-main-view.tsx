@@ -7,8 +7,19 @@ import {
   useState,
   type DragEvent,
   type FormEvent,
+  type ReactNode,
 } from "react";
-import { CheckCircle2, Circle, MoreVertical, Pencil, Plus, Tag, Trash2 } from "lucide-react";
+import {
+  CheckCircle2,
+  Circle,
+  CircleDot,
+  CircleX,
+  Clock,
+  MoreVertical,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { IconButton } from "@/button/src/button";
 import { Button } from "@/button/src/button";
 import { DropdownMenu } from "@/menu-dropdown/src/dropdown-menu";
@@ -16,14 +27,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import type { Task, TaskList } from "@/tasks-core/src/tasks-types";
 import type { TasksUILabels } from "@/tasks-core/src/tasks-labels";
 import { TaskListDot } from "@/tasks-core/src/tasks-list-dot";
-import { isTaskCompleted, taskListName, taskListTitle } from "@/tasks-core/src/tasks-task-utils";
+import {
+  isTaskCompleted,
+  TASK_WORKFLOW_STATUSES,
+  taskListName,
+  taskListTitle,
+  type TaskWorkflowStatus,
+} from "@/tasks-core/src/tasks-task-utils";
 import "@/tasks-core/src/tasks-main-view.css";
 
 export type TasksCreateInput = {
   title: string;
   description: string;
   listId: string;
-  tag: string;
+  workflowStatus: TaskWorkflowStatus;
 };
 
 export type TasksMainViewHandle = {
@@ -46,12 +63,49 @@ type TasksMainViewProps = {
   isItemDragging: (id: string) => boolean;
 };
 
+const DEFAULT_WORKFLOW_STATUS: TaskWorkflowStatus = "needs-action";
+
 const emptyForm = (listId: string): TasksCreateInput => ({
   title: "",
   description: "",
   listId,
-  tag: "",
+  workflowStatus: DEFAULT_WORKFLOW_STATUS,
 });
+
+function sidebarStatusLabel(status: TaskWorkflowStatus, L: TasksUILabels): string {
+  switch (status) {
+    case "needs-action":
+      return L.stateNeedsAction;
+    case "in-process":
+      return L.stateInProcess;
+    case "completed":
+      return L.stateCompleted;
+    case "cancelled":
+      return L.stateCancelled;
+  }
+}
+
+function workflowStatusIcon(status: TaskWorkflowStatus) {
+  switch (status) {
+    case "needs-action":
+      return <Clock className="size-3.5" aria-hidden />;
+    case "in-process":
+      return <CircleDot className="size-3.5" aria-hidden />;
+    case "completed":
+      return <CheckCircle2 className="size-3.5" aria-hidden />;
+    case "cancelled":
+      return <CircleX className="size-3.5" aria-hidden />;
+  }
+}
+
+function ComposerSelectOption({ icon, label }: { icon: ReactNode; label: string }) {
+  return (
+    <span className="tasks-main-view__composer-select-option">
+      {icon}
+      {label}
+    </span>
+  );
+}
 
 function prefersReducedMotion(): boolean {
   if (typeof window === "undefined") return false;
@@ -216,10 +270,7 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
 
     useEffect(() => {
       setDraft((prev) => {
-        const hasContent =
-          prev.title.trim().length > 0 ||
-          prev.description.trim().length > 0 ||
-          prev.tag.trim().length > 0;
+        const hasContent = prev.title.trim().length > 0 || prev.description.trim().length > 0;
         if (hasContent) return prev;
         const listStillValid = taskLists.some((list) => list.id === prev.listId);
         if (listStillValid && prev.listId === defaultListId) return prev;
@@ -237,10 +288,7 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
       [draft, onCreateTask, resetDraft],
     );
 
-    const hasDraftContent =
-      draft.title.trim().length > 0 ||
-      draft.description.trim().length > 0 ||
-      draft.tag.trim().length > 0;
+    const hasDraftContent = draft.title.trim().length > 0 || draft.description.trim().length > 0;
 
     const showDescription = composerExpanded || draft.description.trim().length > 0;
 
@@ -313,7 +361,7 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
                     disabled={!canCreate}
                   >
                     <SelectTrigger
-                      className="tasks-main-view__composer-list-select"
+                      className="tasks-main-view__composer-select"
                       aria-label={L.addTaskList}
                     >
                       <SelectValue />
@@ -321,29 +369,42 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
                     <SelectContent>
                       {taskLists.map((list) => (
                         <SelectItem key={list.id} value={list.id}>
-                          <span className="tasks-main-view__list-select-option">
-                            <TaskListDot list={list} />
-                            {list.name}
-                          </span>
+                          <ComposerSelectOption
+                            icon={<TaskListDot list={list} />}
+                            label={list.name}
+                          />
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
 
-                  <div className="tasks-main-view__composer-tag">
-                    <Tag className="tasks-main-view__composer-tag-icon" aria-hidden />
-                    <input
-                      type="text"
-                      className="tasks-main-view__composer-tag-input"
-                      value={draft.tag}
-                      onChange={(event) =>
-                        setDraft((prev) => ({ ...prev, tag: event.target.value }))
-                      }
-                      placeholder={L.addTaskTagPlaceholder}
-                      aria-label={L.addTaskTag}
-                      disabled={!canCreate}
-                    />
-                  </div>
+                  <Select
+                    value={draft.workflowStatus}
+                    onValueChange={(workflowStatus) =>
+                      setDraft((prev) => ({
+                        ...prev,
+                        workflowStatus: workflowStatus as TaskWorkflowStatus,
+                      }))
+                    }
+                    disabled={!canCreate}
+                  >
+                    <SelectTrigger
+                      className="tasks-main-view__composer-select"
+                      aria-label={L.addTaskStatus}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TASK_WORKFLOW_STATUSES.map((status) => (
+                        <SelectItem key={status} value={status}>
+                          <ComposerSelectOption
+                            icon={workflowStatusIcon(status)}
+                            label={sidebarStatusLabel(status, L)}
+                          />
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="tasks-main-view__composer-actions">

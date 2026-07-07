@@ -1,17 +1,15 @@
 import { useCallback } from "react";
-import { Check, CheckCircle2, Circle, Plus, Tag, Trash2 } from "lucide-react";
+import { Check, CheckCircle2, Circle, Plus, Trash2 } from "lucide-react";
 import { useConfirmDialog } from "@/hooks/use-confirm-dialog";
 import type { Task, TaskPatch } from "@/tasks-core/src/tasks-types";
 import {
   isTaskCompleted,
-  normalizeTag,
   shouldHideCompletedTaskAfterExit,
   taskListName,
 } from "@/tasks-core/src/tasks-task-utils";
 import {
   tasksCompleteToastMessage,
   tasksMoveToastMessage,
-  tasksTagToastMessage,
 } from "@/tasks-core/src/tasks-toast-messages";
 import type { TasksCreateInput } from "@/tasks-core/src/tasks-main-view";
 import type { TasksShellState } from "@/tasks-core/src/use-tasks-shell";
@@ -47,14 +45,13 @@ export function useTasksMutations({ shell, list, exitAnimation }: UseTasksMutati
   );
 
   const createTaskFromForm = useCallback(
-    async ({ title, description, listId, tag }: TasksCreateInput) => {
+    async ({ title, description, listId, workflowStatus }: TasksCreateInput) => {
       if (!operations || !title.trim()) return;
-      const normalizedTag = normalizeTag(tag);
       const created = await operations.createTask({
         title: title.trim(),
         description: description.trim() || null,
         taskListIds: { [listId]: true },
-        ...(normalizedTag ? { categories: [normalizedTag] } : {}),
+        workflowStatus,
       });
       setTasks((prev) => [...prev, created]);
       shell.show(L.toastTaskAdded, { icon: <Plus className="size-4" /> });
@@ -225,50 +222,6 @@ export function useTasksMutations({ shell, list, exitAnimation }: UseTasksMutati
     [L, operations, queueMutation, setTasks, taskLists, tasks],
   );
 
-  const assignTagToTasks = useCallback(
-    (ids: string[], tag: string) => {
-      const normalized = normalizeTag(tag);
-      if (!normalized) return;
-      const before = tasks.filter((task) => ids.includes(task.id));
-      if (before.length === 0) return;
-
-      for (const taskId of ids) {
-        const task = tasks.find((item) => item.id === taskId);
-        if (!task) continue;
-        const categories = [...new Set([...(task.categories ?? []), normalized])];
-        setTasks((prev) =>
-          prev.map((item) => (item.id === taskId ? { ...item, categories } : item)),
-        );
-      }
-
-      const toastMessage = tasksTagToastMessage(before.length, normalized, L);
-      const rollback = () => {
-        setTasks((prev) => {
-          const snapshot = new Map(before.map((task) => [task.id, task.categories ?? []] as const));
-          return prev.map((task) =>
-            snapshot.has(task.id) ? { ...task, categories: snapshot.get(task.id)! } : task,
-          );
-        });
-      };
-
-      queueMutation({
-        key: `tasks:tag:${normalized}:${ids.slice().sort().join(",")}`,
-        toastMessage,
-        icon: <Tag className="size-4" />,
-        execute: async (signal) => {
-          for (const task of before) {
-            const categories = [...new Set([...(task.categories ?? []), normalized])];
-            await patchTask(task.id, { categories }, { signal });
-          }
-        },
-        undo: rollback,
-        onError: rollback,
-        undoToastMessage: L.toastTagUndone,
-      });
-    },
-    [L, patchTask, queueMutation, setTasks, tasks],
-  );
-
   const handleTaskExitAnimationEnd = useCallback(
     (taskId: string) => {
       exitAnimation.finishTaskExit(taskId, shouldHideCompletedTaskAfterExit(view));
@@ -282,7 +235,6 @@ export function useTasksMutations({ shell, list, exitAnimation }: UseTasksMutati
     editTask,
     requestDeleteTask,
     moveToList,
-    assignTagToTasks,
     confirmDialog,
     handleTaskExitAnimationEnd,
   };

@@ -119,7 +119,7 @@ describe("TasksMainView composer", () => {
       title: "New task",
       description: "Details here",
       listId: "default",
-      tag: "",
+      workflowStatus: "needs-action",
     });
   });
 
@@ -141,7 +141,7 @@ describe("TasksMainView composer", () => {
       title: "New task",
       description: "Details here",
       listId: "default",
-      tag: "",
+      workflowStatus: "needs-action",
     });
     expect((screen.getByLabelText(defaultTasksLabels.addTaskName) as HTMLInputElement).value).toBe(
       "",
@@ -185,5 +185,61 @@ describe("TasksMainView composer", () => {
     const marker = composer?.querySelector(".tasks-main-view__composer-marker svg");
     expect(marker).toBeTruthy();
     expect(marker?.classList.contains("lucide-plus")).toBe(true);
+  });
+
+  it("defaults status to needs action in the composer", () => {
+    renderComposer();
+
+    const statusTrigger = screen.getByLabelText(defaultTasksLabels.addTaskStatus);
+    expect(statusTrigger.textContent).toContain(defaultTasksLabels.stateNeedsAction);
+    expect(statusTrigger.querySelector(".lucide-clock")).toBeTruthy();
+  });
+
+  it("shows status icons in the composer dropdown options", () => {
+    renderComposer();
+
+    fireEvent.click(screen.getByLabelText(defaultTasksLabels.addTaskStatus));
+
+    expect(
+      screen
+        .getByRole("option", { name: defaultTasksLabels.stateNeedsAction })
+        .querySelector(".lucide-clock"),
+    ).toBeTruthy();
+    expect(
+      screen
+        .getByRole("option", { name: defaultTasksLabels.stateInProcess })
+        .querySelector(".lucide-circle-dot"),
+    ).toBeTruthy();
+    expect(
+      screen
+        .getByRole("option", { name: defaultTasksLabels.stateCompleted })
+        .querySelector(".lucide-circle-check"),
+    ).toBeTruthy();
+    expect(
+      screen
+        .getByRole("option", { name: defaultTasksLabels.stateCancelled })
+        .querySelector(".lucide-circle-x"),
+    ).toBeTruthy();
+  });
+
+  it("submits selected workflowStatus with createTask", () => {
+    const onCreateTask = vi.fn();
+    renderComposer(onCreateTask);
+
+    fireEvent.change(screen.getByLabelText(defaultTasksLabels.addTaskName), {
+      target: { value: "In progress task" },
+    });
+
+    fireEvent.click(screen.getByLabelText(defaultTasksLabels.addTaskStatus));
+    fireEvent.click(screen.getByRole("option", { name: defaultTasksLabels.stateInProcess }));
+
+    fireEvent.click(screen.getByRole("button", { name: defaultTasksLabels.addTaskButton }));
+
+    expect(onCreateTask).toHaveBeenCalledWith({
+      title: "In progress task",
+      description: "",
+      listId: "default",
+      workflowStatus: "in-process",
+    });
   });
 });

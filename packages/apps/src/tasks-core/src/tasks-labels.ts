@@ -2,7 +2,6 @@ export type TasksUILabels = {
   appName: string;
   sidebarTime: string;
   sidebarStatus: string;
-  sidebarTags: string;
   sidebarInbox: string;
   sidebarProjects: string;
   stateAll: string;
@@ -20,7 +19,6 @@ export type TasksUILabels = {
   emptyDetail: string;
   selectTask: string;
   fallbackViewTitle: string;
-  tagViewTitle: (tag: string) => string;
   statusNeedsAction: string;
   statusInProcess: string;
   statusCompleted: string;
@@ -31,8 +29,6 @@ export type TasksUILabels = {
   dueLabel: string;
   noDue: string;
   descriptionLabel: string;
-  tagsLabel: string;
-  addTag: string;
   remindMe: string;
   remindNone: string;
   remindAtDue: string;
@@ -48,8 +44,7 @@ export type TasksUILabels = {
   addTaskNamePlaceholder: string;
   addTaskDescriptionPlaceholder: string;
   addTaskList: string;
-  addTaskTag: string;
-  addTaskTagPlaceholder: string;
+  addTaskStatus: string;
   addTaskButton: string;
   editTask: string;
   editTaskPrompt: string;
@@ -67,11 +62,9 @@ export type TasksUILabels = {
   toastTaskAdded: string;
   toastTaskUpdated: string;
   toastTaskMoved: (count: number, listName: string) => string;
-  toastTaskTagged: (count: number, tag: string) => string;
   toastCompleteUndone: string;
   toastDeleteUndone: string;
   toastMoveUndone: string;
-  toastTagUndone: string;
   toastListUpdated: string;
   toastListRefreshFailed: string;
   createTaskTitle: string;
@@ -85,7 +78,6 @@ export const defaultTasksLabels: TasksUILabels = {
   appName: "Tasks",
   sidebarTime: "Time",
   sidebarStatus: "Status",
-  sidebarTags: "Tags",
   sidebarInbox: "Inbox",
   sidebarProjects: "Projects",
   stateAll: "All",
@@ -103,7 +95,6 @@ export const defaultTasksLabels: TasksUILabels = {
   emptyDetail: "Select a task or create a new one.",
   selectTask: "Select a task",
   fallbackViewTitle: "Tasks",
-  tagViewTitle: (tag) => tag,
   statusNeedsAction: "Needs action",
   statusInProcess: "In progress",
   statusCompleted: "Completed",
@@ -114,8 +105,6 @@ export const defaultTasksLabels: TasksUILabels = {
   dueLabel: "Due",
   noDue: "No due date",
   descriptionLabel: "Notes",
-  tagsLabel: "Tags",
-  addTag: "Add tag",
   remindMe: "Remind me",
   remindNone: "None",
   remindAtDue: "At time of task",
@@ -131,8 +120,7 @@ export const defaultTasksLabels: TasksUILabels = {
   addTaskNamePlaceholder: "Task name",
   addTaskDescriptionPlaceholder: "Description",
   addTaskList: "List",
-  addTaskTag: "Tag",
-  addTaskTagPlaceholder: "tag",
+  addTaskStatus: "Status",
   addTaskButton: "Add task",
   editTask: "Edit",
   editTaskPrompt: "Task title",
@@ -151,12 +139,9 @@ export const defaultTasksLabels: TasksUILabels = {
   toastTaskUpdated: "Task updated",
   toastTaskMoved: (count, listName) =>
     count === 1 ? `Moved to ${listName}` : `Moved ${count} tasks to ${listName}`,
-  toastTaskTagged: (count, tag) =>
-    count === 1 ? `Tagged with ${tag}` : `Tagged ${count} tasks with ${tag}`,
   toastCompleteUndone: "Completion undone.",
   toastDeleteUndone: "Deletion undone.",
   toastMoveUndone: "Move undone.",
-  toastTagUndone: "Tag assignment undone.",
   toastListUpdated: "List updated",
   toastListRefreshFailed: "Could not refresh tasks. Please try again.",
   createTaskTitle: "New task",
