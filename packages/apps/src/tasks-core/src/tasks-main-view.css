@@ -28,7 +28,7 @@
 }
 
 .tasks-main-view__row {
-  @apply relative flex items-start gap-3 px-4 py-3;
+  @apply relative flex items-start gap-3 px-4 py-3.5;
 }
 
 .tasks-main-view__row--completed .tasks-main-view__title {
@@ -37,6 +37,11 @@
 
 .tasks-main-view__complete {
   @apply mt-0.5 shrink-0 rounded-full p-0.5 transition-colors;
+
+  & svg {
+    @apply size-6;
+  }
+
   color: color-mix(in oklab, var(--color-ink) 45%, transparent);
 }
 
@@ -53,22 +58,22 @@
 }
 
 .tasks-main-view__title {
-  @apply text-sm font-medium;
+  @apply text-base font-medium;
   color: var(--color-ink);
 }
 
 .tasks-main-view__description {
-  @apply mt-0.5 text-xs;
+  @apply mt-0.5 text-sm;
   color: color-mix(in oklab, var(--color-ink) 55%, transparent);
 }
 
 .tasks-main-view__meta {
-  @apply mt-1.5 flex items-center gap-1.5 text-xs;
+  @apply mt-1.5 flex items-center gap-2 text-sm;
   color: color-mix(in oklab, var(--color-ink) 55%, transparent);
 }
 
 .tasks-main-view__list-dot {
-  @apply size-2 shrink-0 rounded-full;
+  @apply size-2.5 shrink-0 rounded-full;
 }
 
 .tasks-main-view__actions {
@@ -81,11 +86,16 @@
 }
 
 .tasks-main-view__composer {
-  @apply flex items-start gap-3 px-4 py-3;
+  @apply flex items-start gap-3 px-4 py-3.5;
 }
 
 .tasks-main-view__composer-marker {
   @apply mt-0.5 shrink-0;
+
+  & svg {
+    @apply size-6;
+  }
+
   color: color-mix(in oklab, var(--color-ink) 35%, transparent);
 }
 
@@ -94,7 +104,7 @@
 }
 
 .tasks-main-view__composer-title {
-  @apply w-full border-0 bg-transparent text-sm font-medium outline-none;
+  @apply w-full border-0 bg-transparent text-base font-medium outline-none;
   color: var(--color-ink);
 }
 
@@ -107,7 +117,7 @@
 }
 
 .tasks-main-view__composer-description {
-  @apply mt-1 w-full resize-none border-0 bg-transparent text-xs outline-none;
+  @apply mt-1 w-full resize-none border-0 bg-transparent text-sm outline-none;
   color: color-mix(in oklab, var(--color-ink) 55%, transparent);
 }
 

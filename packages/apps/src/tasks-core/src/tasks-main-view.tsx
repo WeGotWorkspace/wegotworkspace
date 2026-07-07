@@ -178,11 +178,7 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
                         aria-label={completed ? L.markIncomplete : L.markComplete}
                         onClick={() => onToggleComplete(task.id)}
                       >
-                        {completed ? (
-                          <CheckCircle2 className="size-5" aria-hidden />
-                        ) : (
-                          <Circle className="size-5" aria-hidden />
-                        )}
+                        {completed ? <CheckCircle2 aria-hidden /> : <Circle aria-hidden />}
                       </button>
 
                       <div className="tasks-main-view__body">
@@ -235,7 +231,7 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
 
                 <form className="tasks-main-view__composer" onSubmit={handleSubmit}>
                   <span className="tasks-main-view__composer-marker" aria-hidden>
-                    <Circle className="size-5" />
+                    <Circle />
                   </span>
 
                   <div className="tasks-main-view__composer-body">
