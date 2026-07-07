@@ -77,6 +77,8 @@
     grid-row: 1;
     width: 100%;
     min-width: 0;
+    /* Match `.tasks-main-view__row` md:px-4 so title aligns with row checkboxes. */
+    @apply px-4;
   }
 
   .tasks-workspace .workspace-app-layout__main-header .view-header__search-stack {
