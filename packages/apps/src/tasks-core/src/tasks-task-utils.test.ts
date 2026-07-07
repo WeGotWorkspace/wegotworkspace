@@ -85,6 +85,13 @@ describe("tasks-task-utils", () => {
     expect(filterTasksByView(sampleTasks, "priority:low")).toEqual([]);
   });
 
+  it("filterTasksByView matches legacy inverted API priority values", () => {
+    const legacyHigh = { ...sampleTasks[0], id: "legacy-high", priority: 10 };
+    expect(filterTasksByView([legacyHigh], "priority:high").map((task) => task.id)).toEqual([
+      "legacy-high",
+    ]);
+  });
+
   it("mergeCreatedTask keeps optimistic priority when API response omits it", () => {
     const optimistic = {
       ...sampleTasks[0],

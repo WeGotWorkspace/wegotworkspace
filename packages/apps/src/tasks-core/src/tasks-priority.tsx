@@ -27,6 +27,13 @@ export const TASK_PRIORITY_FLAG_COLORS = {
   none: "color-mix(in oklab, var(--color-ink) 40%, transparent)",
 } as const;
 
+/** Pre-fix API responses used inverted JMAP-ish values for iCal 1/5/9. */
+const LEGACY_API_PRIORITY_MAP: Readonly<Record<number, number>> = {
+  10: TASK_PRIORITY_HIGH,
+  6: TASK_PRIORITY_MEDIUM,
+  2: TASK_PRIORITY_LOW,
+};
+
 export function isTaskPriorityNone(priority: number | string | null | undefined): boolean {
   return normalizeTaskPriority(priority) == null;
 }
@@ -44,24 +51,39 @@ export function priorityFromFilterSlug(slug: string): number | null {
   }
 }
 
-export function priorityLabel(priority: TaskPriorityValue, L: TasksUILabels): string {
-  switch (priority) {
-    case TASK_PRIORITY_NONE:
-      return L.priorityNone;
+export function priorityLabel(
+  priority: number | string | null | undefined,
+  L: TasksUILabels,
+): string {
+  switch (normalizeTaskPriority(priority)) {
     case TASK_PRIORITY_HIGH:
       return L.priorityHigh;
     case TASK_PRIORITY_MEDIUM:
       return L.priorityMedium;
     case TASK_PRIORITY_LOW:
       return L.priorityLow;
+    default:
+      return L.priorityNone;
   }
 }
 
 export function normalizeTaskPriority(priority: number | string | null | undefined): number | null {
   if (priority == null) return null;
-  const value = typeof priority === "string" ? Number(priority) : priority;
+  const value = typeof priority === "string" ? Number(priority.trim()) : priority;
   if (!Number.isFinite(value) || value === TASK_PRIORITY_NONE) return null;
-  return value;
+
+  if (
+    value === TASK_PRIORITY_HIGH ||
+    value === TASK_PRIORITY_MEDIUM ||
+    value === TASK_PRIORITY_LOW
+  ) {
+    return value;
+  }
+
+  const legacy = LEGACY_API_PRIORITY_MAP[value];
+  if (legacy !== undefined) return legacy;
+
+  return null;
 }
 
 export function priorityFlagColor(priority: number | string | null | undefined): string {
@@ -84,8 +106,23 @@ type PriorityFlagStyle = CSSProperties & {
   fill?: string;
 };
 
-function priorityFlagStyle(priority: number | null | undefined): PriorityFlagStyle {
+function renderPriorityFlag(stroke: string, fill: string): ReactNode {
+  const wrapperStyle: PriorityFlagStyle = {
+    "--tasks-priority-flag-stroke": stroke,
+    "--tasks-priority-flag-fill": fill,
+  };
+
+  return (
+    <span className="tasks-priority-flag" style={wrapperStyle}>
+      <Flag className="size-3.5" style={{ stroke, fill }} aria-hidden />
+    </span>
+  );
+}
+
+function priorityFlagStyle(priority: number | string | null | undefined): PriorityFlagStyle | null {
   const normalized = normalizeTaskPriority(priority);
+  if (normalized == null) return null;
+
   const stroke = priorityFlagColor(normalized);
   const fill = normalized === TASK_PRIORITY_LOW ? "#ffffff" : stroke;
   return {
@@ -96,8 +133,15 @@ function priorityFlagStyle(priority: number | null | undefined): PriorityFlagSty
   };
 }
 
-export function priorityIcon(priority: number | null | undefined): ReactNode {
+export function priorityIcon(priority: number | string | null | undefined): ReactNode {
+  if (priority === TASK_PRIORITY_NONE || priority === 0 || priority === "0") {
+    const noneColor = TASK_PRIORITY_FLAG_COLORS.none;
+    return renderPriorityFlag(noneColor, noneColor);
+  }
+
   const flagStyle = priorityFlagStyle(priority);
+  if (flagStyle == null) return null;
+
   const { stroke, fill, ...wrapperStyle } = flagStyle;
 
   return (

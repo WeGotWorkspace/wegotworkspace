@@ -654,8 +654,20 @@ describe("TasksMainView task rows", () => {
 
     const row = screen.getByText(task.title).closest(".tasks-main-view__row");
     const meta = row?.querySelector(".tasks-main-view__meta");
+    expect(meta?.querySelector(".tasks-priority-flag")).toBeNull();
     expect(meta?.textContent).not.toContain(defaultTasksLabels.priorityHigh);
     expect(meta?.textContent).not.toContain(defaultTasksLabels.priorityMedium);
     expect(meta?.textContent).not.toContain(defaultTasksLabels.priorityLow);
+  });
+
+  it("shows colored flag for legacy inverted API priority values", () => {
+    installSvgCurrentColorOverride();
+    const task = { ...bootstrap.data.tasks[0], priority: 10 };
+    renderMainView({ displayTasks: [task] });
+
+    const row = screen.getByText(task.title).closest(".tasks-main-view__row");
+    const meta = row?.querySelector(".tasks-main-view__meta");
+    const flag = meta?.querySelector(".tasks-priority-flag svg") as SVGElement | null;
+    expectPriorityFlagStroke(flag, TASK_PRIORITY_FLAG_COLORS.high);
   });
 });

@@ -1,5 +1,9 @@
 import type { Task, TaskAlert } from "@/tasks-core/src/tasks-types";
-import { isTaskPriorityNone, priorityFromFilterSlug } from "@/tasks-core/src/tasks-priority";
+import {
+  isTaskPriorityNone,
+  normalizeTaskPriority,
+  priorityFromFilterSlug,
+} from "@/tasks-core/src/tasks-priority";
 
 export const TASK_WORKFLOW_STATUSES = [
   "needs-action",
@@ -97,7 +101,7 @@ export function filterTasksByView(tasks: Task[], view: string): Task[] {
   if (view.startsWith("priority:")) {
     const priority = priorityFromFilterSlug(view.slice(9));
     if (priority === null) return tasks;
-    return tasks.filter((task) => task.priority === priority);
+    return tasks.filter((task) => normalizeTaskPriority(task.priority) === priority);
   }
 
   if (!view.startsWith("state:")) {

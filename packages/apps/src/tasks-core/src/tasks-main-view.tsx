@@ -210,7 +210,7 @@ function TaskRow({
           {!isTaskPriorityNone(task.priority) ? (
             <span
               className="tasks-main-view__meta-item tasks-main-view__meta-item--priority"
-              aria-label={priorityLabel(task.priority as TaskPriorityValue, L)}
+              aria-label={priorityLabel(task.priority, L)}
             >
               {priorityIcon(task.priority)}
             </span>
