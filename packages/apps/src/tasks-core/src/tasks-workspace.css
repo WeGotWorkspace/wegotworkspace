@@ -55,7 +55,8 @@
 }
 
 .tasks-workspace .workspace-app-layout__main-content {
-  @apply mx-auto flex min-h-full flex-1 flex-col w-full px-0 pt-6 pb-0;
+  /* Match header inset on small screens; md+ keeps row padding inside centered column. */
+  @apply mx-auto flex min-h-full flex-1 flex-col w-full px-4 pt-6 pb-0 md:px-0;
   max-width: var(--workspace-main-content-max-width);
 }
 

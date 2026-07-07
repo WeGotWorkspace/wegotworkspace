@@ -9,12 +9,12 @@
 }
 
 .tasks-main-view__empty {
-  @apply px-4 py-10 text-center text-sm;
+  @apply px-0 py-10 text-center text-sm md:px-4;
   color: color-mix(in oklab, var(--color-ink) 65%, transparent);
 }
 
 .tasks-main-view__loading {
-  @apply flex items-center justify-center px-4 py-16;
+  @apply flex items-center justify-center px-0 py-16 md:px-4;
 }
 
 .tasks-main-view__list {
@@ -23,7 +23,7 @@
 }
 
 .tasks-main-view__row {
-  @apply relative flex items-start gap-3 px-4 py-3.5;
+  @apply relative flex items-start gap-3 px-0 py-3.5 md:px-4;
 }
 
 .tasks-main-view__row--completed .tasks-main-view__title {
@@ -77,7 +77,7 @@
 }
 
 .tasks-main-view__composer {
-  @apply flex items-start gap-3 px-4 py-3.5;
+  @apply flex items-start gap-3 px-0 py-3.5 md:px-4;
 }
 
 .tasks-main-view__composer-marker {
