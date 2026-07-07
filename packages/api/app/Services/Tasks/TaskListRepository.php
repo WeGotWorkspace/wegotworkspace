@@ -26,7 +26,7 @@ final class TaskListRepository
         $instances = CalendarInstance::query()
             ->with('calendar')
             ->where('principaluri', $principalUri)
-            ->whereHas('calendar', fn ($query) => $query->where('components', 'VTODO'))
+            ->whereHas('calendar', fn ($query) => $query->supportsVtodo())
             ->orderBy('calendarorder')
             ->orderBy('id')
             ->get();
@@ -134,7 +134,7 @@ final class TaskListRepository
         $instances = CalendarInstance::query()
             ->with('calendar')
             ->where('principaluri', $this->principalUri($username))
-            ->whereHas('calendar', fn ($query) => $query->where('components', 'VTODO'))
+            ->whereHas('calendar', fn ($query) => $query->supportsVtodo())
             ->orderBy('uri')
             ->get();
 
@@ -180,7 +180,7 @@ final class TaskListRepository
             ->with('calendar')
             ->where('principaluri', $this->principalUri($username))
             ->where('uri', $taskListId)
-            ->whereHas('calendar', fn ($query) => $query->where('components', 'VTODO'))
+            ->whereHas('calendar', fn ($query) => $query->supportsVtodo())
             ->first();
     }
 

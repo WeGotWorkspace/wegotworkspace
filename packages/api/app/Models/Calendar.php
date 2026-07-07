@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Models\Concerns\UsesWgwConnection;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -41,9 +42,13 @@ final class Calendar extends Model
         return str_contains($components, 'VTODO');
     }
 
-    /** Task lists are VTODO-only collections (Decision 4 — excludes legacy mixed calendars). */
-    public function isVtodoOnlyTaskList(): bool
+    /**
+     * Calendars whose supported component set includes VTODO (legacy mixed or VTODO-only).
+     *
+     * @param  Builder<Calendar>  $query
+     */
+    public function scopeSupportsVtodo(Builder $query): void
     {
-        return (string) ($this->components ?? '') === 'VTODO';
+        $query->where('components', 'like', '%VTODO%');
     }
 }

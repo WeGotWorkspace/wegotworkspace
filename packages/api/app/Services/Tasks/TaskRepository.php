@@ -453,9 +453,7 @@ final class TaskRepository
             ->with('calendar')
             ->where('principaluri', $this->principalUri($username))
             ->where('uri', $taskListId)
-            ->whereHas('calendar', function ($query): void {
-                $query->where('components', 'VTODO');
-            })
+            ->whereHas('calendar', fn ($query) => $query->supportsVtodo())
             ->first();
     }
 

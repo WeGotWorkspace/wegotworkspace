@@ -34,7 +34,7 @@ final class TasksTaskListsTest extends WgwDatabaseTestCase
             ->assertJsonPath('list.0.myRights.mayReadItems', true);
     }
 
-    public function test_list_task_lists_excludes_legacy_mixed_calendar(): void
+    public function test_list_task_lists_includes_vtodo_capable_mixed_calendar(): void
     {
         $caldav = new PDO(DB::connection('wgw')->getPdo());
         $caldav->createCalendar('principals/bob', 'legacy-mixed', [
@@ -48,8 +48,24 @@ final class TasksTaskListsTest extends WgwDatabaseTestCase
         $response->assertOk();
         $ids = collect($response->json('list'))->pluck('id')->all();
         $this->assertContains(InboxTaskListProvisioner::URI, $ids);
-        $this->assertNotContains('legacy-mixed', $ids);
-        $this->assertNotContains('default', $ids);
+        $this->assertContains('legacy-mixed', $ids);
+    }
+
+    public function test_list_task_lists_excludes_vevent_only_calendar(): void
+    {
+        $caldav = new PDO(DB::connection('wgw')->getPdo());
+        $caldav->createCalendar('principals/bob', 'events-only', [
+            '{DAV:}displayname' => 'Events',
+            '{urn:ietf:params:xml:ns:caldav}supported-calendar-component-set' => new SupportedCalendarComponentSet(['VEVENT', 'VJOURNAL']),
+        ]);
+
+        $response = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/tasks/tasklists');
+
+        $response->assertOk();
+        $ids = collect($response->json('list'))->pluck('id')->all();
+        $this->assertContains(InboxTaskListProvisioner::URI, $ids);
+        $this->assertNotContains('events-only', $ids);
     }
 
     public function test_list_task_lists_provisions_inbox_when_missing(): void
