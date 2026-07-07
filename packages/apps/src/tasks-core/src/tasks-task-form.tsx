@@ -1,5 +1,6 @@
 import type { KeyboardEvent, ReactNode, RefObject } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
+import { TextareaAutosize } from "@/ui/textarea-autosize";
 import type { Task, TaskList } from "@/tasks-core/src/tasks-types";
 import type { TasksUILabels } from "@/tasks-core/src/tasks-labels";
 import { TaskListDot } from "@/tasks-core/src/tasks-list-dot";
@@ -114,14 +115,15 @@ export function TasksTaskFormFields({
       />
 
       {showDescription ? (
-        <textarea
+        <TextareaAutosize
           className="tasks-main-view__composer-description"
           value={value.description}
           onChange={(event) => setField("description", event.target.value)}
           onKeyDown={onDescriptionKeyDown}
           placeholder={L.addTaskDescriptionPlaceholder}
           aria-label={L.descriptionLabel}
-          rows={1}
+          minRows={1}
+          maxRows={8}
           disabled={disabled}
         />
       ) : null}
