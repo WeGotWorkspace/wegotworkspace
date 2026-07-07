@@ -1,8 +1,9 @@
-import { RefreshCw } from "lucide-react";
+import { useRef } from "react";
+import { Plus, RefreshCw } from "lucide-react";
+import { Button, IconButton } from "@/button/src/button";
 import { TooltipProvider } from "@/ui/tooltip";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
-import { IconButton } from "@/button/src/button";
 import {
   WorkspaceAppLayout,
   WorkspaceUserFooter,
@@ -12,7 +13,7 @@ import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import { cn } from "@/lib/utils";
 import { useDocumentTitle } from "@/lib/document-title";
 import type { TasksWorkspaceProps } from "@/tasks-core/src/tasks-workspace-props";
-import { TasksMainView } from "@/tasks-core/src/tasks-main-view";
+import { TasksMainView, type TasksMainViewHandle } from "@/tasks-core/src/tasks-main-view";
 import { useTasksController } from "@/tasks-core/src/use-tasks-controller";
 import { useTasksSidebarModel } from "@/tasks-core/src/use-tasks-sidebar-model";
 import "@/tasks-core/src/tasks-workspace.css";
@@ -30,6 +31,8 @@ export function TasksWorkspace({
   initialView,
   onViewChange,
 }: TasksWorkspaceProps) {
+  const composerRef = useRef<TasksMainViewHandle>(null);
+
   const controller = useTasksController({
     data,
     labels,
@@ -87,6 +90,21 @@ export function TasksWorkspace({
           <AppSidebar
             open={sidebarOpen}
             onCloseMobile={() => setSidebarOpen(false)}
+            primaryButton={
+              <Button
+                label={L.newTask}
+                icon={<Plus />}
+                onClick={() => {
+                  composerRef.current?.focusComposerTitle();
+                  setSidebarOpen(false);
+                }}
+                size="lg"
+                pill
+                variant="primary"
+                disabled={!canCreateTask}
+                className="w-full"
+              />
+            }
             footer={
               <WorkspaceUserFooter
                 name={session.user.displayName}
@@ -133,6 +151,7 @@ export function TasksWorkspace({
         }
         main={
           <TasksMainView
+            ref={composerRef}
             L={L}
             listLoading={listLoading}
             visibleTasks={visibleTasks}
