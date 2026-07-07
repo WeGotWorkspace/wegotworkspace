@@ -118,6 +118,20 @@
   max-width: var(--workspace-main-content-max-width);
 }
 
+/**
+ * Portaled tasks dialogs/alerts sit outside `.tasks-workspace`; repeat accent tokens so
+ * {@link Button} and {@link buttonVariants} match the tasks shell.
+ */
+.tasks-dialog-surface {
+  --tasks-accent: #ea8c72;
+  --color-emerald: var(--tasks-accent);
+  --button-primary-bg: var(--tasks-accent);
+  --button-primary-fg: var(--color-ink);
+  --primary: var(--tasks-accent);
+  --primary-foreground: var(--color-ink);
+  --field-label-color: color-mix(in oklab, var(--color-ink) 60%, transparent);
+}
+
 .tasks-story-scope {
   min-height: 100dvh;
   background-color: var(--workspace-root-bg, var(--color-cream, #ffffff));

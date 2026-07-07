@@ -29,7 +29,9 @@ export function useTasksMutations({ shell, list, exitAnimation }: UseTasksMutati
   const { queueMutation } = list;
   const { beginTaskExit, cancelTaskExit } = exitAnimation;
 
-  const { confirmDialog, requestConfirm } = useConfirmDialog();
+  const { confirmDialog, requestConfirm } = useConfirmDialog({
+    contentClassName: "tasks-dialog-surface",
+  });
 
   const patchTask = useCallback(
     async (taskId: string, patch: TaskPatch, opts?: { signal?: AbortSignal }) => {
@@ -210,7 +212,6 @@ export function useTasksMutations({ shell, list, exitAnimation }: UseTasksMutati
         description: L.deleteConfirmBody,
         confirmLabel: L.delete,
         cancelLabel: L.cancel,
-        variant: "destructive",
         onConfirm: () => deleteTasks([taskId]),
       });
     },
