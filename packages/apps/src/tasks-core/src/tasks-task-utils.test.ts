@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  composerDefaultDueForView,
   defaultTaskListId,
   filterTasksByView,
   formatComposerDueDateLabel,
@@ -186,5 +187,14 @@ describe("tasks-task-utils", () => {
     expect(formatComposerDueDateLabel(new Date(2026, 6, 7), labels, now)).toBe("Yesterday");
     expect(formatComposerDueDateLabel(new Date(2026, 6, 9), labels, now)).toBe("Tomorrow");
     expect(formatComposerDueDateLabel(new Date(2026, 6, 15), labels, now)).toBe("Jul 15, 2026");
+  });
+
+  it("returns composer default due dates for time-filter views", () => {
+    const now = new Date(2026, 6, 8, 12, 0, 0);
+
+    expect(composerDefaultDueForView("state:today", now)).toBe("2026-07-08T00:00:00");
+    expect(composerDefaultDueForView("state:upcoming", now)).toBe("2026-07-09T00:00:00");
+    expect(composerDefaultDueForView("state:overdue", now)).toBeNull();
+    expect(composerDefaultDueForView("state:all", now)).toBeNull();
   });
 });

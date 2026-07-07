@@ -92,7 +92,7 @@ export function useTasksShell({
   }, [L, taskLists, view]);
 
   const selectedListId = view.startsWith("list:") ? view.slice(5) : null;
-  const canCreateTask = Boolean(operations);
+  const canCreateTask = Boolean(operations) && view !== "state:overdue";
 
   const selectView = useCallback(
     (nextView: string) => {

@@ -2,6 +2,7 @@ import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createTasksAppBootstrap } from "@/lib/api/mock/tasks-bootstrap";
 import { INBOX_TASK_LIST_ID } from "@/tasks-core/src/tasks-task-utils";
+import type { TasksAPIOperations } from "@/tasks-core/src/tasks-types";
 import { useTasksController } from "@/tasks-core/src/use-tasks-controller";
 
 vi.mock("@/hooks/use-app-toast", () => ({
@@ -28,6 +29,13 @@ vi.mock("@/hooks/use-queued-mutation", () => ({
 }));
 
 const bootstrap = createTasksAppBootstrap();
+
+const mockOperations = {
+  createTask: vi.fn(),
+  patchTask: vi.fn(),
+  deleteTask: vi.fn(),
+  moveTaskToList: vi.fn(),
+} satisfies TasksAPIOperations;
 
 describe("useTasksController URL routing", () => {
   beforeEach(() => {
@@ -155,5 +163,29 @@ describe("useTasksController URL routing", () => {
 
     expect(result.current.showCompletedToggle).toBe(false);
     expect(result.current.displayTasks.some((task) => task.id === "task-done")).toBe(true);
+  });
+
+  it("disables task creation on overdue view when operations are available", () => {
+    const { result } = renderHook(() =>
+      useTasksController({
+        data: bootstrap.data,
+        operations: mockOperations,
+        initialView: "state:overdue",
+      }),
+    );
+
+    expect(result.current.canCreateTask).toBe(false);
+  });
+
+  it("allows task creation on today view when operations are available", () => {
+    const { result } = renderHook(() =>
+      useTasksController({
+        data: bootstrap.data,
+        operations: mockOperations,
+        initialView: "state:today",
+      }),
+    );
+
+    expect(result.current.canCreateTask).toBe(true);
   });
 });

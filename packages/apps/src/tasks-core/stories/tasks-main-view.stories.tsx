@@ -29,6 +29,7 @@ export const MainView: Story = {
     exitingTaskIds: new Set<string>(),
     taskLists: bootstrap.data.taskLists,
     defaultListId: "default",
+    view: "state:all",
     canCreate: true,
     onToggleComplete: () => undefined,
     onEditTask: () => undefined,

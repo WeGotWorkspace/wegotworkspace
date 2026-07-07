@@ -193,6 +193,7 @@ export function TasksWorkspace({
             exitingTaskIds={exitingTaskIds}
             taskLists={taskLists}
             defaultListId={createListId}
+            view={view}
             canCreate={canCreateTask}
             onToggleComplete={toggleTaskComplete}
             onEditTask={editTask}

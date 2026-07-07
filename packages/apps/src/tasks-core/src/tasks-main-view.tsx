@@ -24,6 +24,7 @@ import type { Task, TaskList } from "@/tasks-core/src/tasks-types";
 import type { TasksUILabels } from "@/tasks-core/src/tasks-labels";
 import { TaskListDot } from "@/tasks-core/src/tasks-list-dot";
 import {
+  composerDefaultDueForView,
   formatComposerDueDateLabel,
   isTaskCompleted,
   parseDueDateValue,
@@ -52,6 +53,7 @@ type TasksMainViewProps = {
   exitingTaskIds: ReadonlySet<string>;
   taskLists: TaskList[];
   defaultListId: string;
+  view: string;
   canCreate: boolean;
   onToggleComplete: (taskId: string) => void;
   onEditTask: (taskId: string) => void;
@@ -212,6 +214,7 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
       exitingTaskIds,
       taskLists,
       defaultListId,
+      view,
       canCreate,
       onToggleComplete,
       onEditTask,
@@ -225,8 +228,12 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
   ) {
     const titleRef = useRef<HTMLInputElement>(null);
     const composerFormRef = useRef<HTMLFormElement>(null);
-    const [draft, setDraft] = useState(() => emptyTaskForm(defaultListId));
+    const [draft, setDraft] = useState(() => ({
+      ...emptyTaskForm(defaultListId),
+      due: composerDefaultDueForView(view),
+    }));
     const [composerExpanded, setComposerExpanded] = useState(false);
+    const viewDefaultDue = composerDefaultDueForView(view);
 
     useImperativeHandle(
       ref,
@@ -240,20 +247,32 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
     );
 
     const resetDraft = useCallback(() => {
-      setDraft(emptyTaskForm(defaultListId));
+      setDraft({
+        ...emptyTaskForm(defaultListId),
+        due: composerDefaultDueForView(view),
+      });
       setComposerExpanded(false);
-    }, [defaultListId]);
+    }, [defaultListId, view]);
+
+    useEffect(() => {
+      setDraft((prev) => ({ ...prev, due: composerDefaultDueForView(view) }));
+    }, [view]);
 
     useEffect(() => {
       setDraft((prev) => {
-        const hasContent =
-          prev.title.trim().length > 0 || prev.description.trim().length > 0 || prev.due !== null;
-        if (hasContent) return prev;
+        const hasContent = prev.title.trim().length > 0 || prev.description.trim().length > 0;
+        if (hasContent) {
+          if (prev.listId === defaultListId) return prev;
+          return { ...prev, listId: defaultListId };
+        }
         const listStillValid = taskLists.some((list) => list.id === prev.listId);
         if (listStillValid && prev.listId === defaultListId) return prev;
-        return emptyTaskForm(defaultListId);
+        return {
+          ...emptyTaskForm(defaultListId),
+          due: composerDefaultDueForView(view),
+        };
       });
-    }, [defaultListId, taskLists]);
+    }, [defaultListId, taskLists, view]);
 
     const handleSubmit = useCallback(
       (event: FormEvent) => {
@@ -266,7 +285,9 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
     );
 
     const hasDraftContent =
-      draft.title.trim().length > 0 || draft.description.trim().length > 0 || draft.due !== null;
+      draft.title.trim().length > 0 ||
+      draft.description.trim().length > 0 ||
+      (draft.due !== null && draft.due !== viewDefaultDue);
 
     const showDescription = composerExpanded || draft.description.trim().length > 0;
 

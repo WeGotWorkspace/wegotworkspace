@@ -53,6 +53,18 @@ export function dueDateToApiValue(date: Date): string {
   return `${year}-${month}-${day}T00:00:00`;
 }
 
+/** Default composer due date for time-filter sidebar views; null for all other views. */
+export function composerDefaultDueForView(view: string, now: Date = new Date()): string | null {
+  const today = startOfLocalDay(now);
+  if (view === "state:today") return dueDateToApiValue(today);
+  if (view === "state:upcoming") {
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return dueDateToApiValue(tomorrow);
+  }
+  return null;
+}
+
 export function formatDueDateShort(date: Date): string {
   return date.toLocaleDateString(undefined, {
     month: "short",

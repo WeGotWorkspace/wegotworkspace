@@ -55,6 +55,7 @@ function renderMainView(
         exitingTaskIds={new Set<string>()}
         taskLists={bootstrap.data.taskLists}
         defaultListId="default"
+        view="state:all"
         canCreate
         onToggleComplete={vi.fn()}
         onEditTask={vi.fn()}
@@ -368,6 +369,77 @@ describe("TasksMainView composer", () => {
     const dueTrigger = screen.getByLabelText(defaultTasksLabels.addTaskDue);
     expect(dueTrigger.textContent).toContain(defaultTasksLabels.noDue);
     expect(dueTrigger.querySelector(".lucide-calendar-days")).toBeTruthy();
+  });
+
+  describe("composer due date by view", () => {
+    const mockedNow = new Date(2026, 6, 8, 12, 0, 0);
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(mockedNow);
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("prefills due date to today on today view", () => {
+      renderMainView({ view: "state:today" });
+
+      const dueTrigger = screen.getByLabelText(defaultTasksLabels.addTaskDue);
+      expect(dueTrigger.textContent).toContain(defaultTasksLabels.dueToday);
+    });
+
+    it("prefills due date to tomorrow on upcoming view", () => {
+      renderMainView({ view: "state:upcoming" });
+
+      const dueTrigger = screen.getByLabelText(defaultTasksLabels.addTaskDue);
+      expect(dueTrigger.textContent).toContain(defaultTasksLabels.dueTomorrow);
+    });
+
+    it("clears view-prefilled due when switching away from today view", () => {
+      const { rerender } = renderMainView({ view: "state:today" });
+
+      expect(screen.getByLabelText(defaultTasksLabels.addTaskDue).textContent).toContain(
+        defaultTasksLabels.dueToday,
+      );
+
+      rerender(
+        <TooltipProvider>
+          <TasksMainView
+            L={defaultTasksLabels}
+            displayTasks={[]}
+            exitingTaskIds={new Set<string>()}
+            taskLists={bootstrap.data.taskLists}
+            defaultListId="default"
+            view="state:all"
+            canCreate
+            onToggleComplete={vi.fn()}
+            onEditTask={vi.fn()}
+            onDeleteTask={vi.fn()}
+            onCreateTask={vi.fn()}
+            onTaskExitAnimationEnd={vi.fn()}
+            itemDragHandlers={() => ({})}
+            isItemDragging={() => false}
+          />
+        </TooltipProvider>,
+      );
+
+      const dueTrigger = screen.getByLabelText(defaultTasksLabels.addTaskDue);
+      expect(dueTrigger.textContent).toContain(defaultTasksLabels.noDue);
+    });
+  });
+
+  it("disables composer fields on overdue view", () => {
+    renderMainView({ view: "state:overdue", canCreate: false });
+
+    expect(
+      (screen.getByLabelText(defaultTasksLabels.addTaskName) as HTMLInputElement).disabled,
+    ).toBe(true);
+    expect(
+      (screen.getByRole("button", { name: defaultTasksLabels.addTaskButton }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
   });
 
   describe("composer due date labels", () => {
