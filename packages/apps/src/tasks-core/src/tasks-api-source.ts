@@ -1,30 +1,18 @@
 import { createTasksAppBootstrap, type TasksAppBootstrap } from "@/lib/api/mock/tasks-bootstrap";
 import { createWorkspaceSource } from "@/lib/api/create-workspace-source";
-import { fetchTasksLiveBootstrap } from "@/lib/api/wgw/tasks";
 import { wgwLiveApiEnabled } from "@/lib/api/wgw/http";
-import type { Task, TaskList, TaskPatch, TasksAPIOperations } from "@/tasks-core/src/tasks-types";
+import type { Task, TaskList, TasksAPIOperations } from "@/tasks-core/src/tasks-types";
 import { taskAlertsFromList } from "@/tasks-core/src/tasks-task-utils";
-import * as tasksApi from "@/lib/api/wgw/tasks";
+import {
+  createHybridTasksOperations,
+  loadTasksBootstrapHybrid,
+} from "@/lib/offline/tasks-hybrid-operations";
+import { resolveTasksOfflineUsername } from "@/lib/offline/offline-session";
 
 export type TasksApiSource = {
   loadBootstrap: () => Promise<TasksAppBootstrap>;
   createOperations: (bootstrap?: TasksAppBootstrap) => TasksAPIOperations | undefined;
 };
-
-function createLiveTasksOperations(): TasksAPIOperations {
-  return {
-    createTask: (body, opts) => tasksApi.createTask(body, opts),
-    patchTask: (taskId, patch, opts) => tasksApi.patchTask(taskId, patch, opts),
-    deleteTask: (taskId, opts) => tasksApi.deleteTask(taskId, opts),
-    moveTaskToList: async (taskId, taskListId, opts) => {
-      const task = await tasksApi.patchTask(taskId, {} as TaskPatch, opts);
-      return { ...task, taskListId };
-    },
-    createTaskList: (body, opts) => tasksApi.createTaskList(body, opts),
-    patchTaskList: (taskListId, patch, opts) => tasksApi.patchTaskList(taskListId, patch, opts),
-    deleteTaskList: (taskListId, opts) => tasksApi.deleteTaskList(taskListId, opts),
-  };
-}
 
 function createMockTasksOperations(
   getBootstrap: () => TasksAppBootstrap,
@@ -115,14 +103,23 @@ function createMockTasksOperations(
     },
     createTaskList: async (body) => {
       const created: TaskList = {
-        "@type": "TaskList",
         id: `list-${Date.now()}`,
         name: body.name,
         color: body.color ?? null,
-        role: body.role ?? null,
         scope: body.groupSlug ? "group" : "personal",
         groupSlug: body.groupSlug ?? null,
         isDefault: false,
+        sortOrder: getBootstrap().data.taskLists.length,
+        isSubscribed: true,
+        myRights: {
+          mayReadItems: true,
+          mayWriteAll: true,
+          mayWriteOwn: true,
+          mayUpdatePrivate: true,
+          mayRSVP: true,
+          mayAdmin: true,
+          mayDelete: true,
+        },
       };
       updateTaskLists((lists) => [...lists, created]);
       return created;
@@ -148,6 +145,17 @@ function createMockTasksOperations(
   };
 }
 
+export function createHybridTasksApiSource(): TasksApiSource {
+  return {
+    loadBootstrap: loadTasksBootstrapHybrid,
+    createOperations: (bootstrap) => {
+      const username = resolveTasksOfflineUsername(bootstrap?.session.user.username);
+      if (!username) return undefined;
+      return createHybridTasksOperations(username);
+    },
+  };
+}
+
 export function createDefaultTasksApiSource(): TasksApiSource {
   let mockBootstrap = createTasksAppBootstrap();
 
@@ -155,17 +163,17 @@ export function createDefaultTasksApiSource(): TasksApiSource {
     isLive: wgwLiveApiEnabled(),
     createMockSource: () => ({
       loadBootstrap: () => Promise.resolve(mockBootstrap),
-      createOperations: () =>
-        createMockTasksOperations(
+      createOperations: (bootstrap) => {
+        const username = resolveTasksOfflineUsername(bootstrap?.session.user.username);
+        if (username) return createHybridTasksOperations(username);
+        return createMockTasksOperations(
           () => mockBootstrap,
           (next) => {
             mockBootstrap = next;
           },
-        ),
+        );
+      },
     }),
-    createLiveSource: () => ({
-      loadBootstrap: fetchTasksLiveBootstrap,
-      createOperations: () => createLiveTasksOperations(),
-    }),
+    createLiveSource: createHybridTasksApiSource,
   });
 }

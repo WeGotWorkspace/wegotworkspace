@@ -26,6 +26,7 @@ final class JmapOptimisticConcurrencyTest extends WgwDatabaseTestCase
         $this->setUpTasksFixtures();
         $this->seedDefaultAddressBookFor('bob');
         $this->seedDefaultCalendarFor('bob');
+        $this->seedInboxTaskListFor('bob');
     }
 
     public function test_contact_show_returns_etag_header_and_body_field(): void
@@ -124,6 +125,22 @@ final class JmapOptimisticConcurrencyTest extends WgwDatabaseTestCase
         $blob = is_string($stored->calendardata) ? $stored->calendardata : (string) $stored->calendardata;
         $this->assertStringContainsString('SUMMARY:Fresh primary patch', $blob);
         $this->assertStringContainsString('SUMMARY:Patched Secondary', $blob);
+    }
+
+    public function test_task_stale_if_match_returns_412(): void
+    {
+        $taskId = $this->seedTaskViaPdo('bob', 'buy-milk.ics', $this->sampleTodoIcs('Buy milk'));
+        $url = '/api/v1/tasks/items/'.$taskId;
+        $staleEtag = $this->fetchEtagFromGet($url);
+
+        $this->withBearer($this->userBearerToken())
+            ->patchJson($url, ['title' => 'First update'], $this->withIfMatch($staleEtag))
+            ->assertOk();
+
+        $this->withBearer($this->userBearerToken())
+            ->patchJson($url, ['title' => 'Lost update'], $this->withIfMatch($staleEtag))
+            ->assertStatus(412)
+            ->assertJsonPath('code', 'precondition_failed');
     }
 
     public function test_task_delete_requires_matching_if_match(): void

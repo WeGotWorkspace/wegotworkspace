@@ -31,6 +31,8 @@ const mockTaskLists: TaskList[] = [
     isSubscribed: true,
     shareWith: null,
     myRights: fullRights,
+    scope: "personal",
+    groupSlug: null,
   },
   {
     id: "default",
@@ -42,6 +44,8 @@ const mockTaskLists: TaskList[] = [
     isSubscribed: true,
     shareWith: null,
     myRights: fullRights,
+    scope: "personal",
+    groupSlug: null,
   },
   {
     id: "work",
@@ -53,6 +57,8 @@ const mockTaskLists: TaskList[] = [
     isSubscribed: true,
     shareWith: null,
     myRights: fullRights,
+    scope: "personal",
+    groupSlug: null,
   },
 ];
 

@@ -18,6 +18,7 @@ export const OFFLINE_DOMAIN_VERSION_RANGES: Record<string, OfflineDomainVersionR
   notes: { min: 10, max: 19 },
   docs: { min: 20, max: 29 },
   drive: { min: 30, max: 39 },
+  tasks: { min: 40, max: 49 },
 };
 
 /** Contacts version steps within the contacts block (2–9). */
@@ -43,6 +44,12 @@ export const DRIVE_OFFLINE_VERSION = {
   entriesTables: 30,
   contentTables: 31,
   availabilityTables: 32,
+} as const;
+
+/** Tasks version steps within the tasks block (40–49). */
+export const TASKS_OFFLINE_VERSION = {
+  tables: 40,
+  updatedAtIndex: 41,
 } as const;
 
 const versionOwners = new Map<number, string>();

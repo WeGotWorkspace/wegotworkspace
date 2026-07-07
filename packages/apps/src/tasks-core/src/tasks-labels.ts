@@ -94,6 +94,16 @@ export type TasksUILabels = {
   subtasksLabel: string;
   tasksDisabledTitle: string;
   tasksDisabledMessage: string;
+  pendingSync: string;
+  conflictTitle: string;
+  conflictDescription: (title: string) => string;
+  conflictRemaining: (count: number) => string;
+  conflictKeepMine: string;
+  conflictUseServer: string;
+  conflictDescriptionFieldMerge: (title: string) => string;
+  conflictFieldLocal: string;
+  conflictFieldServer: string;
+  conflictApplyMerge: string;
 };
 
 export const defaultTasksLabels: TasksUILabels = {
@@ -193,6 +203,18 @@ export const defaultTasksLabels: TasksUILabels = {
   subtasksLabel: "Subtasks",
   tasksDisabledTitle: "Tasks unavailable",
   tasksDisabledMessage: "Tasks are disabled for this workspace.",
+  pendingSync: "Pending sync",
+  conflictTitle: "Sync conflict",
+  conflictDescription: (title) =>
+    `Your offline edits to “${title}” conflict with a newer version on the server.`,
+  conflictRemaining: (count) => `${count} more task${count === 1 ? "" : "s"} to review`,
+  conflictKeepMine: "Keep mine",
+  conflictUseServer: "Use server version",
+  conflictDescriptionFieldMerge: (title) =>
+    `Choose which values to keep for “${title}”. Unselected fields use the server version.`,
+  conflictFieldLocal: "Your edits",
+  conflictFieldServer: "Server version",
+  conflictApplyMerge: "Apply merged changes",
 };
 
 export function mergeTasksLabels(overrides?: Partial<TasksUILabels>): TasksUILabels {

@@ -5567,6 +5567,9 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/JmapBadRequest"
+          },
           "403": {
             "$ref": "#/components/responses/JmapForbidden"
           },
@@ -5663,6 +5666,51 @@
           },
           "413": {
             "$ref": "#/components/responses/JmapPayloadTooLarge"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/tasks/items/query": {
+      "post": {
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "Query task item ids",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskItemQueryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Matching task ids",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskItemQueryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/JmapBadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/JmapForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/JmapNotFound"
           }
         },
         "x-wgw-access": "user"

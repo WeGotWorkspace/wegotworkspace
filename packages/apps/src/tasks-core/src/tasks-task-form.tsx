@@ -53,7 +53,7 @@ export function taskToFormValue(task: Task, fallbackListId: string): TasksTaskFo
     description: task.description ?? "",
     listId: task.taskListId ?? fallbackListId,
     workflowStatus: (task.workflowStatus ?? DEFAULT_WORKFLOW_STATUS) as TaskWorkflowStatus,
-    priority: normalizeTaskPriority(task.priority) ?? TASK_PRIORITY_NONE,
+    priority: (normalizeTaskPriority(task.priority) ?? TASK_PRIORITY_NONE) as TaskPriorityValue,
     due: task.due ?? null,
   };
 }

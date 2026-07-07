@@ -8,6 +8,11 @@ import { TASK_PRIORITY_FLAG_COLORS } from "@/tasks-core/src/tasks-priority";
 import { TooltipProvider } from "@/ui/tooltip";
 import "@/tasks-core/src/tasks-main-view.css";
 
+function taskTitleForTest(title: string | null | undefined): string {
+  if (!title) throw new Error("expected task title in fixture");
+  return title;
+}
+
 const bootstrap = createTasksAppBootstrap();
 
 /** Reproduces global svg { stroke: currentColor } rules that mute Lucide attrs in meta. */
@@ -123,7 +128,7 @@ describe("TasksMainView composer", () => {
     const task = bootstrap.data.tasks[0];
     renderMainView({ displayTasks: [task], onEditTask, onToggleComplete });
 
-    fireEvent.click(screen.getByText(task.title));
+    fireEvent.click(screen.getByText(taskTitleForTest(task.title)));
 
     expect(onEditTask).toHaveBeenCalledTimes(1);
     expect(onEditTask).toHaveBeenCalledWith(task.id);
@@ -607,7 +612,7 @@ describe("TasksMainView task rows", () => {
     const task = bootstrap.data.tasks.find((item) => item.workflowStatus === "in-process")!;
     renderMainView({ displayTasks: [task] });
 
-    const row = screen.getByText(task.title).closest(".tasks-main-view__row");
+    const row = screen.getByText(taskTitleForTest(task.title)).closest(".tasks-main-view__row");
     expect(row).toBeTruthy();
     const meta = row?.querySelector(".tasks-main-view__meta");
     expect(meta?.textContent).toContain(defaultTasksLabels.stateInProcess);
@@ -618,7 +623,7 @@ describe("TasksMainView task rows", () => {
     const task = { ...bootstrap.data.tasks[0], workflowStatus: undefined };
     renderMainView({ displayTasks: [task] });
 
-    const row = screen.getByText(task.title).closest(".tasks-main-view__row");
+    const row = screen.getByText(taskTitleForTest(task.title)).closest(".tasks-main-view__row");
     const meta = row?.querySelector(".tasks-main-view__meta");
     expect(meta?.textContent).toContain(defaultTasksLabels.stateNeedsAction);
     expect(meta?.querySelector(".lucide-clock")).toBeTruthy();
@@ -629,7 +634,7 @@ describe("TasksMainView task rows", () => {
     const task = { ...bootstrap.data.tasks[0], priority: 1 };
     renderMainView({ displayTasks: [task] });
 
-    const row = screen.getByText(task.title).closest(".tasks-main-view__row");
+    const row = screen.getByText(taskTitleForTest(task.title)).closest(".tasks-main-view__row");
     const meta = row?.querySelector(".tasks-main-view__meta");
     const flag = meta?.querySelector(".tasks-priority-flag svg") as SVGElement | null;
     expect(meta?.textContent).not.toContain(defaultTasksLabels.priorityHigh);
@@ -648,7 +653,7 @@ describe("TasksMainView task rows", () => {
     };
     renderMainView({ displayTasks: [task] });
 
-    const row = screen.getByText(task.title).closest(".tasks-main-view__row");
+    const row = screen.getByText(taskTitleForTest(task.title)).closest(".tasks-main-view__row");
     const meta = row?.querySelector(".tasks-main-view__meta");
     const flag = meta?.querySelector(".tasks-priority-flag svg") as SVGElement | null;
 
@@ -666,7 +671,7 @@ describe("TasksMainView task rows", () => {
     };
     renderMainView({ displayTasks: [task] });
 
-    const row = screen.getByText(task.title).closest(".tasks-main-view__row");
+    const row = screen.getByText(taskTitleForTest(task.title)).closest(".tasks-main-view__row");
     const meta = row?.querySelector(".tasks-main-view__meta");
     expect(meta?.textContent).toContain(defaultTasksLabels.dueToday);
     expect(meta?.querySelector(".lucide-calendar-days")).toBeTruthy();
@@ -689,7 +694,7 @@ describe("TasksMainView task rows", () => {
     };
     renderMainView({ displayTasks: [task] });
 
-    const row = screen.getByText(task.title).closest(".tasks-main-view__row");
+    const row = screen.getByText(taskTitleForTest(task.title)).closest(".tasks-main-view__row");
     const meta = row?.querySelector(".tasks-main-view__meta");
     const flag = meta?.querySelector(".tasks-priority-flag svg") as SVGElement | null;
 
@@ -708,8 +713,12 @@ describe("TasksMainView task rows", () => {
 
     renderMainView({ displayTasks: [mediumTask, lowTask] });
 
-    const mediumRow = screen.getByText(mediumTask.title).closest(".tasks-main-view__row");
-    const lowRow = screen.getByText(lowTask.title).closest(".tasks-main-view__row");
+    const mediumRow = screen
+      .getByText(taskTitleForTest(mediumTask.title))
+      .closest(".tasks-main-view__row");
+    const lowRow = screen
+      .getByText(taskTitleForTest(lowTask.title))
+      .closest(".tasks-main-view__row");
     const mediumFlag = mediumRow?.querySelector(".tasks-priority-flag svg") as SVGElement | null;
     const lowFlag = lowRow?.querySelector(".tasks-priority-flag svg") as SVGElement | null;
 
@@ -727,7 +736,7 @@ describe("TasksMainView task rows", () => {
     const task = { ...bootstrap.data.tasks[0], priority: 1 };
     renderMainView({ displayTasks: [task] });
 
-    const row = screen.getByText(task.title).closest(".tasks-main-view__row");
+    const row = screen.getByText(taskTitleForTest(task.title)).closest(".tasks-main-view__row");
     const meta = row?.querySelector(".tasks-main-view__meta") as HTMLElement | null;
     const flag = meta?.querySelector(".tasks-priority-flag svg") as SVGElement | null;
 
@@ -742,7 +751,7 @@ describe("TasksMainView task rows", () => {
     const task = { ...bootstrap.data.tasks[0], priority: null };
     renderMainView({ displayTasks: [task] });
 
-    const row = screen.getByText(task.title).closest(".tasks-main-view__row");
+    const row = screen.getByText(taskTitleForTest(task.title)).closest(".tasks-main-view__row");
     const meta = row?.querySelector(".tasks-main-view__meta");
     expect(meta?.querySelector(".tasks-priority-flag")).toBeNull();
     expect(meta?.textContent).not.toContain(defaultTasksLabels.priorityHigh);
@@ -755,7 +764,7 @@ describe("TasksMainView task rows", () => {
     const task = { ...bootstrap.data.tasks[0], priority: 10 };
     renderMainView({ displayTasks: [task] });
 
-    const row = screen.getByText(task.title).closest(".tasks-main-view__row");
+    const row = screen.getByText(taskTitleForTest(task.title)).closest(".tasks-main-view__row");
     const meta = row?.querySelector(".tasks-main-view__meta");
     const flag = meta?.querySelector(".tasks-priority-flag svg") as SVGElement | null;
     expectPriorityFlagStroke(flag, TASK_PRIORITY_FLAG_COLORS.high);
@@ -767,7 +776,9 @@ describe("TasksMainView task rows", () => {
     const task = bootstrap.data.tasks[0];
     renderMainView({ displayTasks: [task], onEditTask, onToggleComplete });
 
-    const row = screen.getByText(task.title).closest(".tasks-main-view__row") as HTMLElement;
+    const row = screen
+      .getByText(taskTitleForTest(task.title))
+      .closest(".tasks-main-view__row") as HTMLElement;
     fireEvent.mouseEnter(row);
     fireEvent.click(screen.getByRole("button", { name: defaultTasksLabels.taskActions }));
 
@@ -787,7 +798,9 @@ describe("TasksMainView task rows", () => {
     const task = bootstrap.data.tasks[0];
     renderMainView({ displayTasks: [task] });
 
-    const row = screen.getByText(task.title).closest(".tasks-main-view__row") as HTMLElement;
+    const row = screen
+      .getByText(taskTitleForTest(task.title))
+      .closest(".tasks-main-view__row") as HTMLElement;
     const actions = row.querySelector(".tasks-main-view__actions") as HTMLElement;
     const actionsButton = screen.getByRole("button", { name: defaultTasksLabels.taskActions });
 

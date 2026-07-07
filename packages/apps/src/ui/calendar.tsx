@@ -145,7 +145,11 @@ function Calendar({
         },
         Chevron: ({ className, orientation, size, disabled: _disabled, ...props }) => (
           <CalendarNavIcon
-            orientation={orientation ?? "left"}
+            orientation={
+              orientation === "right" || orientation === "down" || orientation === "left"
+                ? orientation
+                : "left"
+            }
             className={className}
             size={size ?? CALENDAR_NAV_ICON_SIZE}
             {...props}

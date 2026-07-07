@@ -12691,6 +12691,9 @@
                             }
                         }
                     },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
                     "403": {
                         "$ref": "#/components/responses/JmapForbidden"
                     },
@@ -12742,8 +12745,8 @@
                     "403": {
                         "$ref": "#/components/responses/JmapForbidden"
                     },
-                    "413": {
-                        "$ref": "#/components/responses/JmapPayloadTooLarge"
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
                     }
                 },
                 "x-wgw-access": "user"

@@ -183,6 +183,7 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($filesS
             ->where('taskListId', '[a-z0-9_-]+');
         Route::delete('tasks/tasklists/{taskListId}', [TaskCalendarsController::class, 'destroy'])
             ->where('taskListId', '[a-z0-9_-]+');
+        Route::post('tasks/items/query', [TasksController::class, 'query']);
         Route::get('tasks/items', [TasksController::class, 'index']);
         Route::post('tasks/items', [TasksController::class, 'store']);
         Route::get('tasks/items/{taskId}', [TasksController::class, 'show'])

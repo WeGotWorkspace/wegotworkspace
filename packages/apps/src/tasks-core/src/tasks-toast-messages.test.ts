@@ -13,10 +13,14 @@ import {
 import type { Task } from "@/tasks-core/src/tasks-types";
 
 const task = (id: string, status: Task["workflowStatus"] = "needs-action"): Task => ({
+  "@type": "Task",
   id,
+  uid: `urn:uuid:test-${id}`,
   title: `Task ${id}`,
   workflowStatus: status,
   taskListId: "inbox",
+  isDraft: false,
+  sortOrder: 0,
 });
 
 describe("tasks toast messages", () => {

@@ -89,7 +89,7 @@ export function TaskProjectDialog({
   contentClassName,
 }: TaskProjectDialogProps) {
   const [name, setName] = useState("");
-  const [color, setColor] = useState(DEFAULT_TASK_LIST_COLOR);
+  const [color, setColor] = useState<string>(DEFAULT_TASK_LIST_COLOR);
   const [scopeValue, setScopeValue] = useState(PERSONAL_SCOPE_VALUE);
   const customColorInputRef = useRef<HTMLInputElement>(null);
   const customColorInputId = useId();

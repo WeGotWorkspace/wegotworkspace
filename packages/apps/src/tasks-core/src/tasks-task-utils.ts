@@ -197,7 +197,7 @@ export const INBOX_TASK_LIST_ID = "inbox";
 
 export function isInboxTaskList(list: {
   id: string;
-  name?: string;
+  name?: string | null;
   role?: string | null;
 }): boolean {
   return list.id === INBOX_TASK_LIST_ID || list.role === "inbox" || list.name === "Inbox";
@@ -205,14 +205,14 @@ export function isInboxTaskList(list: {
 
 export function isProtectedTaskList(list: {
   id: string;
-  name?: string;
+  name?: string | null;
   role?: string | null;
 }): boolean {
   return isInboxTaskList(list);
 }
 
 export function defaultTaskListId(
-  taskLists: { id: string; isDefault?: boolean; role?: string | null }[],
+  taskLists: { id: string; isDefault?: boolean; role?: string | null; name?: string | null }[],
 ): string {
   const inbox = taskLists.find(isInboxTaskList);
   if (inbox) return inbox.id;

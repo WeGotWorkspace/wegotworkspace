@@ -5469,6 +5469,7 @@ export interface paths {
                         };
                     };
                 };
+                400: components["responses"]["JmapBadRequest"];
                 403: components["responses"]["JmapForbidden"];
                 404: components["responses"]["JmapNotFound"];
                 409: components["responses"]["JmapConflict"];
@@ -5542,7 +5543,7 @@ export interface paths {
                 };
                 400: components["responses"]["JmapBadRequest"];
                 403: components["responses"]["JmapForbidden"];
-                413: components["responses"]["JmapPayloadTooLarge"];
+                404: components["responses"]["JmapNotFound"];
             };
         };
         delete?: never;

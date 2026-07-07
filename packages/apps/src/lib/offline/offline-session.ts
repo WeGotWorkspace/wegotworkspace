@@ -64,3 +64,19 @@ export function readOfflineDriveUsername(): string | null {
 export function resolveDriveOfflineUsername(sessionUsername: string | undefined): string | null {
   return resolveOfflineUsername(DRIVE_DOMAIN, sessionUsername);
 }
+
+const TASKS_DOMAIN = "tasks";
+
+/** Tasks-domain wrapper over the generic offline account session helpers. */
+export function rememberOfflineTasksUsername(username: string): void {
+  rememberOfflineUsername(TASKS_DOMAIN, username);
+}
+
+export function readOfflineTasksUsername(): string | null {
+  return readOfflineUsername(TASKS_DOMAIN);
+}
+
+/** Session username first, then the last cached tasks account from localStorage. */
+export function resolveTasksOfflineUsername(sessionUsername: string | undefined): string | null {
+  return resolveOfflineUsername(TASKS_DOMAIN, sessionUsername);
+}

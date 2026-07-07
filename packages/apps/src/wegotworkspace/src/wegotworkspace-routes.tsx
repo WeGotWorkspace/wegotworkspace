@@ -194,7 +194,7 @@ function MockTasksRoute() {
       data={bootstrap.data}
       session={bootstrap.session}
       operations={operations}
-      listLoading={false}
+      listRefreshing={false}
       onLogout={onLogout}
       initialView={initialView}
       onViewChange={handleViewChange}

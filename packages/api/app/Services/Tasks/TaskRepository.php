@@ -74,22 +74,24 @@ final class TaskRepository
             ->get();
 
         $ids = [];
+        $total = 0;
         foreach ($objects as $object) {
             foreach ($this->mapper->toTasks($object, $taskListId) as $task) {
                 if ($uidFilter !== null && ($task['uid'] ?? null) !== $uidFilter) {
                     continue;
                 }
                 $id = (string) ($task['id'] ?? '');
-                if ($id !== '') {
-                    $ids[] = $id;
+                if ($id === '') {
+                    continue;
                 }
-                if ($limit !== null && count($ids) >= $limit) {
-                    break 2;
+                $total++;
+                if ($limit === null || count($ids) < $limit) {
+                    $ids[] = $id;
                 }
             }
         }
 
-        return ['ids' => $ids, 'total' => count($ids)];
+        return ['ids' => $ids, 'total' => $total];
     }
 
     public function show(string $username, string $taskId): array

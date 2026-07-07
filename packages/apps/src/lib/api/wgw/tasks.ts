@@ -79,6 +79,16 @@ export async function listTasks(opts: {
   return parseTasks(json);
 }
 
+export async function getTask(taskId: string, opts?: { signal?: AbortSignal }): Promise<Task> {
+  const json = await requestTasksJson(
+    `/tasks/items/${encodeURIComponent(taskId)}`,
+    "GET",
+    undefined,
+    opts,
+  );
+  return json as Task;
+}
+
 export async function createTask(body: TaskCreate, opts?: TasksRequestOpts): Promise<Task> {
   const json = await requestTasksJson("/tasks/items", "POST", body, opts);
   return json as Task;
@@ -93,6 +103,20 @@ export async function patchTask(
     `/tasks/items/${encodeURIComponent(taskId)}`,
     "PATCH",
     patch,
+    opts,
+  );
+  return json as Task;
+}
+
+export async function putTask(
+  taskId: string,
+  body: TaskCreate,
+  opts?: TasksRequestOpts,
+): Promise<Task> {
+  const json = await requestTasksJson(
+    `/tasks/items/${encodeURIComponent(taskId)}`,
+    "PUT",
+    body,
     opts,
   );
   return json as Task;

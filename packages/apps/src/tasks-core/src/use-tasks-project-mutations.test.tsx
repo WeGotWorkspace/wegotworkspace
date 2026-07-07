@@ -99,12 +99,14 @@ describe("useTasksProjectMutations", () => {
       taskLists: [
         ...bootstrap.data.taskLists,
         {
+          ...bootstrap.data.taskLists[1],
           id: "tasks-home",
           role: "home",
           name: "Home",
           isDefault: false,
         },
         {
+          ...bootstrap.data.taskLists[1],
           id: "group-team",
           role: "group",
           name: "Team",

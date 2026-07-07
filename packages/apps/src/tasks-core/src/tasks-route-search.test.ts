@@ -18,11 +18,7 @@ describe("tasks-route-search", () => {
   });
 
   it("redirects legacy tag paths to the inbox view", () => {
-    expect(
-      tasksViewFromLocation("/tasks/tags/focus", {
-        tagSlug: "focus",
-      }),
-    ).toBe("list:inbox");
+    expect(tasksViewFromLocation("/tasks/tags/focus", {})).toBe("list:inbox");
     expect(tasksViewFromLocation("/tasks/tags/My%20Tag", {})).toBe("list:inbox");
   });
 

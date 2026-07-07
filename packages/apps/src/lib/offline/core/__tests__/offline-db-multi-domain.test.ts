@@ -5,10 +5,11 @@ import "@/lib/offline/contacts/contacts-schema";
 import "@/lib/offline/drive/drive-schema";
 import "@/lib/offline/docs/docs-schema";
 import "@/lib/offline/notes/notes-schema";
+import "@/lib/offline/tasks/tasks-schema";
 import { registerOfflineDomainTables, WgwOfflineDatabase } from "@/lib/offline/core/offline-db";
 import {
-  DRIVE_OFFLINE_VERSION,
   NOTES_OFFLINE_VERSION,
+  TASKS_OFFLINE_VERSION,
 } from "@/lib/offline/core/offline-version-allocation";
 import { seedOfflineVersionOwnerForTests } from "@/lib/offline/core/offline-version-allocation";
 import { contactsCardsTable } from "@/lib/offline/contacts/contacts-schema";
@@ -24,7 +25,7 @@ describe("offline db multi-domain registry", () => {
     const db = new WgwOfflineDatabase("multi-fresh");
     await db.open();
 
-    expect(db.verno).toBe(DRIVE_OFFLINE_VERSION.availabilityTables);
+    expect(db.verno).toBe(TASKS_OFFLINE_VERSION.updatedAtIndex);
     expect(db.tables.map((t) => t.name).sort()).toEqual(
       expect.arrayContaining([
         "contacts_address_books",
@@ -38,6 +39,8 @@ describe("offline db multi-domain registry", () => {
         "notes_notebooks",
         "notes_notes",
         "outbox",
+        "tasks_items",
+        "tasks_task_lists",
       ]),
     );
 
@@ -105,7 +108,7 @@ describe("offline db multi-domain registry", () => {
     const db = new WgwOfflineDatabase("multi-upgrade");
     await db.open();
 
-    expect(db.verno).toBe(DRIVE_OFFLINE_VERSION.availabilityTables);
+    expect(db.verno).toBe(TASKS_OFFLINE_VERSION.updatedAtIndex);
     expect(await db.meta.get("shared:session")).toBeTruthy();
     expect(await db.outbox.get("legacy-op")).toBeTruthy();
     expect(db.tables.map((t) => t.name)).toContain("contacts_cards");
