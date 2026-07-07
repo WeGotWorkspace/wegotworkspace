@@ -1,5 +1,5 @@
 import { Flag } from "lucide-react";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { TasksUILabels } from "@/tasks-core/src/tasks-labels";
 
 /** Task priority values: 0 = none, 1 = high, 5 = medium, 9 = low. */
@@ -27,8 +27,8 @@ export const TASK_PRIORITY_FLAG_COLORS = {
   none: "color-mix(in oklab, var(--color-ink) 40%, transparent)",
 } as const;
 
-export function isTaskPriorityNone(priority: number | null | undefined): boolean {
-  return priority == null || priority === TASK_PRIORITY_NONE;
+export function isTaskPriorityNone(priority: number | string | null | undefined): boolean {
+  return normalizeTaskPriority(priority) == null;
 }
 
 export function priorityFromFilterSlug(slug: string): number | null {
@@ -77,20 +77,33 @@ export function priorityFlagColor(priority: number | string | null | undefined):
   }
 }
 
-export function priorityIcon(priority: number | null | undefined): ReactNode {
-  const normalized = normalizeTaskPriority(priority);
-  if (isTaskPriorityNone(normalized)) {
-    return <Flag className="size-3.5" color={TASK_PRIORITY_FLAG_COLORS.none} aria-hidden />;
-  }
+type PriorityFlagStyle = CSSProperties & {
+  "--tasks-priority-flag-stroke"?: string;
+  "--tasks-priority-flag-fill"?: string;
+  stroke?: string;
+  fill?: string;
+};
 
-  const flagColor = priorityFlagColor(normalized);
+function priorityFlagStyle(priority: number | null | undefined): PriorityFlagStyle {
+  const normalized = normalizeTaskPriority(priority);
+  const stroke = priorityFlagColor(normalized);
+  const fill = normalized === TASK_PRIORITY_LOW ? "#ffffff" : stroke;
+  return {
+    "--tasks-priority-flag-stroke": stroke,
+    "--tasks-priority-flag-fill": fill,
+    stroke,
+    fill,
+  };
+}
+
+export function priorityIcon(priority: number | null | undefined): ReactNode {
+  const flagStyle = priorityFlagStyle(priority);
+  const { stroke, fill, ...wrapperStyle } = flagStyle;
+
   return (
-    <Flag
-      className="size-3.5"
-      color={flagColor}
-      fill={normalized === TASK_PRIORITY_LOW ? "#ffffff" : flagColor}
-      aria-hidden
-    />
+    <span className="tasks-priority-flag" style={wrapperStyle}>
+      <Flag className="size-3.5" style={{ stroke, fill }} aria-hidden />
+    </span>
   );
 }
 
