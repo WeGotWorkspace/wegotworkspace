@@ -1,6 +1,6 @@
 import type React from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createTasksAppBootstrap } from "@/lib/api/mock/tasks-bootstrap";
 import { TasksMainView } from "@/tasks-core/src/tasks-main-view";
 import { defaultTasksLabels } from "@/tasks-core/src/tasks-labels";
@@ -71,6 +71,18 @@ function renderMainView(
 
 function renderComposer(onCreateTask = vi.fn()) {
   return renderMainView({}, onCreateTask);
+}
+
+function calendarDataDay(date: Date): string {
+  return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+}
+
+function selectComposerDueDay(dayOffset: number, now = new Date()): void {
+  const targetDay = new Date(now);
+  targetDay.setDate(targetDay.getDate() + dayOffset);
+  const dayButton = document.querySelector(`button[data-day="${calendarDataDay(targetDay)}"]`);
+  expect(dayButton).toBeTruthy();
+  fireEvent.click(dayButton!);
 }
 
 describe("TasksMainView composer", () => {
@@ -350,6 +362,49 @@ describe("TasksMainView composer", () => {
     const dueTrigger = screen.getByLabelText(defaultTasksLabels.addTaskDue);
     expect(dueTrigger.textContent).toContain(defaultTasksLabels.noDue);
     expect(dueTrigger.querySelector(".lucide-calendar-days")).toBeTruthy();
+  });
+
+  describe("composer due date labels", () => {
+    const mockedNow = new Date(2026, 6, 8, 12, 0, 0);
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(mockedNow);
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("shows Today when due date is today", () => {
+      renderComposer();
+
+      fireEvent.click(screen.getByLabelText(defaultTasksLabels.addTaskDue));
+      selectComposerDueDay(0, mockedNow);
+
+      const dueTrigger = screen.getByLabelText(defaultTasksLabels.addTaskDue);
+      expect(dueTrigger.textContent).toContain(defaultTasksLabels.dueToday);
+    });
+
+    it("shows Yesterday when due date is yesterday", () => {
+      renderComposer();
+
+      fireEvent.click(screen.getByLabelText(defaultTasksLabels.addTaskDue));
+      selectComposerDueDay(-1, mockedNow);
+
+      const dueTrigger = screen.getByLabelText(defaultTasksLabels.addTaskDue);
+      expect(dueTrigger.textContent).toContain(defaultTasksLabels.dueYesterday);
+    });
+
+    it("shows Tomorrow when due date is tomorrow", () => {
+      renderComposer();
+
+      fireEvent.click(screen.getByLabelText(defaultTasksLabels.addTaskDue));
+      selectComposerDueDay(1, mockedNow);
+
+      const dueTrigger = screen.getByLabelText(defaultTasksLabels.addTaskDue);
+      expect(dueTrigger.textContent).toContain(defaultTasksLabels.dueTomorrow);
+    });
   });
 
   it("renders due date before list, status, and priority in the composer", () => {

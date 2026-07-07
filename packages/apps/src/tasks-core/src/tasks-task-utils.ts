@@ -55,6 +55,24 @@ export function formatDueDateShort(date: Date): string {
   });
 }
 
+export function formatComposerDueDateLabel(
+  date: Date,
+  labels: { dueToday: string; dueYesterday: string; dueTomorrow: string },
+  now: Date = new Date(),
+): string {
+  const dueDay = startOfLocalDay(date);
+  const today = startOfLocalDay(now);
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  if (dueDay.getTime() === today.getTime()) return labels.dueToday;
+  if (dueDay.getTime() === yesterday.getTime()) return labels.dueYesterday;
+  if (dueDay.getTime() === tomorrow.getTime()) return labels.dueTomorrow;
+  return formatDueDateShort(date);
+}
+
 function startOfLocalDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }

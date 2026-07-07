@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   defaultTaskListId,
   filterTasksByView,
+  formatComposerDueDateLabel,
   INBOX_TASK_LIST_ID,
   mergeCreatedTask,
   taskListDotColor,
 } from "./tasks-task-utils";
+import { defaultTasksLabels } from "./tasks-labels";
 import type { Task } from "./tasks-types";
 
 const sampleTasks: Task[] = [
@@ -117,5 +119,19 @@ describe("tasks-task-utils", () => {
     };
 
     expect(mergeCreatedTask(optimistic, created).priority).toBe(5);
+  });
+
+  it("formatComposerDueDateLabel shows relative labels for today, yesterday, and tomorrow", () => {
+    const now = new Date(2026, 6, 8, 12, 0, 0);
+    const labels = {
+      dueToday: defaultTasksLabels.dueToday,
+      dueYesterday: defaultTasksLabels.dueYesterday,
+      dueTomorrow: defaultTasksLabels.dueTomorrow,
+    };
+
+    expect(formatComposerDueDateLabel(new Date(2026, 6, 8), labels, now)).toBe("Today");
+    expect(formatComposerDueDateLabel(new Date(2026, 6, 7), labels, now)).toBe("Yesterday");
+    expect(formatComposerDueDateLabel(new Date(2026, 6, 9), labels, now)).toBe("Tomorrow");
+    expect(formatComposerDueDateLabel(new Date(2026, 6, 15), labels, now)).toBe("Jul 15, 2026");
   });
 });

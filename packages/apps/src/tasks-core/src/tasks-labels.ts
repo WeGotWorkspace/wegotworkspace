@@ -30,6 +30,9 @@ export type TasksUILabels = {
   addTaskPriority: string;
   addTaskDue: string;
   dueLabel: string;
+  dueToday: string;
+  dueYesterday: string;
+  dueTomorrow: string;
   noDue: string;
   descriptionLabel: string;
   remindMe: string;
@@ -109,6 +112,9 @@ export const defaultTasksLabels: TasksUILabels = {
   addTaskPriority: "Priority",
   addTaskDue: "Due date",
   dueLabel: "Due",
+  dueToday: "Today",
+  dueYesterday: "Yesterday",
+  dueTomorrow: "Tomorrow",
   noDue: "No due date",
   descriptionLabel: "Notes",
   remindMe: "Remind me",

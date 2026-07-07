@@ -6,7 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/ui/popover";
 import type { TasksUILabels } from "@/tasks-core/src/tasks-labels";
 import {
   dueDateToApiValue,
-  formatDueDateShort,
+  formatComposerDueDateLabel,
   parseDueDateValue,
 } from "@/tasks-core/src/tasks-task-utils";
 
@@ -27,7 +27,9 @@ export function TasksComposerDuePicker({
 }: TasksComposerDuePickerProps) {
   const [open, setOpen] = useState(false);
   const selectedDate = parseDueDateValue(value);
-  const displayLabel = selectedDate ? formatDueDateShort(selectedDate) : labels.noDue;
+  const displayLabel = selectedDate
+    ? formatComposerDueDateLabel(selectedDate, labels)
+    : labels.noDue;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
