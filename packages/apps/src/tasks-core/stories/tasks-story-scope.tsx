@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import "@/tasks-core/src/tasks-workspace.css";
+import "../src/tasks-main-view.css";
+import "../src/tasks-workspace.css";
 
 export type TasksStoryScopeVariant = "app" | "main";
 

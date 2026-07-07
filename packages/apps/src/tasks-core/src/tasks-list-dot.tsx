@@ -4,7 +4,7 @@ import {
   isInboxTaskList,
   taskListDotColor,
 } from "@/tasks-core/src/tasks-task-utils";
-import "@/tasks-core/src/tasks-list-dot.css";
+import "./tasks-list-dot.css";
 
 type TaskListDotSource = {
   id: string;

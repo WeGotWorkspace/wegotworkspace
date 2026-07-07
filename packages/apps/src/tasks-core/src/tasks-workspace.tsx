@@ -17,7 +17,8 @@ import { TasksMainView, type TasksMainViewHandle } from "@/tasks-core/src/tasks-
 import { useTasksController } from "@/tasks-core/src/use-tasks-controller";
 import { useTasksSidebarModel } from "@/tasks-core/src/use-tasks-sidebar-model";
 import { TasksEditDialog } from "@/tasks-core/src/tasks-edit-dialog";
-import "@/tasks-core/src/tasks-workspace.css";
+import "./tasks-main-view.css";
+import "./tasks-workspace.css";
 
 export function TasksWorkspace({
   data,
