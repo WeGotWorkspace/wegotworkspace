@@ -34,7 +34,8 @@ export type TasksMainViewHandle = {
 type TasksMainViewProps = {
   L: TasksUILabels;
   listLoading: boolean;
-  visibleTasks: Task[];
+  displayTasks: Task[];
+  exitingTaskIds: ReadonlySet<string>;
   taskLists: TaskList[];
   defaultListId: string;
   canCreate: boolean;
@@ -42,6 +43,7 @@ type TasksMainViewProps = {
   onEditTask: (taskId: string) => void;
   onDeleteTask: (taskId: string) => void;
   onCreateTask: (input: TasksCreateInput) => void;
+  onTaskExitAnimationEnd: (taskId: string) => void;
   itemDragHandlers: (id: string) => Record<string, unknown>;
   isItemDragging: (id: string) => boolean;
 };
@@ -53,12 +55,121 @@ const emptyForm = (listId: string): TasksCreateInput => ({
   tag: "",
 });
 
+function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+type TaskRowProps = {
+  task: Task;
+  L: TasksUILabels;
+  taskLists: TaskList[];
+  isExiting: boolean;
+  isDragging: boolean;
+  onToggleComplete: (taskId: string) => void;
+  onEditTask: (taskId: string) => void;
+  onDeleteTask: (taskId: string) => void;
+  onTaskExitAnimationEnd: (taskId: string) => void;
+  itemDragHandlers: (id: string) => Record<string, unknown>;
+};
+
+function TaskRow({
+  task,
+  L,
+  taskLists,
+  isExiting,
+  isDragging,
+  onToggleComplete,
+  onEditTask,
+  onDeleteTask,
+  onTaskExitAnimationEnd,
+  itemDragHandlers,
+}: TaskRowProps) {
+  const dragHandlers = itemDragHandlers(task.id) as {
+    onDragStart?: (event: DragEvent) => void;
+    onDragEnd?: () => void;
+  };
+  const completed = isTaskCompleted(task);
+  const listName = taskListName(task.taskListId, taskLists);
+  const taskList = taskLists.find((list) => list.id === task.taskListId);
+
+  useEffect(() => {
+    if (!isExiting || !prefersReducedMotion()) return;
+    onTaskExitAnimationEnd(task.id);
+  }, [isExiting, onTaskExitAnimationEnd, task.id]);
+
+  return (
+    <div
+      role="listitem"
+      className={`tasks-main-view__row${isExiting ? " tasks-main-view__row--exiting" : completed ? " tasks-main-view__row--completed" : ""}${isDragging ? " opacity-50" : ""}`}
+      draggable={!isExiting}
+      onDragStart={dragHandlers.onDragStart}
+      onDragEnd={dragHandlers.onDragEnd}
+      onAnimationEnd={(event) => {
+        if (!isExiting || event.animationName !== "tasks-row-exit") return;
+        onTaskExitAnimationEnd(task.id);
+      }}
+    >
+      <button
+        type="button"
+        className={`tasks-main-view__complete${completed ? " tasks-main-view__complete--done" : ""}`}
+        aria-label={completed ? L.markIncomplete : L.markComplete}
+        onClick={() => onToggleComplete(task.id)}
+        disabled={isExiting}
+      >
+        {completed ? <CheckCircle2 aria-hidden /> : <Circle aria-hidden />}
+      </button>
+
+      <div className="tasks-main-view__body">
+        <p className="tasks-main-view__title">{taskListTitle(task, L.untitledTask)}</p>
+        {task.description?.trim() ? (
+          <p className="tasks-main-view__description">{task.description}</p>
+        ) : null}
+        <div className="tasks-main-view__meta">
+          <TaskListDot list={taskList ?? task.taskListId} />
+          <span>{listName}</span>
+        </div>
+      </div>
+
+      <div className="tasks-main-view__actions">
+        <DropdownMenu
+          align="end"
+          trigger={
+            <IconButton
+              label={L.taskActions}
+              icon={<MoreVertical className="size-4" />}
+              size="sm"
+              variant="subtle"
+              disabled={isExiting}
+            />
+          }
+          items={[
+            {
+              id: "edit",
+              label: L.editTask,
+              icon: <Pencil className="size-4" />,
+              onClick: () => onEditTask(task.id),
+            },
+            {
+              id: "delete",
+              label: L.delete,
+              icon: <Trash2 className="size-4" />,
+              onClick: () => onDeleteTask(task.id),
+            },
+          ]}
+        />
+      </div>
+    </div>
+  );
+}
+
 export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>(
   function TasksMainView(
     {
       L,
       listLoading,
-      visibleTasks,
+      displayTasks,
+      exitingTaskIds,
       taskLists,
       defaultListId,
       canCreate,
@@ -66,6 +177,7 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
       onEditTask,
       onDeleteTask,
       onCreateTask,
+      onTaskExitAnimationEnd,
       itemDragHandlers,
       isItemDragging,
     },
@@ -130,81 +242,26 @@ export const TasksMainView = forwardRef<TasksMainViewHandle, TasksMainViewProps>
             </div>
           ) : (
             <>
-              {visibleTasks.length === 0 ? (
+              {displayTasks.length === 0 ? (
                 <p className="tasks-main-view__empty">{L.emptyList}</p>
               ) : null}
 
               <div className="tasks-main-view__list" role="list">
-                {visibleTasks.map((task) => {
-                  const dragHandlers = itemDragHandlers(task.id) as {
-                    onDragStart?: (event: DragEvent) => void;
-                    onDragEnd?: () => void;
-                  };
-                  const completed = isTaskCompleted(task);
-                  const listName = taskListName(task.taskListId, taskLists);
-                  const taskList = taskLists.find((list) => list.id === task.taskListId);
-
-                  return (
-                    <div
-                      key={task.id}
-                      role="listitem"
-                      className={`tasks-main-view__row${completed ? " tasks-main-view__row--completed" : ""}${isItemDragging(task.id) ? " opacity-50" : ""}`}
-                      draggable
-                      onDragStart={dragHandlers.onDragStart}
-                      onDragEnd={dragHandlers.onDragEnd}
-                    >
-                      <button
-                        type="button"
-                        className={`tasks-main-view__complete${completed ? " tasks-main-view__complete--done" : ""}`}
-                        aria-label={completed ? L.markIncomplete : L.markComplete}
-                        onClick={() => onToggleComplete(task.id)}
-                      >
-                        {completed ? <CheckCircle2 aria-hidden /> : <Circle aria-hidden />}
-                      </button>
-
-                      <div className="tasks-main-view__body">
-                        <p className="tasks-main-view__title">
-                          {taskListTitle(task, L.untitledTask)}
-                        </p>
-                        {task.description?.trim() ? (
-                          <p className="tasks-main-view__description">{task.description}</p>
-                        ) : null}
-                        <div className="tasks-main-view__meta">
-                          <TaskListDot list={taskList ?? task.taskListId} />
-                          <span>{listName}</span>
-                        </div>
-                      </div>
-
-                      <div className="tasks-main-view__actions">
-                        <DropdownMenu
-                          align="end"
-                          trigger={
-                            <IconButton
-                              label={L.taskActions}
-                              icon={<MoreVertical className="size-4" />}
-                              size="sm"
-                              variant="subtle"
-                            />
-                          }
-                          items={[
-                            {
-                              id: "edit",
-                              label: L.editTask,
-                              icon: <Pencil className="size-4" />,
-                              onClick: () => onEditTask(task.id),
-                            },
-                            {
-                              id: "delete",
-                              label: L.delete,
-                              icon: <Trash2 className="size-4" />,
-                              onClick: () => onDeleteTask(task.id),
-                            },
-                          ]}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
+                {displayTasks.map((task) => (
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    L={L}
+                    taskLists={taskLists}
+                    isExiting={exitingTaskIds.has(task.id)}
+                    isDragging={isItemDragging(task.id)}
+                    onToggleComplete={onToggleComplete}
+                    onEditTask={onEditTask}
+                    onDeleteTask={onDeleteTask}
+                    onTaskExitAnimationEnd={onTaskExitAnimationEnd}
+                    itemDragHandlers={itemDragHandlers}
+                  />
+                ))}
 
                 <form className="tasks-main-view__composer" onSubmit={handleSubmit}>
                   <span className="tasks-main-view__composer-marker" aria-hidden>

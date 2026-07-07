@@ -26,7 +26,8 @@ export const MainView: Story = {
   args: {
     L: defaultTasksLabels,
     listLoading: false,
-    visibleTasks: bootstrap.data.tasks,
+    displayTasks: bootstrap.data.tasks,
+    exitingTaskIds: new Set<string>(),
     taskLists: bootstrap.data.taskLists,
     defaultListId: "default",
     canCreate: true,
@@ -34,6 +35,7 @@ export const MainView: Story = {
     onEditTask: () => undefined,
     onDeleteTask: () => undefined,
     onCreateTask: () => undefined,
+    onTaskExitAnimationEnd: () => undefined,
     itemDragHandlers: () => ({}),
     isItemDragging: () => false,
   },

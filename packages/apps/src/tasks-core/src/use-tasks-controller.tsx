@@ -1,5 +1,9 @@
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useWorkspaceListKeyboardShortcuts } from "@/hooks/use-workspace-list-keyboard-shortcuts";
 import type { TasksUILabels } from "@/tasks-core/src/tasks-labels";
 import type { TasksAPIOperations, TasksUIData } from "@/tasks-core/src/tasks-types";
+import { buildDisplayTasks } from "@/tasks-core/src/tasks-task-utils";
+import { useTasksExitAnimation } from "@/tasks-core/src/use-tasks-exit-animation";
 import { useTasksList } from "@/tasks-core/src/use-tasks-list";
 import { useTasksMutations } from "@/tasks-core/src/use-tasks-mutations";
 import { useTasksShell } from "@/tasks-core/src/use-tasks-shell";
@@ -33,9 +37,41 @@ export function useTasksController({
     onViewChange,
   });
   const list = useTasksList({ shell });
-  const mutations = useTasksMutations({ shell });
+  const exitAnimation = useTasksExitAnimation();
+  const mutations = useTasksMutations({ shell, list, exitAnimation });
+  const { clearHiddenTasks } = exitAnimation;
 
-  const selectView = shell.selectView;
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+  useWorkspaceListKeyboardShortcuts({
+    searchInputRef,
+    selectedCount: 0,
+    onRequestDeleteSelection: () => {},
+    onUndoQueuedAction: list.undoLatest,
+    listNavigationEnabled: false,
+  });
+
+  useEffect(() => {
+    clearHiddenTasks();
+  }, [clearHiddenTasks, shell.view]);
+
+  const displayTasks = useMemo(
+    () =>
+      buildDisplayTasks(
+        shell.tasks,
+        shell.visibleTasks,
+        exitAnimation.exitingTaskIds,
+        exitAnimation.hiddenTaskIds,
+      ),
+    [exitAnimation.exitingTaskIds, exitAnimation.hiddenTaskIds, shell.tasks, shell.visibleTasks],
+  );
+
+  const selectView = useCallback(
+    (nextView: string) => {
+      shell.selectView(nextView);
+    },
+    [shell],
+  );
 
   return {
     L: shell.L,
@@ -45,10 +81,12 @@ export function useTasksController({
     viewLabel: shell.viewLabel,
     canCreateTask: shell.canCreateTask,
     visibleTasks: shell.visibleTasks,
+    displayTasks,
     sidebarOpen: shell.sidebarOpen,
     setSidebarOpen: shell.setSidebarOpen,
     listLoading: shell.listLoading,
     createListId: shell.createListId,
+    exitingTaskIds: exitAnimation.exitingTaskIds,
     isItemDragging: list.isItemDragging,
     itemDragHandlers: list.itemDragHandlers,
     sidebarDropZoneProps: list.sidebarDropZoneProps,
@@ -60,6 +98,7 @@ export function useTasksController({
     requestDeleteTask: mutations.requestDeleteTask,
     moveToList: mutations.moveToList,
     assignTagToTasks: mutations.assignTagToTasks,
+    handleTaskExitAnimationEnd: mutations.handleTaskExitAnimationEnd,
   };
 }
 

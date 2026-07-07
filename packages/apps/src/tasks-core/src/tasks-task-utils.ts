@@ -185,6 +185,32 @@ export function isTaskCompleted(task: Task): boolean {
   return task.workflowStatus === "completed" || task.workflowStatus === "cancelled";
 }
 
+/** Views where a completed task would remain visible until explicitly hidden. */
+export function shouldHideCompletedTaskAfterExit(view: string): boolean {
+  if (view === "state:all") return true;
+  if (view.startsWith("tag:") || view.startsWith("list:")) return true;
+  return false;
+}
+
+export function buildDisplayTasks(
+  tasks: Task[],
+  visibleTasks: Task[],
+  exitingTaskIds: ReadonlySet<string>,
+  hiddenTaskIds: ReadonlySet<string>,
+): Task[] {
+  const visibleIds = new Set(visibleTasks.map((task) => task.id));
+  const displayIds = new Set<string>();
+  for (const task of visibleTasks) {
+    if (!hiddenTaskIds.has(task.id)) displayIds.add(task.id);
+  }
+  for (const taskId of exitingTaskIds) {
+    if (visibleIds.has(taskId) || tasks.some((task) => task.id === taskId)) {
+      displayIds.add(taskId);
+    }
+  }
+  return tasks.filter((task) => displayIds.has(task.id));
+}
+
 export function formatTaskDue(task: Task): string | null {
   const due = parseDueDate(task);
   if (!due) return null;

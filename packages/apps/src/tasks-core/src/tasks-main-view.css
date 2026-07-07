@@ -30,6 +30,25 @@
   @apply line-through opacity-60;
 }
 
+.tasks-main-view__row--exiting {
+  @apply pointer-events-none;
+  animation: tasks-row-exit 220ms ease-out forwards;
+}
+
+@keyframes tasks-row-exit {
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tasks-main-view__row--exiting {
+    animation: none;
+    opacity: 0;
+  }
+}
+
 .tasks-main-view__complete {
   @apply mt-0.5 shrink-0 rounded-full p-0.5 transition-colors;
 

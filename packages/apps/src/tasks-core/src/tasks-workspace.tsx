@@ -47,7 +47,7 @@ export function TasksWorkspace({
     L,
     view,
     viewLabel,
-    visibleTasks,
+    displayTasks,
     canCreateTask,
     sidebarOpen,
     setSidebarOpen,
@@ -62,9 +62,11 @@ export function TasksWorkspace({
     moveToList,
     assignTagToTasks,
     createListId,
+    exitingTaskIds,
     isItemDragging,
     itemDragHandlers,
     sidebarDropZoneProps,
+    handleTaskExitAnimationEnd,
   } = controller;
 
   const {
@@ -134,7 +136,7 @@ export function TasksWorkspace({
             sidebarOpen={sidebarOpen}
             onToggleSidebar={() => setSidebarOpen((open) => !open)}
             title={viewLabel}
-            subtitle={L.listTasks(visibleTasks.length)}
+            subtitle={L.listTasks(displayTasks.length)}
             actions={
               onRefreshList ? (
                 <IconButton
@@ -159,13 +161,15 @@ export function TasksWorkspace({
             ref={composerRef}
             L={L}
             listLoading={listLoading}
-            visibleTasks={visibleTasks}
+            displayTasks={displayTasks}
+            exitingTaskIds={exitingTaskIds}
             taskLists={taskLists}
             defaultListId={createListId}
             canCreate={canCreateTask}
             onToggleComplete={toggleTaskComplete}
             onEditTask={editTask}
             onDeleteTask={requestDeleteTask}
+            onTaskExitAnimationEnd={handleTaskExitAnimationEnd}
             onCreateTask={(input) => {
               void createTaskFromForm(input);
             }}

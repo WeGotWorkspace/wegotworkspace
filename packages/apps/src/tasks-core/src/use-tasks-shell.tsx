@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check } from "lucide-react";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { mergeTasksLabels, type TasksUILabels } from "@/tasks-core/src/tasks-labels";
 import { normalizeTasksView } from "@/tasks-core/src/tasks-route-search";
@@ -121,10 +120,6 @@ export function useTasksShell({
     [selectedListId, taskLists],
   );
 
-  const queueSaveToast = useCallback(() => {
-    show(L.toastSaved, { icon: <Check className="size-4" /> });
-  }, [L.toastSaved, show]);
-
   return {
     L,
     tasks,
@@ -143,8 +138,8 @@ export function useTasksShell({
     listLoading,
     operations,
     createListId,
+    show,
     showMutationError,
-    queueSaveToast,
   };
 }
 

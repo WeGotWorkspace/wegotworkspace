@@ -61,6 +61,16 @@ export type TasksUILabels = {
   cancel: string;
   toastSaved: string;
   toastDeleted: string;
+  toastTaskCompleted: string;
+  toastTaskReopened: string;
+  toastTaskAdded: string;
+  toastTaskUpdated: string;
+  toastTaskMoved: (count: number, listName: string) => string;
+  toastTaskTagged: (count: number, tag: string) => string;
+  toastCompleteUndone: string;
+  toastDeleteUndone: string;
+  toastMoveUndone: string;
+  toastTagUndone: string;
   createTaskTitle: string;
   untitledTask: string;
   subtasksLabel: string;
@@ -131,6 +141,18 @@ export const defaultTasksLabels: TasksUILabels = {
   cancel: "Cancel",
   toastSaved: "Saved",
   toastDeleted: "Task deleted",
+  toastTaskCompleted: "Task completed",
+  toastTaskReopened: "Marked incomplete",
+  toastTaskAdded: "Task added",
+  toastTaskUpdated: "Task updated",
+  toastTaskMoved: (count, listName) =>
+    count === 1 ? `Moved to ${listName}` : `Moved ${count} tasks to ${listName}`,
+  toastTaskTagged: (count, tag) =>
+    count === 1 ? `Tagged with ${tag}` : `Tagged ${count} tasks with ${tag}`,
+  toastCompleteUndone: "Completion undone.",
+  toastDeleteUndone: "Deletion undone.",
+  toastMoveUndone: "Move undone.",
+  toastTagUndone: "Tag assignment undone.",
   createTaskTitle: "New task",
   untitledTask: "Untitled task",
   subtasksLabel: "Subtasks",

@@ -20,6 +20,13 @@ vi.mock("@/hooks/use-confirm-dialog", () => ({
   }),
 }));
 
+vi.mock("@/hooks/use-queued-mutation", () => ({
+  useQueuedMutation: () => ({
+    queueMutation: vi.fn(),
+    undoLatest: vi.fn(() => false),
+  }),
+}));
+
 const bootstrap = createTasksAppBootstrap();
 
 describe("useTasksController URL routing", () => {
