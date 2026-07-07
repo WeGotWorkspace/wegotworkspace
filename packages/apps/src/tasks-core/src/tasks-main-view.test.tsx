@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createTasksAppBootstrap } from "@/lib/api/mock/tasks-bootstrap";
 import { TasksMainView } from "@/tasks-core/src/tasks-main-view";
 import { defaultTasksLabels } from "@/tasks-core/src/tasks-labels";
+import { TooltipProvider } from "@/ui/tooltip";
 
 const bootstrap = createTasksAppBootstrap();
 
@@ -12,22 +13,24 @@ function renderMainView(
   onCreateTask = vi.fn(),
 ) {
   return render(
-    <TasksMainView
-      L={defaultTasksLabels}
-      displayTasks={[]}
-      exitingTaskIds={new Set<string>()}
-      taskLists={bootstrap.data.taskLists}
-      defaultListId="default"
-      canCreate
-      onToggleComplete={vi.fn()}
-      onEditTask={vi.fn()}
-      onDeleteTask={vi.fn()}
-      onCreateTask={onCreateTask}
-      onTaskExitAnimationEnd={vi.fn()}
-      itemDragHandlers={() => ({})}
-      isItemDragging={() => false}
-      {...overrides}
-    />,
+    <TooltipProvider>
+      <TasksMainView
+        L={defaultTasksLabels}
+        displayTasks={[]}
+        exitingTaskIds={new Set<string>()}
+        taskLists={bootstrap.data.taskLists}
+        defaultListId="default"
+        canCreate
+        onToggleComplete={vi.fn()}
+        onEditTask={vi.fn()}
+        onDeleteTask={vi.fn()}
+        onCreateTask={onCreateTask}
+        onTaskExitAnimationEnd={vi.fn()}
+        itemDragHandlers={() => ({})}
+        isItemDragging={() => false}
+        {...overrides}
+      />
+    </TooltipProvider>,
   );
 }
 
