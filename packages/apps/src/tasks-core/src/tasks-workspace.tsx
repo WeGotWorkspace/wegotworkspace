@@ -115,10 +115,10 @@ export function TasksWorkspace({
           >
             <SidebarSection items={inboxSidebarItems} />
             <SidebarSection title={L.sidebarTime} items={timeSidebarItems} />
-            <SidebarSection title={L.sidebarStatus} items={statusSidebarItems} />
             {projectSidebarItems.length > 0 ? (
               <SidebarSection title={L.sidebarProjects} items={projectSidebarItems} />
             ) : null}
+            <SidebarSection title={L.sidebarStatus} items={statusSidebarItems} />
           </AppSidebar>
         }
         mainHeader={
