@@ -8,7 +8,7 @@
  */
 .tasks-workspace {
   --tasks-accent: #14b8a6;
-  --tasks-sidebar: color-mix(in oklab, var(--tasks-accent) 8%, var(--color-cream, #ffffff));
+  --tasks-sidebar: color-mix(in oklab, var(--tasks-accent) 12%, var(--color-cream, #ffffff));
   --workspace-accent: var(--tasks-accent);
   --color-emerald: var(--tasks-accent);
   --workspace-root-bg: var(--color-cream, #ffffff);
