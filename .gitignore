@@ -2,7 +2,7 @@ node_modules/
 .turbo/
 .env
 .env.local
-.env.install
+docker/install/.env
 /docker/apache/certs/*.pem
 
 /apps/wegotworkspace/vendor/

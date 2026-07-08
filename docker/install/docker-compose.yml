@@ -1,36 +1,60 @@
 # Production install stack — runs the same tree as the release ZIP (see INSTALL.md).
 # Not for monorepo development (use compose.dev.yml + pnpm dev instead).
 #
-# Quick start:
-#   cp .env.install.example .env.install
-#   docker compose -f compose.install.yml --env-file .env.install up -d
+# Quick start (from this directory):
+#   cp .env.example .env
+#   docker compose up -d --build
 #   open http://localhost:8080/install/
 #
-# MySQL (default): COMPOSE_PROFILES=mysql in .env.install
+# MySQL (default): COMPOSE_PROFILES=mysql in .env
 # SQLite only:     COMPOSE_PROFILES=sqlite (no db service)
 
 name: wgw-install
 
+x-wgw-web-volumes: &wgw-web-volumes
+  - wgw-content:/var/www/html/wgw-content
+  - wgw-api-storage:/var/www/html/packages/api/storage
+  - wgw-install-config:/wgw-config-vol
+
+x-wgw-web-environment: &wgw-web-environment
+  WGW_APP_ROOT: /var/www/html
+  WGW_WAIT_FOR_DB: ${WGW_WAIT_FOR_DB:-1}
+  WGW_DB_HOST: ${WGW_DB_HOST:-db}
+  WGW_DB_PORT: ${WGW_DB_PORT:-3306}
+  WGW_DB_USERNAME: ${WGW_DB_USERNAME:-wgw}
+  WGW_DB_PASSWORD: ${WGW_DB_PASSWORD:-wgw}
+
 services:
+  migrator:
+    build:
+      context: ../..
+      dockerfile: docker/install/Dockerfile
+    image: ${WGW_IMAGE:-ghcr.io/wegotworkspace/wegotworkspace:latest}
+    restart: "no"
+    environment: *wgw-web-environment
+    volumes:
+      - wgw-content:/var/www/html/wgw-content
+      - wgw-api-storage:/var/www/html/packages/api/storage
+      - wgw-install-config:/wgw-config-vol
+    depends_on:
+      db:
+        condition: service_healthy
+        required: false
+    entrypoint: ["/usr/local/bin/wgw-install-migrate.sh"]
+
   web:
     build:
-      context: .
+      context: ../..
       dockerfile: docker/install/Dockerfile
     image: ${WGW_IMAGE:-ghcr.io/wegotworkspace/wegotworkspace:latest}
     restart: unless-stopped
     ports:
       - "${WGW_HTTP_PORT:-8080}:80"
-    environment:
-      WGW_APP_ROOT: /var/www/html
-      WGW_WAIT_FOR_DB: ${WGW_WAIT_FOR_DB:-1}
-      WGW_DB_HOST: ${WGW_DB_HOST:-db}
-      WGW_DB_PORT: ${WGW_DB_PORT:-3306}
-      WGW_DB_USERNAME: ${WGW_DB_USERNAME:-wgw}
-      WGW_DB_PASSWORD: ${WGW_DB_PASSWORD:-wgw}
-    volumes:
-      - wgw-content:/var/www/html/wgw-content
-      - wgw-api-storage:/var/www/html/packages/api/storage
+    environment: *wgw-web-environment
+    volumes: *wgw-web-volumes
     depends_on:
+      migrator:
+        condition: service_completed_successfully
       db:
         condition: service_healthy
         required: false
@@ -70,4 +94,5 @@ services:
 volumes:
   wgw-content:
   wgw-api-storage:
+  wgw-install-config:
   wgw-db:

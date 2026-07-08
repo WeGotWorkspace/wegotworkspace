@@ -91,7 +91,14 @@ COPY docker/install/http-vhost.conf /etc/apache2/conf-available/wgw-install-http
 RUN a2enconf wgw-install-vhost wgw-install-http-vhost
 
 COPY docker/install/docker-entrypoint.sh /usr/local/bin/wgw-install-entrypoint
-RUN chmod +x /usr/local/bin/wgw-install-entrypoint
+COPY docker/install/wgw-install-wait-db.sh /usr/local/bin/wgw-install-wait-db.sh
+COPY docker/install/wgw-install-migrate.sh /usr/local/bin/wgw-install-migrate.sh
+COPY docker/install/wgw-install-seed-config.sh /usr/local/bin/wgw-install-seed-config.sh
+RUN chmod +x \
+    /usr/local/bin/wgw-install-entrypoint \
+    /usr/local/bin/wgw-install-wait-db.sh \
+    /usr/local/bin/wgw-install-migrate.sh \
+    /usr/local/bin/wgw-install-seed-config.sh
 
 COPY --from=builder /release/ /var/www/html/
 RUN chown -R www-data:www-data \
