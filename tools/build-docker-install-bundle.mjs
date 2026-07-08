@@ -34,20 +34,20 @@ const envWithImage = envExample.includes("WGW_IMAGE=")
       `WGW_IMAGE=ghcr.io/wegotworkspace/wegotworkspace:${version}`,
     )
   : `${envExample}\nWGW_IMAGE=ghcr.io/wegotworkspace/wegotworkspace:${version}\n`;
-writeFileSync(resolve(bundleDir, ".env.example"), envWithImage);
+writeFileSync(resolve(bundleDir, "env.example"), envWithImage);
 
 const setupContent = readFileSync(setupSource, "utf8");
 writeFileSync(resolve(bundleDir, "setup.sh"), setupContent);
 writeFileSync(resolve(bundleDir, "install"), setupContent);
 
-for (const name of ["setup.sh", "install", "docker-compose.yml", ".env.example"]) {
+for (const name of ["setup.sh", "install", "docker-compose.yml", "env.example"]) {
   cpSync(resolve(bundleDir, name), resolve(outputRoot, name));
 }
 
 execFileSync("tar", ["-czf", tarPath, "-C", bundleDir, "."], { stdio: "inherit" });
 
 console.log(`Docker install bundle written to ${outputRoot}`);
-console.log("  install, setup.sh, docker-compose.yml, .env.example");
+console.log("  install, setup.sh, docker-compose.yml, env.example");
 console.log(`  wgw-docker-install-${version}.tar.gz`);
 
 function resolveVersion() {

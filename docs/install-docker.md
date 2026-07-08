@@ -222,7 +222,7 @@ Each tagged GitHub Release includes:
 | `install` | One-liner entry for `curl \| sh` |
 | `setup.sh` | Same script — lifecycle commands |
 | `docker-compose.yml` | Pull-only stack with migrator |
-| `.env.example` | Copied to `wegotworkspace/.env` on install |
+| `env.example` | Release env template (no leading dot — GitHub strips dotted names). Install writes `wegotworkspace/.env.example` and `wegotworkspace/.env` |
 | `wgw-docker-install-{version}.tar.gz` | All of the above in one archive |
 | GHCR image | `ghcr.io/wegotworkspace/wegotworkspace:{version}` |
 
