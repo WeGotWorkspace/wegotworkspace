@@ -10,6 +10,8 @@
 
 .tasks-main-view__list {
   --tasks-title-line-height: 1.5rem;
+  /* title + meta (typical single-line body without description). */
+  --tasks-body-intrinsic-block-size: calc(var(--tasks-title-line-height) + 1.625rem);
 
   @apply divide-y border-b;
   border-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
@@ -28,6 +30,10 @@
 .tasks-main-view__row--exiting {
   @apply pointer-events-none;
   animation: tasks-row-exit 220ms ease-out forwards;
+}
+
+.tasks-main-view__row--exiting .tasks-main-view__body {
+  content-visibility: visible;
 }
 
 @keyframes tasks-row-exit {
@@ -72,6 +78,8 @@
 
 .tasks-main-view__body {
   @apply min-w-0 flex-1 cursor-pointer;
+  content-visibility: auto;
+  contain-intrinsic-size: auto var(--tasks-body-intrinsic-block-size);
 }
 
 .tasks-main-view__title {
