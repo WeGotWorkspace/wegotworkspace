@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      packages: write
     steps:
       - uses: actions/checkout@v6
         with:
@@ -116,3 +117,50 @@ jobs:
             dist/releases/*.zip
             dist/releases/manifest.json
             dist/releases/manifest.sig
+
+      - name: Set up Docker Buildx
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push install image
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/install/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/wegotworkspace/wegotworkspace:${{ steps.release_version.outputs.value }}
+            ghcr.io/wegotworkspace/wegotworkspace:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test install image
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          IMAGE="ghcr.io/wegotworkspace/wegotworkspace:${{ steps.release_version.outputs.value }}"
+          docker pull "$IMAGE"
+          docker run -d --name wgw-install-smoke -p 127.0.0.1:18080:80 \
+            -e WGW_WAIT_FOR_DB=0 \
+            -e WGW_DB_HOST= \
+            "$IMAGE"
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:18080/api/v1/health | grep -q '"status":"ok"'; then
+              echo "Health check passed."
+              docker rm -f wgw-install-smoke
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::Install image health check failed."
+          docker logs wgw-install-smoke || true
+          docker rm -f wgw-install-smoke
+          exit 1
