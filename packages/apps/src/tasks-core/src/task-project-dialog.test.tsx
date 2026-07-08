@@ -1,8 +1,9 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TaskProjectDialog } from "@/tasks-core/src/task-project-dialog";
+import { TaskListDot } from "@/tasks-core/src/tasks-list-dot";
 import { defaultTasksLabels } from "@/tasks-core/src/tasks-labels";
-import { DEFAULT_TASK_LIST_COLOR } from "@/tasks-core/src/tasks-task-utils";
+import { DEFAULT_TASK_LIST_COLOR, taskListDotColor } from "@/tasks-core/src/tasks-task-utils";
 
 const dialogLabels = {
   createTitle: defaultTasksLabels.newProject,
@@ -11,7 +12,6 @@ const dialogLabels = {
   colorLabel: defaultTasksLabels.projectColorLabel,
   scopeLabel: defaultTasksLabels.projectScopeLabel,
   scopePersonal: defaultTasksLabels.projectScopePersonal,
-  scopePersonalDescription: defaultTasksLabels.projectScopePersonalDescription,
   scopeGroup: defaultTasksLabels.projectScopeGroup,
   scopeReadOnlyLabel: defaultTasksLabels.projectScopeReadOnlyLabel,
   createButton: defaultTasksLabels.createProjectButton,
@@ -23,6 +23,10 @@ const groups = [
   { slug: "team", displayName: "Team" },
   { slug: "studio", displayName: "Studio Crew" },
 ];
+
+function openColorPicker() {
+  fireEvent.click(screen.getByRole("button", { name: defaultTasksLabels.projectColorLabel }));
+}
 
 describe("TaskProjectDialog", () => {
   beforeEach(() => {
@@ -60,6 +64,7 @@ describe("TaskProjectDialog", () => {
     fireEvent.change(screen.getByLabelText(defaultTasksLabels.projectNameLabel), {
       target: { value: "  Launch plan  " },
     });
+    openColorPicker();
     fireEvent.click(screen.getByRole("radio", { name: "#ec4899" }));
     fireEvent.click(screen.getByRole("button", { name: defaultTasksLabels.createProjectButton }));
 
@@ -142,12 +147,13 @@ describe("TaskProjectDialog", () => {
       />,
     );
 
-    expect(screen.getByText(defaultTasksLabels.projectScopePersonal("Demo User"))).toBeTruthy();
+    expect(screen.getByText("Only Me")).toBeTruthy();
     expect(screen.queryByLabelText(defaultTasksLabels.projectScopeLabel)).toBeNull();
 
     fireEvent.change(screen.getByLabelText(defaultTasksLabels.projectNameLabel), {
       target: { value: "Client work" },
     });
+    openColorPicker();
     fireEvent.click(screen.getByRole("radio", { name: "#22c55e" }));
     fireEvent.click(screen.getByRole("button", { name: defaultTasksLabels.saveProjectButton }));
 
@@ -155,6 +161,89 @@ describe("TaskProjectDialog", () => {
       name: "Client work",
       color: "#22c55e",
     });
+  });
+
+  it("shows project name label aligned with owner field", () => {
+    render(
+      <TaskProjectDialog
+        dialog={{
+          mode: "edit",
+          listId: "work",
+          name: "Work",
+          color: "#6366f1",
+          scope: "personal",
+          groupSlug: null,
+        }}
+        groups={groups}
+        personalOwnerLabel="Demo User"
+        onClose={vi.fn()}
+        onConfirm={vi.fn()}
+        labels={dialogLabels}
+      />,
+    );
+
+    expect(
+      screen.getByText(defaultTasksLabels.projectNameLabel, { selector: "label" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(defaultTasksLabels.projectScopeReadOnlyLabel, { selector: "label" }),
+    ).toBeTruthy();
+    const nameInput = screen.getByLabelText(
+      defaultTasksLabels.projectNameLabel,
+    ) as HTMLInputElement;
+    expect(nameInput.value).toBe("Work");
+  });
+
+  it("shows hashed color when API color is null", () => {
+    const listId = "roadmap";
+
+    const { container: reference } = render(<TaskListDot list={{ id: listId, color: null }} />);
+    const referenceColor = (reference.querySelector(".tasks-list-dot") as HTMLElement).style
+      .backgroundColor;
+
+    cleanup();
+
+    render(
+      <TaskProjectDialog
+        dialog={{
+          mode: "edit",
+          listId,
+          name: "Roadmap",
+          color: null,
+          scope: "personal",
+          groupSlug: null,
+        }}
+        groups={groups}
+        personalOwnerLabel="Demo User"
+        onClose={vi.fn()}
+        onConfirm={vi.fn()}
+        labels={dialogLabels}
+      />,
+    );
+
+    const dot = document.querySelector(".task-project-color-picker__dot") as HTMLElement;
+    expect(dot.style.backgroundColor).toBe(referenceColor);
+    expect(referenceColor).not.toBe("");
+    expect(taskListDotColor({ id: listId, color: null })).not.toBe(DEFAULT_TASK_LIST_COLOR);
+  });
+
+  it("does not show owner helper text on create", () => {
+    render(
+      <TaskProjectDialog
+        dialog={{ mode: "create" }}
+        groups={groups}
+        personalOwnerLabel="Demo User"
+        onClose={vi.fn()}
+        onConfirm={vi.fn()}
+        labels={dialogLabels}
+      />,
+    );
+
+    expect(screen.queryByText("Only you can manage this project.")).toBeNull();
+    const ownerSelect = screen.getByRole("combobox", {
+      name: defaultTasksLabels.projectScopeLabel,
+    });
+    expect(ownerSelect.textContent).toContain("Only Me");
   });
 
   it("calls onClose when cancel is clicked", () => {

@@ -242,7 +242,6 @@ export function TasksWorkspace({
           colorLabel: L.projectColorLabel,
           scopeLabel: L.projectScopeLabel,
           scopePersonal: L.projectScopePersonal,
-          scopePersonalDescription: L.projectScopePersonalDescription,
           scopeGroup: L.projectScopeGroup,
           scopeReadOnlyLabel: L.projectScopeReadOnlyLabel,
           createButton: L.createProjectButton,

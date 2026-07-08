@@ -1,18 +1,11 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/button/src/button";
 import { Input } from "@/ui/input";
-import { Label } from "@/ui/label";
+import { FieldLabelRow } from "@/ui/field-label-row";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/ui/dialog";
-import { TaskListDot } from "@/tasks-core/src/tasks-list-dot";
-import { DEFAULT_TASK_LIST_COLOR, TASK_LIST_DOT_COLORS } from "@/tasks-core/src/tasks-task-utils";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/ui/dialog";
+import { TaskProjectColorPicker } from "@/tasks-core/src/task-project-color-picker";
+import { DEFAULT_TASK_LIST_COLOR, taskListDotColor } from "@/tasks-core/src/tasks-task-utils";
 import type { TaskProjectGroupOption } from "@/tasks-core/src/tasks-types";
 import "./task-project-dialog.css";
 
@@ -43,7 +36,6 @@ type TaskProjectDialogLabels = {
   colorLabel: string;
   scopeLabel: string;
   scopePersonal: (ownerLabel: string) => string;
-  scopePersonalDescription: string;
   scopeGroup: (name: string) => string;
   scopeReadOnlyLabel: string;
   createButton: string;
@@ -61,10 +53,8 @@ type TaskProjectDialogProps = {
   contentClassName?: string;
 };
 
-function normalizePickerColor(color: string | null | undefined): string {
-  const trimmed = color?.trim();
-  if (trimmed) return trimmed;
-  return DEFAULT_TASK_LIST_COLOR;
+function editDialogDisplayColor(listId: string, color: string | null): string {
+  return taskListDotColor({ id: listId, color });
 }
 
 function scopeLabelForEdit(
@@ -91,8 +81,6 @@ export function TaskProjectDialog({
   const [name, setName] = useState("");
   const [color, setColor] = useState<string>(DEFAULT_TASK_LIST_COLOR);
   const [scopeValue, setScopeValue] = useState(PERSONAL_SCOPE_VALUE);
-  const customColorInputRef = useRef<HTMLInputElement>(null);
-  const customColorInputId = useId();
   const open = dialog !== null;
   const isCreate = dialog?.mode === "create";
 
@@ -105,18 +93,19 @@ export function TaskProjectDialog({
       return;
     }
     setName(dialog.name);
-    setColor(normalizePickerColor(dialog.color));
+    setColor(editDialogDisplayColor(dialog.listId, dialog.color));
     setScopeValue(
       dialog.scope === "group" && dialog.groupSlug ? dialog.groupSlug : PERSONAL_SCOPE_VALUE,
     );
   }, [dialog]);
 
   const trimmedName = name.trim();
-  const selectedColor = normalizePickerColor(color);
+  const selectedColor = color.trim() || DEFAULT_TASK_LIST_COLOR;
   const unchangedEdit =
     dialog?.mode === "edit" &&
     trimmedName === dialog.name.trim() &&
-    selectedColor === normalizePickerColor(dialog.color);
+    selectedColor.toLowerCase() ===
+      editDialogDisplayColor(dialog.listId, dialog.color).toLowerCase();
   const canSubmit = Boolean(trimmedName) && (isCreate || !unchangedEdit);
 
   const scopeReadOnly =
@@ -129,10 +118,8 @@ export function TaskProjectDialog({
       <DialogContent className={contentClassName}>
         <DialogHeader>
           <DialogTitle>{isCreate ? labels.createTitle : labels.editTitle}</DialogTitle>
-          <DialogDescription>{labels.nameLabel}</DialogDescription>
         </DialogHeader>
         <form
-          className="task-project-dialog__form"
           onSubmit={(event) => {
             event.preventDefault();
             if (!canSubmit) return;
@@ -147,72 +134,26 @@ export function TaskProjectDialog({
             });
           }}
         >
-          <div className="task-project-dialog__field">
-            <Label htmlFor="task-project-name">{labels.nameLabel}</Label>
-            <Input
-              id="task-project-name"
-              autoFocus
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-            />
-          </div>
-
-          <div className="task-project-dialog__field">
-            <div className="task-project-dialog__color-header">
-              <Label id="task-project-color-label">{labels.colorLabel}</Label>
-              <TaskListDot
-                className="task-project-dialog__preview-dot"
-                list={{ id: trimmedName || "preview", color: selectedColor }}
+          <FieldLabelRow label={labels.nameLabel} htmlFor="task-project-name">
+            <div className="task-project-dialog__name-color-row">
+              <Input
+                id="task-project-name"
+                className="task-project-dialog__name-input"
+                autoFocus
+                value={name}
+                onChange={(event) => setName(event.target.value)}
               />
-            </div>
-            <div
-              className="task-project-dialog__swatches"
-              role="radiogroup"
-              aria-labelledby="task-project-color-label"
-            >
-              {TASK_LIST_DOT_COLORS.map((swatch) => {
-                const selected = selectedColor.toLowerCase() === swatch.toLowerCase();
-                return (
-                  <button
-                    key={swatch}
-                    type="button"
-                    className={
-                      selected
-                        ? "task-project-dialog__swatch task-project-dialog__swatch--selected"
-                        : "task-project-dialog__swatch"
-                    }
-                    style={{ backgroundColor: swatch }}
-                    aria-label={swatch}
-                    aria-checked={selected}
-                    role="radio"
-                    onClick={() => setColor(swatch)}
-                  />
-                );
-              })}
-              <button
-                type="button"
-                className="task-project-dialog__swatch task-project-dialog__swatch--custom"
-                aria-label="Custom color"
-                onClick={() => customColorInputRef.current?.click()}
-              >
-                <span className="task-project-dialog__custom-marker" aria-hidden />
-              </button>
-              <input
-                ref={customColorInputRef}
-                id={customColorInputId}
-                type="color"
-                className="task-project-dialog__native-color"
+              <TaskProjectColorPicker
                 value={selectedColor}
-                tabIndex={-1}
-                aria-hidden
-                onChange={(event) => setColor(event.target.value)}
+                onChange={setColor}
+                colorLabel={labels.colorLabel}
+                previewListId={dialog?.mode === "edit" ? dialog.listId : trimmedName || "preview"}
               />
             </div>
-          </div>
+          </FieldLabelRow>
 
           {isCreate ? (
-            <div className="task-project-dialog__field">
-              <Label htmlFor="task-project-scope">{labels.scopeLabel}</Label>
+            <FieldLabelRow label={labels.scopeLabel} htmlFor="task-project-scope">
               <Select value={scopeValue} onValueChange={setScopeValue}>
                 <SelectTrigger id="task-project-scope" className="w-full">
                   <SelectValue />
@@ -228,19 +169,11 @@ export function TaskProjectDialog({
                   ))}
                 </SelectContent>
               </Select>
-              <p className="task-project-dialog__scope-hint">
-                {scopeValue === PERSONAL_SCOPE_VALUE
-                  ? labels.scopePersonalDescription
-                  : labels.scopeGroup(
-                      groups.find((group) => group.slug === scopeValue)?.displayName ?? scopeValue,
-                    )}
-              </p>
-            </div>
+            </FieldLabelRow>
           ) : scopeReadOnly ? (
-            <div className="task-project-dialog__field">
-              <Label>{labels.scopeReadOnlyLabel}</Label>
+            <FieldLabelRow label={labels.scopeReadOnlyLabel} readOnly>
               <p className="task-project-dialog__scope-readonly">{scopeReadOnly}</p>
-            </div>
+            </FieldLabelRow>
           ) : null}
 
           <DialogFooter>

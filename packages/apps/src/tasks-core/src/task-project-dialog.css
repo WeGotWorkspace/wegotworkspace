@@ -1,52 +1,13 @@
 @import "../../styles.css" reference;
 
-.task-project-dialog__form {
-  @apply space-y-4;
+.task-project-dialog__name-color-row {
+  @apply flex items-center gap-2;
 }
 
-.task-project-dialog__field {
-  @apply space-y-2;
+.task-project-dialog__name-input {
+  @apply min-w-0 flex-[1_1_85%];
 }
 
-.task-project-dialog__color-header {
-  @apply flex items-center justify-between gap-3;
-}
-
-.task-project-dialog__preview-dot {
-  @apply size-2.5;
-}
-
-.task-project-dialog__swatches {
-  @apply flex flex-wrap items-center gap-2;
-}
-
-.task-project-dialog__swatch {
-  @apply inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent p-0 transition-shadow;
-}
-
-.task-project-dialog__swatch:hover {
-  @apply ring-2 ring-offset-2;
-  ring-color: color-mix(in oklab, var(--color-ink) 18%, transparent);
-}
-
-.task-project-dialog__swatch--selected {
-  @apply ring-2 ring-offset-2;
-  ring-color: var(--color-ink);
-}
-
-.task-project-dialog__swatch--custom {
-  background: conic-gradient(from 0deg, #ef4444, #f59e0b, #22c55e, #3b82f6, #a855f7, #ef4444);
-}
-
-.task-project-dialog__custom-marker {
-  @apply size-3 rounded-full border border-white/80 bg-white/20;
-}
-
-.task-project-dialog__native-color {
-  @apply sr-only;
-}
-
-.task-project-dialog__scope-hint,
 .task-project-dialog__scope-readonly {
   @apply text-sm;
   color: color-mix(in oklab, var(--color-ink) 60%, transparent);

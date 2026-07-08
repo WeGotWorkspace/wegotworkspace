@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { Tag } from "lucide-react";
 import type { TaskProjectDialogConfirmInput } from "@/tasks-core/src/task-project-dialog";
 import type { TaskProjectDialogState } from "@/tasks-core/src/task-project-dialog";
-import { isProtectedTaskList } from "@/tasks-core/src/tasks-task-utils";
+import { isProtectedTaskList, taskListDotColor } from "@/tasks-core/src/tasks-task-utils";
 import type { TasksShellState } from "@/tasks-core/src/use-tasks-shell";
 
 type UseTasksProjectMutationsArgs = {
@@ -67,9 +67,11 @@ export function useTasksProjectMutations({ shell }: UseTasksProjectMutationsArgs
 
       const patch: { name?: string; color?: string | null } = {};
       if (trimmed !== list.name) patch.name = trimmed;
-      const normalizedColor = color?.trim() || null;
-      const currentColor = list.color?.trim() || null;
-      if (normalizedColor !== currentColor) patch.color = normalizedColor;
+      const displayColor = taskListDotColor({ id: list.id, color: list.color }).toLowerCase();
+      const selectedColor = (color?.trim() || displayColor).toLowerCase();
+      if (selectedColor !== displayColor) {
+        patch.color = color?.trim() || null;
+      }
 
       if (Object.keys(patch).length === 0) {
         setProjectDialog(null);

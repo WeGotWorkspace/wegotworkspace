@@ -1,6 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createTasksAppBootstrap } from "@/lib/api/mock/tasks-bootstrap";
+import { taskListDotColor } from "@/tasks-core/src/tasks-task-utils";
 import { useTasksProjectMutations } from "@/tasks-core/src/use-tasks-project-mutations";
 import { useTasksShell } from "@/tasks-core/src/use-tasks-shell";
 
@@ -253,6 +254,52 @@ describe("useTasksProjectMutations", () => {
       await result.current.updateProject("inbox", {
         name: "Inbox",
         color: null,
+      });
+    });
+
+    expect(patchTaskList).not.toHaveBeenCalled();
+  });
+
+  it("updateProject skips patch when implicit hash color is unchanged", async () => {
+    const patchTaskList = vi.fn();
+    const data = {
+      ...bootstrap.data,
+      taskLists: [
+        ...bootstrap.data.taskLists,
+        {
+          ...bootstrap.data.taskLists[1],
+          id: "roadmap",
+          name: "Roadmap",
+          color: null,
+          isDefault: false,
+        },
+      ],
+    };
+    const operations = {
+      createTask: vi.fn(),
+      patchTask: vi.fn(),
+      deleteTask: vi.fn(),
+      moveTaskToList: vi.fn(),
+      createTaskList: vi.fn(),
+      patchTaskList,
+    };
+    const { result: shellResult } = renderHook(() =>
+      useTasksShell({
+        data,
+        operations,
+        initialView: "list:roadmap",
+      }),
+    );
+    const { result } = renderHook(({ shell }) => useTasksProjectMutations({ shell }), {
+      initialProps: { shell: shellResult.current },
+    });
+
+    const displayColor = taskListDotColor({ id: "roadmap", color: null });
+
+    await act(async () => {
+      await result.current.updateProject("roadmap", {
+        name: "Roadmap",
+        color: displayColor,
       });
     });
 
