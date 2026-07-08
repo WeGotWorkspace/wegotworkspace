@@ -5,6 +5,7 @@ set -eu
 
 WGW_GITHUB_REPO="${WGW_GITHUB_REPO:-WeGotWorkspace/wegotworkspace}"
 WGW_RELEASE_BASE="https://github.com/${WGW_GITHUB_REPO}/releases"
+WGW_MANIFEST_URL="${WGW_MANIFEST_URL:-https://github.com/WeGotWorkspace/wegotworkspace/releases/latest/download/manifest.json}"
 WGW_INSTALL_DIR="${WGW_INSTALL_DIR:-./wegotworkspace}"
 WGW_VERSION="${WGW_VERSION:-latest}"
 WGW_HTTP_PORT="${WGW_HTTP_PORT:-}"
@@ -12,10 +13,14 @@ WGW_SQLITE=0
 WGW_FORCE=0
 WGW_UPGRADE=0
 WGW_UPGRADE_VERSION=""
+WGW_YES=0
+WGW_DRY_RUN=0
+WGW_LOCAL=0
 WGW_PLATFORM_ENSURED=0
 
 COMPOSE_FILE="docker-compose.yml"
 ENV_FILE=".env"
+SETUP_SCRIPT_DIR=$(CDPATH= cd "$(dirname "$0")" && pwd)
 
 usage() {
   cat <<'EOF'
@@ -31,6 +36,8 @@ Commands (default: install):
   start            docker compose up -d (after stop)
   stop             docker compose down
   restart          docker compose restart
+  status           Show install dir, image tag, health, compose profile
+  check            Compare installed tag to latest release (manifest.json)
   upgrade [ver]    Backup, update image tag, pull, up -d, health check
   backup           Archive volumes (+ MySQL dump when mysql profile)
   logs             docker compose logs -f
@@ -39,7 +46,10 @@ Commands (default: install):
 Options:
   --sqlite         SQLite-only stack (no MariaDB)
   --version VER    Pin release / image tag (default: latest)
-  --upgrade [VER]  Upgrade existing install (same as: upgrade [VER])
+  --upgrade [VER]  Upgrade existing install (same as: upgrade [VER]; omit VER for latest)
+  --yes            Skip upgrade confirmation prompt
+  --dry-run        Show upgrade target without pulling or recreating
+  --local          Use docker/install assets from this repo (contributor pre-release testing)
   --force          Overwrite existing wegotworkspace/ on install
   -h, --help       Show this message
 
@@ -52,8 +62,12 @@ Examples:
   curl -fsSL .../install | sh
   WGW_HTTP_PORT=9090 curl -fsSL .../install | sh
   curl -fsSL .../install | sh -s -- --sqlite
+  bash tools/setup-docker-install.sh --local --version 0.0.0-dev
   curl -fsSL .../install | sh -s -- --version 1.2.0
   curl -fsSL .../install | sh -s -- --upgrade 1.2.0
+  curl -fsSL .../install | sh -s -- --upgrade --yes
+  cd wegotworkspace && bash setup.sh check
+  cd wegotworkspace && bash setup.sh upgrade
   cd wegotworkspace && bash setup.sh upgrade 1.2.0
 EOF
 }
@@ -162,6 +176,15 @@ download_url() {
 fetch_asset() {
   asset=$1
   dest=$2
+  if [ "$WGW_LOCAL" -eq 1 ]; then
+    local_src="${SETUP_SCRIPT_DIR}/../docker/install/${asset}"
+    if [ ! -f "$local_src" ]; then
+      die "Local asset not found: ${local_src} (run from repo checkout with --local)"
+    fi
+    cp "$local_src" "$dest"
+    log "Copied ${asset} from ${local_src}"
+    return 0
+  fi
   url=$(download_url "$asset")
   log "Downloading ${asset} from ${url}"
   if command -v curl >/dev/null 2>&1; then
@@ -175,6 +198,15 @@ fetch_asset() {
 
 fetch_env_example() {
   dest=$1
+  if [ "$WGW_LOCAL" -eq 1 ]; then
+    local_src="${SETUP_SCRIPT_DIR}/../docker/install/.env.example"
+    if [ ! -f "$local_src" ]; then
+      die "Local env example not found: ${local_src}"
+    fi
+    cp "$local_src" "$dest"
+    log "Copied .env.example from ${local_src}"
+    return 0
+  fi
   for asset in env.example default.env.example .env.example; do
     url=$(download_url "$asset")
     log "Trying ${asset} from ${url}"
@@ -193,6 +225,80 @@ fetch_env_example() {
     fi
   done
   die "Could not download env example (tried env.example, default.env.example, .env.example)."
+}
+
+normalize_semver() {
+  printf '%s' "$1" | sed 's/^v//'
+}
+
+fetch_manifest() {
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsSL "$WGW_MANIFEST_URL"
+  elif command -v wget >/dev/null 2>&1; then
+    wget -qO- "$WGW_MANIFEST_URL"
+  else
+    die "curl or wget is required to fetch release manifest."
+  fi
+}
+
+parse_manifest_version() {
+  manifest=$1
+  version=$(printf '%s' "$manifest" | grep '"version"' | head -1 | sed 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+  if [ -z "$version" ]; then
+    die "Could not parse version from manifest.json"
+  fi
+  normalize_semver "$version"
+}
+
+resolve_latest_version() {
+  manifest=$(fetch_manifest)
+  parse_manifest_version "$manifest"
+}
+
+image_tag_from_env() {
+  load_env
+  if [ -n "${WGW_IMAGE:-}" ]; then
+    printf '%s' "$WGW_IMAGE" | sed 's/.*://'
+    return
+  fi
+  printf '%s' "${WGW_VERSION:-latest}"
+}
+
+# Compare two semver strings. Return 0 if equal, 1 if $1 > $2, 2 if $1 < $2.
+semver_cmp() {
+  a=$(normalize_semver "$1")
+  b=$(normalize_semver "$2")
+
+  a_major=$(printf '%s' "$a" | cut -d. -f1)
+  a_minor=$(printf '%s' "$a" | cut -d. -f2)
+  a_patch=$(printf '%s' "$a" | cut -d. -f3)
+  b_major=$(printf '%s' "$b" | cut -d. -f1)
+  b_minor=$(printf '%s' "$b" | cut -d. -f2)
+  b_patch=$(printf '%s' "$b" | cut -d. -f3)
+
+  if [ "$a_major" -gt "$b_major" ]; then return 1; fi
+  if [ "$a_major" -lt "$b_major" ]; then return 2; fi
+  if [ "$a_minor" -gt "$b_minor" ]; then return 1; fi
+  if [ "$a_minor" -lt "$b_minor" ]; then return 2; fi
+  if [ "$a_patch" -gt "$b_patch" ]; then return 1; fi
+  if [ "$a_patch" -lt "$b_patch" ]; then return 2; fi
+  return 0
+}
+
+confirm_upgrade() {
+  target=$1
+  if [ "$WGW_YES" -eq 1 ]; then
+    return 0
+  fi
+  if [ ! -t 0 ]; then
+    die "Refusing upgrade without confirmation on non-interactive stdin. Pass --yes to confirm upgrade to ${target}."
+  fi
+  printf '[wegotworkspace] Upgrade to %s? [y/N] ' "$target"
+  read -r answer
+  case "$answer" in
+    y | Y | yes | YES) return 0 ;;
+    *) return 1 ;;
+  esac
 }
 
 sed_inplace() {
@@ -230,6 +336,21 @@ apply_http_port() {
     else
       printf '\nWGW_HTTP_PORT=%s\n' "$WGW_HTTP_PORT" >>"$env_path"
     fi
+  fi
+}
+
+prompt_http_port() {
+  if [ -n "$WGW_HTTP_PORT" ]; then
+    return 0
+  fi
+  if [ ! -t 0 ]; then
+    return 0
+  fi
+  default_port="8080"
+  printf 'HTTP port [%s]: ' "$default_port"
+  read -r answer
+  if [ -n "$answer" ]; then
+    WGW_HTTP_PORT="$answer"
   fi
 }
 
@@ -280,6 +401,23 @@ print_success() {
 
 cmd_install() {
   check_docker
+  if [ "$WGW_LOCAL" -eq 1 ]; then
+    WGW_INSTALL_DIR="${SETUP_SCRIPT_DIR}/../docker/install"
+    resolve_install_dir
+    log "Local install mode: ${WGW_INSTALL_DIR}"
+    if [ ! -f "${WGW_INSTALL_DIR}/${ENV_FILE}" ]; then
+      cp "${WGW_INSTALL_DIR}/.env.example" "${WGW_INSTALL_DIR}/${ENV_FILE}"
+    fi
+    apply_sqlite_profile "${WGW_INSTALL_DIR}/${ENV_FILE}"
+    prompt_http_port
+    apply_http_port "${WGW_INSTALL_DIR}/${ENV_FILE}"
+    log "Building and starting stack..."
+    compose up -d --build
+    wait_for_health "$(read_http_port)"
+    print_success
+    return 0
+  fi
+
   resolve_install_dir
 
   if [ -d "$WGW_INSTALL_DIR" ] && [ -n "$(ls -A "$WGW_INSTALL_DIR" 2>/dev/null || true)" ]; then
@@ -297,6 +435,7 @@ cmd_install() {
 
   write_env_from_example "${WGW_INSTALL_DIR}/${ENV_FILE}" "${WGW_INSTALL_DIR}/${ENV_FILE}.example"
   apply_sqlite_profile "${WGW_INSTALL_DIR}/${ENV_FILE}"
+  prompt_http_port
   apply_http_port "${WGW_INSTALL_DIR}/${ENV_FILE}"
 
   pull_images
@@ -376,14 +515,79 @@ cmd_backup() {
   log "Backup complete: ${backup_dir}"
 }
 
+cmd_status() {
+  check_docker
+  install_dir_from_cwd
+  resolve_install_dir
+  [ -f "${WGW_INSTALL_DIR}/${COMPOSE_FILE}" ] || die "Not installed. Run install first."
+
+  load_env
+  image="${WGW_IMAGE:-ghcr.io/wegotworkspace/wegotworkspace:${WGW_VERSION:-latest}}"
+  tag=$(printf '%s' "$image" | sed 's/.*://')
+  profiles="${COMPOSE_PROFILES:-mysql}"
+  port=$(read_http_port)
+
+  log "Install directory: ${WGW_INSTALL_DIR}"
+  log "WGW_IMAGE: ${image}"
+  log "Image tag: ${tag}"
+  log "Compose profile: ${profiles}"
+
+  url="http://127.0.0.1:${port}/api/v1/health"
+  if curl -fsS "$url" 2>/dev/null | grep -q '"status":"ok"'; then
+    log "Health: ok (${url})"
+  else
+    log "Health: unavailable (${url})"
+  fi
+}
+
+cmd_check() {
+  install_dir_from_cwd
+  resolve_install_dir
+  [ -f "${WGW_INSTALL_DIR}/${COMPOSE_FILE}" ] || die "Not installed. Run install first."
+
+  installed=$(image_tag_from_env)
+  latest=$(resolve_latest_version)
+
+  if [ "$installed" = "latest" ]; then
+    log "Installed tag is :latest (unpinned). Latest release: ${latest}"
+    log "Run: bash setup.sh upgrade"
+    return 0
+  fi
+
+  semver_cmp "$installed" "$latest"
+  cmp=$?
+  if [ "$cmp" -eq 0 ]; then
+    log "Up to date (${installed})"
+  elif [ "$cmp" -eq 1 ]; then
+    log "Installed ${installed} is newer than published ${latest}"
+  else
+    log "${latest} available (installed: ${installed})"
+    log "Run: bash setup.sh upgrade"
+  fi
+}
+
 cmd_upgrade() {
   check_docker
   install_dir_from_cwd
   [ -f "${WGW_INSTALL_DIR}/${COMPOSE_FILE}" ] || die "Not installed. Run install first."
 
-  target="${WGW_UPGRADE_VERSION:-$WGW_VERSION}"
+  target="${WGW_UPGRADE_VERSION:-}"
   if [ -z "$target" ] || [ "$target" = "latest" ]; then
-    die "Specify upgrade version: setup.sh upgrade 1.2.0"
+    target=$(resolve_latest_version)
+  fi
+  target=$(normalize_semver "$target")
+
+  installed=$(image_tag_from_env)
+  if [ "$WGW_DRY_RUN" -eq 1 ]; then
+    log "Dry run: would upgrade ${installed} -> ${target}"
+    log "  WGW_IMAGE=ghcr.io/wegotworkspace/wegotworkspace:${target}"
+    log "  Steps: backup, pull, compose up -d, health check"
+    return 0
+  fi
+
+  if ! confirm_upgrade "$target"; then
+    log "Upgrade cancelled."
+    exit 0
   fi
 
   log "Upgrading to ${target}..."
@@ -418,7 +622,7 @@ cmd_logs() {
 
 is_command() {
   case "$1" in
-    install | start | stop | restart | upgrade | backup | logs | help) return 0 ;;
+    install | start | stop | restart | status | check | upgrade | backup | logs | help) return 0 ;;
     *) return 1 ;;
   esac
 }
@@ -426,8 +630,15 @@ is_command() {
 is_version_arg() {
   case "$1" in
     "" | --*) return 1 ;;
-    install | start | stop | restart | upgrade | backup | logs | help) return 1 ;;
+    install | start | stop | restart | status | check | upgrade | backup | logs | help) return 1 ;;
     *) return 0 ;;
+  esac
+}
+
+is_flag_arg() {
+  case "$1" in
+    --yes | --dry-run | --local) return 0 ;;
+    *) return 1 ;;
   esac
 }
 
@@ -452,6 +663,18 @@ parse_args() {
         fi
         shift
         ;;
+      --yes)
+        WGW_YES=1
+        shift
+        ;;
+      --dry-run)
+        WGW_DRY_RUN=1
+        shift
+        ;;
+      --local)
+        WGW_LOCAL=1
+        shift
+        ;;
       --force)
         WGW_FORCE=1
         shift
@@ -464,9 +687,21 @@ parse_args() {
         if is_command "$1"; then
           cmd=$1
           shift
-          if [ "$cmd" = "upgrade" ] && is_version_arg "${1:-}"; then
-            WGW_UPGRADE_VERSION=$1
-            shift
+          if [ "$cmd" = "upgrade" ]; then
+            while [ $# -gt 0 ]; do
+              if is_flag_arg "$1"; then
+                case "$1" in
+                  --yes) WGW_YES=1 ;;
+                  --dry-run) WGW_DRY_RUN=1 ;;
+                esac
+                shift
+              elif is_version_arg "$1"; then
+                WGW_UPGRADE_VERSION=$1
+                shift
+              else
+                break
+              fi
+            done
           fi
         else
           die "Unknown argument: $1 (try --help)"
@@ -484,6 +719,8 @@ parse_args() {
     start) cmd_start ;;
     stop) cmd_stop ;;
     restart) cmd_restart ;;
+    status) cmd_status ;;
+    check) cmd_check ;;
     upgrade) cmd_upgrade ;;
     backup) cmd_backup ;;
     logs) cmd_logs ;;
