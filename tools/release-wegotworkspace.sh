@@ -2,7 +2,7 @@
 # Build release artifacts and/or publish a signed tag (CI builds the GitHub Release).
 #
 #   pnpm release                          # build + package (loads repo-root .env)
-#   pnpm release:publish patch            # bump VERSION, commit, signed tag, push
+#   pnpm release:publish patch            # signed tag on main HEAD, push tag → CI publishes release
 #   pnpm release:publish 1.2.3 --yes      # explicit version, no prompt
 #
 set -euo pipefail
@@ -15,18 +15,22 @@ usage() {
   cat <<'EOF'
 usage:
   tools/release-wegotworkspace.sh package [--skip-build]
-  tools/release-wegotworkspace.sh publish <patch|minor|major|X.Y.Z> [--yes] [--no-push] [--verify]
+  tools/release-wegotworkspace.sh publish <patch|minor|major|X.Y.Z> [--yes] [--no-push] [--verify] [--sync-main]
 
 package   Run pnpm build (unless --skip-build), then write dist/releases/* using
           WGW_RELEASE_SIGNING_PRIVATE_KEY from the environment (repo-root .env via pnpm).
 
-publish   Bump apps/wegotworkspace/VERSION, commit, create a signed annotated tag v*,
-          and push branch + tag. GitHub Actions builds and uploads the release assets.
+publish   Resolve the next semver from the latest of apps/wegotworkspace/VERSION and
+          the newest v* tag, create a signed annotated tag on main HEAD, and push the
+          tag. GitHub Actions builds and uploads the release assets. No VERSION commit
+          or sync PR is required — CI reads the version from the tag name.
 
 options:
-  --yes       Skip confirmation prompts (publish only).
-  --no-push   Commit and tag locally but do not push (publish only).
-  --verify    After bump, run package build before commit (publish only).
+  --yes         Skip confirmation prompts (publish only).
+  --no-push     Create the tag locally but do not push (publish only).
+  --verify      Run package build before tagging (publish only).
+  --sync-main   Also bump apps/wegotworkspace/VERSION, commit on main, and push main
+                (for admins who want main kept in sync; requires branch bypass).
   --skip-build  Skip pnpm build (package, or publish --verify).
 EOF
   exit 1
@@ -39,9 +43,68 @@ require_clean_tree() {
   fi
 }
 
-read_version() {
+read_version_from_file() {
   [[ -f "$VERSION_FILE" ]] || { echo "error: missing $VERSION_FILE" >&2; exit 1; }
   tr -d '[:space:]' < "$VERSION_FILE" | sed 's/^v//'
+}
+
+read_latest_tag_version() {
+  local tag
+  tag="$(git -C "$ROOT" tag -l 'v*' --sort=-v:refname 2>/dev/null | head -1 || true)"
+  [[ -n "$tag" ]] || return 0
+  echo "${tag#v}"
+}
+
+read_version() {
+  local from_file from_tag
+  from_file="$(read_version_from_file)"
+  from_tag="$(read_latest_tag_version)"
+  node -e '
+const file = process.argv[1]?.trim() ?? "";
+const tag = process.argv[2]?.trim() ?? "";
+const semver = /^\d+\.\d+\.\d+$/;
+const parse = (value) => {
+  if (!semver.test(value)) return null;
+  return value.split(".").map((part) => Number.parseInt(part, 10));
+};
+const compare = (left, right) => {
+  for (let i = 0; i < 3; i += 1) {
+    if (left[i] !== right[i]) return left[i] - right[i];
+  }
+  return 0;
+};
+const fileParts = parse(file);
+const tagParts = parse(tag);
+if (fileParts && tagParts) {
+  console.log(compare(fileParts, tagParts) >= 0 ? file : tag);
+  process.exit(0);
+}
+if (fileParts) {
+  console.log(file);
+  process.exit(0);
+}
+if (tagParts) {
+  console.log(tag);
+  process.exit(0);
+}
+console.error("error: no semver found in VERSION or v* tags");
+process.exit(1);
+' "$from_file" "$from_tag"
+}
+
+require_main_branch() {
+  local branch
+  branch="$(git -C "$ROOT" rev-parse --abbrev-ref HEAD)"
+  if [[ "$branch" != "main" ]]; then
+    echo "error: release:publish must run on main (current: ${branch})." >&2
+    echo "       Checkout main, pull latest, then publish." >&2
+    exit 1
+  fi
+}
+
+sync_main_branch() {
+  echo "→ git pull --ff-only origin main"
+  git -C "$ROOT" pull --ff-only origin main
 }
 
 write_version() {
@@ -182,7 +245,7 @@ cmd_package() {
 }
 
 cmd_publish() {
-  local bump="" yes=0 no_push=0 verify=0 skip_build=0
+  local bump="" yes=0 no_push=0 verify=0 skip_build=0 sync_main=0
   [[ $# -gt 0 ]] || usage
   bump="$1"
   shift
@@ -191,6 +254,7 @@ cmd_publish() {
       --yes) yes=1 ;;
       --no-push) no_push=1 ;;
       --verify) verify=1 ;;
+      --sync-main) sync_main=1 ;;
       --skip-build) skip_build=1 ;;
       *) usage ;;
     esac
@@ -199,6 +263,8 @@ cmd_publish() {
   [[ $# -eq 0 ]] || usage
 
   require_clean_tree
+  require_main_branch
+  sync_main_branch
   resolve_git_tag_signing
 
   local current new tag
@@ -206,18 +272,22 @@ cmd_publish() {
   new="$(bump_version "$bump" "$current")"
   tag="v${new}"
 
-  if [[ "$current" == "$new" && "$bump" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    echo "error: VERSION is already ${new}" >&2
+  if git -C "$ROOT" rev-parse "$tag" >/dev/null 2>&1; then
+    echo "error: tag ${tag} already exists" >&2
     exit 1
   fi
 
-  echo "Release: ${current} → ${new} (${tag})"
+  if [[ "$current" == "$new" && "$bump" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo "error: latest version is already ${new}" >&2
+    exit 1
+  fi
+
+  echo "Release: ${current} → ${new} (${tag}) on $(git -C "$ROOT" rev-parse --short HEAD)"
   if [[ "$yes" -eq 0 ]]; then
     read -r -p "Continue? [y/N] " reply
     [[ "${reply,,}" == "y" || "${reply,,}" == "yes" ]] || { echo "Aborted."; exit 0; }
   fi
 
-  write_version "$new"
   export WGW_RELEASE_VERSION="$new"
 
   if [[ "$verify" -eq 1 ]]; then
@@ -228,24 +298,36 @@ cmd_publish() {
     run_package
   fi
 
-  git -C "$ROOT" add "$VERSION_FILE"
-  git -C "$ROOT" commit -m "chore(release): ${tag}"
-  git_tag_sign tag -s "$tag" -m "chore(release): ${tag}"
+  if [[ "$sync_main" -eq 1 ]]; then
+    write_version "$new"
+    git -C "$ROOT" add "$VERSION_FILE"
+    git -C "$ROOT" commit -m "chore(release): ${tag}"
+  fi
 
-  echo "→ Created commit and signed tag ${tag}"
+  git_tag_sign tag -s "$tag" -m "Release ${tag}"
+
+  echo "→ Created signed tag ${tag}"
   if [[ "$no_push" -eq 1 ]]; then
     echo "Skipped push (--no-push). When ready:"
-    echo "  git push origin HEAD && git push origin ${tag}"
+    if [[ "$sync_main" -eq 1 ]]; then
+      echo "  git push origin main && git push origin ${tag}"
+    else
+      echo "  git push origin ${tag}"
+    fi
     exit 0
   fi
 
-  local branch
-  branch="$(git -C "$ROOT" rev-parse --abbrev-ref HEAD)"
-  echo "→ git push origin ${branch}"
-  git -C "$ROOT" push origin "HEAD:${branch}"
+  if [[ "$sync_main" -eq 1 ]]; then
+    echo "→ git push origin main"
+    git -C "$ROOT" push origin main
+  fi
   echo "→ git push origin ${tag}"
   git -C "$ROOT" push origin "$tag"
   echo "Done. GitHub Actions will build and publish release assets for ${tag}."
+  if [[ "$sync_main" -eq 0 ]]; then
+    echo "Note: apps/wegotworkspace/VERSION on main is unchanged; CI uses the tag version."
+    echo "      Pass --sync-main to commit the VERSION bump on main (admin bypass required)."
+  fi
 }
 
 [[ $# -gt 0 ]] || usage
