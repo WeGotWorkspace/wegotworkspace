@@ -34,6 +34,8 @@ const appReleaseEntries = [
   "packages/apps/shell/dist",
   "packages/apps/settings/dist",
   "packages/apps/meet/dist",
+  "packages/apps/contacts/dist",
+  "packages/apps/tasks/dist",
 ];
 const repoReleaseEntries = ["packages/api"];
 

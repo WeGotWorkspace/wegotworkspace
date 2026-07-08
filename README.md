@@ -3,29 +3,40 @@
 WeGotWorkspace is a self-hosted platform evolving into a full autonomous office suite.
 It builds on open-source projects and open protocols, including SabreDAV.
 
+**New here?** See **[docs/getting-started.md](docs/getting-started.md)** — pick ZIP install, Docker install, or contributor dev.
+
 It includes:
 
 - WebDAV files (`/files/`)
 - CalDAV calendars (`/calendars/`)
 - CardDAV contacts (`/addressbooks/`)
 - A web installer (`/install/`)
-- Product surfaces (`/drive/`, `/mail/`, `/notes/`, `doc`, `/meet/`)
+- Product surfaces (`/drive/`, `/mail/`, `/notes/`, `doc`, `/meet/`, `/contacts/`, `/tasks/`)
 - Utility surfaces (`/admin/`, `/settings/`)
 - Plugin surfaces (always installed separately via **Admin → Plugins**; routes come from each plugin manifest)
 
 Docs for these surfaces are still being expanded.
 
+> **Note:** This repository folder may still be named `sabre-installer` locally — the product is **WeGotWorkspace**.
+
 ## Install (production)
 
-Use the step-by-step guide in `INSTALL.md`.
+| Method | Guide |
+| --- | --- |
+| **Apache/PHP hosting** (SFTP upload) | [INSTALL.md](INSTALL.md) — download the release ZIP |
+| **Docker** (self-host) | [docs/install-docker.md](docs/install-docker.md) — `compose.install.yml` or GHCR image |
 
-That guide is intentionally short and covers:
+Both paths run the same runtime tree and `/install/` wizard. ZIP upload covers shared hosting; Docker needs no Node/pnpm on the host.
 
-- Uploading files to your host
-- First-request bootstrap for `packages/api/.env` and `.htaccess` when missing (preserved across in-place updates)
-- Running the web installer
+### Why three folders?
 
-## Local development
+- `packages/api` — API source
+- `packages/apps` — UI source (you edit here when developing)
+- `apps/wegotworkspace` — **runtime/install shell** assembled by `pnpm build` for releases
+
+See [docs/getting-started.md](docs/getting-started.md) for the full picture.
+
+## Local development (contributors)
 
 **Once:** install dependencies and API env (see [`docs/env.md`](docs/env.md)).
 
@@ -49,11 +60,13 @@ Open:
 - **http://127.0.0.1:6006** — Storybook
 - API on **http://127.0.0.1:9080** (proxied as `/api/v1` from Vite and Storybook)
 
-Optional: use Docker for the API instead of host PHP (`pnpm docker:up` then keep `pnpm dev` for UI).
-
 Edit code in **`packages/api`** and **`packages/apps`** — nothing is copied into `apps/wegotworkspace` during normal dev. Details: [`docs/dev-layout.md`](docs/dev-layout.md).
 
-### WebDAV / HTTPS
+### Contributor optional: Docker API
+
+Use Docker for the API instead of host PHP (`pnpm docker:up` then keep `pnpm dev` for UI). This is **`compose.dev.yml`** (monorepo bind mounts) — not the production install stack in [docs/install-docker.md](docs/install-docker.md).
+
+### WebDAV / HTTPS (contributor Docker dev)
 
 For CalDAV/CardDAV/WebDAV clients that need TLS and a stable hostname:
 
@@ -133,7 +146,7 @@ See [`docs/plugins.md`](docs/plugins.md) for the plugin contract, layout, and ve
 
 ## Release artifacts
 
-Release ZIP files are built in CI from **signed annotated** tag pushes (`v*`) via `.github/workflows/release.yml`.
+Release ZIP files and the production Docker image (`ghcr.io/wegotworkspace/wegotworkspace`) are built in CI from **signed annotated** tag pushes (`v*`) via `.github/workflows/release.yml`.
 
 | Command                               | What it does                                                                                       |
 | ------------------------------------- | -------------------------------------------------------------------------------------------------- |
