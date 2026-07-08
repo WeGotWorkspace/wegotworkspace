@@ -7,7 +7,7 @@ WeGotWorkspace is a self-hosted office platform (files, mail, notes, contacts, t
 | I want to… | Start here |
 | --- | --- |
 | **Install on shared Apache/PHP hosting** (cPanel, Plesk, SFTP upload) | [INSTALL.md](../INSTALL.md) — download the release ZIP from [GitHub Releases](https://github.com/WeGotWorkspace/wegotworkspace/releases) |
-| **Install with Docker** (self-host on a VPS or homelab) | [install-docker.md](install-docker.md) — `compose.install.yml` + GHCR image |
+| **Install with Docker** (self-host on a VPS or homelab) | One command: `curl -fsSL https://github.com/WeGotWorkspace/wegotworkspace/releases/latest/download/install \| sh` — details in [install-docker.md](install-docker.md) |
 | **Develop or contribute** (clone the monorepo, HMR, tests) | [dev-layout.md](dev-layout.md) — `pnpm dev` |
 
 All production installs (ZIP or Docker) use the **same runtime tree**: `index.php`, `bootstrap/`, `packages/api/`, built `packages/apps/*/dist/`, and `wgw-config.sample.php`. The web installer at `/install/` is identical regardless of delivery channel.
@@ -32,8 +32,8 @@ Day-to-day development runs Vite HMR from `packages/apps` and a host or Docker P
 
 ## Updates
 
-- **ZIP installs:** Replace files in place per [INSTALL.md](../INSTALL.md); `.env`, `wgw-content/`, and user data are preserved.
-- **Docker installs:** Pull a new image tag and `docker compose up -d`; named volumes keep `wgw-content/` and database data. See [install-docker.md](install-docker.md#updates-and-backups).
+- **ZIP installs:** Replace files in place per [INSTALL.md](../INSTALL.md); `.env`, `wgw-content/`, and user data are preserved. Use **Admin → Updates** in the web UI.
+- **Docker installs:** Pull a new image tag with `bash setup.sh upgrade X.Y.Z` (or `curl .../install | sh -s -- --upgrade X.Y.Z`). A one-shot **migrator** service runs `wgw:schema-migrate` before the web container starts. **Do not** use Admin → Updates on Docker — that path replaces files in-container; Docker upgrades use image tags only. See [install-docker.md](install-docker.md#updates-and-backups).
 
 ## Need help?
 

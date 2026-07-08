@@ -24,7 +24,7 @@ Docs for these surfaces are still being expanded.
 | Method | Guide |
 | --- | --- |
 | **Apache/PHP hosting** (SFTP upload) | [INSTALL.md](INSTALL.md) — download the release ZIP |
-| **Docker** (self-host) | [docs/install-docker.md](docs/install-docker.md) — `compose.install.yml` or GHCR image |
+| **Docker** (self-host) | [docs/install-docker.md](docs/install-docker.md) — `curl -fsSL .../install \| sh` or repo `docker/install/docker-compose.yml` |
 
 Both paths run the same runtime tree and `/install/` wizard. ZIP upload covers shared hosting; Docker needs no Node/pnpm on the host.
 

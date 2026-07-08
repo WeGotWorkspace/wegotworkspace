@@ -9,75 +9,106 @@ For monorepo development (bind mounts, Vite HMR), use [dev-layout.md](dev-layout
 - Docker Engine 24+ and Docker Compose v2
 - ~2 GB disk for the image; more for uploads and database volume
 
-## Quick start (MySQL)
+## Quick start (recommended)
 
-1. Copy the example env file:
-
-   ```bash
-   cp .env.install.example .env.install
-   ```
-
-2. Start the stack (builds locally if no `WGW_IMAGE` is set):
-
-   ```bash
-   docker compose -f compose.install.yml --env-file .env.install up -d
-   ```
-
-3. Open the installer:
-
-   ```text
-   http://localhost:8080/install/
-   ```
-
-   Default host port is **8080** (`WGW_HTTP_PORT`). Change it in `.env.install` if needed.
-
-4. In the wizard:
-
-   - Pass requirements check
-   - Choose **MySQL** and use:
-     - Host: `db`
-     - Port: `3306`
-     - Database / user / password: match `MARIADB_*` in `.env.install` (defaults: database `wgw`, user `wgw`, password `wgw`)
-   - Create the first admin account
-
-## Quick start (SQLite only)
-
-No MariaDB container — suitable for trials or single-user setups.
+One command — no git clone, no `chmod`, no separate start step:
 
 ```bash
-cp .env.install.example .env.install
-# Edit .env.install:
-#   COMPOSE_PROFILES=sqlite
-#   WGW_WAIT_FOR_DB=0
-#   WGW_DB_HOST=
-docker compose -f compose.install.yml --env-file .env.install up -d
+curl -fsSL https://github.com/WeGotWorkspace/wegotworkspace/releases/latest/download/install | sh
 ```
 
-In the installer, choose **SQLite**. Data lives under the `wgw-content` volume and `packages/api/storage` volume.
+This creates `./wgw-app/` in the current directory (override with `WGW_INSTALL_DIR`), downloads the release `docker-compose.yml` and `.env`, pulls the image, starts the stack, and prints the installer URL when healthy.
 
-## Pull a release image (no local build)
-
-Tagged releases publish to GitHub Container Registry:
+Optional flags (pipe-friendly):
 
 ```bash
-export WGW_IMAGE=ghcr.io/wegotworkspace/wegotworkspace:1.0.0
-docker compose -f compose.install.yml --env-file .env.install up -d
+WGW_HTTP_PORT=9090 curl -fsSL .../install | sh
+curl -fsSL .../install | sh -s -- --sqlite
+curl -fsSL .../install | sh -s -- --version 1.2.0
 ```
 
-Omit the `build:` step by setting `WGW_IMAGE` — Compose uses the pre-built image from GHCR.
+Then open:
+
+```text
+http://localhost:8080/install/
+```
+
+Default host port is **8080** (`WGW_HTTP_PORT`).
+
+### MySQL wizard defaults
+
+When using the default MySQL stack (`COMPOSE_PROFILES=mysql`), use these in the installer:
+
+| Field | Value |
+| --- | --- |
+| Host | `db` |
+| Port | `3306` |
+| Database / user / password | `wgw` (match `MARIADB_*` in `wgw-app/.env`) |
+
+## Lifecycle commands
+
+After the first install, use the same script from `wgw-app/` (or re-download `setup.sh` from GitHub Releases):
+
+```bash
+cd wgw-app
+bash setup.sh start          # after stop
+bash setup.sh stop
+bash setup.sh restart
+bash setup.sh logs
+bash setup.sh backup
+bash setup.sh upgrade 1.2.0  # backup → pull → migrator → web
+```
+
+Upgrade from anywhere (re-downloads assets into an existing install dir):
+
+```bash
+curl -fsSL .../install | sh -s -- --upgrade 1.2.0
+```
+
+Run `bash setup.sh --help` for the full command list.
+
+## SQLite only
+
+```bash
+curl -fsSL .../install | sh -s -- --sqlite
+```
+
+Or edit `wgw-app/.env`:
+
+```bash
+COMPOSE_PROFILES=sqlite
+WGW_WAIT_FOR_DB=0
+WGW_DB_HOST=
+```
+
+In the installer, choose **SQLite**. Data lives under the `wgw-content` volume.
+
+## Contributor path (repo checkout)
+
+For local image builds and development of the install stack itself:
+
+```bash
+git clone https://github.com/WeGotWorkspace/wegotworkspace.git
+cd wegotworkspace/docker/install
+cp .env.example .env
+docker compose up -d --build
+open http://localhost:8080/install/
+```
+
+`docker/install/docker-compose.yml` includes a `build:` stanza for contributors. Release bundles ship a pull-only `docker-compose.yml` with no local build.
 
 ## Environment variables
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `COMPOSE_PROFILES` | `mysql` | `mysql` = web + MariaDB; `sqlite` = web only |
-| `WGW_IMAGE` | `ghcr.io/wegotworkspace/wegotworkspace:latest` | Image to run; set to a version tag to pin releases |
+| `WGW_IMAGE` | pinned at install time | GHCR image tag |
 | `WGW_HTTP_PORT` | `8080` | Host port mapped to container HTTP :80 |
-| `WGW_WAIT_FOR_DB` | `1` | Entrypoint waits for MySQL before Apache starts |
+| `WGW_WAIT_FOR_DB` | `1` | Entrypoint/migrator wait for MySQL before proceeding |
 | `WGW_DB_HOST` | `db` | MySQL hostname (Compose service name) |
 | `WGW_DB_PORT` | `3306` | MySQL port |
-| `WGW_DB_USERNAME` | `wgw` | Credentials passed to entrypoint wait probe |
-| `WGW_DB_PASSWORD` | `wgw` | Credentials passed to entrypoint wait probe |
+| `WGW_DB_USERNAME` | `wgw` | Credentials passed to DB wait probe |
+| `WGW_DB_PASSWORD` | `wgw` | Credentials passed to DB wait probe |
 | `MARIADB_ROOT_PASSWORD` | `wgw-root` | MariaDB root password |
 | `MARIADB_DATABASE` | `wgw` | Database created on first boot |
 | `MARIADB_USER` | `wgw` | Application database user |
@@ -91,43 +122,73 @@ Named volumes (survive `docker compose down` and image updates):
 
 | Volume | Mount | Contents |
 | --- | --- | --- |
-| `wgw-content` | `/var/www/html/wgw-content` | SQLite DB (if used), uploads, JWT keys |
+| `wgw-content` | `/var/www/html/wgw-content` | SQLite DB (if used), uploads, JWT keys, `.installed` lock |
 | `wgw-api-storage` | `/var/www/html/packages/api/storage` | Laravel storage, sessions, logs |
+| `wgw-install-config` | `/wgw-config-vol` | Install config (`wgw-config.php`, `api.env`) — **survives container recreate** |
 | `wgw-db` | MariaDB data dir | MySQL database files (profile `mysql`) |
 
 Application code in the image is replaced on update; volumes are **not** removed unless you run `docker compose down -v`.
 
-## First boot (inside the container)
+## Boot sequence
 
-The production entrypoint ([docker/install/docker-entrypoint.sh](../docker/install/docker-entrypoint.sh)) mirrors ZIP first-request bootstrap:
+Each `docker compose up` runs a **one-shot migrator** before the web container starts:
 
-- Copies `wgw-config.sample.php` → `wgw-config.php` when missing
-- Creates `packages/api/.env` from `.env.example` and generates `APP_KEY`
-- Ensures storage directories and permissions
-- **Does not** run `composer install` — `vendor/` ships in the release image
+1. **Migrator** ([wgw-install-migrate.sh](../docker/install/wgw-install-migrate.sh)): waits for MySQL (if enabled), then:
+   - Seeds [wgw-install-seed-config.sh](../docker/install/wgw-install-seed-config.sh) into the `wgw-install-config` volume (`wgw-config.php`, `api.env`).
+   - **Fresh install** (no `wgw-content/.installed`): skips schema migration — the web wizard runs initial migrations.
+   - **Existing install**: runs `php artisan wgw:schema-migrate` (same as ZIP in-place updates).
+2. **Web** entrypoint ([docker-entrypoint.sh](../docker/install/docker-entrypoint.sh)): symlinks config from `/wgw-config-vol`, ensures permissions, runs `key:generate` when needed, starts Apache.
+
+Failed migrations block the web service from starting, preventing a half-upgraded state.
 
 ## Updates and backups
 
-### Update to a new release
+### Upgrade to a new release
+
+**Recommended** — use the lifecycle script (includes backup):
 
 ```bash
-# Pin the new tag in .env.install
-WGW_IMAGE=ghcr.io/wegotworkspace/wegotworkspace:1.1.0
-
-docker compose -f compose.install.yml --env-file .env.install pull web
-docker compose -f compose.install.yml --env-file .env.install up -d
+cd wgw-app
+bash setup.sh upgrade 1.2.0
 ```
 
-Volumes keep your data; only the immutable code layer is replaced (same semantics as in-place ZIP updates).
+Or re-run the install script with `--upgrade`:
+
+```bash
+curl -fsSL .../install | sh -s -- --upgrade 1.2.0
+```
+
+Manual equivalent:
+
+```bash
+# Pin the new tag in wgw-app/.env
+WGW_IMAGE=ghcr.io/wegotworkspace/wegotworkspace:1.2.0
+
+docker compose -f wgw-app/docker-compose.yml --env-file wgw-app/.env pull
+docker compose -f wgw-app/docker-compose.yml --env-file wgw-app/.env up -d
+```
+
+The migrator runs automatically before Apache serves traffic.
+
+### Do not use Admin → Updates on Docker
+
+The admin web updater ([UpdateRunner](../packages/api/app/Services/Update/UpdateRunner.php)) replaces files inside the container filesystem. Docker installs should **only** upgrade by pulling a new image tag. The admin updater is for ZIP/Apache hosting installs.
 
 ### Backup
 
-1. **Files:** snapshot the `wgw-content` and `wgw-api-storage` volumes (or `docker run` a temp container to `tar` them).
-2. **MySQL:** `docker compose -f compose.install.yml exec db mariadb-dump -u root -p"$MARIADB_ROOT_PASSWORD" wgw > wgw-backup.sql`
+```bash
+cd wgw-app
+bash setup.sh backup
+```
 
-### Restore
+This archives named volumes and (when using MySQL) dumps the database to `wgw-app/backups/<timestamp>/`.
 
-Restore volume data and database dump before starting the web service, or follow the same steps as a fresh install with restored volumes.
+Manual MySQL dump:
+
+```bash
+docker compose -f wgw-app/docker-compose.yml --env-file wgw-app/.env exec db \
+  mariadb-dump -u root -p"$MARIADB_ROOT_PASSWORD" wgw > wgw-backup.sql
+```
 
 ## Health check
 
@@ -143,23 +204,35 @@ Compose and the container `HEALTHCHECK` use the same endpoint.
 From a git checkout (used when `WGW_IMAGE` is unset or you pass `--build`):
 
 ```bash
-docker compose -f compose.install.yml --env-file .env.install up -d --build
+cd docker/install
+cp .env.example .env
+docker compose up -d --build
 ```
 
 The Dockerfile runs `pnpm build` and the release packager — expect several minutes on first build.
 
-## Advanced: migrate from ZIP to Docker
+## Release assets
 
-If you already run a ZIP install, you can mount your extracted tree over `/var/www/html` instead of using the baked image. This is unsupported for casual use but preserves an existing `wgw-content/` and `.env`. Prefer a fresh Docker install + data restore for most cases.
+Each tagged GitHub Release includes:
+
+| Asset | Purpose |
+| --- | --- |
+| `install` | One-liner entry for `curl \| sh` |
+| `setup.sh` | Same script — lifecycle commands |
+| `docker-compose.yml` | Pull-only stack with migrator |
+| `.env.example` | Copied to `wgw-app/.env` on install |
+| `wgw-docker-install-{version}.tar.gz` | All of the above in one archive |
+| GHCR image | `ghcr.io/wegotworkspace/wegotworkspace:{version}` |
 
 ## Troubleshooting
 
 | Symptom | Check |
 | --- | --- |
-| `/install/` 404 | Container health: `docker compose -f compose.install.yml ps`; wait for `healthy` |
-| MySQL connection failed in wizard | `COMPOSE_PROFILES=mysql`, host `db`, credentials match `.env.install` |
+| `/install/` 404 | Container health: `bash setup.sh logs` or `docker compose ps`; wait for `healthy` |
+| MySQL connection failed in wizard | `COMPOSE_PROFILES=mysql`, host `db`, credentials match `.env` |
 | Port in use | Change `WGW_HTTP_PORT` (default 8080 avoids dev stack :9080) |
-| Stale config after update | Volumes preserve `.env`; edit `packages/api/.env` via `docker compose exec web` if needed |
+| Web won't start after upgrade | Check migrator logs: `docker compose logs migrator` — migration may have failed |
+| Config lost after recreate | Ensure `wgw-install-config` volume exists; do not use `docker compose down -v` unless intentional |
 
 ## TLS (HTTPS)
 
