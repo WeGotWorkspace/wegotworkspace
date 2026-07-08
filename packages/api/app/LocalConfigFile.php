@@ -52,6 +52,10 @@ final class LocalConfigFile
         if ($updateFeedUrl !== null) {
             $cfg['update_feed_url'] = $updateFeedUrl;
         }
+        $installChannel = self::definedString('WGW_INSTALL_CHANNEL');
+        if ($installChannel !== null) {
+            $cfg['install_channel'] = $installChannel;
+        }
 
         $pdo = [];
         $sqliteFile = self::definedString('WGW_DB_SQLITE_FILE');

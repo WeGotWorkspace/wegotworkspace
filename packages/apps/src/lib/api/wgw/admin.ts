@@ -41,6 +41,7 @@ function coerceUpdateCheck(input: AdminUpdateCheck): AdminUpdateCheck {
 
 export function mapWgwUpdateStateToUI(state: WgwUpdateStateResponse): AdminUpdateState {
   return {
+    installChannel: state.installChannel ?? null,
     installedVersion: state.installedVersion,
     schemaVersion: state.schemaVersion,
     latest: state.latest

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 return [
     'data_dir' => env('WGW_DATA_DIR_OVERRIDE'),
+    /** Install channel: `docker` (image pull + setup.sh) or `zip` / unset (Admin web updater). */
+    'install_channel' => env('WGW_INSTALL_CHANNEL'),
+
     'auth_realm' => env('WGW_AUTH_REALM', 'SabreDAV'),
 
     'jwt' => [

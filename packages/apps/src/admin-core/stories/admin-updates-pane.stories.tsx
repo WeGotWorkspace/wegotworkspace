@@ -76,3 +76,23 @@ export const InProgress: Story = {
     />
   ),
 };
+
+export const DockerChannel: Story = {
+  render: () => (
+    <UpdatesPaneHarness
+      dataOverride={{
+        updates: {
+          installChannel: "docker",
+          installedVersion: "1.2.3",
+          updateAvailable: true,
+          latest: {
+            version: "9.9.9",
+            package_url: "https://example.test/pkg.tgz",
+            checksum_sha256: "a".repeat(64),
+            checksum_signature: "sig",
+          },
+        },
+      }}
+    />
+  ),
+};

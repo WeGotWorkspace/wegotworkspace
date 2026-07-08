@@ -44,6 +44,25 @@ ensure_config_file \
   "${API_ROOT}/.env.example" \
   "api.env"
 
+
+ensure_env_kv() {
+  file="$1"
+  key="$2"
+  value="$3"
+
+  if [ ! -f "$file" ]; then
+    return 1
+  fi
+  if grep -q "^${key}=" "$file" 2>/dev/null; then
+    return 0
+  fi
+
+  printf '\n# Docker install — upgrade via setup.sh, not Admin Updates\n%s=%s\n' "$key" "$value" >> "$file"
+  echo "[wgw-install-seed] Set ${key}=${value} in api.env"
+}
+
+ensure_env_kv "${CONFIG_VOL}/api.env" "WGW_INSTALL_CHANNEL" "docker"
+
 # Remove mistaken copies from older entrypoints that copied into directory mounts.
 for stray in "${CONFIG_VOL}/wgw-config.sample.php" "${CONFIG_VOL}/.env.example"; do
   if [ -f "$stray" ]; then

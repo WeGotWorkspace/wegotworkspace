@@ -30,12 +30,41 @@ final class AdminUpdatesTest extends WgwDatabaseTestCase
             ->getJson('/api/v1/admin/updates/state')
             ->assertOk()
             ->assertJsonStructure([
+                'installChannel',
                 'installedVersion',
                 'schemaVersion',
                 'backups',
                 'compatible',
                 'updateAvailable',
             ]);
+    }
+
+    public function test_update_state_exposes_install_channel_from_env(): void
+    {
+        config(['wgw.install_channel' => 'docker']);
+
+        $this->withBearer($this->adminBearerToken())
+            ->getJson('/api/v1/admin/updates/state')
+            ->assertOk()
+            ->assertJsonPath('installChannel', 'docker');
+    }
+
+    public function test_docker_channel_blocks_web_update_check(): void
+    {
+        config(['wgw.install_channel' => 'docker']);
+
+        $this->withBearer($this->adminBearerToken())
+            ->postJson('/api/v1/admin/update-jobs', ['type' => 'check'])
+            ->assertForbidden();
+    }
+
+    public function test_docker_channel_blocks_web_update_apply(): void
+    {
+        config(['wgw.install_channel' => 'docker']);
+
+        $this->withBearer($this->adminBearerToken())
+            ->postJson('/api/v1/admin/update-jobs', ['type' => 'apply'])
+            ->assertForbidden();
     }
 
     public function test_admin_can_round_trip_update_log(): void

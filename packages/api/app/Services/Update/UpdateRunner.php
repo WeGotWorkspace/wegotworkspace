@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Update;
 
+use App\Exceptions\ApiHttpException;
 use App\Models\AppUpdateHistory;
 use App\Services\Installer\ApiRuntimeEnvService;
 use App\Services\Installer\InstallerEnvChecker;
@@ -50,6 +51,7 @@ final class UpdateRunner
         }
 
         return [
+            'installChannel' => $this->install->installChannel(),
             'installedVersion' => $installedVersion,
             'schemaVersion' => $this->schemaMigrator->currentVersion(),
             'latest' => $latest,
@@ -183,6 +185,7 @@ final class UpdateRunner
      */
     public function check(string $feedUrl): array
     {
+        self::assertWebUpdaterAllowed();
         self::ensureRateLimit('check', 10);
         $state = $this->store->read();
         $state['last_checked_at'] = date('c');
@@ -215,6 +218,7 @@ final class UpdateRunner
      */
     public function apply(array $input): array
     {
+        self::assertWebUpdaterAllowed();
         self::ensureRateLimit('apply', 30);
         $lock = @fopen($this->store->absolutePath($this->store->lockPath()), 'c+');
         if (! is_resource($lock)) {
@@ -1417,6 +1421,17 @@ final class UpdateRunner
         }
 
         return null;
+    }
+
+    private function assertWebUpdaterAllowed(): void
+    {
+        if ($this->install->installChannel() === 'docker') {
+            throw new ApiHttpException(
+                403,
+                'In-container web updates are disabled on Docker installs. Upgrade with setup.sh on the host.',
+                'forbidden',
+            );
+        }
     }
 
     private function ensureRateLimit(string $action, int $seconds): void
