@@ -19,6 +19,7 @@ final class InstallerWizardService
         private InstallerConfigWriter $configWriter,
         private InstallerJwtKeyGenerator $jwtKeys,
         private ApiRuntimeEnvService $apiEnv,
+        private WgwInstallEnv $installEnv,
     ) {}
 
     /**
@@ -264,7 +265,7 @@ final class InstallerWizardService
         $this->saveWizardState($state);
 
         try {
-            $redirect = $this->runInstall($webBase, $state, $payload);
+            $redirect = $this->executeInstall($webBase, $state, $payload);
 
             return [
                 'ok' => true,
@@ -284,7 +285,7 @@ final class InstallerWizardService
      * @param  array<string, mixed>  $state
      * @param  array<string, mixed>  $payload
      */
-    private function runInstall(string $webBase, array $state, array $payload): string
+    public function executeInstall(string $webBase, array $state, array $payload): string
     {
         $username = strtolower(trim((string) ($payload['username'] ?? '')));
         $display = trim((string) ($payload['display_name'] ?? '')) ?: $username;
@@ -375,7 +376,7 @@ final class InstallerWizardService
             throw new \RuntimeException('Database was set up but the install lock file could not be written.');
         }
 
-        $this->apiEnv->ensure($this->paths->installRoot(), ApiRuntimeEnvService::guessRequestAppUrl());
+        $this->apiEnv->ensure($this->paths->installRoot(), $this->resolveAppUrlForInstall());
         @chmod($this->paths->lockFile(), 0600);
 
         $this->saveWizardState([
@@ -415,7 +416,7 @@ final class InstallerWizardService
             ];
         }
 
-        $state = $this->wizardState();
+        $state = $this->mergeEnvDefaults($this->wizardState(), $webBase);
         $step = (string) ($state['step'] ?? 'welcome');
         $allowed = ['welcome', 'requirements', 'database', 'site', 'account', 'done', 'installed'];
         if (! in_array($step, $allowed, true)) {
@@ -425,7 +426,7 @@ final class InstallerWizardService
         $driver = $this->normalizeDriver($state['db_driver'] ?? 'sqlite');
         $db = is_array($state['db'] ?? null) ? $state['db'] : [];
 
-        return [
+        $runtime = [
             'step' => $step,
             'flash' => is_string($state['_flash'] ?? null) ? $state['_flash'] : null,
             'db_driver' => $driver,
@@ -438,6 +439,52 @@ final class InstallerWizardService
             'show_browser_ui' => (bool) ($state['show_browser_ui'] ?? true),
             'checks' => $this->env->checkAll($driver),
         ];
+
+        foreach (['admin_username', 'admin_email', 'admin_display_name'] as $adminKey) {
+            if (isset($state[$adminKey]) && is_string($state[$adminKey]) && $state[$adminKey] !== '') {
+                $runtime[$adminKey] = $state[$adminKey];
+            }
+        }
+
+        return $runtime;
+    }
+
+    /**
+     * @param  array<string, mixed>  $state
+     * @return array<string, mixed>
+     */
+    private function mergeEnvDefaults(array $state, string $webBase): array
+    {
+        $defaults = $this->installEnv->wizardDefaults($webBase);
+
+        if (! isset($state['db_driver']) || $state['db_driver'] === '') {
+            $state['db_driver'] = $defaults['db_driver'];
+        }
+
+        $sessionDb = is_array($state['db'] ?? null) ? $state['db'] : [];
+        $defaultDb = is_array($defaults['db'] ?? null) ? $defaults['db'] : [];
+        if ($defaultDb !== []) {
+            $state['db'] = array_merge($defaultDb, array_filter(
+                $sessionDb,
+                static fn (mixed $value): bool => $value !== null && $value !== '',
+            ));
+        }
+
+        foreach (['timezone', 'base_uri', 'enable_files', 'enable_calendars', 'enable_contacts', 'show_browser_ui'] as $key) {
+            if (! array_key_exists($key, $state) || $state[$key] === '' || $state[$key] === null) {
+                if (array_key_exists($key, $defaults)) {
+                    $state[$key] = $defaults[$key];
+                }
+            }
+        }
+
+        foreach (['admin_username', 'admin_email', 'admin_display_name'] as $key) {
+            if ((! isset($state[$key]) || $state[$key] === '') && isset($defaults[$key])) {
+                $state[$key] = $defaults[$key];
+            }
+        }
+
+        return $state;
     }
 
     /**
@@ -613,6 +660,24 @@ final class InstallerWizardService
         if (is_file($path) && filesize($path) < 1) {
             @unlink($path);
         }
+    }
+
+    private function resolveAppUrlForInstall(): ?string
+    {
+        $fromRequest = ApiRuntimeEnvService::guessRequestAppUrl();
+        if ($fromRequest !== null) {
+            return $fromRequest;
+        }
+
+        $fromEnv = getenv('APP_URL');
+        if (! is_string($fromEnv) || trim($fromEnv) === '') {
+            $fromEnv = $_ENV['APP_URL'] ?? null;
+        }
+        if (is_string($fromEnv) && trim($fromEnv) !== '') {
+            return rtrim(trim($fromEnv), '/');
+        }
+
+        return null;
     }
 
     private function allowInstallAttempt(): bool

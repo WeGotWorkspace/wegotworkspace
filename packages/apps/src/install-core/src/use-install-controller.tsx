@@ -68,6 +68,8 @@ export function useInstallController({
     password: "",
     password2: "",
   });
+  const [siteTimezone, setSiteTimezone] = useState("UTC");
+  const [siteBaseUri, setSiteBaseUri] = useState("/");
   const [mysqlTest, setMysqlTest] = useState<InstallMysqlTestState>({ state: "idle" });
   const [showChecks, setShowChecks] = useState(false);
 
@@ -99,6 +101,14 @@ export function useInstallController({
       calendars: !!state.enable_calendars,
       contacts: !!state.enable_contacts,
     });
+    setSiteTimezone(state.timezone ?? "UTC");
+    setSiteBaseUri(state.base_uri ?? "/");
+    setAdmin((current) => ({
+      ...current,
+      username: state.admin_username ?? current.username,
+      displayName: state.admin_display_name ?? current.displayName,
+      email: state.admin_email ?? current.email,
+    }));
   }, []);
 
   const hydrateNonDbFieldsFromState = useCallback((state: WgwInstallerRuntimeState) => {
@@ -268,8 +278,8 @@ export function useInstallController({
         }
         if (step.id === "dav") {
           const payload: InstallerSitePayload = {
-            base_uri_override: "",
-            timezone: "UTC",
+            base_uri_override: siteBaseUri === "/" ? "" : siteBaseUri.replace(/^\/+|\/+$/g, ""),
+            timezone: siteTimezone,
             enable_files: dav.files,
             enable_calendars: dav.calendars,
             enable_contacts: dav.contacts,
@@ -329,6 +339,8 @@ export function useInstallController({
     mail,
     meet,
     mysqlTest.state,
+    siteTimezone,
+    siteBaseUri,
     onInstallRedirect,
     operations,
     setStepFromBackend,
@@ -393,6 +405,10 @@ export function useInstallController({
     setMeet,
     admin,
     setAdmin,
+    siteTimezone,
+    setSiteTimezone,
+    siteBaseUri,
+    setSiteBaseUri,
     mysqlTest,
     setMysqlTest,
     setUiStep,
