@@ -1,0 +1,98 @@
+# Production install stack — runs the same tree as the release ZIP (see INSTALL.md).
+# Not for monorepo development (use compose.dev.yml + pnpm dev instead).
+#
+# Quick start (from this directory):
+#   cp .env.example .env
+#   docker compose up -d --build
+#   open http://localhost:8080/install/
+#
+# MySQL (default): COMPOSE_PROFILES=mysql in .env
+# SQLite only:     COMPOSE_PROFILES=sqlite (no db service)
+
+name: wgw-install
+
+x-wgw-web-volumes: &wgw-web-volumes
+  - wgw-content:/var/www/html/wgw-content
+  - wgw-api-storage:/var/www/html/packages/api/storage
+  - wgw-install-config:/wgw-config-vol
+
+x-wgw-web-environment: &wgw-web-environment
+  WGW_APP_ROOT: /var/www/html
+  WGW_WAIT_FOR_DB: ${WGW_WAIT_FOR_DB:-1}
+  WGW_DB_HOST: ${WGW_DB_HOST:-db}
+  WGW_DB_PORT: ${WGW_DB_PORT:-3306}
+  WGW_DB_USERNAME: ${WGW_DB_USERNAME:-wgw}
+  WGW_DB_PASSWORD: ${WGW_DB_PASSWORD:-wgw}
+
+services:
+  migrator:
+    build:
+      context: ../..
+      dockerfile: docker/install/Dockerfile
+    image: ${WGW_IMAGE:-ghcr.io/wegotworkspace/wegotworkspace:latest}
+    restart: "no"
+    environment: *wgw-web-environment
+    volumes:
+      - wgw-content:/var/www/html/wgw-content
+      - wgw-api-storage:/var/www/html/packages/api/storage
+      - wgw-install-config:/wgw-config-vol
+    depends_on:
+      db:
+        condition: service_healthy
+        required: false
+    entrypoint: ["/usr/local/bin/wgw-install-migrate.sh"]
+
+  web:
+    build:
+      context: ../..
+      dockerfile: docker/install/Dockerfile
+    image: ${WGW_IMAGE:-ghcr.io/wegotworkspace/wegotworkspace:latest}
+    restart: unless-stopped
+    ports:
+      - "${WGW_HTTP_PORT:-8080}:80"
+    environment: *wgw-web-environment
+    volumes: *wgw-web-volumes
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+        required: false
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://127.0.0.1/api/v1/health | grep -q '\"status\":\"ok\"'",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+  db:
+    profiles: ["mysql"]
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-wgw-root}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-wgw}
+      MARIADB_USER: ${MARIADB_USER:-wgw}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-wgw}
+    volumes:
+      - wgw-db:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mariadb-admin ping -h 127.0.0.1 -u root -p\"$$MARIADB_ROOT_PASSWORD\" --silent",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+volumes:
+  wgw-content:
+  wgw-api-storage:
+  wgw-install-config:
+  wgw-db:

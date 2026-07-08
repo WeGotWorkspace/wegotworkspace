@@ -10,3 +10,6 @@ apps/wegotworkspace/wgw-content
 **/.env
 **/.env.local
 *.md
+!INSTALL.md
+!README.md
+!THIRD_PARTY_NOTICES.md

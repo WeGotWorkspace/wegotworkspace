@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      packages: write
     steps:
       - uses: actions/checkout@v6
         with:
@@ -106,6 +107,37 @@ jobs:
           WGW_RELEASE_SIGNING_PRIVATE_KEY: ${{ secrets.WGW_RELEASE_SIGNING_PRIVATE_KEY }}
         run: node tools/build-wegotworkspace-release.mjs
 
+      - name: Set up Docker Buildx
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push install image
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/install/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/wegotworkspace/wegotworkspace:${{ steps.release_version.outputs.value }}
+            ghcr.io/wegotworkspace/wegotworkspace:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build Docker install bundle
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          WGW_RELEASE_VERSION: ${{ steps.release_version.outputs.value }}
+        run: node tools/build-docker-install-bundle.mjs
+
       - name: Upload release artifacts
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
@@ -116,3 +148,102 @@ jobs:
             dist/releases/*.zip
             dist/releases/manifest.json
             dist/releases/manifest.sig
+            dist/releases/install
+            dist/releases/setup.sh
+            dist/releases/docker-compose.yml
+            dist/releases/.env.example
+            dist/releases/wgw-docker-install-*.tar.gz
+
+      - name: Smoke test install stack (compose + migrator + volumes)
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.release_version.outputs.value }}"
+          IMAGE="ghcr.io/wegotworkspace/wegotworkspace:${VERSION}"
+          SMOKE_DIR="${RUNNER_TEMP}/wgw-install-smoke"
+          rm -rf "$SMOKE_DIR"
+          mkdir -p "$SMOKE_DIR"
+
+          docker pull "$IMAGE"
+
+          cp dist/releases/docker-compose.yml "$SMOKE_DIR/docker-compose.yml"
+          cp dist/releases/.env.example "$SMOKE_DIR/.env"
+          sed -i "s|^WGW_IMAGE=.*|WGW_IMAGE=${IMAGE}|" "$SMOKE_DIR/.env"
+          sed -i 's/^COMPOSE_PROFILES=.*/COMPOSE_PROFILES=sqlite/' "$SMOKE_DIR/.env"
+          sed -i 's/^WGW_WAIT_FOR_DB=.*/WGW_WAIT_FOR_DB=0/' "$SMOKE_DIR/.env"
+          sed -i 's/^WGW_DB_HOST=.*/WGW_DB_HOST=/' "$SMOKE_DIR/.env"
+          sed -i 's/^WGW_HTTP_PORT=.*/WGW_HTTP_PORT=18080/' "$SMOKE_DIR/.env"
+
+          cd "$SMOKE_DIR"
+          compose() {
+            docker compose -f docker-compose.yml --env-file .env "$@"
+          }
+
+          echo "=== Fresh install: migrator should skip, web should become healthy ==="
+          compose up -d
+          compose ps -a
+          compose logs migrator | tee /tmp/wgw-migrator-fresh.log
+          grep -q "skipping schema migration" /tmp/wgw-migrator-fresh.log
+
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:18080/api/v1/health | grep -q '"status":"ok"'; then
+              echo "Health check passed."
+              break
+            fi
+            if [ "$i" -eq 45 ]; then
+              echo "::error::Health check failed."
+              compose logs
+              exit 1
+            fi
+            sleep 2
+          done
+
+          curl -fsS -o /dev/null -w "%{http_code}" http://127.0.0.1:18080/install/ | grep -qE '200|302'
+
+          echo "=== Installed instance: migrator should run wgw:schema-migrate ==="
+          CONTENT_VOL="$(docker volume ls -q | grep '_wgw-content$' | head -1)"
+          [ -n "$CONTENT_VOL" ] || { echo "::error::wgw-content volume not found"; compose ps -a; docker volume ls; exit 1; }
+          docker run --rm -v "${CONTENT_VOL}:/data" alpine:3.20 \
+            sh -c 'mkdir -p /data && date -Iseconds > /data/.installed'
+
+          compose up -d --force-recreate
+          compose logs migrator | tee /tmp/wgw-migrator-installed.log
+          grep -q "Running wgw:schema-migrate" /tmp/wgw-migrator-installed.log
+
+          echo "=== Config persistence: force-recreate web, health should remain ok ==="
+          compose up -d --force-recreate web
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:18080/api/v1/health | grep -q '"status":"ok"'; then
+              echo "Post-recreate health check passed."
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "::error::Post-recreate health check failed."
+              compose logs web
+              exit 1
+            fi
+            sleep 2
+          done
+
+          echo "=== Bare container smoke (image entrypoint only) ==="
+          docker run -d --name wgw-install-smoke-bare -p 127.0.0.1:18081:80 \
+            -e WGW_WAIT_FOR_DB=0 \
+            -e WGW_DB_HOST= \
+            "$IMAGE"
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:18081/api/v1/health | grep -q '"status":"ok"'; then
+              echo "Bare container health check passed."
+              docker rm -f wgw-install-smoke-bare
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "::error::Bare container health check failed."
+              docker logs wgw-install-smoke-bare || true
+              docker rm -f wgw-install-smoke-bare
+              exit 1
+            fi
+            sleep 2
+          done
+
+          compose down -v
+          echo "Install stack smoke tests passed."
