@@ -9,7 +9,7 @@
 # MySQL (default): COMPOSE_PROFILES=mysql in .env
 # SQLite only:     COMPOSE_PROFILES=sqlite (no db service)
 
-name: wgw-install
+name: wegotworkspace
 
 x-wgw-web-volumes: &wgw-web-volumes
   - wgw-content:/var/www/html/wgw-content
