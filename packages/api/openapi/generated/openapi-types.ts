@@ -5943,6 +5943,9 @@ export interface components {
             checks: components["schemas"]["InstallerChecks"];
             already_installed?: boolean;
             admin_updates_url?: string;
+            admin_username?: string;
+            admin_email?: string;
+            admin_display_name?: string;
         };
         InstallerBootstrapResponse: {
             state: components["schemas"]["InstallerRuntimeState"];
@@ -6201,6 +6204,8 @@ export interface components {
             lastCheckedAt: string | null;
             lastCheckError: string | null;
             lastResult: components["schemas"]["UpdateApplyResult"] | null;
+            /** @description Install channel: `docker` disables Admin web updater; `zip` or null uses ZIP in-container updates. */
+            installChannel: string | null;
         };
         AdminStateResponse: {
             users: components["schemas"]["AdminUserSummary"][];
