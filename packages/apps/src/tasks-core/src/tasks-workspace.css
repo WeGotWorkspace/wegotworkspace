@@ -16,9 +16,11 @@
   /*
    * Horizontal inset for title text — matches view-header title, not the sidebar toggle.
    * Mobile: toggle (size-9) + flex gap-3 within header p-4, while main-content adds px-4.
+   * Right inset is 0 on mobile: header actions sit at the main-content edge (header p-4 only).
    * md+: centered column + view-header__main px-4; main-content is md:px-0.
    */
   --tasks-content-inset: calc(2.25rem + 0.75rem);
+  --tasks-content-inset-end: 0;
 
   --tasks-accent: #ea8c72;
   --tasks-sidebar: color-mix(in oklab, var(--tasks-accent) 12%, var(--color-cream, #ffffff));
@@ -67,6 +69,7 @@
 @media (min-width: 768px) {
   .tasks-workspace {
     --tasks-content-inset: 1rem;
+    --tasks-content-inset-end: var(--tasks-content-inset);
   }
 
   .tasks-workspace .workspace-app-layout__main-header > div:first-child {
