@@ -3,7 +3,6 @@ node_modules/
 .env
 .env.local
 .env.install
-.env.install
 /docker/apache/certs/*.pem
 
 /apps/wegotworkspace/vendor/
@@ -51,6 +50,4 @@ wgw-content/
 .DS_Store
 .playwright-mcp/
 .env.local
-.env.install
-.env.install
 wgw-plugins
