@@ -5,7 +5,7 @@ set -eu
 
 WGW_GITHUB_REPO="${WGW_GITHUB_REPO:-WeGotWorkspace/wegotworkspace}"
 WGW_RELEASE_BASE="https://github.com/${WGW_GITHUB_REPO}/releases"
-WGW_INSTALL_DIR="${WGW_INSTALL_DIR:-./wgw-app}"
+WGW_INSTALL_DIR="${WGW_INSTALL_DIR:-./wegotworkspace}"
 WGW_VERSION="${WGW_VERSION:-latest}"
 WGW_HTTP_PORT="${WGW_HTTP_PORT:-}"
 WGW_SQLITE=0
@@ -26,7 +26,7 @@ Usage:
   bash setup.sh [options] [command]
 
 Commands (default: install):
-  install          Create wgw-app/, download assets, pull, up -d, wait for health
+  install          Create wegotworkspace/, download assets, pull, up -d, wait for health
   start            docker compose up -d (after stop)
   stop             docker compose down
   restart          docker compose restart
@@ -39,11 +39,11 @@ Options:
   --sqlite         SQLite-only stack (no MariaDB)
   --version VER    Pin release / image tag (default: latest)
   --upgrade [VER]  Upgrade existing install (same as: upgrade [VER])
-  --force          Overwrite existing wgw-app/ on install
+  --force          Overwrite existing wegotworkspace/ on install
   -h, --help       Show this message
 
 Environment:
-  WGW_INSTALL_DIR  Install directory (default: ./wgw-app)
+  WGW_INSTALL_DIR  Install directory (default: ./wegotworkspace)
   WGW_HTTP_PORT    Host HTTP port (default: 8080)
   WGW_VERSION      Release tag when not passed via --version
 
@@ -53,16 +53,16 @@ Examples:
   curl -fsSL .../install | sh -s -- --sqlite
   curl -fsSL .../install | sh -s -- --version 1.2.0
   curl -fsSL .../install | sh -s -- --upgrade 1.2.0
-  cd wgw-app && bash setup.sh upgrade 1.2.0
+  cd wegotworkspace && bash setup.sh upgrade 1.2.0
 EOF
 }
 
 log() {
-  printf '[wgw-setup] %s\n' "$*"
+  printf '[wegotworkspace] %s\n' "$*"
 }
 
 die() {
-  printf '[wgw-setup] Error: %s\n' "$*" >&2
+  printf '[wegotworkspace] Error: %s\n' "$*" >&2
   exit 1
 }
 

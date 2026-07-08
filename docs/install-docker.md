@@ -17,7 +17,7 @@ One command — no git clone, no `chmod`, no separate start step:
 curl -fsSL https://github.com/WeGotWorkspace/wegotworkspace/releases/latest/download/install | sh
 ```
 
-This creates `./wgw-app/` in the current directory (override with `WGW_INSTALL_DIR`), downloads the release `docker-compose.yml` and `.env`, pulls the image, starts the stack, and prints the installer URL when healthy.
+This creates `./wegotworkspace/` in the current directory (override with `WGW_INSTALL_DIR`), downloads the release `docker-compose.yml` and `.env`, pulls the image, starts the stack, and prints the installer URL when healthy.
 
 Optional flags (pipe-friendly):
 
@@ -43,14 +43,14 @@ When using the default MySQL stack (`COMPOSE_PROFILES=mysql`), use these in the 
 | --- | --- |
 | Host | `db` |
 | Port | `3306` |
-| Database / user / password | `wgw` (match `MARIADB_*` in `wgw-app/.env`) |
+| Database / user / password | `wgw` (match `MARIADB_*` in `wegotworkspace/.env`) |
 
 ## Lifecycle commands
 
-After the first install, use the same script from `wgw-app/` (or re-download `setup.sh` from GitHub Releases):
+After the first install, use the same script from `wegotworkspace/` (or re-download `setup.sh` from GitHub Releases):
 
 ```bash
-cd wgw-app
+cd wegotworkspace
 bash setup.sh start          # after stop
 bash setup.sh stop
 bash setup.sh restart
@@ -73,7 +73,7 @@ Run `bash setup.sh --help` for the full command list.
 curl -fsSL .../install | sh -s -- --sqlite
 ```
 
-Or edit `wgw-app/.env`:
+Or edit `wegotworkspace/.env`:
 
 ```bash
 COMPOSE_PROFILES=sqlite
@@ -150,7 +150,7 @@ Failed migrations block the web service from starting, preventing a half-upgrade
 **Recommended** — use the lifecycle script (includes backup):
 
 ```bash
-cd wgw-app
+cd wegotworkspace
 bash setup.sh upgrade 1.2.0
 ```
 
@@ -163,11 +163,11 @@ curl -fsSL .../install | sh -s -- --upgrade 1.2.0
 Manual equivalent:
 
 ```bash
-# Pin the new tag in wgw-app/.env
+# Pin the new tag in wegotworkspace/.env
 WGW_IMAGE=ghcr.io/wegotworkspace/wegotworkspace:1.2.0
 
-docker compose -f wgw-app/docker-compose.yml --env-file wgw-app/.env pull
-docker compose -f wgw-app/docker-compose.yml --env-file wgw-app/.env up -d
+docker compose -f wegotworkspace/docker-compose.yml --env-file wegotworkspace/.env pull
+docker compose -f wegotworkspace/docker-compose.yml --env-file wegotworkspace/.env up -d
 ```
 
 The migrator runs automatically before Apache serves traffic.
@@ -179,16 +179,16 @@ The admin web updater ([UpdateRunner](../packages/api/app/Services/Update/Update
 ### Backup
 
 ```bash
-cd wgw-app
+cd wegotworkspace
 bash setup.sh backup
 ```
 
-This archives named volumes and (when using MySQL) dumps the database to `wgw-app/backups/<timestamp>/`.
+This archives named volumes and (when using MySQL) dumps the database to `wegotworkspace/backups/<timestamp>/`.
 
 Manual MySQL dump:
 
 ```bash
-docker compose -f wgw-app/docker-compose.yml --env-file wgw-app/.env exec db \
+docker compose -f wegotworkspace/docker-compose.yml --env-file wegotworkspace/.env exec db \
   mariadb-dump -u root -p"$MARIADB_ROOT_PASSWORD" wgw > wgw-backup.sql
 ```
 
@@ -222,7 +222,7 @@ Each tagged GitHub Release includes:
 | `install` | One-liner entry for `curl \| sh` |
 | `setup.sh` | Same script — lifecycle commands |
 | `docker-compose.yml` | Pull-only stack with migrator |
-| `.env.example` | Copied to `wgw-app/.env` on install |
+| `.env.example` | Copied to `wegotworkspace/.env` on install |
 | `wgw-docker-install-{version}.tar.gz` | All of the above in one archive |
 | GHCR image | `ghcr.io/wegotworkspace/wegotworkspace:{version}` |
 

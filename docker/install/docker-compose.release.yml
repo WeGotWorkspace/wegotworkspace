@@ -3,7 +3,7 @@
 #
 # End users receive this file as docker-compose.yml via setup.sh / install script.
 
-name: wgw-install
+name: wegotworkspace
 
 x-wgw-web-volumes: &wgw-web-volumes
   - wgw-content:/var/www/html/wgw-content
