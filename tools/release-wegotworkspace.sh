@@ -285,7 +285,10 @@ cmd_publish() {
   echo "Release: ${current} → ${new} (${tag}) on $(git -C "$ROOT" rev-parse --short HEAD)"
   if [[ "$yes" -eq 0 ]]; then
     read -r -p "Continue? [y/N] " reply
-    [[ "${reply,,}" == "y" || "${reply,,}" == "yes" ]] || { echo "Aborted."; exit 0; }
+    case "$reply" in
+      [yY]|[yY][eE][sS]) ;;
+      *) echo "Aborted."; exit 0 ;;
+    esac
   fi
 
   export WGW_RELEASE_VERSION="$new"
