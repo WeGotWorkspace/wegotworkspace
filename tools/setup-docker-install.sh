@@ -12,6 +12,7 @@ WGW_SQLITE=0
 WGW_FORCE=0
 WGW_UPGRADE=0
 WGW_UPGRADE_VERSION=""
+WGW_PLATFORM_ENSURED=0
 
 COMPOSE_FILE="docker-compose.yml"
 ENV_FILE=".env"
@@ -78,6 +79,61 @@ check_docker() {
   if ! docker compose version >/dev/null 2>&1; then
     die "Docker Compose v2 is required (docker compose). Install Docker Desktop or the compose plugin."
   fi
+}
+
+docker_host_arch() {
+  case "$(uname -m)" in
+    arm64 | aarch64) printf '%s' arm64 ;;
+    x86_64 | amd64) printf '%s' amd64 ;;
+    *) printf '%s' "$(uname -m)" ;;
+  esac
+}
+
+image_ref() {
+  load_env
+  if [ -n "${WGW_IMAGE:-}" ]; then
+    printf '%s' "$WGW_IMAGE"
+    return
+  fi
+  printf 'ghcr.io/wegotworkspace/wegotworkspace:%s' "$WGW_VERSION"
+}
+
+image_supports_host_arch() {
+  image=$1
+  arch=$(docker_host_arch)
+  manifest=$(docker manifest inspect "$image" 2>/dev/null) || return 1
+  printf '%s' "$manifest" | grep -q "\"architecture\": \"${arch}\""
+}
+
+ensure_docker_platform() {
+  if [ "$WGW_PLATFORM_ENSURED" -eq 1 ]; then
+    return 0
+  fi
+  WGW_PLATFORM_ENSURED=1
+
+  arch=$(docker_host_arch)
+  case "$arch" in
+    arm64) ;;
+    *) return 0 ;;
+  esac
+
+  image=$(image_ref)
+  if image_supports_host_arch "$image"; then
+    return 0
+  fi
+
+  export DOCKER_DEFAULT_PLATFORM=linux/amd64
+  log "Apple Silicon: ${image} has no linux/arm64 build yet; using amd64 emulation (DOCKER_DEFAULT_PLATFORM=linux/amd64)."
+  log "Enable Rosetta for x86_64/amd64 emulation in Docker Desktop if pulls fail."
+}
+
+pull_images() {
+  ensure_docker_platform
+  log "Pulling images..."
+  if compose pull; then
+    return 0
+  fi
+  die "Image pull failed. Run: cd ${WGW_INSTALL_DIR} && sh setup.sh logs"
 }
 
 resolve_install_dir() {
@@ -178,6 +234,7 @@ apply_http_port() {
 }
 
 compose() {
+  ensure_docker_platform
   docker compose -f "${WGW_INSTALL_DIR}/${COMPOSE_FILE}" --env-file "${WGW_INSTALL_DIR}/${ENV_FILE}" "$@"
 }
 
@@ -242,8 +299,7 @@ cmd_install() {
   apply_sqlite_profile "${WGW_INSTALL_DIR}/${ENV_FILE}"
   apply_http_port "${WGW_INSTALL_DIR}/${ENV_FILE}"
 
-  log "Pulling images..."
-  compose pull
+  pull_images
 
   log "Starting stack..."
   compose up -d
@@ -343,8 +399,7 @@ cmd_upgrade() {
   WGW_VERSION="$target"
   fetch_asset "docker-compose.yml" "${WGW_INSTALL_DIR}/${COMPOSE_FILE}"
 
-  log "Pulling images..."
-  compose pull
+  pull_images
 
   log "Recreating stack (migrator runs before web)..."
   compose up -d

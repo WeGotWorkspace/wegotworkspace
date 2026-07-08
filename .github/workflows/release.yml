@@ -107,6 +107,10 @@ jobs:
           WGW_RELEASE_SIGNING_PRIVATE_KEY: ${{ secrets.WGW_RELEASE_SIGNING_PRIVATE_KEY }}
         run: node tools/build-wegotworkspace-release.mjs
 
+      - name: Set up QEMU
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx
         if: startsWith(github.ref, 'refs/tags/')
         uses: docker/setup-buildx-action@v3
@@ -126,6 +130,7 @@ jobs:
           context: .
           file: docker/install/Dockerfile
           push: true
+          platforms: linux/amd64,linux/arm64
           tags: |
             ghcr.io/wegotworkspace/wegotworkspace:${{ steps.release_version.outputs.value }}
             ghcr.io/wegotworkspace/wegotworkspace:latest

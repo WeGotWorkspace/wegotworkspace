@@ -8,6 +8,7 @@ For monorepo development (bind mounts, Vite HMR), use [dev-layout.md](dev-layout
 
 - Docker Engine 24+ and Docker Compose v2
 - ~2 GB disk for the image; more for uploads and database volume
+- **Apple Silicon (M1/M2/M3):** the install script auto-detects amd64-only release images and sets `DOCKER_DEFAULT_PLATFORM=linux/amd64`. Enable Rosetta for x86_64/amd64 emulation in Docker Desktop if needed. Future releases also publish native `linux/arm64` images.
 
 ## Quick start (recommended)
 
