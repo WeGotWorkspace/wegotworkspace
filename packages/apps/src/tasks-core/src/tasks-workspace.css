@@ -10,6 +10,16 @@
   /* Readable todo column — matches contacts/mail detail measure (680px). */
   --workspace-main-content-max-width: 42.5rem;
 
+  --tasks-marker-size: 1.5rem;
+  --tasks-marker-gap: 0.75rem;
+  --tasks-marker-gutter: calc(var(--tasks-marker-size) + var(--tasks-marker-gap));
+  /*
+   * Horizontal inset for title text — matches view-header title, not the sidebar toggle.
+   * Mobile: toggle (size-9) + flex gap-3 within header p-4, while main-content adds px-4.
+   * md+: centered column + view-header__main px-4; main-content is md:px-0.
+   */
+  --tasks-content-inset: calc(2.25rem + 0.75rem);
+
   --tasks-accent: #ea8c72;
   --tasks-sidebar: color-mix(in oklab, var(--tasks-accent) 12%, var(--color-cream, #ffffff));
   --workspace-accent: var(--tasks-accent);
@@ -51,10 +61,14 @@
 }
 
 /**
- * Desktop: title/actions share the centered max-width column with task rows; toggle
- * insets to the same left edge as row checkboxes (centered column + md:px-4).
+ * Desktop: view title and task/composer text share the centered column's content inset
+ * (md:px-4); row markers sit in a left gutter so they do not push title text right.
  */
 @media (min-width: 768px) {
+  .tasks-workspace {
+    --tasks-content-inset: 1rem;
+  }
+
   .tasks-workspace .workspace-app-layout__main-header > div:first-child {
     display: grid;
     grid-template-columns: 1fr minmax(0, var(--workspace-main-content-max-width)) 1fr;
@@ -67,7 +81,7 @@
     grid-row: 1;
     justify-self: start;
     /*
-     * Match `.tasks-main-view__row` md:px-4 inside `.workspace-app-layout__main-content`:
+     * Match `.tasks-main-view__row` content inset inside `.workspace-app-layout__main-content`:
      * centering offset + 1rem, minus header md:p-6 (1.5rem) when the column is full width.
      */
     margin-inline-start: max(
@@ -81,7 +95,7 @@
     grid-row: 1;
     width: 100%;
     min-width: 0;
-    /* Match `.tasks-main-view__row` md:px-4 so title aligns with row checkboxes. */
+    /* Match task/composer title text inset inside the centered column. */
     @apply px-4;
   }
 

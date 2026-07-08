@@ -10,14 +10,14 @@
 
 .tasks-main-view__list {
   --tasks-title-line-height: 1.5rem;
-  --tasks-marker-size: 1.5rem;
 
   @apply divide-y border-b;
   border-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
 }
 
 .tasks-main-view__row {
-  @apply relative flex items-start gap-3 px-0 py-3.5 md:px-4;
+  @apply relative flex items-start py-3.5;
+  padding-inline: var(--tasks-content-inset, 1rem);
 }
 
 .tasks-main-view__row--completed .tasks-main-view__title {
@@ -45,9 +45,11 @@
 
 .tasks-main-view__complete,
 .tasks-main-view__composer-marker {
-  @apply flex shrink-0 items-center justify-center self-start;
+  @apply absolute flex shrink-0 items-center justify-center;
+  top: 0.875rem;
+  inset-inline-start: calc(var(--tasks-content-inset, 1rem) - var(--tasks-marker-gutter, 2.25rem));
   block-size: var(--tasks-title-line-height);
-  inline-size: var(--tasks-marker-size);
+  inline-size: var(--tasks-marker-size, 1.5rem);
 
   & svg {
     @apply size-6;
@@ -110,7 +112,8 @@
 }
 
 .tasks-main-view__composer {
-  @apply flex items-start gap-3 px-0 py-3.5 md:px-4;
+  @apply relative flex w-full flex-col py-3.5;
+  padding-inline: var(--tasks-content-inset, 1rem);
 }
 
 .tasks-main-view__composer-marker {
@@ -118,7 +121,7 @@
 }
 
 .tasks-main-view__composer-body {
-  @apply min-w-0 flex-1;
+  @apply min-w-0 w-full;
 }
 
 .tasks-main-view__composer-title {
@@ -234,7 +237,7 @@
 }
 
 .tasks-main-view__composer-actions {
-  @apply mt-2 flex justify-end gap-2;
+  @apply mt-2 flex w-full justify-end gap-2;
 }
 
 .tasks-main-view__add-submit.button--variant-primary {
