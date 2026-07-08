@@ -207,7 +207,7 @@ Blocked on live [#134](https://github.com/WeGotWorkspace/wegotworkspace/issues/1
 
 ## Decision 16 — Branding
 
-**Decision:** Use existing **`tasks.svg`** and teal accent **`#14b8a6`** — **not** `reminders.svg`.
+**Decision:** Use existing **`tasks.svg`** and warm coral accent **`#ea8c72`** — **not** `reminders.svg`.
 
 | Surface | Wiring |
 |---------|--------|
@@ -292,13 +292,13 @@ Like Notes, **one** sidebar selection drives the list column at a time. States, 
 
 ### Branding and theme
 
-Use existing [tasks.svg](../../packages/apps/src/assets/app-icons/tasks.svg) — circle + checkmark; `--wai-bg` **`#14b8a6`** (teal), `--wai-fg` white. Public copy: `/app-icons/tasks.svg`. Inline markup already in `WORKSPACE_FUTURE_APP_ICON_INLINE.tasks` — promote to `WORKSPACE_APP_ICON_INLINE` when wiring.
+Use existing [tasks.svg](../../packages/apps/src/assets/app-icons/tasks.svg) — circle + checkmark; `--wai-bg` **`#ea8c72`** (coral), `--wai-fg` ink. Public copy: `/app-icons/tasks.svg`. Inline markup already in `WORKSPACE_FUTURE_APP_ICON_INLINE.tasks` — promote to `WORKSPACE_APP_ICON_INLINE` when wiring.
 
 | Surface | Action |
 |---------|--------|
-| CSS | `tasks-workspace.css`: `--tasks-accent: #14b8a6`, mirror Notes sidebar/button tokens |
-| Accents | `WORKSPACE_APP_ACCENT.tasks = "#14b8a6"` in [workspace-app-icons.ts](../../packages/apps/src/lib/workspace-app-icons.ts) |
-| PWA | `public/manifests/tasks.webmanifest` (`theme_color` / `background_color` `#14b8a6`); register in [workspace-pwa-head.ts](../../packages/apps/src/lib/workspace-pwa-head.ts) |
+| CSS | `tasks-workspace.css`: `--tasks-accent: #ea8c72`, mirror Notes sidebar/button tokens |
+| Accents | `WORKSPACE_APP_ACCENT.tasks = "#ea8c72"` in [workspace-app-icons.ts](../../packages/apps/src/lib/workspace-app-icons.ts) |
+| PWA | `public/manifests/tasks.webmanifest` (`theme_color` / `background_color` `#ea8c72`); register in [workspace-pwa-head.ts](../../packages/apps/src/lib/workspace-pwa-head.ts) |
 | Icons | Run `generate-pwa-icons.mjs` for `tasks-180.png` ([#305](https://github.com/WeGotWorkspace/wegotworkspace/issues/305) pattern) |
 
 **Do not** use Calendar or Reminders icons/colors for the Tasks app surface.

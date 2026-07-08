@@ -1,7 +1,7 @@
 {
   "name": "Tasks",
   "short_name": "Tasks",
-  "start_url": "/tasks/state/all",
+  "start_url": "/tasks/lists/inbox",
   "scope": "/tasks",
   "id": "/tasks",
   "display": "standalone",

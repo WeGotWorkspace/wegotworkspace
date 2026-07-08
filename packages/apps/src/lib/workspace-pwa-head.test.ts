@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { WORKSPACE_PWA_ICON_CACHE_VERSION, createWorkspacePwaHead } from "@/lib/workspace-pwa-head";
-import { WORKSPACE_APP_IDS } from "@/lib/workspace-app-icons";
+import { WORKSPACE_APP_ACCENT, WORKSPACE_APP_IDS } from "@/lib/workspace-app-icons";
 
 describe("createWorkspacePwaHead", () => {
   it("links manifest and cache-busted apple-touch PNG for each workspace app", () => {
@@ -19,6 +19,15 @@ describe("createWorkspacePwaHead", () => {
             href: `/app-icons/${appId}.svg?v=${WORKSPACE_PWA_ICON_CACHE_VERSION}`,
           },
         ]),
+      );
+    }
+  });
+
+  it("sets theme-color meta from WORKSPACE_APP_ACCENT for each workspace app", () => {
+    for (const appId of WORKSPACE_APP_IDS) {
+      const head = createWorkspacePwaHead(appId);
+      expect(head.meta).toEqual(
+        expect.arrayContaining([{ name: "theme-color", content: WORKSPACE_APP_ACCENT[appId] }]),
       );
     }
   });
