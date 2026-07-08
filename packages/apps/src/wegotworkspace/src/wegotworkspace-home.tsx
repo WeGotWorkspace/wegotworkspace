@@ -27,6 +27,7 @@ export function WeGotWorkspaceHome() {
     homeAppTile("notes", "Notes", () => void navigate({ to: "/notes" })),
     homeAppTile("mail", "Mail", () => void navigate({ to: "/mail" })),
     homeAppTile("contacts", "Contacts", () => void navigate({ to: "/contacts" }), "#ffffff"),
+    homeAppTile("tasks", "Tasks", () => void navigate({ to: "/tasks" }), "#ffffff"),
     homeAppTile("drive", "Drive", () => void navigate({ to: "/drive" }), "#ffffff"),
     homeAppTile("docs", "Docs", () => void navigate({ to: "/docs" }), "#ffffff"),
     homeAppTile("settings", "Settings", () => void navigate({ to: "/settings" })),

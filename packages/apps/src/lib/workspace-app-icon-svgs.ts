@@ -22,6 +22,7 @@ export const WORKSPACE_APP_ICON_INLINE: Record<WorkspaceAppId, string> = {
   meet: meetIcon,
   notes: notesIcon,
   settings: settingsIcon,
+  tasks: tasksIcon,
 };
 
 export function workspaceAppIconInlineMarkup(appId: WorkspaceAppId): string {
@@ -35,5 +36,4 @@ export const WORKSPACE_HOME_ICON_INLINE = homeIcon;
 export const WORKSPACE_FUTURE_APP_ICON_INLINE = {
   calendar: calendarIcon,
   reminders: remindersIcon,
-  tasks: tasksIcon,
 } as const;

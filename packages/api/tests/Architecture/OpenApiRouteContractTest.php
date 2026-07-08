@@ -55,4 +55,58 @@ final class OpenApiRouteContractTest extends TestCase
             "OpenAPI operations missing from routes/api.php:\n".implode("\n", $missing)
         );
     }
+
+    public function test_jmap_rest_operations_document_error_responses(): void
+    {
+        $missing = [];
+
+        foreach (OpenApiContract::jmapRestOperations() as $operation) {
+            $key = $operation['method'].' '.$operation['path'];
+            $responses = $operation['responses'];
+
+            if (! isset($responses['403'])) {
+                $missing[] = $key.' missing 403';
+            } elseif (! $this->responseDocumentsErrorSchema($responses['403'])) {
+                $missing[] = $key.' 403 missing Error schema';
+            }
+
+            if (in_array($operation['method'], ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
+                if (! isset($responses['400'])) {
+                    $missing[] = $key.' missing 400';
+                } elseif (! $this->responseDocumentsErrorSchema($responses['400'])) {
+                    $missing[] = $key.' 400 missing Error schema';
+                }
+            }
+
+            if (str_contains($operation['path'], '{') && in_array($operation['method'], ['GET', 'PUT', 'PATCH', 'DELETE'], true)) {
+                if (! isset($responses['404'])) {
+                    $missing[] = $key.' missing 404';
+                } elseif (! $this->responseDocumentsErrorSchema($responses['404'])) {
+                    $missing[] = $key.' 404 missing Error schema';
+                }
+            }
+        }
+
+        $this->assertSame([], $missing, "JMAP REST error contract gaps:\n".implode("\n", $missing));
+    }
+
+    private function responseDocumentsErrorSchema(mixed $response): bool
+    {
+        if (! is_array($response)) {
+            return false;
+        }
+
+        if (isset($response['$ref']) && is_string($response['$ref'])) {
+            return str_contains($response['$ref'], 'Error')
+                || str_contains($response['$ref'], 'Forbidden')
+                || str_contains($response['$ref'], 'BadRequest')
+                || str_contains($response['$ref'], 'NotFound')
+                || str_contains($response['$ref'], 'PayloadTooLarge')
+                || str_contains($response['$ref'], 'PreconditionFailed');
+        }
+
+        $schema = $response['content']['application/json']['schema']['$ref'] ?? null;
+
+        return is_string($schema) && str_ends_with($schema, '/Error');
+    }
 }

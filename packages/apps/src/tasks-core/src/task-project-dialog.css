@@ -1,0 +1,14 @@
+@import "../../styles.css" reference;
+
+.task-project-dialog__name-color-row {
+  @apply flex items-center gap-2;
+}
+
+.task-project-dialog__name-input {
+  @apply min-w-0 flex-[1_1_85%];
+}
+
+.task-project-dialog__scope-readonly {
+  @apply text-sm;
+  color: color-mix(in oklab, var(--color-ink) 60%, transparent);
+}

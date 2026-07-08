@@ -42,6 +42,7 @@ final class AdminStateService
             'apps' => [
                 'calendars' => (bool) ($cfg[SettingKeys::CALENDAR_ENABLED] ?? true),
                 'contacts' => (bool) ($cfg[SettingKeys::CONTACTS_ENABLED] ?? true),
+                'tasks' => (bool) ($cfg[SettingKeys::TASKS_ENABLED] ?? true),
             ],
             'webdav' => [
                 'sabreUi' => (bool) ($cfg[SettingKeys::BROWSER_PLUGIN] ?? true),

@@ -191,7 +191,7 @@ export function EditDialog({
   contentClassName,
   title: titleProp,
 }: {
-  item: null | { kind: "notebook" | "tag" | "group"; name: string };
+  item: null | { kind: "notebook" | "tag" | "group" | "project"; name: string };
   onClose: () => void;
   onConfirm: (newName: string) => void;
   contentClassName?: string;
@@ -202,11 +202,14 @@ export function EditDialog({
     if (item) setValue(item.name);
   }, [item]);
   const v = value.trim();
-  const kindLabel = item?.kind === "group" ? "group" : item?.kind;
+  const kindLabel =
+    item?.kind === "group" ? "group" : item?.kind === "project" ? "project" : item?.kind;
   const description =
     item?.kind === "group"
       ? "The group name will update in your address books and sidebar."
-      : `All items currently in this ${item?.kind} will keep their assignment.`;
+      : item?.kind === "project"
+        ? "The project name will update in your sidebar and task lists."
+        : `All items currently in this ${item?.kind} will keep their assignment.`;
   return (
     <Dialog open={!!item} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className={contentClassName}>

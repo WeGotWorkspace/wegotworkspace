@@ -1,7 +1,8 @@
 # JMAP REST API — CalDAV/CardDAV parity gaps
 
 > **Epic:** [GitHub #137](https://github.com/WeGotWorkspace/wegotworkspace/issues/137)  
-> **Baseline PRs:** Contacts [#132](https://github.com/WeGotWorkspace/wegotworkspace/pull/132), Calendars [#135](https://github.com/WeGotWorkspace/wegotworkspace/pull/135), Tasks [#136](https://github.com/WeGotWorkspace/wegotworkspace/pull/136)
+> **Baseline PRs:** Contacts [#132](https://github.com/WeGotWorkspace/wegotworkspace/pull/132), Calendars [#135](https://github.com/WeGotWorkspace/wegotworkspace/pull/135), Tasks [#136](https://github.com/WeGotWorkspace/wegotworkspace/pull/136)  
+> **Tasks architecture:** [docs/architecture/tasks.md](../../../docs/architecture/tasks.md) ([#330](https://github.com/WeGotWorkspace/wegotworkspace/issues/330))
 
 This document summarizes what the v1 JMAP-shaped REST layers implement versus full CalDAV/CardDAV (and JMAP spec) expectations. Use it for planning; **track work in GitHub issues** linked below.
 
@@ -12,7 +13,7 @@ This document summarizes what the v1 JMAP-shaped REST layers implement versus fu
 | **Contacts** (CardDAV) | JSContact conversion; REST CRUD; blob upload; localizations; JSCOMPS; matrix gaps closed in [#151](https://github.com/WeGotWorkspace/wegotworkspace/issues/151)–[#156](https://github.com/WeGotWorkspace/wegotworkspace/issues/156) | `/queryChanges`, advanced query filters | — |
 | **Calendars** (VEVENT) | Event CRUD, RRULE read, basic participants | **Alerts**, **recurrenceOverrides**, RRULE write parity, rich locations | [#138](https://github.com/WeGotWorkspace/wegotworkspace/issues/138)–[#145](https://github.com/WeGotWorkspace/wegotworkspace/issues/145) |
 | **Tasks** (VTODO) | Title, dates, status, priority | **Recurrence**, **alerts**, participants, `icsProps` | [#146](https://github.com/WeGotWorkspace/wegotworkspace/issues/146)–[#150](https://github.com/WeGotWorkspace/wegotworkspace/issues/150) |
-| **Platform** | List/get + item CRUD | Collection CRUD, sharing, incremental sync | [#157](https://github.com/WeGotWorkspace/wegotworkspace/issues/157), [#158](https://github.com/WeGotWorkspace/wegotworkspace/issues/158) |
+| **Platform** | Collection CRUD + collection `/changes` + task `/query` | Item `/changes`, sharing (RFC 9670) | [#157](https://github.com/WeGotWorkspace/wegotworkspace/issues/157), [#158](https://github.com/WeGotWorkspace/wegotworkspace/issues/158) |
 
 ## Priority
 
@@ -39,7 +40,7 @@ This document summarizes what the v1 JMAP-shaped REST layers implement versus fu
 
 | Gap | Issue | Docs / converters |
 |-----|-------|-------------------|
-| Recurrence | [#146](https://github.com/WeGotWorkspace/wegotworkspace/issues/146) | `docs/tasks/ics-jmap-task-conversion-matrix.md` |
+| Recurrence | [#146](https://github.com/WeGotWorkspace/wegotworkspace/issues/146) | [docs/tasks/](./tasks/) — [ics-jmap-task-conversion-matrix.md](./tasks/ics-jmap-task-conversion-matrix.md) |
 | VALARM ↔ alerts | [#147](https://github.com/WeGotWorkspace/wegotworkspace/issues/147) | `Tasks/Conversion/*` |
 | Assignees / participants | [#148](https://github.com/WeGotWorkspace/wegotworkspace/issues/148) | same |
 | `icsProps` escape hatch | [#149](https://github.com/WeGotWorkspace/wegotworkspace/issues/149) | parity with calendars |
@@ -60,8 +61,8 @@ This document summarizes what the v1 JMAP-shaped REST layers implement versus fu
 
 | Gap | Issue |
 |-----|-------|
-| Address book / calendar / task list CRUD + sharing | [#157](https://github.com/WeGotWorkspace/wegotworkspace/issues/157) — **contacts CRUD done**; calendars/tasks CalDAV-only (documented) |
-| JMAP `changes` / `query` sync | [#158](https://github.com/WeGotWorkspace/wegotworkspace/issues/158) — **contacts pilot done**; calendars/tasks documented |
+| Address book / calendar / task list CRUD + sharing | [#157](https://github.com/WeGotWorkspace/wegotworkspace/issues/157) — **CRUD done** for all three collection types; **sharing stub** (`shareWith` null, PATCH rejects) |
+| JMAP `changes` / `query` sync | [#158](https://github.com/WeGotWorkspace/wegotworkspace/issues/158) — **collection `/changes` done** (contacts, calendars, task lists); **contacts card `/changes` + `/query` + tasks `/items/query` done**; item `/changes` deferred |
 
 ## External interop fixtures
 

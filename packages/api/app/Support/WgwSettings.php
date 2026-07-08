@@ -28,6 +28,8 @@ final class WgwSettings
 
     public const CONTACTS_ENABLED = 'contacts_enabled';
 
+    public const TASKS_ENABLED = 'tasks_enabled';
+
     public const AUTH_REALM = 'auth_realm';
 
     public const BROWSER_PLUGIN = 'browser_plugin';
@@ -57,6 +59,7 @@ final class WgwSettings
             self::FILES_ENABLED => true,
             self::CALENDAR_ENABLED => true,
             self::CONTACTS_ENABLED => true,
+            self::TASKS_ENABLED => true,
             self::AUTH_REALM => 'SabreDAV',
             self::BROWSER_PLUGIN => true,
             self::TIMEZONE => 'UTC',
@@ -82,7 +85,7 @@ final class WgwSettings
             }
             $out[$key] = match ($key) {
                 self::MAIL_IMAP_PORT, self::MAIL_SMTP_PORT => (int) $db[$key],
-                self::FILES_ENABLED, self::CALENDAR_ENABLED, self::CONTACTS_ENABLED, self::BROWSER_PLUGIN => (bool) $db[$key],
+                self::FILES_ENABLED, self::CALENDAR_ENABLED, self::CONTACTS_ENABLED, self::TASKS_ENABLED, self::BROWSER_PLUGIN => (bool) $db[$key],
                 self::TIMEZONE => TimezoneNormalizer::normalize($db[$key]),
                 self::BASE_URI => self::normalizeBaseUri((string) $db[$key]),
                 default => $db[$key],

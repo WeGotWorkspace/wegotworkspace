@@ -1,0 +1,24 @@
+{
+  "name": "Tasks",
+  "short_name": "Tasks",
+  "start_url": "/tasks/lists/inbox",
+  "scope": "/tasks",
+  "id": "/tasks",
+  "display": "standalone",
+  "background_color": "#ea8c72",
+  "theme_color": "#ea8c72",
+  "icons": [
+    {
+      "src": "/app-icons/tasks.svg?v=3",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icons/tasks-180.png?v=3",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

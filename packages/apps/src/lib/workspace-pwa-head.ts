@@ -8,7 +8,7 @@ import {
 } from "@/lib/workspace-app-icons";
 
 /** Bump when launcher / apple-touch artwork changes to bust Safari icon cache. */
-export const WORKSPACE_PWA_ICON_CACHE_VERSION = "2";
+export const WORKSPACE_PWA_ICON_CACHE_VERSION = "3";
 
 export type WorkspacePwaAppKey = WorkspaceAppId | "home";
 
@@ -55,6 +55,12 @@ const WORKSPACE_PWA_META: Record<WorkspacePwaAppKey, WorkspacePwaMeta> = {
     description: "People and groups in your workspace.",
     appTitle: "Contacts",
     manifest: "/manifests/contacts.webmanifest",
+  },
+  tasks: {
+    title: "Tasks",
+    description: "A calm to-do workspace for focused work.",
+    appTitle: "Tasks",
+    manifest: "/manifests/tasks.webmanifest",
   },
   settings: {
     title: "Settings",

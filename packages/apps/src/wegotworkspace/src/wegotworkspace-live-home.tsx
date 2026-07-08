@@ -47,6 +47,9 @@ export function WeGotWorkspaceLiveHome() {
     ...(homeState.showContacts
       ? [homeAppTile("contacts", "Contacts", () => void navigate({ to: "/contacts" }), "#ffffff")]
       : []),
+    ...(homeState.showTasks
+      ? [homeAppTile("tasks", "Tasks", () => void navigate({ to: "/tasks" }), "#ffffff")]
+      : []),
     homeAppTile("drive", "Drive", () => void navigate({ to: "/drive" }), "#ffffff"),
     homeAppTile("docs", "Docs", () => void navigate({ to: "/docs" }), "#ffffff"),
     homeAppTile("settings", "Settings", () => void navigate({ to: "/settings" })),

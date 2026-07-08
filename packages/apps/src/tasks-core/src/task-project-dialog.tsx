@@ -1,0 +1,191 @@
+import { useEffect, useState } from "react";
+import { Button } from "@/button/src/button";
+import { Input } from "@/ui/input";
+import { FieldLabelRow } from "@/ui/field-label-row";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/ui/dialog";
+import { TaskProjectColorPicker } from "@/tasks-core/src/task-project-color-picker";
+import { DEFAULT_TASK_LIST_COLOR, taskListDotColor } from "@/tasks-core/src/tasks-task-utils";
+import type { TaskProjectGroupOption } from "@/tasks-core/src/tasks-types";
+import "./task-project-dialog.css";
+
+const PERSONAL_SCOPE_VALUE = "__personal__";
+
+export type TaskProjectDialogState =
+  | null
+  | { mode: "create" }
+  | {
+      mode: "edit";
+      listId: string;
+      name: string;
+      color: string | null;
+      scope: "personal" | "group";
+      groupSlug: string | null;
+    };
+
+export type TaskProjectDialogConfirmInput = {
+  name: string;
+  color: string | null;
+  groupSlug?: string | null;
+};
+
+type TaskProjectDialogLabels = {
+  createTitle: string;
+  editTitle: string;
+  nameLabel: string;
+  colorLabel: string;
+  scopeLabel: string;
+  scopePersonal: (ownerLabel: string) => string;
+  scopeGroup: (name: string) => string;
+  scopeReadOnlyLabel: string;
+  createButton: string;
+  saveButton: string;
+  cancel: string;
+};
+
+type TaskProjectDialogProps = {
+  dialog: TaskProjectDialogState;
+  groups: TaskProjectGroupOption[];
+  personalOwnerLabel: string;
+  onClose: () => void;
+  onConfirm: (input: TaskProjectDialogConfirmInput) => void;
+  labels: TaskProjectDialogLabels;
+  contentClassName?: string;
+};
+
+function editDialogDisplayColor(listId: string, color: string | null): string {
+  return taskListDotColor({ id: listId, color });
+}
+
+function scopeLabelForEdit(
+  scope: "personal" | "group",
+  groupSlug: string | null,
+  groups: TaskProjectGroupOption[],
+  personalOwnerLabel: string,
+  labels: TaskProjectDialogLabels,
+): string {
+  if (scope !== "group" || !groupSlug) return labels.scopePersonal(personalOwnerLabel);
+  const group = groups.find((entry) => entry.slug === groupSlug);
+  return labels.scopeGroup(group?.displayName ?? groupSlug);
+}
+
+export function TaskProjectDialog({
+  dialog,
+  groups,
+  personalOwnerLabel,
+  onClose,
+  onConfirm,
+  labels,
+  contentClassName,
+}: TaskProjectDialogProps) {
+  const [name, setName] = useState("");
+  const [color, setColor] = useState<string>(DEFAULT_TASK_LIST_COLOR);
+  const [scopeValue, setScopeValue] = useState(PERSONAL_SCOPE_VALUE);
+  const open = dialog !== null;
+  const isCreate = dialog?.mode === "create";
+
+  useEffect(() => {
+    if (!dialog) return;
+    if (dialog.mode === "create") {
+      setName("");
+      setColor(DEFAULT_TASK_LIST_COLOR);
+      setScopeValue(PERSONAL_SCOPE_VALUE);
+      return;
+    }
+    setName(dialog.name);
+    setColor(editDialogDisplayColor(dialog.listId, dialog.color));
+    setScopeValue(
+      dialog.scope === "group" && dialog.groupSlug ? dialog.groupSlug : PERSONAL_SCOPE_VALUE,
+    );
+  }, [dialog]);
+
+  const trimmedName = name.trim();
+  const selectedColor = color.trim() || DEFAULT_TASK_LIST_COLOR;
+  const unchangedEdit =
+    dialog?.mode === "edit" &&
+    trimmedName === dialog.name.trim() &&
+    selectedColor.toLowerCase() ===
+      editDialogDisplayColor(dialog.listId, dialog.color).toLowerCase();
+  const canSubmit = Boolean(trimmedName) && (isCreate || !unchangedEdit);
+
+  const scopeReadOnly =
+    dialog?.mode === "edit"
+      ? scopeLabelForEdit(dialog.scope, dialog.groupSlug, groups, personalOwnerLabel, labels)
+      : null;
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className={contentClassName}>
+        <DialogHeader>
+          <DialogTitle>{isCreate ? labels.createTitle : labels.editTitle}</DialogTitle>
+        </DialogHeader>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!canSubmit) return;
+            onConfirm({
+              name: trimmedName,
+              color: selectedColor,
+              ...(isCreate
+                ? {
+                    groupSlug: scopeValue === PERSONAL_SCOPE_VALUE ? null : scopeValue,
+                  }
+                : {}),
+            });
+          }}
+        >
+          <FieldLabelRow label={labels.nameLabel} htmlFor="task-project-name">
+            <div className="task-project-dialog__name-color-row">
+              <Input
+                id="task-project-name"
+                className="task-project-dialog__name-input"
+                autoFocus
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+              />
+              <TaskProjectColorPicker
+                value={selectedColor}
+                onChange={setColor}
+                colorLabel={labels.colorLabel}
+                previewListId={dialog?.mode === "edit" ? dialog.listId : trimmedName || "preview"}
+              />
+            </div>
+          </FieldLabelRow>
+
+          {isCreate ? (
+            <FieldLabelRow label={labels.scopeLabel} htmlFor="task-project-scope">
+              <Select value={scopeValue} onValueChange={setScopeValue}>
+                <SelectTrigger id="task-project-scope" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={PERSONAL_SCOPE_VALUE}>
+                    {labels.scopePersonal(personalOwnerLabel)}
+                  </SelectItem>
+                  {groups.map((group) => (
+                    <SelectItem key={group.slug} value={group.slug}>
+                      {labels.scopeGroup(group.displayName)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FieldLabelRow>
+          ) : scopeReadOnly ? (
+            <FieldLabelRow label={labels.scopeReadOnlyLabel} readOnly>
+              <p className="task-project-dialog__scope-readonly">{scopeReadOnly}</p>
+            </FieldLabelRow>
+          ) : null}
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              {labels.cancel}
+            </Button>
+            <Button type="submit" disabled={!canSubmit}>
+              {isCreate ? labels.createButton : labels.saveButton}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}

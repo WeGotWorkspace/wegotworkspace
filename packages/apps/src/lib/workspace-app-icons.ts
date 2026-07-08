@@ -3,6 +3,7 @@ export const WORKSPACE_APP_IDS = [
   "notes",
   "mail",
   "contacts",
+  "tasks",
   "drive",
   "docs",
   "settings",
@@ -16,13 +17,14 @@ export type WorkspaceAppId = (typeof WORKSPACE_APP_IDS)[number];
  * Future app icons stored under `/app-icons/` but not wired in the home grid or switcher yet.
  * Source artwork: calendar, reminders, tasks (vector SVG in `src/assets/app-icons/`).
  */
-export const WORKSPACE_FUTURE_APP_ICON_IDS = ["calendar", "reminders", "tasks"] as const;
+export const WORKSPACE_FUTURE_APP_ICON_IDS = ["calendar", "reminders"] as const;
 
 /** Sampled from icon artwork — keep in sync with webmanifest theme colors. */
 export const WORKSPACE_APP_ACCENT: Record<WorkspaceAppId, string> = {
   notes: "#f0b422",
   mail: "#ef4444",
   contacts: "#7360c8",
+  tasks: "#ea8c72",
   drive: "#10b981",
   docs: "#3b82f6",
   settings: "#64748b",

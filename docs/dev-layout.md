@@ -143,3 +143,7 @@ Not part of `pnpm test:apps-done-gate` or CI yet (see [apps-done-gate.md](../.ag
 
 - **`packages/*`** = where you edit.
 - **`apps/wegotworkspace`** = install shell (config + data + front door), not a second API codebase.
+
+## Architecture docs
+
+Cross-cutting product/protocol decisions live under [`docs/architecture/`](architecture/). Start with [Tasks module](architecture/tasks.md) ([#330](https://github.com/WeGotWorkspace/wegotworkspace/issues/330)) for v0.9 Calendar/Tasks work. API conversion detail stays under `packages/api/docs/<domain>/`.

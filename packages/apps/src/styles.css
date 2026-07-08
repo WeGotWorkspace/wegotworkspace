@@ -154,6 +154,7 @@
   --sidebar-ring: oklch(0.704 0.04 256.788);
   /* Shared form controls: flat inputs (no shadow) + sheet-like elevation for surfaces. */
   --control-radius: 0.1875rem;
+  --control-border-color: color-mix(in oklab, var(--color-ink) 12%, transparent);
   --input-shadow: none;
   /* Capsule chips: tags, metadata labels, count badges, switches. */
   --control-radius-pill: 9999px;

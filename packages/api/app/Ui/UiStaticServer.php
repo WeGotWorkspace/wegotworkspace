@@ -42,6 +42,7 @@ final class UiStaticServer
             '/meet',
             '/notes',
             '/settings',
+            '/tasks',
         ];
 
         if ($this->isPwaRootAssetPath($webBase, $path)) {
@@ -138,6 +139,7 @@ final class UiStaticServer
             '/meet',
             '/notes',
             '/settings',
+            '/tasks',
             '/install',
         ];
     }

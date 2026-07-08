@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Models\Concerns\UsesWgwConnection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class CalendarObject extends Model
 {
@@ -28,4 +29,10 @@ final class CalendarObject extends Model
         'lastoccurence',
         'uid',
     ];
+
+    /** @return BelongsTo<Calendar, $this> */
+    public function calendar(): BelongsTo
+    {
+        return $this->belongsTo(Calendar::class, 'calendarid');
+    }
 }

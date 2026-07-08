@@ -6,6 +6,7 @@ use App\Exceptions\ApiHttpException;
 use App\Http\Middleware\AuthenticateWgwApi;
 use App\Http\Middleware\EnsureCalendarsEnabled;
 use App\Http\Middleware\EnsureContactsEnabled;
+use App\Http\Middleware\EnsureTasksEnabled;
 use App\Http\Middleware\RequireWgwRole;
 use App\Http\Middleware\WgwSecurityHeaders;
 use App\Services\Collab\CollabResponseException;
@@ -40,6 +41,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'wgw.role' => RequireWgwRole::class,
             'wgw.contacts' => EnsureContactsEnabled::class,
             'wgw.calendars' => EnsureCalendarsEnabled::class,
+            'wgw.tasks' => EnsureTasksEnabled::class,
         ]);
         $middleware->appendToGroup('web', [
             WgwSecurityHeaders::class,

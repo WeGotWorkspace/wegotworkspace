@@ -7,6 +7,40 @@ import { DayButton, DayPicker, getDefaultClassNames } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/ui/button";
 
+const CALENDAR_NAV_BUTTON_CLASS =
+  "inline-flex size-8 min-h-8 min-w-8 shrink-0 select-none items-center justify-center p-0 aria-disabled:opacity-50";
+const CALENDAR_NAV_ICON_SIZE = 20;
+
+function CalendarNavIcon({
+  orientation,
+  className,
+  size = CALENDAR_NAV_ICON_SIZE,
+  ...props
+}: {
+  orientation: "left" | "right" | "down";
+  className?: string;
+  size?: number;
+} & React.SVGProps<SVGSVGElement>) {
+  const iconProps = {
+    size,
+    strokeWidth: 2,
+    className: cn("shrink-0", className),
+    ...props,
+  };
+
+  if (orientation === "left") {
+    return <ChevronLeftIcon {...iconProps} />;
+  }
+
+  if (orientation === "right") {
+    return <ChevronRightIcon {...iconProps} />;
+  }
+
+  return (
+    <ChevronDownIcon size={14} strokeWidth={2} className={cn("shrink-0", className)} {...props} />
+  );
+}
+
 function Calendar({
   className,
   classNames,
@@ -44,15 +78,16 @@ function Calendar({
           defaultClassNames.nav,
         ),
         button_previous: cn(
-          buttonVariants({ variant: buttonVariant }),
-          "h-(--cell-size) w-(--cell-size) select-none p-0 aria-disabled:opacity-50",
+          buttonVariants({ variant: buttonVariant, size: "icon" }),
+          CALENDAR_NAV_BUTTON_CLASS,
           defaultClassNames.button_previous,
         ),
         button_next: cn(
-          buttonVariants({ variant: buttonVariant }),
-          "h-(--cell-size) w-(--cell-size) select-none p-0 aria-disabled:opacity-50",
+          buttonVariants({ variant: buttonVariant, size: "icon" }),
+          CALENDAR_NAV_BUTTON_CLASS,
           defaultClassNames.button_next,
         ),
+        chevron: cn("shrink-0", defaultClassNames.chevron),
         month_caption: cn(
           "flex h-(--cell-size) w-full items-center justify-center px-(--cell-size)",
           defaultClassNames.month_caption,
@@ -108,17 +143,18 @@ function Calendar({
         Root: ({ className, rootRef, ...props }) => {
           return <div data-slot="calendar" ref={rootRef} className={cn(className)} {...props} />;
         },
-        Chevron: ({ className, orientation, ...props }) => {
-          if (orientation === "left") {
-            return <ChevronLeftIcon className={cn("size-4", className)} {...props} />;
-          }
-
-          if (orientation === "right") {
-            return <ChevronRightIcon className={cn("size-4", className)} {...props} />;
-          }
-
-          return <ChevronDownIcon className={cn("size-4", className)} {...props} />;
-        },
+        Chevron: ({ className, orientation, size, disabled: _disabled, ...props }) => (
+          <CalendarNavIcon
+            orientation={
+              orientation === "right" || orientation === "down" || orientation === "left"
+                ? orientation
+                : "left"
+            }
+            className={className}
+            size={size ?? CALENDAR_NAV_ICON_SIZE}
+            {...props}
+          />
+        ),
         DayButton: CalendarDayButton,
         WeekNumber: ({ children, ...props }) => {
           return (
