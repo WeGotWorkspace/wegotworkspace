@@ -151,7 +151,7 @@ jobs:
             dist/releases/install
             dist/releases/setup.sh
             dist/releases/docker-compose.yml
-            dist/releases/.env.example
+            dist/releases/env.example
             dist/releases/wgw-docker-install-*.tar.gz
 
       - name: Smoke test install stack (compose + migrator + volumes)
@@ -167,7 +167,7 @@ jobs:
           docker pull "$IMAGE"
 
           cp dist/releases/docker-compose.yml "$SMOKE_DIR/docker-compose.yml"
-          cp dist/releases/.env.example "$SMOKE_DIR/.env"
+          cp dist/releases/env.example "$SMOKE_DIR/.env"
           sed -i "s|^WGW_IMAGE=.*|WGW_IMAGE=${IMAGE}|" "$SMOKE_DIR/.env"
           sed -i 's/^COMPOSE_PROFILES=.*/COMPOSE_PROFILES=sqlite/' "$SMOKE_DIR/.env"
           sed -i 's/^WGW_WAIT_FOR_DB=.*/WGW_WAIT_FOR_DB=0/' "$SMOKE_DIR/.env"

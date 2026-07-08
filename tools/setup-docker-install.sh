@@ -117,6 +117,28 @@ fetch_asset() {
   fi
 }
 
+fetch_env_example() {
+  dest=$1
+  for asset in env.example default.env.example .env.example; do
+    url=$(download_url "$asset")
+    log "Trying ${asset} from ${url}"
+    if command -v curl >/dev/null 2>&1; then
+      if curl -fsSL "$url" -o "$dest"; then
+        log "Downloaded ${asset}"
+        return 0
+      fi
+    elif command -v wget >/dev/null 2>&1; then
+      if wget -qO "$dest" "$url" 2>/dev/null; then
+        log "Downloaded ${asset}"
+        return 0
+      fi
+    else
+      die "curl or wget is required to download release assets."
+    fi
+  done
+  die "Could not download env example (tried env.example, default.env.example, .env.example)."
+}
+
 sed_inplace() {
   expr=$1
   file=$2
@@ -214,7 +236,7 @@ cmd_install() {
   mkdir -p "$WGW_INSTALL_DIR"
 
   fetch_asset "docker-compose.yml" "${WGW_INSTALL_DIR}/${COMPOSE_FILE}"
-  fetch_asset ".env.example" "${WGW_INSTALL_DIR}/${ENV_FILE}.example"
+  fetch_env_example "${WGW_INSTALL_DIR}/${ENV_FILE}.example"
 
   write_env_from_example "${WGW_INSTALL_DIR}/${ENV_FILE}" "${WGW_INSTALL_DIR}/${ENV_FILE}.example"
   apply_sqlite_profile "${WGW_INSTALL_DIR}/${ENV_FILE}"
