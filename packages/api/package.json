@@ -8,6 +8,7 @@
     "sync:runtime": "node scripts/sync-runtime-api-package.mjs --with-vendor",
     "dev": "pnpm run dev:php",
     "dev:php": "sh -c 'app_root=\"../../apps/wegotworkspace\"; env -u SABRE_BUILD_DIR php -S 127.0.0.1:9080 -t \"$app_root\" \"$app_root/index.php\"'",
+    "preview": "bash scripts/dev-php-server.sh",
     "openapi:build-json": "node scripts/build-openapi-built-json.mjs",
     "typegen": "pnpm run typegen:openapi",
     "typegen:check": "pnpm run typegen:openapi:check",
