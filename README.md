@@ -155,11 +155,14 @@ Release ZIP files and the production Docker image (`ghcr.io/wegotworkspace/wegot
 | ------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | `pnpm release`                        | `pnpm build` + **core** package to `dist/releases/` (loads signing key from repo-root `.env`)      |
 | `pnpm release -- --skip-build`        | Package only (when `pnpm build` already ran)                                                       |
-| `pnpm release:publish patch`          | Bump `apps/wegotworkspace/VERSION`, commit, **signed** tag, push → CI publishes the GitHub Release |
-| `pnpm release:publish 1.2.3 --yes`    | Same with an explicit version and no confirmation prompt                                           |
-| `pnpm release:publish patch --verify` | Run a local `pnpm release` before commit (catch build errors early)                                |
+| `pnpm release:publish patch`          | Signed tag on **main** HEAD, push tag → CI publishes the GitHub Release (no VERSION commit or sync PR) |
+| `pnpm release:publish 1.2.3 --yes`    | Same with an explicit version and no confirmation prompt                                               |
+| `pnpm release:publish patch --verify` | Run a local `pnpm release` before tagging (catch build errors early)                                     |
+| `pnpm release:publish patch --sync-main` | Also commit `apps/wegotworkspace/VERSION` on main (admin bypass required; optional)                   |
 
-Publish requires a clean git tree and a **signed annotated** git tag. That uses a separate key from release ZIP signing:
+Publish requires a clean git tree on **main**, up to date with `origin/main`, and a **signed annotated** git tag. The next semver is derived from the greater of `apps/wegotworkspace/VERSION` and the newest `v*` tag, so `main` can lag without blocking releases. CI reads the version from the tag name — no chore PR is needed.
+
+That uses a separate key from release ZIP signing:
 
 | `.env` variable                   | Purpose                                                            |
 | --------------------------------- | ------------------------------------------------------------------ |
