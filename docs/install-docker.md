@@ -95,6 +95,8 @@ docker compose up -d --build
 open http://localhost:8080/install/
 ```
 
+From a repo checkout you can also run `pnpm docker:install:up` (and `docker:install:down` / `docker:install:logs`) at the monorepo root after copying `docker/install/.env.example` to `docker/install/.env`.
+
 `docker/install/docker-compose.yml` includes a `build:` stanza for contributors. Release bundles ship a pull-only `docker-compose.yml` with no local build.
 
 ## Environment variables

@@ -87,6 +87,9 @@ Then use **https://wegotworkspace.localhost/** (see [`docker/README.md`](docker/
 | `pnpm preview`             | Built UI (`vite preview`) + PHP API (no HMR)           |
 | `pnpm build`               | Production build + runtime sync (CI/release)           |
 | `pnpm test:api-e2e:docker` | Playwright against Docker stack                        |
+| `pnpm docker:install:up`   | Production install stack from repo root ([`docker/install`](docker/install/); copy `docker/install/.env.example` → `.env`) |
+| `pnpm docker:install:down` | Stop production install stack                          |
+| `pnpm docker:install:logs` | Follow logs for production install stack               |
 
 Environment variables: [`docs/env.md`](docs/env.md).
 
