@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Installer;
 
-use App\LocalConfigFile;
 use Tests\Support\InstallerMysqlTestDatabase;
+use Tests\Support\WgwInstallFixture;
 use Tests\TestCase;
 
 final class InstallerEndpointsTest extends TestCase
@@ -20,6 +20,7 @@ final class InstallerEndpointsTest extends TestCase
         mkdir($this->installRoot, 0775, true);
         mkdir($this->installRoot.'/wgw-content', 0775, true);
         file_put_contents($this->installRoot.'/index.php', "<?php\n");
+        WgwInstallFixture::ensureApiPackage($this->installRoot);
 
         putenv('WGW_APP_ROOT='.$this->installRoot);
         $_ENV['WGW_APP_ROOT'] = $this->installRoot;
@@ -28,7 +29,7 @@ final class InstallerEndpointsTest extends TestCase
 
         parent::setUp();
 
-        config(['wgw.data_dir' => $this->installRoot.'/wgw-content']);
+        config(['wgw.install_root' => $this->installRoot, 'wgw.data_dir' => $this->installRoot.'/wgw-content']);
     }
 
     protected function tearDown(): void
@@ -37,8 +38,8 @@ final class InstallerEndpointsTest extends TestCase
         if (is_file($lock)) {
             @unlink($lock);
         }
-        if (is_file($this->installRoot.'/wgw-config.php')) {
-            @unlink($this->installRoot.'/wgw-config.php');
+        if (is_file($this->installRoot.'/packages/api/.env')) {
+            @unlink($this->installRoot.'/packages/api/.env');
         }
 
         if ($this->mysqlInstallDatabase !== null) {
@@ -46,7 +47,7 @@ final class InstallerEndpointsTest extends TestCase
             $this->mysqlInstallDatabase = null;
         }
 
-        LocalConfigFile::clearCache();
+        WgwInstallFixture::forgetInstallBindings();
 
         parent::tearDown();
     }
@@ -128,7 +129,10 @@ final class InstallerEndpointsTest extends TestCase
             ->assertJsonStructure(['redirect', 'state']);
 
         $this->assertFileExists($this->installRoot.'/wgw-content/.installed');
-        $this->assertFileExists($this->installRoot.'/wgw-config.php');
+        $env = (string) file_get_contents($this->installRoot.'/packages/api/.env');
+        $this->assertStringContainsString('WGW_DB_CONNECTION=sqlite', $env);
+        $this->assertStringContainsString('install-test.sqlite', $env);
+        $this->assertFileDoesNotExist($this->installRoot.'/wgw-config.php');
         $this->assertFileExists($this->installRoot.'/wgw-content/install-test.sqlite');
         $this->assertFileExists($this->installRoot.'/wgw-content/keys/api-jwt-private.pem');
         $this->assertFileExists($this->installRoot.'/wgw-content/keys/api-jwt-public.pem');
@@ -201,17 +205,10 @@ final class InstallerEndpointsTest extends TestCase
             ->assertJsonStructure(['redirect', 'state']);
 
         $this->assertFileExists($this->installRoot.'/wgw-content/.installed');
-        $this->assertFileExists($this->installRoot.'/wgw-config.php');
-        $this->assertFileExists($this->installRoot.'/wgw-content/keys/api-jwt-private.pem');
-        $this->assertFileExists($this->installRoot.'/wgw-content/keys/api-jwt-public.pem');
-
-        $config = require $this->installRoot.'/wgw-config.php';
-        $this->assertIsArray($config);
-        $this->assertStringContainsString(
-            'mysql:',
-            (string) ($config['pdo']['dsn'] ?? ''),
-        );
-        $this->assertStringContainsString($this->mysqlInstallDatabase, (string) ($config['pdo']['dsn'] ?? ''));
+        $env = (string) file_get_contents($this->installRoot.'/packages/api/.env');
+        $this->assertStringContainsString('WGW_DB_CONNECTION=mysql', $env);
+        $this->assertStringContainsString($this->mysqlInstallDatabase, $env);
+        $this->assertFileDoesNotExist($this->installRoot.'/wgw-config.php');
 
         $admin = [
             'host' => getenv('WGW_TEST_MYSQL_HOST') ?: '127.0.0.1',
@@ -240,7 +237,7 @@ final class InstallerEndpointsTest extends TestCase
 
         putenv('WGW_DISABLE_LOGIN_THROTTLE=1');
         $_ENV['WGW_DISABLE_LOGIN_THROTTLE'] = '1';
-        LocalConfigFile::clearCache();
+        WgwInstallFixture::syncDatabaseConnection();
 
         $this->postJson('/api/v1/auth/token', [
             'username' => 'admin',

@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Database;
 
-use App\LocalConfigFile;
 use App\Models\AppSetting;
 use App\Models\AppUpdateHistory;
 use App\Models\GroupMember;
 use App\Models\Principal;
 use App\Models\User;
-use App\Support\WgwDatabaseConfig;
 use Tests\Support\WgwDatabaseTestCase;
 use Tests\Support\WgwInstallFixture;
 
@@ -66,7 +64,7 @@ final class WgwModelsTest extends WgwDatabaseTestCase
         $this->assertSame('success', $row->status);
     }
 
-    public function test_wgw_connection_uses_install_config_when_present(): void
+    public function test_wgw_connection_uses_install_env_when_present(): void
     {
         $installRoot = sys_get_temp_dir().'/wgw-models-config-'.uniqid('', true);
         mkdir($installRoot, 0775, true);
@@ -74,30 +72,22 @@ final class WgwModelsTest extends WgwDatabaseTestCase
 
         putenv('WGW_APP_ROOT='.$installRoot);
         $_ENV['WGW_APP_ROOT'] = $installRoot;
+        config(['wgw.install_root' => $installRoot]);
+        WgwInstallFixture::ensureApiPackage($installRoot);
         WgwInstallFixture::forgetInstallBindings();
-        LocalConfigFile::clearCache();
 
-        file_put_contents($installRoot.'/wgw-config.php', <<<'PHP'
-<?php
+        WgwInstallFixture::writeRuntimeEnv($installRoot, [
+            'WGW_DATA_DIR' => './wgw-content',
+            'WGW_UPDATE_FEED_URL' => 'https://example.test/releases/manifest.json',
+            'WGW_DB_CONNECTION' => 'sqlite',
+            'WGW_DB_DATABASE' => './wgw-content/test.sqlite',
+        ]);
 
-declare(strict_types=1);
-
-return [
-    'data_dir' => './wgw-content',
-    'update_feed_url' => 'https://example.test/releases/manifest.json',
-    'pdo' => ['sqlite_file' => './wgw-content/test.sqlite'],
-];
-PHP);
-
-        WgwInstallFixture::forgetInstallBindings();
-        LocalConfigFile::clearCache();
-
-        $config = $this->app->make(WgwDatabaseConfig::class)->connectionConfig();
+        $config = (array) config('database.connections.wgw', []);
 
         putenv('WGW_APP_ROOT');
         unset($_ENV['WGW_APP_ROOT']);
         WgwInstallFixture::forgetInstallBindings();
-        LocalConfigFile::clearCache();
         if (is_dir($installRoot)) {
             $this->removeTree($installRoot);
         }
