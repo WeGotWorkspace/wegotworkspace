@@ -9,6 +9,7 @@ use App\Services\Installer\WgwConfigMigrator;
 use App\Services\Installer\WgwSchemaMigrator;
 use App\Services\Tasks\DefaultMixedCalendarMigrator;
 use App\Services\Tasks\InboxTaskListProvisioner;
+use App\Support\WgwInstallConfig;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 
@@ -52,13 +53,22 @@ Artisan::command('wgw:dev-install', function (DevInstallBootstrap $bootstrap): i
 })->purpose('Bootstrap packages/api/.env WGW_* keys, SQLite, and admin user for Docker-free dev/preview (idempotent)');
 
 Artisan::command('wgw:config-migrate', function (WgwConfigMigrator $migrator): int {
-    if (! $migrator->migrateIfNeeded()) {
-        $this->info('No legacy wgw-config.php found — nothing to migrate.');
+    if ($migrator->migrateIfNeeded()) {
+        $this->info('Migrated wgw-config.php to packages/api/.env (backup kept, legacy file removed).');
 
         return self::SUCCESS;
     }
 
-    $this->info('Migrated wgw-config.php to packages/api/.env (backup kept, legacy file removed).');
+    $installRoot = app(WgwInstallConfig::class)->installRoot();
+    $backups = glob(rtrim($installRoot, '/').'/wgw-config.php.bak.*') ?: [];
+    if ($backups !== []) {
+        $this->warn('No active wgw-config.php to migrate. A backup exists but packages/api/.env already has database keys.');
+        $this->line('If DB config is wrong, remove WGW_DB_* from packages/api/.env and run this command again.');
+
+        return self::SUCCESS;
+    }
+
+    $this->info('No legacy wgw-config.php found — nothing to migrate.');
 
     return self::SUCCESS;
 })->purpose('One-shot migration from legacy wgw-config.php to WGW_* keys in packages/api/.env');
