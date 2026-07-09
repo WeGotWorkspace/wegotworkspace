@@ -1,5 +1,11 @@
 Options -Indexes -MultiViews
 
+# PWA ships index.html beside index.php for Workbox precache; always route "/" through Laravel
+# so unconfigured installs redirect to /install/ (see UiStaticFront).
+<IfModule mod_dir.c>
+    DirectoryIndex index.php
+</IfModule>
+
 # WebAssembly assets: ensure correct Content-Type when host mime.types omits .wasm.
 <IfModule mod_mime.c>
     AddType application/wasm .wasm
