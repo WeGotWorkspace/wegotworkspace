@@ -20,43 +20,28 @@ final class WgwConfigMigrator
 
     public static function migrateAtPaths(string $installRoot, string $apiPackageRoot, bool $clearConfig = true): bool
     {
-        $legacyPath = rtrim($installRoot, '/').'/wgw-config.php';
-        if (! is_readable($legacyPath)) {
-            return false;
-        }
-
+        $installRoot = rtrim($installRoot, '/');
         $apiEnv = new ApiRuntimeEnvService;
         $apiEnv->seedEnvFromExampleIfMissing($apiPackageRoot);
         $envPath = $apiPackageRoot.'/.env';
 
-        $legacy = WgwLegacyConfigParser::read($legacyPath);
-        $pairs = self::legacyToEnvPairs($legacy);
-
-        $timestamp = date('Ymd-His');
-        @copy($legacyPath, $legacyPath.'.bak.'.$timestamp);
-        if (is_file($envPath)) {
-            @copy($envPath, $envPath.'.bak.'.$timestamp);
+        $legacyPath = self::resolveLegacySourcePath($installRoot, $envPath);
+        if ($legacyPath === null) {
+            return false;
         }
 
         $writer = new InstallerEnvWriter(
             new AppPaths(new WgwInstallConfig, new WgwDatabaseProbe(new WgwInstallConfig)),
             $apiEnv,
         );
-        $writer->patchEnvFile($envPath, $pairs);
-        self::applyPairsToRuntime($pairs);
 
-        if (! @unlink($legacyPath)) {
-            throw new \RuntimeException('Could not remove legacy wgw-config.php after migration.');
-        }
-
-        if ($clearConfig && class_exists(Artisan::class)) {
-            try {
-                Artisan::call('config:clear');
-            } catch (\Throwable) {
-            }
-        }
-
-        return true;
+        return self::migrateFromLegacyFile(
+            $legacyPath,
+            $envPath,
+            $installRoot,
+            static fn (string $path, array $pairs) => $writer->patchEnvFile($path, $pairs),
+            $clearConfig,
+        );
     }
 
     public function migrateIfNeeded(bool $clearConfig = true): bool
@@ -67,38 +52,21 @@ final class WgwConfigMigrator
             return false;
         }
 
-        $legacyPath = $installRoot.'/wgw-config.php';
-        if (! is_readable($legacyPath)) {
-            return false;
-        }
-
         $this->apiEnv->seedEnvFromExampleIfMissing($apiRoot);
         $envPath = $apiRoot.'/.env';
 
-        $legacy = WgwLegacyConfigParser::read($legacyPath);
-        $pairs = self::legacyToEnvPairs($legacy);
-
-        $timestamp = date('Ymd-His');
-        @copy($legacyPath, $legacyPath.'.bak.'.$timestamp);
-        if (is_file($envPath)) {
-            @copy($envPath, $envPath.'.bak.'.$timestamp);
+        $legacyPath = self::resolveLegacySourcePath($installRoot, $envPath);
+        if ($legacyPath === null) {
+            return false;
         }
 
-        $this->envWriter->patchEnvFile($envPath, $pairs);
-        self::applyPairsToRuntime($pairs);
-
-        if (! @unlink($legacyPath)) {
-            throw new \RuntimeException('Could not remove legacy wgw-config.php after migration.');
-        }
-
-        if ($clearConfig && class_exists(Artisan::class)) {
-            try {
-                Artisan::call('config:clear');
-            } catch (\Throwable) {
-            }
-        }
-
-        return true;
+        return self::migrateFromLegacyFile(
+            $legacyPath,
+            $envPath,
+            $installRoot,
+            fn (string $path, array $pairs) => $this->envWriter->patchEnvFile($path, $pairs),
+            $clearConfig,
+        );
     }
 
     /**
@@ -129,7 +97,7 @@ final class WgwConfigMigrator
 
         $pdo = $legacy['pdo'] ?? null;
         if (! is_array($pdo)) {
-            return $pairs;
+            $pdo = ['sqlite_file' => rtrim($dataDir, '/').'/db.sqlite'];
         }
 
         $installRoot = getenv('WGW_APP_ROOT');
@@ -158,5 +126,116 @@ final class WgwConfigMigrator
             $_ENV[$key] = $value;
             $_SERVER[$key] = $value;
         }
+    }
+
+    private static function resolveLegacySourcePath(string $installRoot, string $envPath): ?string
+    {
+        $installRoot = rtrim($installRoot, '/');
+        $legacyPath = $installRoot.'/wgw-config.php';
+        if (is_readable($legacyPath)) {
+            return $legacyPath;
+        }
+
+        if (self::envFileHasRealDatabaseConfig($envPath)) {
+            return null;
+        }
+
+        $backups = glob($installRoot.'/wgw-config.php.bak.*');
+        if (! is_array($backups) || $backups === []) {
+            return null;
+        }
+        sort($backups);
+        $latest = end($backups);
+
+        return is_string($latest) && is_readable($latest) ? $latest : null;
+    }
+
+    private static function envFileHasRealDatabaseConfig(string $envPath): bool
+    {
+        if (! is_readable($envPath)) {
+            return false;
+        }
+        $content = (string) file_get_contents($envPath);
+        $connection = self::readEnvValue($content, 'WGW_DB_CONNECTION');
+        if ($connection === null || $connection === '') {
+            return false;
+        }
+        $database = self::readEnvValue($content, 'WGW_DB_DATABASE');
+        if ($database === null || $database === '') {
+            return false;
+        }
+
+        $examplePath = dirname($envPath).'/.env.example';
+        if (is_readable($examplePath)) {
+            $example = (string) file_get_contents($examplePath);
+            $exampleConnection = self::readEnvValue($example, 'WGW_DB_CONNECTION');
+            $exampleDatabase = self::readEnvValue($example, 'WGW_DB_DATABASE');
+            if ($connection === $exampleConnection && $database === $exampleDatabase) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static function readEnvValue(string $content, string $key): ?string
+    {
+        if (preg_match('/^'.preg_quote($key, '/').'\s*=\s*(\S+)/m', $content, $match) !== 1) {
+            return null;
+        }
+
+        return trim($match[1], " \t\"'");
+    }
+
+    /**
+     * @param  array<string, string>  $pairs
+     */
+    private static function pairsIncludeDatabaseConfig(array $pairs): bool
+    {
+        $connection = $pairs['WGW_DB_CONNECTION'] ?? '';
+
+        return is_string($connection) && trim($connection) !== '';
+    }
+
+    /**
+     * @param  callable(string, array<string, string>): void  $patchEnv
+     */
+    private static function migrateFromLegacyFile(
+        string $legacyPath,
+        string $envPath,
+        string $installRoot,
+        callable $patchEnv,
+        bool $clearConfig,
+    ): bool {
+        $legacy = WgwLegacyConfigParser::read($legacyPath);
+        $pairs = self::legacyToEnvPairs($legacy);
+        if (! self::pairsIncludeDatabaseConfig($pairs)) {
+            return false;
+        }
+
+        $timestamp = date('Ymd-His');
+        if (is_file($installRoot.'/wgw-config.php')) {
+            @copy($installRoot.'/wgw-config.php', $installRoot.'/wgw-config.php.bak.'.$timestamp);
+        }
+        if (is_file($envPath)) {
+            @copy($envPath, $envPath.'.bak.'.$timestamp);
+        }
+
+        $patchEnv($envPath, $pairs);
+        self::applyPairsToRuntime($pairs);
+
+        $activeLegacy = $installRoot.'/wgw-config.php';
+        if ($legacyPath === $activeLegacy && is_file($activeLegacy) && ! @unlink($activeLegacy)) {
+            throw new \RuntimeException('Could not remove legacy wgw-config.php after migration.');
+        }
+
+        if ($clearConfig && class_exists(Artisan::class)) {
+            try {
+                Artisan::call('config:clear');
+            } catch (\Throwable) {
+            }
+        }
+
+        return true;
     }
 }
