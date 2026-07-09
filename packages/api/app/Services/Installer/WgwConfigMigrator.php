@@ -6,6 +6,7 @@ namespace App\Services\Installer;
 
 use App\Support\AppPaths;
 use App\Support\UpdateFeedDefaults;
+use App\Support\WgwApiEnvFile;
 use App\Support\WgwDatabaseProbe;
 use App\Support\WgwInstallConfig;
 use Illuminate\Support\Facades\Artisan;
@@ -137,7 +138,7 @@ final class WgwConfigMigrator
             return $legacyPath;
         }
 
-        if (self::envFileHasRealDatabaseConfig($envPath)) {
+        if (WgwApiEnvFile::hasRealDatabaseConfig($envPath)) {
             return null;
         }
 
@@ -149,43 +150,6 @@ final class WgwConfigMigrator
         $latest = end($backups);
 
         return is_string($latest) && is_readable($latest) ? $latest : null;
-    }
-
-    private static function envFileHasRealDatabaseConfig(string $envPath): bool
-    {
-        if (! is_readable($envPath)) {
-            return false;
-        }
-        $content = (string) file_get_contents($envPath);
-        $connection = self::readEnvValue($content, 'WGW_DB_CONNECTION');
-        if ($connection === null || $connection === '') {
-            return false;
-        }
-        $database = self::readEnvValue($content, 'WGW_DB_DATABASE');
-        if ($database === null || $database === '') {
-            return false;
-        }
-
-        $examplePath = dirname($envPath).'/.env.example';
-        if (is_readable($examplePath)) {
-            $example = (string) file_get_contents($examplePath);
-            $exampleConnection = self::readEnvValue($example, 'WGW_DB_CONNECTION');
-            $exampleDatabase = self::readEnvValue($example, 'WGW_DB_DATABASE');
-            if ($connection === $exampleConnection && $database === $exampleDatabase) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private static function readEnvValue(string $content, string $key): ?string
-    {
-        if (preg_match('/^'.preg_quote($key, '/').'\s*=\s*(\S+)/m', $content, $match) !== 1) {
-            return null;
-        }
-
-        return trim($match[1], " \t\"'");
     }
 
     /**
