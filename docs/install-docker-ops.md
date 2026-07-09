@@ -104,7 +104,7 @@ Pre-release testing from a clone without publishing to GHCR: use Option B or C (
 
 ## Apple Silicon & ARM
 
-Releases publish a multi-arch OCI manifest (`linux/amd64` + `linux/arm64`) via CI ([`.github/workflows/release.yml`](../.github/workflows/release.yml)).
+Releases publish a multi-arch OCI manifest (`linux/amd64` + `linux/arm64`) via CI ([`.github/workflows/release.yml`](../.github/workflows/release.yml)). CI builds the image from [`Dockerfile.runtime`](../docker/install/Dockerfile.runtime), which unpacks the pre-built deploy ZIP from the runner; local `docker compose up --build` still uses [`Dockerfile`](../docker/install/Dockerfile) (full monorepo build).
 
 | Host | Behavior |
 | --- | --- |
