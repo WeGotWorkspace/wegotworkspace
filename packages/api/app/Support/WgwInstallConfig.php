@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Support;
 
-use App\LocalConfigFile;
-
 /**
  * Install path resolution for the greenfield Laravel app (no legacy Config::load).
  */
@@ -19,9 +17,9 @@ final class WgwInstallConfig
             return $this->installRoot;
         }
 
-        $fromEnv = getenv('WGW_APP_ROOT');
-        if (is_string($fromEnv) && $fromEnv !== '' && is_dir($fromEnv)) {
-            return $this->installRoot = $this->normalize($fromEnv);
+        $fromConfig = config('wgw.install_root');
+        if (is_string($fromConfig) && $fromConfig !== '' && is_dir($fromConfig)) {
+            return $this->installRoot = $this->normalize($fromConfig);
         }
 
         $cwd = getcwd();
@@ -37,26 +35,16 @@ final class WgwInstallConfig
         return $this->installRoot = dirname(__DIR__, 2);
     }
 
-    public function configFilePath(): string
+    public function apiEnvPath(): string
     {
-        return $this->installRoot().'/wgw-config.php';
+        return $this->installRoot().'/packages/api/.env';
     }
 
     public function dataDir(): string
     {
         $configured = config('wgw.data_dir');
         if (is_string($configured) && $configured !== '') {
-            return rtrim($configured, '/');
-        }
-
-        $override = getenv('SABRE_DATA_DIR');
-        if (is_string($override) && $override !== '') {
-            return $this->resolvePath($override);
-        }
-
-        $file = $this->readInstallFileConfig();
-        if (isset($file['data_dir']) && is_string($file['data_dir']) && $file['data_dir'] !== '') {
-            return $this->resolvePath($file['data_dir']);
+            return $this->resolvePath($configured);
         }
 
         return $this->installRoot().'/wgw-content';
@@ -99,25 +87,22 @@ final class WgwInstallConfig
             return strtolower(trim($fromEnv));
         }
 
-        $file = $this->readInstallFileConfig();
-        if (isset($file['install_channel']) && is_string($file['install_channel']) && trim($file['install_channel']) !== '') {
-            return strtolower(trim($file['install_channel']));
-        }
-
         return null;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function readInstallFileConfig(): array
+    public function hasRuntimeDatabaseConfig(): bool
     {
-        $path = $this->configFilePath();
-        if (! is_readable($path)) {
-            return [];
+        $connection = (string) config('database.connections.wgw.driver', '');
+        if ($connection === '') {
+            return false;
         }
 
-        return LocalConfigFile::read($path);
+        $database = (string) config('database.connections.wgw.database', '');
+        if ($connection === 'sqlite') {
+            return $database !== '' && $database !== ':memory:';
+        }
+
+        return $database !== '';
     }
 
     private function resolvePath(string $path): string
@@ -147,9 +132,9 @@ final class WgwInstallConfig
     {
         $dir = rtrim(str_replace('\\', '/', $dir), '/');
 
-        return is_file($dir.'/wgw-config.php')
-            || is_file($dir.'/wgw-config.sample.php')
-            || is_file($dir.'/index.php');
+        return is_file($dir.'/index.php')
+            || is_file($dir.'/packages/api/.env')
+            || is_file($dir.'/packages/api/.env.example');
     }
 
     private function normalize(string $path): string
