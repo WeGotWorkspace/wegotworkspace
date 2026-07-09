@@ -13,7 +13,7 @@ Define explicit disks (names are examples; keep stable once chosen):
 | `wgw_files` | `data/files/` | drive, office, WebDAV tree (`users/`, `groups/`) |
 | `wgw_notes` | `data/files/users/{user}/.notes/` **or** prefix on `wgw_files` | notes markdown |
 
-- Resolve roots from `wgw-config.php` in a **service provider** (set disk roots at boot) — not `Paths::data()` in services.
+- Resolve roots from `WGW_*` keys in `packages/api/.env` in a **service provider** (set disk roots at boot) — not `Paths::data()` in services.
 - Optional later: `s3` disk with same logical paths; domain code stays on `Storage::disk('wgw_files')`.
 
 ## Application boundary

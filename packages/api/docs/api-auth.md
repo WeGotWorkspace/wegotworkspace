@@ -4,7 +4,7 @@ The `/api/v1` endpoints use bearer JWT tokens signed with RS256.
 
 ## 1) Signing keys
 
-For Docker-free monorepo dev, run **`pnpm dev`** or **`pnpm preview`** — the first run bootstraps `wgw-config.php`, SQLite, an `admin` user, and RSA keys under `wgw-content/keys/` (no manual OpenSSL step). Default login: `admin` / `storybook-dev` (override with `WGW_DEV_USERNAME` / `WGW_DEV_PASSWORD`).
+For Docker-free monorepo dev, run **`pnpm dev`** or **`pnpm preview`** — the first run bootstraps `packages/api/.env` (`WGW_*`), SQLite, an `admin` user, and RSA keys under `wgw-content/keys/` (no manual OpenSSL step). Default login: `admin` / `storybook-dev` (override with `WGW_DEV_USERNAME` / `WGW_DEV_PASSWORD`).
 
 The web installer and `wgw:dev-install` create these files:
 

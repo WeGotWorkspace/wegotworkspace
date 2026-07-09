@@ -6,7 +6,7 @@
 |------|------------|--------|
 | `packages/api` | Laravel **API app** (REST, WebDAV, UI kernels) | `composer install` only |
 | `packages/apps` | UI **source** (Vite dev / build → `packages/apps/dist/`) | `vite dev` or `vite build` |
-| `apps/wegotworkspace` | **Install shell** — `index.php`, `wgw-config.php`, `wgw-content/` | No code copies in day-to-day dev |
+| `apps/wegotworkspace` | **Install shell** — `index.php`, `wgw-content/` (runtime data; `WGW_*` in `packages/api/.env`) | No code copies in day-to-day dev |
 
 Production releases still assemble a self-contained tree under `apps/wegotworkspace/packages/*` via `pnpm build` / `pnpm release`. That sync is for shipping, not for editing.
 
@@ -24,7 +24,7 @@ pnpm dev
 
 The API task runs `packages/api/scripts/dev-php-server.sh`, which traps `SIGINT`/`SIGTERM` and stops the `php -S` process when you exit `pnpm dev` or `pnpm preview` (Ctrl+C). If `:9080` stays bound after a crash, find the listener with `lsof -nP -iTCP:9080 -sTCP:LISTEN` and stop it manually.
 
-`pnpm dev` runs `wgw:dev-install` first (idempotent), then starts all three in parallel via turbo. On a fresh clone that bootstraps `wgw-config.php`, `wgw-content/db.sqlite`, the `admin` user (password `storybook-dev`, overridable via `WGW_DEV_USERNAME` / `WGW_DEV_PASSWORD`), and JWT keys under `apps/wegotworkspace/wgw-content/keys/` (gitignored). OpenAPI typegen watch runs alongside.
+`pnpm dev` runs `wgw:dev-install` first (idempotent), then starts all three in parallel via turbo. On a fresh clone that bootstraps `packages/api/.env` (from `.env.example`), `wgw-content/db.sqlite`, the `admin` user (password `storybook-dev`, overridable via `WGW_DEV_USERNAME` / `WGW_DEV_PASSWORD`), and JWT keys under `apps/wegotworkspace/wgw-content/keys/` (gitignored). OpenAPI typegen watch runs alongside.
 
 ## Docker API (optional)
 
@@ -98,7 +98,7 @@ See [`packages/api/docs/api-auth.md`](../packages/api/docs/api-auth.md) for env 
 
 1. **API running** — `pnpm dev:api` in a separate terminal; `curl -s http://127.0.0.1:9080/api/v1/health` must return `200`.
 2. **Laravel env** — `cp packages/api/.env.example packages/api/.env` and `php artisan key:generate --working-dir packages/api`.
-3. **Install data** under `apps/wegotworkspace/` — `wgw-config.php`, `wgw-content/db.sqlite`, and `wgw-content/keys/api-jwt-{private,public}.pem` (created by the web installer, or copy from an existing install / run `tools/setup-storybook-live-api.sh` after install).
+3. **Install data** under `apps/wegotworkspace/` — `packages/api/.env` with `WGW_*`, `wgw-content/db.sqlite`, and `wgw-content/keys/api-jwt-{private,public}.pem` (created by the web installer, or copy from an existing install / run `tools/setup-storybook-live-api.sh` after install).
 4. **Preview env** — repo-root `.env.local` from `packages/apps/.env.example` with `VITE_WGW_USE_LIVE_API=1` and credentials matching your install user.
 
 If the API is down, the preview proxy returns **502** with `code: proxy_backend_down` (not a Laravel 500). When the API is up but JWT keys are missing, `/auth/token` returns **503** `config_error`.
