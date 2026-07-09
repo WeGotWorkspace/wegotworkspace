@@ -16,4 +16,4 @@
 
 ## Single-tenant
 
-- One install per `wgw-config.php`; multitenancy deferred
+- One install per `packages/api/.env` (`WGW_*` profile); multitenancy deferred
