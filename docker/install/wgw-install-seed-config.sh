@@ -3,7 +3,7 @@ set -eu
 
 # Seed install config into the named volume before web subpath file mounts.
 # Docker creates directories (not files) when subpath targets are missing; the
-# migrator mounts the full volume here and writes wgw-config.php + api.env first.
+# migrator mounts the full volume here and writes api.env first.
 
 CONFIG_VOL="${WGW_CONFIG_VOL:-/wgw-config-vol}"
 INSTALL_ROOT="${WGW_APP_ROOT:-/var/www/html}"
@@ -33,11 +33,6 @@ ensure_config_file() {
 }
 
 mkdir -p "$CONFIG_VOL"
-
-ensure_config_file \
-  "${CONFIG_VOL}/wgw-config.php" \
-  "${INSTALL_ROOT}/wgw-config.sample.php" \
-  "wgw-config.php"
 
 ensure_config_file \
   "${CONFIG_VOL}/api.env" \
@@ -76,7 +71,7 @@ elif [ "${COMPOSE_PROFILES:-mysql}" = "sqlite" ] || [ "${WGW_WAIT_FOR_DB:-1}" = 
 fi
 
 # Remove mistaken copies from older entrypoints that copied into directory mounts.
-for stray in "${CONFIG_VOL}/wgw-config.sample.php" "${CONFIG_VOL}/.env.example"; do
+for stray in "${CONFIG_VOL}/wgw-config.php" "${CONFIG_VOL}/wgw-config.sample.php" "${CONFIG_VOL}/.env.example"; do
   if [ -f "$stray" ]; then
     rm -f "$stray"
   fi
