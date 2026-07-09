@@ -350,8 +350,8 @@ final class UpdateRunner
             file_put_contents($this->install->installRoot().'/VERSION', $targetVersion."\n", LOCK_EX);
 
             self::writeStatus('running_migrations', $beforeVersion, $targetVersion);
-            $this->schemaMigrator->migrate();
             $this->configMigrator->migrateIfNeeded();
+            $this->schemaMigrator->migrate();
             self::recordHistory($beforeVersion, $targetVersion, 'success', 'Update applied successfully.');
             $result['ok'] = true;
             $result['message'] = 'Update applied successfully.';
