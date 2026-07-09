@@ -1066,6 +1066,13 @@
                             "null"
                         ],
                         "description": "Install channel: `docker` disables Admin web updater; `zip` or null uses ZIP in-container updates."
+                    },
+                    "imageTag": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Docker image tag from WGW_IMAGE when install channel is docker."
                     }
                 },
                 "required": [

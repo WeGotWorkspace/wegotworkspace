@@ -105,6 +105,7 @@ export type AdminUpdateResult = {
 export type AdminUpdateState = {
   installChannel: string | null;
   installedVersion: string;
+  imageTag?: string | null;
   schemaVersion: number;
   latest: AdminUpdateRelease | null;
   updateAvailable: boolean;

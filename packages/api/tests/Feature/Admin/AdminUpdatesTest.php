@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Tests\Feature\Admin;
 
 use App\Storage\WgwStorage;
+use App\Support\AppVersion;
+use App\Support\WgwInstallConfig;
+use Illuminate\Support\Facades\File;
 use Tests\Support\AdminTestFixtures;
 use Tests\Support\WgwDatabaseTestCase;
 
@@ -65,6 +68,64 @@ final class AdminUpdatesTest extends WgwDatabaseTestCase
         $this->withBearer($this->adminBearerToken())
             ->postJson('/api/v1/admin/update-jobs', ['type' => 'apply'])
             ->assertForbidden();
+    }
+
+    public function test_docker_channel_installed_version_uses_version_file_not_stale_job_state(): void
+    {
+        $installRoot = storage_path('framework/testing/wgw-docker-version-'.uniqid('', true));
+        File::ensureDirectoryExists($installRoot);
+        File::put($installRoot.'/VERSION', "0.1.80\n");
+
+        $previousAppRoot = getenv('WGW_APP_ROOT') ?: '';
+        putenv('WGW_APP_ROOT='.$installRoot);
+        $_ENV['WGW_APP_ROOT'] = $installRoot;
+        putenv('WGW_IMAGE=ghcr.io/wegotworkspace/wegotworkspace:0.1.80');
+        $_ENV['WGW_IMAGE'] = 'ghcr.io/wegotworkspace/wegotworkspace:0.1.80';
+        $this->app->forgetInstance(WgwInstallConfig::class);
+        $this->app->forgetInstance(AppVersion::class);
+
+        config(['wgw.install_channel' => 'docker']);
+
+        $recentAt = date('c');
+        app(WgwStorage::class)->data()->put(
+            'updates/state.json',
+            json_encode([
+                'phase' => 'extracting',
+                'current' => ['from' => '0.1.70', 'to' => '0.1.71', 'at' => $recentAt],
+                'phase_progress' => [
+                    'completed' => 100,
+                    'total' => 200,
+                    'percent' => 50,
+                    'updatedAt' => $recentAt,
+                ],
+            ], JSON_UNESCAPED_SLASHES)."\n",
+        );
+
+        try {
+            $this->withBearer($this->adminBearerToken())
+                ->getJson('/api/v1/admin/updates/state')
+                ->assertOk()
+                ->assertJsonPath('installChannel', 'docker')
+                ->assertJsonPath('installedVersion', '0.1.80')
+                ->assertJsonPath('imageTag', '0.1.80')
+                ->assertJsonPath('inProgress', false)
+                ->assertJsonPath('phase', null);
+        } finally {
+            if ($previousAppRoot !== '') {
+                putenv('WGW_APP_ROOT='.$previousAppRoot);
+                $_ENV['WGW_APP_ROOT'] = $previousAppRoot;
+            } else {
+                putenv('WGW_APP_ROOT');
+                unset($_ENV['WGW_APP_ROOT']);
+            }
+            putenv('WGW_IMAGE');
+            unset($_ENV['WGW_IMAGE']);
+            $this->app->forgetInstance(WgwInstallConfig::class);
+            $this->app->forgetInstance(AppVersion::class);
+            if (File::isDirectory($installRoot)) {
+                File::deleteDirectory($installRoot);
+            }
+        }
     }
 
     public function test_admin_can_round_trip_update_log(): void

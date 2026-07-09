@@ -84,6 +84,7 @@ export const DockerChannel: Story = {
         updates: {
           installChannel: "docker",
           installedVersion: "1.2.3",
+          imageTag: "1.2.3",
           updateAvailable: true,
           latest: {
             version: "9.9.9",
