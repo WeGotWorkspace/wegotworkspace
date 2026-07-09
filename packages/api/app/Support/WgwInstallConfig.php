@@ -92,6 +92,21 @@ final class WgwInstallConfig
             && $path[1] === ':';
     }
 
+    public function installChannel(): ?string
+    {
+        $fromEnv = config('wgw.install_channel');
+        if (is_string($fromEnv) && trim($fromEnv) !== '') {
+            return strtolower(trim($fromEnv));
+        }
+
+        $file = $this->readInstallFileConfig();
+        if (isset($file['install_channel']) && is_string($file['install_channel']) && trim($file['install_channel']) !== '') {
+            return strtolower(trim($file['install_channel']));
+        }
+
+        return null;
+    }
+
     /**
      * @return array<string, mixed>
      */

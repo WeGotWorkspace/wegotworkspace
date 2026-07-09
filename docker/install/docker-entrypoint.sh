@@ -16,9 +16,7 @@ fi
 
 # Install config lives on a named volume; link expected paths for Laravel and the installer.
 if [ -d "$CONFIG_VOL" ]; then
-  if [ ! -f "${CONFIG_VOL}/wgw-config.php" ] || [ ! -f "${CONFIG_VOL}/api.env" ]; then
-    /usr/local/bin/wgw-install-seed-config.sh
-  fi
+  /usr/local/bin/wgw-install-seed-config.sh
 
   for target in "${INSTALL_ROOT}/wgw-config.php" "${API_ROOT}/.env"; do
     if [ -d "$target" ]; then

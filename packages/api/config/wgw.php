@@ -1,9 +1,37 @@
 <?php
 
 declare(strict_types=1);
+use App\Services\Installer\WgwInstallEnv;
 
 return [
     'data_dir' => env('WGW_DATA_DIR_OVERRIDE'),
+    /** Install channel: `docker` (image pull + setup.sh) or `zip` / unset (Admin web updater). */
+    'install_channel' => env('WGW_INSTALL_CHANNEL'),
+
+    /**
+     * Installer autofill / headless env (read via {@see WgwInstallEnv}).
+     * Set in packages/api/.env or Docker api.env on the wgw-install-config volume.
+     *
+     * @see docs/install-docker.md#installer-environment-wgw_install_
+     */
+    'install' => [
+        'headless' => env('WGW_INSTALL_HEADLESS', false),
+        'db_driver' => env('WGW_INSTALL_DB_DRIVER'),
+        'db_sqlite_path' => env('WGW_INSTALL_DB_SQLITE_PATH'),
+        'db_host' => env('WGW_INSTALL_DB_HOST'),
+        'db_port' => env('WGW_INSTALL_DB_PORT'),
+        'db_database' => env('WGW_INSTALL_DB_DATABASE'),
+        'db_user' => env('WGW_INSTALL_DB_USER'),
+        'db_password' => env('WGW_INSTALL_DB_PASSWORD'),
+        'base_uri' => env('WGW_INSTALL_BASE_URI'),
+        'base_uri_auto' => env('WGW_INSTALL_BASE_URI_AUTO', false),
+        'timezone' => env('WGW_INSTALL_TIMEZONE'),
+        'admin_username' => env('WGW_INSTALL_ADMIN_USERNAME'),
+        'admin_email' => env('WGW_INSTALL_ADMIN_EMAIL'),
+        'admin_password' => env('WGW_INSTALL_ADMIN_PASSWORD'),
+        'admin_display_name' => env('WGW_INSTALL_ADMIN_DISPLAY_NAME'),
+    ],
+
     'auth_realm' => env('WGW_AUTH_REALM', 'SabreDAV'),
 
     'jwt' => [

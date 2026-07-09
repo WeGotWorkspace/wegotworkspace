@@ -103,6 +103,7 @@ export type AdminUpdateResult = {
 };
 
 export type AdminUpdateState = {
+  installChannel: string | null;
   installedVersion: string;
   schemaVersion: number;
   latest: AdminUpdateRelease | null;

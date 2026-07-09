@@ -16,6 +16,9 @@ import {
 } from "@/admin-core/src/admin-workspace-utils";
 import type { AdminControllerState } from "@/admin-core/src/use-admin-controller";
 
+const DOCKER_INSTALL_DOCS_URL =
+  "https://github.com/WeGotWorkspace/wegotworkspace/blob/main/docs/install-docker.md";
+
 export type AdminUpdatesPaneProps = {
   controller: AdminControllerState;
   setConfirmClearLogsOpen: (open: boolean) => void;
@@ -29,6 +32,7 @@ export function AdminUpdatesPane({
   setConfirmUpdateOpen,
   updatingNow,
 }: AdminUpdatesPaneProps) {
+  const isDockerChannel = controller.updates.installChannel === "docker";
   const updateLogRows = useMemo(
     () =>
       controller.updateLogLines.map((line, index) => parseUpdateLogLine(line, index)).slice(-25),
@@ -102,110 +106,157 @@ export function AdminUpdatesPane({
               <Tag label={controller.updates.installedVersion || "-"} />
             </div>
           </div>
-          <div>
-            <div className="admin-updates-stat-label">Latest</div>
-            <div className="admin-updates-stat-value">
-              <Tag
-                label={
-                  controller.updates.latest?.version ?? controller.updates.installedVersion ?? "-"
-                }
-              />
+          {isDockerChannel ? (
+            <div>
+              <div className="admin-updates-stat-label">Install channel</div>
+              <Tag label="docker" />
             </div>
-          </div>
-          <div>
-            <div className="admin-updates-stat-label">Channel</div>
-            <Tag label="stable" />
-          </div>
-          <div className="flex-1 min-w-32">
-            <div className="admin-updates-stat-label">Last checked</div>
-            <Tag label={formatHumanDateTime(controller.updates.lastCheckedAt)} />
-          </div>
+          ) : (
+            <>
+              <div>
+                <div className="admin-updates-stat-label">Latest</div>
+                <div className="admin-updates-stat-value">
+                  <Tag
+                    label={
+                      controller.updates.latest?.version ??
+                      controller.updates.installedVersion ??
+                      "-"
+                    }
+                  />
+                </div>
+              </div>
+              <div>
+                <div className="admin-updates-stat-label">Channel</div>
+                <Tag label="stable" />
+              </div>
+              <div className="flex-1 min-w-32">
+                <div className="admin-updates-stat-label">Last checked</div>
+                <Tag label={formatHumanDateTime(controller.updates.lastCheckedAt)} />
+              </div>
+            </>
+          )}
         </div>
-        <Callout
-          className="mt-5"
-          severity={
-            controller.updates.inProgress
-              ? "warning"
-              : controller.updates.updateAvailable
-                ? "warning"
-                : "success"
-          }
-          title={
-            controller.updates.inProgress
-              ? "Update in progress"
-              : controller.updates.updateAvailable
-                ? "Update available"
-                : "You're up to date"
-          }
-          message={
-            controller.updates.inProgress
-              ? `Applying ${controller.updates.current?.from ?? controller.updates.installedVersion} -> ${controller.updates.current?.to ?? controller.updates.latest?.version ?? "latest"} (${controller.updates.phase?.replace(/_/g, " ") ?? "processing"}).`
-              : controller.updates.updateAvailable
-                ? `${controller.updates.latest?.version ?? "Latest"} introduces faster sync and security patches.`
-                : "Running the latest stable release."
-          }
-        />
-        {controller.updates.inProgress ? (
-          <div className="admin-updates-progress-card">
-            <div className="admin-updates-progress-head">
-              <div className="admin-updates-stat-label--strong">Update progress</div>
-              <div className="admin-updates-progress-count">{displayProgressCount}</div>
-            </div>
-            <div className="admin-updates-progress-track">
-              <div
-                className="admin-updates-progress-fill"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-            <ol className="admin-updates-step-list">
-              {UPDATE_PROGRESS_STEPS.map((step, index) => {
-                const isDone = activeProgressStep > index;
-                const isActive = activeProgressStep === index;
-                const stepState = isDone ? "done" : isActive ? "active" : "pending";
-                return (
-                  <li key={step.label} className="admin-updates-step-row">
-                    <span className="admin-updates-step-dot" data-step-state={stepState}>
-                      {isDone ? (
-                        <Check className="size-3" />
-                      ) : isActive ? (
-                        <Loader2 className="size-3 animate-spin" />
-                      ) : (
-                        <span className="size-1.5 rounded-full bg-current" />
-                      )}
-                    </span>
-                    <span className="admin-updates-step-label">{step.label}</span>
-                  </li>
-                );
-              })}
-            </ol>
-          </div>
-        ) : null}
-        {controller.updates.lastCheckError ? (
-          <p className="mt-3 text-sm text-red-700">{controller.updates.lastCheckError}</p>
-        ) : null}
-        <div className="admin-updates-actions">
-          <Button
-            variant="outline"
-            onClick={controller.actions.checkUpdates}
-            disabled={controller.checkingUpdates}
-          >
-            {controller.checkingUpdates ? (
-              <Loader2 className="size-4 mr-2 animate-spin" />
-            ) : (
-              <RefreshCw className="size-4 mr-2" />
-            )}
-            {controller.checkingUpdates ? "Checking..." : "Check for updates"}
-          </Button>
-          <Button
-            onClick={() => setConfirmUpdateOpen(true)}
-            disabled={
-              !controller.updates.updateAvailable || !controller.updates.compatible || updatingNow
+        {isDockerChannel ? (
+          <Callout
+            className="mt-5"
+            severity="info"
+            title="Docker install — upgrade on the host"
+            message={
+              <>
+                <p>
+                  This instance runs from a container image. Do not use Admin Updates — upgrade by
+                  pulling a new image tag with{" "}
+                  <code className="admin-updates-inline-code">setup.sh</code> on the host.
+                </p>
+                <pre className="admin-updates-docker-commands">
+                  <code>{`cd wegotworkspace\nbash setup.sh check\nbash setup.sh upgrade`}</code>
+                </pre>
+                <p>
+                  See{" "}
+                  <a
+                    className="admin-updates-docs-link"
+                    href={DOCKER_INSTALL_DOCS_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    install-docker.md
+                  </a>{" "}
+                  for backup, rollback, and troubleshooting.
+                </p>
+              </>
             }
-          >
-            <Download className="size-4 mr-2" />
-            {`Update to ${controller.updates.latest?.version ?? "latest"}`}
-          </Button>
-        </div>
+          />
+        ) : (
+          <>
+            <Callout
+              className="mt-5"
+              severity={
+                controller.updates.inProgress
+                  ? "warning"
+                  : controller.updates.updateAvailable
+                    ? "warning"
+                    : "success"
+              }
+              title={
+                controller.updates.inProgress
+                  ? "Update in progress"
+                  : controller.updates.updateAvailable
+                    ? "Update available"
+                    : "You're up to date"
+              }
+              message={
+                controller.updates.inProgress
+                  ? `Applying ${controller.updates.current?.from ?? controller.updates.installedVersion} -> ${controller.updates.current?.to ?? controller.updates.latest?.version ?? "latest"} (${controller.updates.phase?.replace(/_/g, " ") ?? "processing"}).`
+                  : controller.updates.updateAvailable
+                    ? `${controller.updates.latest?.version ?? "Latest"} introduces faster sync and security patches.`
+                    : "Running the latest stable release."
+              }
+            />
+            {controller.updates.inProgress ? (
+              <div className="admin-updates-progress-card">
+                <div className="admin-updates-progress-head">
+                  <div className="admin-updates-stat-label--strong">Update progress</div>
+                  <div className="admin-updates-progress-count">{displayProgressCount}</div>
+                </div>
+                <div className="admin-updates-progress-track">
+                  <div
+                    className="admin-updates-progress-fill"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+                <ol className="admin-updates-step-list">
+                  {UPDATE_PROGRESS_STEPS.map((step, index) => {
+                    const isDone = activeProgressStep > index;
+                    const isActive = activeProgressStep === index;
+                    const stepState = isDone ? "done" : isActive ? "active" : "pending";
+                    return (
+                      <li key={step.label} className="admin-updates-step-row">
+                        <span className="admin-updates-step-dot" data-step-state={stepState}>
+                          {isDone ? (
+                            <Check className="size-3" />
+                          ) : isActive ? (
+                            <Loader2 className="size-3 animate-spin" />
+                          ) : (
+                            <span className="size-1.5 rounded-full bg-current" />
+                          )}
+                        </span>
+                        <span className="admin-updates-step-label">{step.label}</span>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
+            ) : null}
+            {controller.updates.lastCheckError ? (
+              <p className="mt-3 text-sm text-red-700">{controller.updates.lastCheckError}</p>
+            ) : null}
+            <div className="admin-updates-actions">
+              <Button
+                variant="outline"
+                onClick={controller.actions.checkUpdates}
+                disabled={controller.checkingUpdates}
+              >
+                {controller.checkingUpdates ? (
+                  <Loader2 className="size-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="size-4 mr-2" />
+                )}
+                {controller.checkingUpdates ? "Checking..." : "Check for updates"}
+              </Button>
+              <Button
+                onClick={() => setConfirmUpdateOpen(true)}
+                disabled={
+                  !controller.updates.updateAvailable ||
+                  !controller.updates.compatible ||
+                  updatingNow
+                }
+              >
+                <Download className="size-4 mr-2" />
+                {`Update to ${controller.updates.latest?.version ?? "latest"}`}
+              </Button>
+            </div>
+          </>
+        )}
       </Card>
 
       <Card

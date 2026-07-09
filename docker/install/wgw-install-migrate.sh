@@ -11,7 +11,22 @@ INSTALLED_LOCK="${INSTALL_ROOT}/wgw-content/.installed"
 /usr/local/bin/wgw-install-seed-config.sh
 
 if [ ! -f "$INSTALLED_LOCK" ]; then
-  echo "[wgw-install-migrate] Fresh install (no ${INSTALLED_LOCK}); skipping schema migration."
+  if [ "${WGW_INSTALL_HEADLESS:-}" = "1" ]; then
+    if [ ! -f "${API_ROOT}/artisan" ]; then
+      echo "[wgw-install-migrate] Error: artisan not found at ${API_ROOT}/artisan" >&2
+      exit 1
+    fi
+    echo "[wgw-install-migrate] Fresh install — attempting headless wgw:install..."
+    if php "${API_ROOT}/artisan" wgw:install; then
+      if [ -f "$INSTALLED_LOCK" ]; then
+        echo "[wgw-install-migrate] Headless install complete."
+        exit 0
+      fi
+    fi
+    echo "[wgw-install-migrate] Headless install skipped (incomplete env or requirements); web wizard will run."
+  else
+    echo "[wgw-install-migrate] Fresh install (no ${INSTALLED_LOCK}); skipping schema migration."
+  fi
   exit 0
 fi
 

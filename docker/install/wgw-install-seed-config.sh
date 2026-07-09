@@ -44,6 +44,37 @@ ensure_config_file \
   "${API_ROOT}/.env.example" \
   "api.env"
 
+ensure_env_kv() {
+  file="$1"
+  key="$2"
+  value="$3"
+
+  if [ ! -f "$file" ]; then
+    return 1
+  fi
+  if grep -q "^${key}=" "$file" 2>/dev/null; then
+    return 0
+  fi
+
+  printf '\n# Docker install — upgrade via setup.sh, not Admin Updates\n%s=%s\n' "$key" "$value" >> "$file"
+  echo "[wgw-install-seed] Set ${key}=${value} in api.env"
+}
+
+ensure_env_kv "${CONFIG_VOL}/api.env" "WGW_INSTALL_CHANNEL" "docker"
+
+# Prefill installer wizard / headless install from compose database settings.
+if [ "${WGW_WAIT_FOR_DB:-0}" = "1" ] && [ -n "${WGW_DB_HOST:-}" ]; then
+  ensure_env_kv "${CONFIG_VOL}/api.env" "WGW_INSTALL_DB_DRIVER" "mysql"
+  ensure_env_kv "${CONFIG_VOL}/api.env" "WGW_INSTALL_DB_HOST" "${WGW_DB_HOST}"
+  ensure_env_kv "${CONFIG_VOL}/api.env" "WGW_INSTALL_DB_PORT" "${WGW_DB_PORT:-3306}"
+  ensure_env_kv "${CONFIG_VOL}/api.env" "WGW_INSTALL_DB_DATABASE" "${MARIADB_DATABASE:-${WGW_DB_USERNAME:-wgw}}"
+  ensure_env_kv "${CONFIG_VOL}/api.env" "WGW_INSTALL_DB_USER" "${MARIADB_USER:-${WGW_DB_USERNAME:-wgw}}"
+  ensure_env_kv "${CONFIG_VOL}/api.env" "WGW_INSTALL_DB_PASSWORD" "${MARIADB_PASSWORD:-${WGW_DB_PASSWORD:-wgw}}"
+elif [ "${COMPOSE_PROFILES:-mysql}" = "sqlite" ] || [ "${WGW_WAIT_FOR_DB:-1}" = "0" ]; then
+  ensure_env_kv "${CONFIG_VOL}/api.env" "WGW_INSTALL_DB_DRIVER" "sqlite"
+  ensure_env_kv "${CONFIG_VOL}/api.env" "WGW_INSTALL_DB_SQLITE_PATH" "wgw-content/db.sqlite"
+fi
+
 # Remove mistaken copies from older entrypoints that copied into directory mounts.
 for stray in "${CONFIG_VOL}/wgw-config.sample.php" "${CONFIG_VOL}/.env.example"; do
   if [ -f "$stray" ]; then

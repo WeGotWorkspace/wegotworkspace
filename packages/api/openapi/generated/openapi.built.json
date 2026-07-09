@@ -244,6 +244,15 @@
                     },
                     "admin_updates_url": {
                         "type": "string"
+                    },
+                    "admin_username": {
+                        "type": "string"
+                    },
+                    "admin_email": {
+                        "type": "string"
+                    },
+                    "admin_display_name": {
+                        "type": "string"
                     }
                 },
                 "required": [
@@ -1050,9 +1059,17 @@
                                 "type": "null"
                             }
                         ]
+                    },
+                    "installChannel": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Install channel: `docker` disables Admin web updater; `zip` or null uses ZIP in-container updates."
                     }
                 },
                 "required": [
+                    "installChannel",
                     "installedVersion",
                     "schemaVersion",
                     "latest",

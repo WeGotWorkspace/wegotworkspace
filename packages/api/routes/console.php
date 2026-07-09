@@ -4,6 +4,7 @@ use App\Services\Calendars\UserCalendarCollectionsProvisioner;
 use App\Services\Contacts\GroupMemberUriBackfill;
 use App\Services\Installer\DevInstallBootstrap;
 use App\Services\Installer\InstallerJwtKeyGenerator;
+use App\Services\Installer\ProductionInstallBootstrap;
 use App\Services\Installer\WgwSchemaMigrator;
 use App\Services\Tasks\DefaultMixedCalendarMigrator;
 use App\Services\Tasks\InboxTaskListProvisioner;
@@ -48,6 +49,22 @@ Artisan::command('wgw:dev-install', function (DevInstallBootstrap $bootstrap): i
 
     return self::SUCCESS;
 })->purpose('Bootstrap wgw-config.php, SQLite, and admin user for Docker-free dev/preview (idempotent)');
+
+Artisan::command('wgw:install', function (ProductionInstallBootstrap $bootstrap): int {
+    try {
+        $result = $bootstrap->run('');
+    } catch (RuntimeException $e) {
+        $this->error($e->getMessage());
+
+        return self::FAILURE;
+    }
+
+    return match ($result) {
+        'installed' => tap(self::SUCCESS, fn () => $this->info('Headless install complete.')),
+        'skipped' => tap(self::SUCCESS, fn () => $this->info('Already installed — skipped.')),
+        'incomplete' => tap(self::SUCCESS, fn () => $this->comment('Install env incomplete or headless disabled — wizard will run.')),
+    };
+})->purpose('Production headless install when WGW_INSTALL_HEADLESS=1 and required WGW_INSTALL_* vars are set');
 
 Artisan::command('wgw:contacts:sanitize-group-member-uris', function (GroupMemberUriBackfill $backfill): int {
     $result = $backfill->run();

@@ -57,6 +57,7 @@ const DEFAULT_DATA: AdminUIData = {
   },
   plugins: [],
   updates: {
+    installChannel: null,
     installedVersion: "0.0.0",
     schemaVersion: 0,
     latest: null,

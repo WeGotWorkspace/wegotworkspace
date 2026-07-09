@@ -4,11 +4,13 @@ Production Docker install runs the **same document-root layout** as the release 
 
 For monorepo development (bind mounts, Vite HMR), use [dev-layout.md](dev-layout.md) and [docker/README.md](../docker/README.md) instead — that is **`compose.dev.yml`**, not this stack.
 
+**Maintainers & contributors:** release checklist, GHCR visibility, testing matrix, and ARM notes — [install-docker-ops.md](install-docker-ops.md).
+
 ## Requirements
 
 - Docker Engine 24+ and Docker Compose v2
 - ~2 GB disk for the image; more for uploads and database volume
-- **Apple Silicon (M1/M2/M3):** the install script auto-detects amd64-only release images and sets `DOCKER_DEFAULT_PLATFORM=linux/amd64`. Enable Rosetta for x86_64/amd64 emulation in Docker Desktop if needed. Future releases also publish native `linux/arm64` images.
+- **Apple Silicon (M1/M2/M3) / ARM:** current releases ship native `linux/arm64` plus `linux/amd64`. Older tags may be amd64-only — `install` / `setup.sh` then sets `DOCKER_DEFAULT_PLATFORM=linux/amd64` and logs a Rosetta hint. Enable x86_64/amd64 emulation in Docker Desktop when needed. See [install-docker-ops.md § Apple Silicon & ARM](install-docker-ops.md#apple-silicon--arm).
 
 ## Quick start (recommended)
 
@@ -52,19 +54,41 @@ After the first install, use the same script from `wegotworkspace/` (or re-downl
 
 ```bash
 cd wegotworkspace
+bash setup.sh status         # install dir, image tag, health, profile
+bash setup.sh check          # compare installed tag to latest release
 bash setup.sh start          # after stop
 bash setup.sh stop
 bash setup.sh restart
 bash setup.sh logs
 bash setup.sh backup
-bash setup.sh upgrade 1.2.0  # backup → pull → migrator → web
+bash setup.sh upgrade        # latest from manifest.json (confirms interactively)
+bash setup.sh upgrade 1.2.0  # explicit version — backup → pull → migrator → web
+```
+
+Check for updates (read-only — does not apply):
+
+```bash
+bash setup.sh check
+# Up to date (1.2.0)
+# or: 1.3.0 available (installed: 1.2.0)
+```
+
+Upgrade to the latest release (resolves version from [manifest.json](https://github.com/WeGotWorkspace/wegotworkspace/releases/latest/download/manifest.json), same feed as Admin Updates on ZIP installs):
+
+```bash
+bash setup.sh upgrade              # prompts for confirmation
+bash setup.sh upgrade --yes        # non-interactive
+bash setup.sh upgrade --dry-run    # show target version only
 ```
 
 Upgrade from anywhere (re-downloads assets into an existing install dir):
 
 ```bash
+curl -fsSL .../install | sh -s -- --upgrade --yes
 curl -fsSL .../install | sh -s -- --upgrade 1.2.0
 ```
+
+Upgrades always pin `WGW_IMAGE` to a semver tag in `.env` (never `:latest`).
 
 Run `bash setup.sh --help` for the full command list.
 
@@ -86,19 +110,22 @@ In the installer, choose **SQLite**. Data lives under the `wgw-content` volume.
 
 ## Contributor path (repo checkout)
 
-For local image builds and development of the install stack itself:
+Contributors validating the install stack should follow the [testing matrix in install-docker-ops.md](install-docker-ops.md#contributor-testing-matrix) (release `curl | sh`, local `docker compose --build`, or `pnpm docker:install:up`). Quick local build:
 
 ```bash
-git clone https://github.com/WeGotWorkspace/wegotworkspace.git
-cd wegotworkspace/docker/install
+cd docker/install
 cp .env.example .env
 docker compose up -d --build
 open http://localhost:8080/install/
 ```
 
-From a repo checkout you can also run `pnpm docker:install:up` (and `docker:install:down` / `docker:install:logs`) at the monorepo root after copying `docker/install/.env.example` to `docker/install/.env`.
+Pre-release testing via the install script (build from clone, no GHCR pull):
 
-`docker/install/docker-compose.yml` includes a `build:` stanza for contributors. Release bundles ship a pull-only `docker-compose.yml` with no local build.
+```bash
+bash tools/setup-docker-install.sh --local
+```
+
+`docker/install/docker-compose.yml` includes a `build:` stanza. Release bundles ship a pull-only compose file with no local build.
 
 ## Environment variables
 
@@ -119,6 +146,48 @@ From a repo checkout you can also run `pnpm docker:install:up` (and `docker:inst
 
 Change default passwords before exposing the stack to a network.
 
+## Installer environment (`WGW_INSTALL_*`)
+
+Set these in `packages/api/.env` (Docker: the `api.env` file on the `wgw-install-config` volume). They prefill the web installer and can skip the wizard entirely when complete.
+
+| Variable | Wizard step | Purpose |
+| --- | --- | --- |
+| `WGW_INSTALL_HEADLESS` | — | `1` enables migrator `wgw:install` before web (skip wizard when all required vars set) |
+| `WGW_INSTALL_DB_DRIVER` | Database | `sqlite` or `mysql` |
+| `WGW_INSTALL_DB_SQLITE_PATH` | Database | SQLite path (default `wgw-content/db.sqlite`) |
+| `WGW_INSTALL_DB_HOST` | Database | MySQL host (Docker default: `db`) |
+| `WGW_INSTALL_DB_PORT` | Database | MySQL port (default `3306`) |
+| `WGW_INSTALL_DB_DATABASE` | Database | MySQL database name |
+| `WGW_INSTALL_DB_USER` | Database | MySQL user |
+| `WGW_INSTALL_DB_PASSWORD` | Database | MySQL password |
+| `WGW_INSTALL_BASE_URI` | Site | Public path prefix (e.g. `/` or `/wgw/`) |
+| `WGW_INSTALL_BASE_URI_AUTO` | Site | `1` to derive base URI from `APP_URL` or request path (headless requires this or explicit `WGW_INSTALL_BASE_URI`) |
+| `WGW_INSTALL_TIMEZONE` | Site | PHP timezone (default `UTC`) |
+| `WGW_INSTALL_ADMIN_USERNAME` | Account | First admin username |
+| `WGW_INSTALL_ADMIN_EMAIL` | Account | Admin email |
+| `WGW_INSTALL_ADMIN_PASSWORD` | Account | Admin password (min 10 chars; never sent to the browser) |
+| `WGW_INSTALL_ADMIN_DISPLAY_NAME` | Account | Optional display name |
+| `WGW_INSTALL_ENABLE_FILES` | Site | Optional DAV toggles (default on) |
+| `WGW_INSTALL_ENABLE_CALENDARS` | Site | Optional |
+| `WGW_INSTALL_ENABLE_CONTACTS` | Site | Optional |
+| `WGW_INSTALL_CHANNEL` | — | `docker` — disables Admin web updater (seeded automatically on Docker) |
+
+**Autofill:** partial `WGW_INSTALL_*` values pre-populate the wizard; the operator still confirms each step.
+
+**Headless:** when `WGW_INSTALL_HEADLESS=1` and all required vars are set (database, admin account, `WGW_INSTALL_BASE_URI` or `WGW_INSTALL_BASE_URI_AUTO=1`), the migrator runs `php artisan wgw:install` before Apache starts — open `/login` with no wizard clicks. Incomplete env falls back to the wizard (never half-installs). Requirements checks still run.
+
+On MySQL Docker installs, [wgw-install-seed-config.sh](../docker/install/wgw-install-seed-config.sh) writes database `WGW_INSTALL_*` keys into `api.env` from compose env (`WGW_DB_*`, `MARIADB_*`).
+
+Example headless `.env` fragment (add to `wegotworkspace/.env`; migrator passes `WGW_INSTALL_HEADLESS` into the container):
+
+```bash
+WGW_INSTALL_HEADLESS=1
+WGW_INSTALL_BASE_URI=/
+WGW_INSTALL_ADMIN_USERNAME=admin
+WGW_INSTALL_ADMIN_EMAIL=admin@example.com
+WGW_INSTALL_ADMIN_PASSWORD=your-long-password
+```
+
 ## What persists
 
 Named volumes (survive `docker compose down` and image updates):
@@ -138,7 +207,7 @@ Each `docker compose up` runs a **one-shot migrator** before the web container s
 
 1. **Migrator** ([wgw-install-migrate.sh](../docker/install/wgw-install-migrate.sh)): waits for MySQL (if enabled), then:
    - Seeds [wgw-install-seed-config.sh](../docker/install/wgw-install-seed-config.sh) into the `wgw-install-config` volume (`wgw-config.php`, `api.env`).
-   - **Fresh install** (no `wgw-content/.installed`): skips schema migration — the web wizard runs initial migrations.
+   - **Fresh install** (no `wgw-content/.installed`): runs headless `wgw:install` when `WGW_INSTALL_HEADLESS=1` and env is complete; otherwise skips schema migration — the web wizard runs initial setup.
    - **Existing install**: runs `php artisan wgw:schema-migrate` (same as ZIP in-place updates).
 2. **Web** entrypoint ([docker-entrypoint.sh](../docker/install/docker-entrypoint.sh)): symlinks config from `/wgw-config-vol`, ensures permissions, runs `key:generate` when needed, starts Apache.
 
@@ -148,18 +217,24 @@ Failed migrations block the web service from starting, preventing a half-upgrade
 
 ### Upgrade to a new release
 
-**Recommended** — use the lifecycle script (includes backup):
+**Recommended** — check, then upgrade with the lifecycle script (includes backup):
 
 ```bash
 cd wegotworkspace
-bash setup.sh upgrade 1.2.0
+bash setup.sh check
+bash setup.sh upgrade              # latest from manifest.json
+bash setup.sh upgrade 1.2.0        # explicit version
+bash setup.sh upgrade --dry-run    # preview target without pulling
 ```
 
 Or re-run the install script with `--upgrade`:
 
 ```bash
+curl -fsSL .../install | sh -s -- --upgrade --yes
 curl -fsSL .../install | sh -s -- --upgrade 1.2.0
 ```
+
+`setup.sh check` only reports availability; it does not pull or restart containers.
 
 Manual equivalent:
 
@@ -175,7 +250,11 @@ The migrator runs automatically before Apache serves traffic.
 
 ### Do not use Admin → Updates on Docker
 
-The admin web updater ([UpdateRunner](../packages/api/app/Services/Update/UpdateRunner.php)) replaces files inside the container filesystem. Docker installs should **only** upgrade by pulling a new image tag. The admin updater is for ZIP/Apache hosting installs.
+Docker installs are seeded with `WGW_INSTALL_CHANNEL=docker`. **Admin → Updates** is disabled for this channel: the panel shows your installed version and host upgrade commands only (`bash setup.sh check` / `bash setup.sh upgrade`). Apply/download actions are hidden; the API rejects in-container file replacement ([UpdateRunner](../packages/api/app/Services/Update/UpdateRunner.php) returns 403).
+
+Upgrade **only** by pulling a new image tag via `setup.sh` (see [Lifecycle commands](#lifecycle-commands)). The admin web updater is for ZIP/Apache hosting installs. Details: [install-docker-ops.md § Docker channel](install-docker-ops.md#docker-channel--admin-updates-disabled).
+
+Upgrades are **user-initiated** — there is no recommended auto-pull sidecar (e.g. Watchtower). See [install-docker-ops.md](install-docker-ops.md#upgrades-user-initiated-only-no-watchtower).
 
 ### Backup
 
@@ -225,7 +304,9 @@ Each tagged GitHub Release includes:
 | `docker-compose.yml` | Pull-only stack with migrator |
 | `env.example` | Release env template (no leading dot — GitHub strips dotted names). Install writes `wegotworkspace/.env.example` and `wegotworkspace/.env` |
 | `wgw-docker-install-{version}.tar.gz` | All of the above in one archive |
-| GHCR image | `ghcr.io/wegotworkspace/wegotworkspace:{version}` |
+| GHCR image | `ghcr.io/wegotworkspace/wegotworkspace:{version}` (must be **public** for anonymous pull) |
+
+Maintainers: pre-release checklist (smoke job, GHCR visibility, multi-arch manifest, spot-check `curl | sh`) — [install-docker-ops.md § Maintainer release checklist](install-docker-ops.md#maintainer-release-checklist).
 
 ## Troubleshooting
 

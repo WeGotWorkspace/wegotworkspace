@@ -39,6 +39,7 @@ export function useAdminAPI(source?: AdminApiSource) {
       },
       plugins: [],
       updates: {
+        installChannel: null,
         installedVersion: "",
         schemaVersion: 0,
         latest: null,
