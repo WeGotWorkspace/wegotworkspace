@@ -196,7 +196,7 @@ Named volumes (survive `docker compose down` and image updates):
 | --- | --- | --- |
 | `wgw-content` | `/var/www/html/wgw-content` | SQLite DB (if used), uploads, JWT keys, `.installed` lock |
 | `wgw-api-storage` | `/var/www/html/packages/api/storage` | Laravel storage, sessions, logs |
-| `wgw-install-config` | `/wgw-config-vol` | Install config (`wgw-config.php`, `api.env`) — **survives container recreate** |
+| `wgw-install-config` | `/wgw-config-vol` | Install config (`api.env` → `packages/api/.env`) — **survives container recreate** |
 | `wgw-db` | MariaDB data dir | MySQL database files (profile `mysql`) |
 
 Application code in the image is replaced on update; volumes are **not** removed unless you run `docker compose down -v`.
@@ -206,10 +206,10 @@ Application code in the image is replaced on update; volumes are **not** removed
 Each `docker compose up` runs a **one-shot migrator** before the web container starts:
 
 1. **Migrator** ([wgw-install-migrate.sh](../docker/install/wgw-install-migrate.sh)): waits for MySQL (if enabled), then:
-   - Seeds [wgw-install-seed-config.sh](../docker/install/wgw-install-seed-config.sh) into the `wgw-install-config` volume (`wgw-config.php`, `api.env`).
+   - Seeds [wgw-install-seed-config.sh](../docker/install/wgw-install-seed-config.sh) into the `wgw-install-config` volume (`api.env` with `WGW_INSTALL_*` pre-install keys).
    - **Fresh install** (no `wgw-content/.installed`): runs headless `wgw:install` when `WGW_INSTALL_HEADLESS=1` and env is complete; otherwise skips schema migration — the web wizard runs initial setup.
    - **Existing install**: runs `php artisan wgw:schema-migrate` (same as ZIP in-place updates).
-2. **Web** entrypoint ([docker-entrypoint.sh](../docker/install/docker-entrypoint.sh)): symlinks config from `/wgw-config-vol`, ensures permissions, runs `key:generate` when needed, starts Apache.
+2. **Web** entrypoint ([docker-entrypoint.sh](../docker/install/docker-entrypoint.sh)): symlinks `api.env` → `packages/api/.env`, ensures permissions, runs `key:generate` when needed, starts Apache.
 
 Failed migrations block the web service from starting, preventing a half-upgraded state.
 

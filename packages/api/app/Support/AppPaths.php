@@ -37,7 +37,7 @@ final class AppPaths
             return false;
         }
 
-        if (! is_readable($this->install->configFilePath())) {
+        if (! $this->install->hasRuntimeDatabaseConfig()) {
             return false;
         }
 
@@ -67,20 +67,22 @@ final class AppPaths
 
     public function databaseReady(): bool
     {
-        $credentials = (new WgwDatabaseConfig($this->install))->pdoCredentials();
-        $dsn = trim($credentials['dsn']);
-        if ($dsn === '' || $dsn === 'sqlite::memory:') {
+        $connection = config('database.connections.wgw');
+        if (! is_array($connection)) {
             return false;
         }
 
-        if (str_starts_with($dsn, 'sqlite:')) {
-            $sqlitePath = substr($dsn, 7);
-            if ($sqlitePath === '' || ! is_file($sqlitePath) || filesize($sqlitePath) < 1) {
-                return false;
-            }
+        $driver = (string) ($connection['driver'] ?? '');
+        $database = (string) ($connection['database'] ?? '');
+        if ($driver === '' || $database === '' || $database === ':memory:') {
+            return false;
         }
 
-        return $this->databaseProbe->installConfigHasUsers($this->install);
+        if ($driver === 'sqlite' && (! is_file($database) || filesize($database) < 1)) {
+            return false;
+        }
+
+        return $this->databaseProbe->installConfigHasUsers();
     }
 
     public function clearStaleInstallLock(): void

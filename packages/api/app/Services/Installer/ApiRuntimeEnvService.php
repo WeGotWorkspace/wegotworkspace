@@ -21,8 +21,14 @@ final class ApiRuntimeEnvService
     public function apiPackageRoot(string $installRoot): ?string
     {
         $root = rtrim(str_replace('\\', '/', $installRoot), '/').'/packages/api';
-        if (is_file($root.'/vendor/autoload.php')) {
+        if (is_file($root.'/vendor/autoload.php') || is_file($root.'/artisan')) {
             return $root;
+        }
+
+        // Monorepo dev: install shell at apps/wegotworkspace without packages/api subtree.
+        $runtime = dirname(__DIR__, 4);
+        if (! is_dir($root) && is_file($runtime.'/vendor/autoload.php')) {
+            return $runtime;
         }
 
         return null;

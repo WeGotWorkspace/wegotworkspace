@@ -6,20 +6,16 @@ namespace Tests\Feature\Plugins;
 
 use Illuminate\Support\Facades\File;
 use Tests\Support\WgwDatabaseTestCase;
+use Tests\Support\WgwInstallFixture;
 
 final class PluginSessionEndpointsTest extends WgwDatabaseTestCase
 {
     private string $dataDir = '';
 
-    private string $previousAppRoot = '';
-
     protected function setUp(): void
     {
-        $this->previousAppRoot = getenv('WGW_APP_ROOT') ?: '';
         $this->dataDir = rtrim(sys_get_temp_dir(), '/').'/wgw-plugin-session-'.uniqid('', true);
         @mkdir($this->dataDir.'/install-root/wgw-plugins/demo-plugin/assets', 0777, true);
-        putenv('WGW_APP_ROOT='.$this->dataDir.'/install-root');
-        $_ENV['WGW_APP_ROOT'] = $this->dataDir.'/install-root';
         @file_put_contents($this->dataDir.'/install-root/wgw-plugins/demo-plugin/assets/index.html', '<!doctype html><title>Plugin</title>');
         @file_put_contents($this->dataDir.'/install-root/wgw-plugins/demo-plugin/assets/editor.html', '<!doctype html><title>Editor</title>');
         @file_put_contents($this->dataDir.'/install-root/wgw-plugins/demo-plugin/plugin.json', json_encode([
@@ -39,6 +35,7 @@ final class PluginSessionEndpointsTest extends WgwDatabaseTestCase
         $_ENV['WGW_DISABLE_LOGIN_THROTTLE'] = '1';
 
         parent::setUp();
+        WgwInstallFixture::bindInstallRoot($this->dataDir.'/install-root');
         $this->configureWgwJwtKeys();
         $this->seedAlice();
     }
@@ -47,13 +44,6 @@ final class PluginSessionEndpointsTest extends WgwDatabaseTestCase
     {
         if ($this->dataDir !== '' && File::isDirectory($this->dataDir)) {
             File::deleteDirectory($this->dataDir);
-        }
-        if ($this->previousAppRoot !== '') {
-            putenv('WGW_APP_ROOT='.$this->previousAppRoot);
-            $_ENV['WGW_APP_ROOT'] = $this->previousAppRoot;
-        } else {
-            putenv('WGW_APP_ROOT');
-            unset($_ENV['WGW_APP_ROOT']);
         }
 
         parent::tearDown();

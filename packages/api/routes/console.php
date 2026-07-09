@@ -5,6 +5,7 @@ use App\Services\Contacts\GroupMemberUriBackfill;
 use App\Services\Installer\DevInstallBootstrap;
 use App\Services\Installer\InstallerJwtKeyGenerator;
 use App\Services\Installer\ProductionInstallBootstrap;
+use App\Services\Installer\WgwConfigMigrator;
 use App\Services\Installer\WgwSchemaMigrator;
 use App\Services\Tasks\DefaultMixedCalendarMigrator;
 use App\Services\Tasks\InboxTaskListProvisioner;
@@ -48,7 +49,19 @@ Artisan::command('wgw:dev-install', function (DevInstallBootstrap $bootstrap): i
     }
 
     return self::SUCCESS;
-})->purpose('Bootstrap wgw-config.php, SQLite, and admin user for Docker-free dev/preview (idempotent)');
+})->purpose('Bootstrap packages/api/.env WGW_* keys, SQLite, and admin user for Docker-free dev/preview (idempotent)');
+
+Artisan::command('wgw:config-migrate', function (WgwConfigMigrator $migrator): int {
+    if (! $migrator->migrateIfNeeded()) {
+        $this->info('No legacy wgw-config.php found — nothing to migrate.');
+
+        return self::SUCCESS;
+    }
+
+    $this->info('Migrated wgw-config.php to packages/api/.env (backup kept, legacy file removed).');
+
+    return self::SUCCESS;
+})->purpose('One-shot migration from legacy wgw-config.php to WGW_* keys in packages/api/.env');
 
 Artisan::command('wgw:install', function (ProductionInstallBootstrap $bootstrap): int {
     try {

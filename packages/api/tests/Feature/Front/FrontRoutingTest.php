@@ -18,6 +18,7 @@ final class FrontRoutingTest extends TestCase
             UiDistFixture::removeTree($this->repoRoot);
             $this->repoRoot = null;
         }
+
         parent::tearDown();
     }
 

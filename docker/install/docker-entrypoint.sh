@@ -18,14 +18,12 @@ fi
 if [ -d "$CONFIG_VOL" ]; then
   /usr/local/bin/wgw-install-seed-config.sh
 
-  for target in "${INSTALL_ROOT}/wgw-config.php" "${API_ROOT}/.env"; do
-    if [ -d "$target" ]; then
-      rm -rf "$target"
-    fi
-  done
+  target="${API_ROOT}/.env"
+  if [ -d "$target" ]; then
+    rm -rf "$target"
+  fi
 
-  ln -sf "${CONFIG_VOL}/wgw-config.php" "${INSTALL_ROOT}/wgw-config.php"
-  ln -sf "${CONFIG_VOL}/api.env" "${API_ROOT}/.env"
+  ln -sf "${CONFIG_VOL}/api.env" "$target"
 fi
 
 if [ -f "${API_ROOT}/artisan" ] && [ -f "${API_ROOT}/.env" ]; then
@@ -48,7 +46,6 @@ if [ "$(id -u)" = "0" ]; then
 
   for path in \
     "${API_ROOT}/.env" \
-    "${INSTALL_ROOT}/wgw-config.php" \
     "${INSTALL_ROOT}/.htaccess"; do
     if [ -e "$path" ] || [ -L "$path" ]; then
       chown -h www-data:www-data "$path" 2>/dev/null || chown www-data:www-data "$path"

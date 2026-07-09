@@ -31,7 +31,7 @@ final class SabreWebdavGetTest extends WgwDatabaseTestCase
         WgwInstallFixture::markInstalled($installRoot, $this->dataDir, 'alice');
         $this->setAppSetting(WgwSettings::BROWSER_PLUGIN, false);
 
-        config(['wgw.data_dir' => $this->dataDir]);
+        config(['wgw.install_root' => $installRoot, 'wgw.data_dir' => $this->dataDir]);
         WgwTestDisks::refresh($this->dataDir);
         WgwInstallFixture::forgetInstallBindings();
         unset($_COOKIE['sabre_ui_auth']);

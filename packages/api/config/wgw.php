@@ -1,10 +1,14 @@
 <?php
 
 declare(strict_types=1);
+
 use App\Services\Installer\WgwInstallEnv;
+use App\Support\UpdateFeedDefaults;
 
 return [
-    'data_dir' => env('WGW_DATA_DIR_OVERRIDE'),
+    'install_root' => env('WGW_APP_ROOT'),
+    'data_dir' => env('WGW_DATA_DIR'),
+    'update_feed_url' => env('WGW_UPDATE_FEED_URL', UpdateFeedDefaults::MANIFEST_URL),
     /** Install channel: `docker` (image pull + setup.sh) or `zip` / unset (Admin web updater). */
     'install_channel' => env('WGW_INSTALL_CHANNEL'),
 
@@ -30,6 +34,10 @@ return [
         'admin_email' => env('WGW_INSTALL_ADMIN_EMAIL'),
         'admin_password' => env('WGW_INSTALL_ADMIN_PASSWORD'),
         'admin_display_name' => env('WGW_INSTALL_ADMIN_DISPLAY_NAME'),
+        'enable_files' => env('WGW_INSTALL_ENABLE_FILES'),
+        'enable_calendars' => env('WGW_INSTALL_ENABLE_CALENDARS'),
+        'enable_contacts' => env('WGW_INSTALL_ENABLE_CONTACTS'),
+        'show_browser_ui' => env('WGW_INSTALL_SHOW_BROWSER_UI'),
     ],
 
     'auth_realm' => env('WGW_AUTH_REALM', 'SabreDAV'),

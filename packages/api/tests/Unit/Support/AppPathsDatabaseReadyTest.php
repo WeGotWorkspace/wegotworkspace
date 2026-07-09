@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Support;
 
-use App\LocalConfigFile;
 use App\Support\AppPaths;
 use Tests\Support\WgwInstallFixture;
 use Tests\TestCase;
@@ -15,8 +14,6 @@ final class AppPathsDatabaseReadyTest extends TestCase
 
     protected function setUp(): void
     {
-        parent::setUp();
-
         $this->installRoot = sys_get_temp_dir().'/wgw-app-paths-test-'.uniqid('', true);
         mkdir($this->installRoot, 0775, true);
         mkdir($this->installRoot.'/wgw-content/keys', 0700, true);
@@ -24,8 +21,11 @@ final class AppPathsDatabaseReadyTest extends TestCase
         putenv('WGW_APP_ROOT='.$this->installRoot);
         $_ENV['WGW_APP_ROOT'] = $this->installRoot;
 
+        parent::setUp();
+
+        config(['wgw.install_root' => $this->installRoot]);
+        WgwInstallFixture::ensureApiPackage($this->installRoot);
         WgwInstallFixture::forgetInstallBindings();
-        LocalConfigFile::clearCache();
     }
 
     protected function tearDown(): void
@@ -33,7 +33,6 @@ final class AppPathsDatabaseReadyTest extends TestCase
         putenv('WGW_APP_ROOT');
         unset($_ENV['WGW_APP_ROOT']);
         WgwInstallFixture::forgetInstallBindings();
-        LocalConfigFile::clearCache();
 
         if (is_dir($this->installRoot)) {
             $this->removeTree($this->installRoot);
@@ -42,19 +41,17 @@ final class AppPathsDatabaseReadyTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_mysql_define_style_config_does_not_require_sqlite_file(): void
+    public function test_mysql_runtime_env_does_not_require_sqlite_file(): void
     {
-        $config = <<<'PHP'
-<?php
-
-declare(strict_types=1);
-
-defined('WGW_DATA_DIR') || define('WGW_DATA_DIR', 'wgw-content');
-defined('WGW_DB_DSN') || define('WGW_DB_DSN', 'mysql:host=127.0.0.1;port=3306;dbname=missing_wegotworkspace;charset=utf8mb4');
-defined('WGW_DB_USER') || define('WGW_DB_USER', 'db_user');
-defined('WGW_DB_PASSWORD') || define('WGW_DB_PASSWORD', 'db_password');
-PHP;
-        file_put_contents($this->installRoot.'/wgw-config.php', $config);
+        WgwInstallFixture::writeRuntimeEnv($this->installRoot, [
+            'WGW_DATA_DIR' => 'wgw-content',
+            'WGW_DB_CONNECTION' => 'mysql',
+            'WGW_DB_HOST' => '127.0.0.1',
+            'WGW_DB_PORT' => '3306',
+            'WGW_DB_DATABASE' => 'missing_wegotworkspace',
+            'WGW_DB_USERNAME' => 'db_user',
+            'WGW_DB_PASSWORD' => 'db_password',
+        ]);
         file_put_contents($this->installRoot.'/wgw-content/.installed', date('c')."\n");
         file_put_contents($this->installRoot.'/wgw-content/keys/api-jwt-private.pem', str_repeat('a', 64));
         file_put_contents($this->installRoot.'/wgw-content/keys/api-jwt-public.pem', str_repeat('b', 64));

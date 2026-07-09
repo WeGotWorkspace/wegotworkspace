@@ -6,9 +6,11 @@ namespace App\Services\Installer;
 
 use App\Services\Settings\SettingKeys;
 use App\Support\AppPaths;
+use App\Support\WgwInstallConfig;
+use App\Support\WgwRuntimeEnvBridge;
 
 /**
- * Idempotent local-dev install: wgw-config.php, SQLite schema, admin user, JWT keys.
+ * Idempotent local-dev install: packages/api/.env WGW_* keys, SQLite schema, admin user, JWT keys.
  *
  * Used by {@code pnpm dev} / {@code pnpm preview} so login works without the web installer.
  */
@@ -16,10 +18,11 @@ final class DevInstallBootstrap
 {
     public function __construct(
         private AppPaths $paths,
-        private InstallerConfigWriter $configWriter,
+        private InstallerEnvWriter $envWriter,
         private InstallerDatabaseInstaller $database,
         private InstallerJwtKeyGenerator $jwtKeys,
         private ApiRuntimeEnvService $apiEnv,
+        private WgwInstallConfig $installConfig,
     ) {}
 
     /**
@@ -85,10 +88,11 @@ final class DevInstallBootstrap
         $absDb = $this->paths->resolveProjectPath($db['sqlite_path']);
         $relDb = $this->paths->tryRelativeToInstallRoot($absDb) ?? $db['sqlite_path'];
 
-        $this->configWriter->writeBootstrap([
+        $this->envWriter->writeBootstrap([
             'data_dir' => $this->paths->tryRelativeToInstallRoot($this->paths->dataDir()) ?? './wgw-content',
             'pdo' => ['sqlite_file' => $relDb],
         ]);
+        WgwRuntimeEnvBridge::apply($this->installConfig);
 
         if (file_put_contents($this->paths->lockFile(), date('c')."\n", LOCK_EX) === false) {
             throw new \RuntimeException('Database was set up but the install lock file could not be written.');

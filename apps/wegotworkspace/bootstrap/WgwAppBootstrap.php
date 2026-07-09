@@ -21,6 +21,7 @@ final class WgwAppBootstrap
 
         if ($apiPackageRoot !== null) {
             self::ensureApiRuntimeEnv($apiPackageRoot);
+            self::migrateLegacyConfigIfNeeded($appRoot, $apiPackageRoot);
             require $apiPackageRoot.'/public/index.php';
 
             return;
@@ -120,6 +121,11 @@ final class WgwAppBootstrap
         }
 
         @copy($example, $htaccess);
+    }
+
+    private static function migrateLegacyConfigIfNeeded(string $appRoot, string $apiPackageRoot): void
+    {
+        \App\Services\Installer\WgwConfigMigrator::migrateAtPaths($appRoot, $apiPackageRoot, false);
     }
 
     private static function ensureApiRuntimeEnv(string $apiPackageRoot): void

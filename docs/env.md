@@ -25,9 +25,15 @@ bash packages/api/scripts/generate-jwt-keys.sh          # RS256 keys for auth/to
 
 `pnpm dev:api` loads **repo-root** `.env` only for pnpm/turbo tooling (`tools/with-root-env.sh`). **Laravel reads `packages/api/.env` only** — put JWT paths and `APP_KEY` there, not in the repo root.
 
-Tune `APP_URL`, `APP_ENV`, and `APP_DEBUG` for production.  
-`DB_*` in this file is for **Laravel framework** storage (sessions/cache when using database drivers).  
-WeGotWorkspace data uses `wgw-config.php` and `wgw-content/` (see `WgwServiceProvider` / `wgw` DB connection).
+WeGotWorkspace **runtime** data uses `WGW_*` keys in `packages/api/.env` (loaded into `config/wgw.php` and `database.connections.wgw` via `WgwServiceProvider`).  
+`DB_*` in the same file is for **Laravel framework** storage (sessions/cache when using database drivers).  
+`wgw-content/` holds SQLite, files, and JWT keys.
+
+| Prefix | Purpose |
+|--------|---------|
+| `WGW_DATA_DIR`, `WGW_DB_*`, `WGW_UPDATE_FEED_URL` | Post-install runtime (written by installer or legacy migrator) |
+| `WGW_INSTALL_*` | Pre-install wizard / headless install autofill (Docker `api.env` seed) |
+| `DB_*` | Laravel default connection (sessions, cache, queue — not WGW app data) |
 
 ### Apache / shared hosting
 

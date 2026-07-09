@@ -4,11 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Installer;
 
-use App\LocalConfigFile;
 use App\Services\Installer\DevInstallBootstrap;
 use App\Support\AppPaths;
-use App\Support\WgwDatabaseConfig;
-use App\Support\WgwInstallConfig;
 use Illuminate\Support\Facades\DB;
 use Tests\Support\WgwInstallFixture;
 use Tests\TestCase;
@@ -19,8 +16,6 @@ final class DevInstallBootstrapTest extends TestCase
 
     protected function setUp(): void
     {
-        parent::setUp();
-
         $this->installRoot = sys_get_temp_dir().'/wgw-dev-install-test-'.uniqid('', true);
         mkdir($this->installRoot, 0775, true);
         file_put_contents($this->installRoot.'/index.php', "<?php\n");
@@ -28,8 +23,11 @@ final class DevInstallBootstrapTest extends TestCase
         putenv('WGW_APP_ROOT='.$this->installRoot);
         $_ENV['WGW_APP_ROOT'] = $this->installRoot;
 
+        parent::setUp();
+
+        config(['wgw.install_root' => $this->installRoot]);
+        WgwInstallFixture::ensureApiPackage($this->installRoot);
         WgwInstallFixture::forgetInstallBindings();
-        LocalConfigFile::clearCache();
     }
 
     protected function tearDown(): void
@@ -37,7 +35,6 @@ final class DevInstallBootstrapTest extends TestCase
         putenv('WGW_APP_ROOT');
         unset($_ENV['WGW_APP_ROOT']);
         WgwInstallFixture::forgetInstallBindings();
-        LocalConfigFile::clearCache();
 
         if (is_dir($this->installRoot)) {
             $this->removeTree($this->installRoot);
@@ -51,7 +48,8 @@ final class DevInstallBootstrapTest extends TestCase
         $bootstrap = app(DevInstallBootstrap::class);
 
         $this->assertTrue($bootstrap->ensure('admin', 'storybook-dev'));
-        $this->assertFileExists($this->installRoot.'/wgw-config.php');
+        $env = (string) file_get_contents($this->installRoot.'/packages/api/.env');
+        $this->assertStringContainsString('WGW_DB_CONNECTION=sqlite', $env);
         $this->assertFileExists($this->installRoot.'/wgw-content/db.sqlite');
         $this->assertFileExists($this->installRoot.'/wgw-content/.installed');
         $this->assertFileExists($this->installRoot.'/wgw-content/keys/api-jwt-private.pem');
@@ -64,15 +62,16 @@ final class DevInstallBootstrapTest extends TestCase
         $this->assertFalse($bootstrap->ensure('admin', 'storybook-dev'));
     }
 
-    public function test_ensure_writes_sqlite_path_into_config(): void
+    public function test_ensure_writes_sqlite_path_into_env(): void
     {
         app(DevInstallBootstrap::class)->ensure('admin', 'storybook-dev');
 
-        $config = require $this->installRoot.'/wgw-config.php';
-        $credentials = (new WgwDatabaseConfig(app(WgwInstallConfig::class)))->pdoCredentials();
+        $env = (string) file_get_contents($this->installRoot.'/packages/api/.env');
+        $this->assertStringContainsString('WGW_DB_DATABASE=./wgw-content/db.sqlite', $env);
 
-        $this->assertSame('./wgw-content/db.sqlite', $config['pdo']['sqlite_file'] ?? null);
-        $this->assertStringEndsWith('/wgw-content/db.sqlite', $credentials['dsn']);
+        WgwInstallFixture::syncDatabaseConnection();
+        $dsn = (string) DB::connection('wgw')->getConfig('database');
+        $this->assertStringEndsWith('/wgw-content/db.sqlite', $dsn);
     }
 
     private function removeTree(string $dir): void
