@@ -52,13 +52,14 @@ final class WgwConfigMigrator
             return false;
         }
 
-        $this->apiEnv->seedEnvFromExampleIfMissing($apiRoot);
         $envPath = $apiRoot.'/.env';
 
         $legacyPath = self::resolveLegacySourcePath($installRoot, $envPath);
         if ($legacyPath === null) {
             return false;
         }
+
+        $this->apiEnv->seedEnvFromExampleIfMissing($apiRoot);
 
         return self::migrateFromLegacyFile(
             $legacyPath,
