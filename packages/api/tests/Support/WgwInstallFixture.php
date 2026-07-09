@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Support;
 
+use App\Models\Principal;
+use App\Models\User;
 use App\Services\Installer\InstallerEnvWriter;
 use App\Support\AppPaths;
 use App\Support\UpdateFeedDefaults;
 use App\Support\WgwInstallConfig;
 use App\Support\WgwRuntimeEnvBridge;
 use Illuminate\Foundation\Testing\RefreshDatabaseState;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
 final class WgwInstallFixture
@@ -229,26 +232,34 @@ final class WgwInstallFixture
         if (is_file($path)) {
             @unlink($path);
         }
-        $pdo = new \PDO('sqlite:'.$path, null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+
+        $dir = dirname($path);
+        if (! is_dir($dir) && ! @mkdir($dir, 0775, true) && ! is_dir($dir)) {
+            throw new \RuntimeException('Failed to create database directory: '.$dir);
+        }
+
+        if (! function_exists('app')) {
+            throw new \RuntimeException('seedSqliteDatabase requires the Laravel application container.');
+        }
+
+        DB::purge('wgw');
+        Artisan::call('migrate', [
+            '--path' => 'database/migrations/wgw',
+            '--database' => 'wgw',
+            '--force' => true,
         ]);
-        $pdo->exec(
-            'CREATE TABLE users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                username TEXT NOT NULL,
-                digesta1 TEXT NOT NULL DEFAULT "",
-                digest TEXT NOT NULL,
-                UNIQUE(username)
-            )'
-        );
-        $pdo->exec(
-            'CREATE TABLE app_settings (
-                name TEXT NOT NULL PRIMARY KEY,
-                value TEXT NOT NULL
-            )'
-        );
-        $stmt = $pdo->prepare('INSERT INTO users (username, digesta1, digest) VALUES (?, ?, ?)');
-        $stmt->execute([$username, '', password_hash('secret', PASSWORD_DEFAULT)]);
+
+        User::query()->create([
+            'username' => $username,
+            'digesta1' => '',
+            'digest' => password_hash('secret', PASSWORD_DEFAULT),
+        ]);
+
+        Principal::query()->create([
+            'uri' => 'principals/'.$username,
+            'email' => null,
+            'displayname' => ucfirst($username),
+        ]);
     }
 
     private static function relativeToInstallRoot(string $installRoot, string $absolute): ?string

@@ -107,10 +107,20 @@ export function AdminUpdatesPane({
             </div>
           </div>
           {isDockerChannel ? (
-            <div>
-              <div className="admin-updates-stat-label">Install channel</div>
-              <Tag label="docker" />
-            </div>
+            <>
+              <div>
+                <div className="admin-updates-stat-label">Install channel</div>
+                <Tag label="docker" />
+              </div>
+              {controller.updates.imageTag ? (
+                <div>
+                  <div className="admin-updates-stat-label">Image tag</div>
+                  <div className="admin-updates-stat-value">
+                    <Tag label={controller.updates.imageTag} />
+                  </div>
+                </div>
+              ) : null}
+            </>
           ) : (
             <>
               <div>

@@ -6206,6 +6206,8 @@ export interface components {
             lastResult: components["schemas"]["UpdateApplyResult"] | null;
             /** @description Install channel: `docker` disables Admin web updater; `zip` or null uses ZIP in-container updates. */
             installChannel: string | null;
+            /** @description Docker image tag from WGW_IMAGE when install channel is docker. */
+            imageTag?: string | null;
         };
         AdminStateResponse: {
             users: components["schemas"]["AdminUserSummary"][];

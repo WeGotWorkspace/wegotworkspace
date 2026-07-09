@@ -35,6 +35,10 @@ final class UpdateRunner
      */
     public function getState(): array
     {
+        $installChannel = $this->install->installChannel();
+        if ($installChannel === 'docker') {
+            $this->recoverDockerAbandonedUpdateState();
+        }
         $this->recoverStaleLockState();
         $state = $this->store->read();
         $latest = isset($state['latest']) && is_array($state['latest']) ? $state['latest'] : null;
@@ -48,12 +52,18 @@ final class UpdateRunner
         $inProgress = $lockHeld || $phase !== null;
         $current = $inProgress && is_array($state['current'] ?? null) ? $state['current'] : null;
         $installedVersion = $this->appVersion->current();
-        if ($inProgress && is_array($current) && is_string($current['from'] ?? null) && trim((string) $current['from']) !== '') {
+        if (
+            $installChannel !== 'docker'
+            && $inProgress
+            && is_array($current)
+            && is_string($current['from'] ?? null)
+            && trim((string) $current['from']) !== ''
+        ) {
             $installedVersion = trim((string) $current['from']);
         }
 
-        return [
-            'installChannel' => $this->install->installChannel(),
+        $response = [
+            'installChannel' => $installChannel,
             'installedVersion' => $installedVersion,
             'schemaVersion' => $this->schemaMigrator->currentVersion(),
             'latest' => $latest,
@@ -72,6 +82,42 @@ final class UpdateRunner
             'lastCheckError' => is_string($state['last_check_error'] ?? null) ? $state['last_check_error'] : null,
             'lastResult' => is_array($state['last_result'] ?? null) ? $state['last_result'] : null,
         ];
+        if ($installChannel === 'docker') {
+            $imageTag = self::dockerImageTagFromEnv();
+            if ($imageTag !== null) {
+                $response['imageTag'] = $imageTag;
+            }
+        }
+
+        return $response;
+    }
+
+    public function recoverDockerAbandonedUpdateState(): void
+    {
+        if ($this->install->installChannel() !== 'docker') {
+            return;
+        }
+
+        $lockPath = $this->store->absolutePath($this->store->lockPath());
+        $maintenancePath = $this->store->absolutePath($this->store->maintenancePath());
+        $state = $this->store->read();
+        $hasProgress = self::phaseFromState($state) !== null
+            || is_array($state['current'] ?? null)
+            || is_file($lockPath)
+            || is_file($maintenancePath);
+
+        if (! $hasProgress) {
+            return;
+        }
+
+        if (is_file($lockPath)) {
+            @unlink($lockPath);
+        }
+        @unlink($maintenancePath);
+        $this->store->clearCancelRequest();
+        self::clearProgressFields($state);
+        $this->store->write($state);
+        $this->store->appendLog('Cleared abandoned update state on Docker channel (web updater disabled).');
     }
 
     public function recoverStaleLockState(): void
@@ -1247,6 +1293,25 @@ final class UpdateRunner
         }
 
         return $trimmed;
+    }
+
+    private static function dockerImageTagFromEnv(): ?string
+    {
+        $image = getenv('WGW_IMAGE');
+        if (! is_string($image)) {
+            return null;
+        }
+        $image = trim($image);
+        if ($image === '') {
+            return null;
+        }
+        $pos = strrpos($image, ':');
+        if ($pos === false) {
+            return null;
+        }
+        $tag = trim(substr($image, $pos + 1));
+
+        return $tag !== '' ? $tag : null;
     }
 
     /**
