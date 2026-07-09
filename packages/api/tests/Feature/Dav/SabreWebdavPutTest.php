@@ -27,7 +27,7 @@ final class SabreWebdavPutTest extends WgwDatabaseTestCase
         $_ENV['WGW_APP_ROOT'] = $installRoot;
         WgwInstallFixture::markInstalled($installRoot, $this->dataDir, 'alice');
 
-        config(['wgw.data_dir' => $this->dataDir]);
+        config(['wgw.install_root' => $installRoot, 'wgw.data_dir' => $this->dataDir]);
         WgwInstallFixture::forgetInstallBindings();
     }
 

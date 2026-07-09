@@ -22,6 +22,14 @@ final class WgwInstallConfig
             return $this->installRoot = $this->normalize($fromConfig);
         }
 
+        $fromEnv = getenv('WGW_APP_ROOT');
+        if (! is_string($fromEnv) || $fromEnv === '') {
+            $fromEnv = $_ENV['WGW_APP_ROOT'] ?? null;
+        }
+        if (is_string($fromEnv) && $fromEnv !== '' && is_dir($fromEnv)) {
+            return $this->installRoot = $this->normalize($fromEnv);
+        }
+
         $cwd = getcwd();
         if (is_string($cwd) && $this->looksLikeInstallRoot($cwd)) {
             return $this->installRoot = $this->normalize($cwd);
@@ -133,8 +141,7 @@ final class WgwInstallConfig
         $dir = rtrim(str_replace('\\', '/', $dir), '/');
 
         return is_file($dir.'/index.php')
-            || is_file($dir.'/packages/api/.env')
-            || is_file($dir.'/packages/api/.env.example');
+            || is_file($dir.'/packages/api/.env');
     }
 
     private function normalize(string $path): string

@@ -24,8 +24,9 @@ final class SabreWebdavFrontTest extends WgwDatabaseTestCase
         $_ENV['WGW_APP_ROOT'] = $installRoot;
         WgwInstallFixture::markInstalled($installRoot, $data);
 
-        config(['wgw.data_dir' => $data]);
+        config(['wgw.install_root' => $installRoot, 'wgw.data_dir' => $data]);
         WgwInstallFixture::forgetInstallBindings();
+        WgwInstallFixture::purgeDatabaseConnection();
 
         $factory = $this->app->make(SabreServerFactory::class);
         $server = $factory->create();

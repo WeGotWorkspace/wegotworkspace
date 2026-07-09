@@ -9,6 +9,7 @@ use App\Support\AppPaths;
 use App\Support\UpdateFeedDefaults;
 use App\Support\WgwInstallConfig;
 use App\Support\WgwRuntimeEnvBridge;
+use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Support\Facades\DB;
 
 final class WgwInstallFixture
@@ -70,7 +71,21 @@ final class WgwInstallFixture
         $writer = app(InstallerEnvWriter::class);
         $envPath = $installRoot.'/packages/api/.env';
         $writer->patchEnvFile($envPath, $pairs);
+        self::applyPairsToRuntime($pairs);
+        config(['wgw.install_root' => $installRoot]);
         WgwRuntimeEnvBridge::apply(app(WgwInstallConfig::class));
+    }
+
+    /**
+     * @param  array<string, string>  $pairs
+     */
+    private static function applyPairsToRuntime(array $pairs): void
+    {
+        foreach ($pairs as $key => $value) {
+            putenv($key.'='.$value);
+            $_ENV[$key] = $value;
+            $_SERVER[$key] = $value;
+        }
     }
 
     public static function forgetInstallBindings(): void
@@ -103,6 +118,68 @@ final class WgwInstallFixture
         }
         config(['database.connections.wgw' => $wgw]);
         DB::purge('wgw');
+    }
+
+    /**
+     * Reconnect the {@code wgw} connection after install env changes without re-reading config.
+     */
+    public static function purgeDatabaseConnection(): void
+    {
+        if (! function_exists('app')) {
+            return;
+        }
+        DB::purge('wgw');
+    }
+
+    /**
+     * Restore PHPUnit's default install/database env after fixture tests.
+     */
+    public static function resetInstallEnv(): void
+    {
+        if (! function_exists('app')) {
+            return;
+        }
+
+        foreach ([
+            'WGW_APP_ROOT',
+            'WGW_DATA_DIR',
+            'WGW_DB_CONNECTION',
+            'WGW_DB_DATABASE',
+            'WGW_UPDATE_FEED_URL',
+        ] as $key) {
+            putenv($key);
+            unset($_ENV[$key], $_SERVER[$key]);
+        }
+
+        config([
+            'wgw.install_root' => null,
+            'wgw.data_dir' => null,
+            'database.connections.wgw' => array_merge(
+                (array) config('database.connections.wgw', []),
+                ['driver' => 'sqlite', 'database' => ':memory:'],
+            ),
+        ]);
+        self::forgetInstallBindings();
+        DB::purge('wgw');
+    }
+
+    /**
+     * Clear install env overrides after the Laravel app has shut down.
+     */
+    public static function resetInstallEnvAfterApplication(): void
+    {
+        foreach ([
+            'WGW_APP_ROOT',
+            'WGW_DATA_DIR',
+            'WGW_DB_CONNECTION',
+            'WGW_DB_DATABASE',
+            'WGW_UPDATE_FEED_URL',
+        ] as $key) {
+            putenv($key);
+            unset($_ENV[$key], $_SERVER[$key]);
+        }
+
+        RefreshDatabaseState::$migrated = false;
     }
 
     private static function isAbsolutePath(string $path): bool

@@ -38,7 +38,7 @@ final class UiDistFixture
 
         putenv('WGW_APP_ROOT='.$installRoot);
         $_ENV['WGW_APP_ROOT'] = $installRoot;
-        config(['wgw.data_dir' => $dataDir]);
+        config(['wgw.install_root' => $installRoot, 'wgw.data_dir' => $dataDir]);
         self::forgetBindings();
 
         return $repo;

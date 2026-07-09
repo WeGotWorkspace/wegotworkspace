@@ -19,6 +19,7 @@ final class FrontRoutingTest extends TestCase
             $this->repoRoot = null;
         }
         parent::tearDown();
+        WgwInstallFixture::resetInstallEnvAfterApplication();
     }
 
     public function test_install_without_trailing_slash_serves_wizard(): void
