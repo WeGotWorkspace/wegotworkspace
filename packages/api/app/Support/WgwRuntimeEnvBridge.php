@@ -19,14 +19,24 @@ final class WgwRuntimeEnvBridge
 
         $driver = self::envString('WGW_DB_CONNECTION');
         if ($driver === null) {
-            return;
+            $dataDir = self::envString('WGW_DATA_DIR');
+            if ($dataDir === null) {
+                return;
+            }
+            $driver = 'sqlite';
         }
 
         $wgw = (array) config('database.connections.wgw', []);
         $wgw['driver'] = $driver;
 
         if ($driver === 'sqlite') {
-            $database = self::envString('WGW_DB_DATABASE') ?? ':memory:';
+            $database = self::envString('WGW_DB_DATABASE');
+            if ($database === null) {
+                $dataDir = self::envString('WGW_DATA_DIR');
+                $database = $dataDir !== null
+                    ? rtrim($dataDir, '/').'/db.sqlite'
+                    : ':memory:';
+            }
             if ($database !== ':memory:' && ! self::isAbsolutePath($database)) {
                 $database = $install->resolveInstallPath($database);
             }

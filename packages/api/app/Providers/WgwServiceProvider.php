@@ -26,7 +26,7 @@ final class WgwServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        $this->app->make(WgwConfigMigrator::class)->migrateIfNeeded();
+        $this->app->make(WgwConfigMigrator::class)->migrateIfNeeded(clearConfig: false);
         WgwRuntimeEnvBridge::apply($this->app->make(WgwInstallConfig::class));
 
         $install = $this->app->make(WgwInstallConfig::class);

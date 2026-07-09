@@ -1,5 +1,11 @@
 Options -Indexes -MultiViews
 
+# PWA ships index.html beside index.php for Workbox precache; always route "/" through Laravel
+# so unconfigured installs redirect to /install/ (see UiStaticFront).
+<IfModule mod_dir.c>
+    DirectoryIndex index.php
+</IfModule>
+
 # PWA manifest icons are served from /pwa-icons/ (not /icons/) because Debian/Ubuntu Apache
 # ships Alias /icons/ -> /usr/share/apache2/icons/ in alias.conf, which shadows app assets.
 

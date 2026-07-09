@@ -43,9 +43,11 @@ export function InstallWizardActions({
         <Button
           variant="primary"
           onClick={() => void goNext()}
-          disabled={!canNext || actionPending || mysqlTest.state === "testing"}
+          disabled={
+            !canNext || actionPending || (step.id === "database" && mysqlTest.state === "testing")
+          }
         >
-          {actionPending || mysqlTest.state === "testing" ? (
+          {actionPending || (step.id === "database" && mysqlTest.state === "testing") ? (
             <>
               <Loader2 className="size-4 mr-2 animate-spin" />
               Working...
