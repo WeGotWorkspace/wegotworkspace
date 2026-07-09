@@ -2,7 +2,7 @@
 # Build release artifacts and/or publish a signed tag (CI builds the GitHub Release).
 #
 #   pnpm release                          # build + package (loads repo-root .env)
-#   pnpm release:publish patch            # signed tag on main HEAD, push tag → CI publishes release
+#   pnpm release:publish patch            # bump apps/wegotworkspace/VERSION, tag, push → CI
 #   pnpm release:publish 1.2.3 --yes      # explicit version, no prompt
 #
 set -euo pipefail
@@ -15,23 +15,21 @@ usage() {
   cat <<'EOF'
 usage:
   tools/release-wegotworkspace.sh package [--skip-build]
-  tools/release-wegotworkspace.sh publish <patch|minor|major|X.Y.Z> [--yes] [--no-push] [--verify] [--sync-main]
+  tools/release-wegotworkspace.sh publish <patch|minor|major|X.Y.Z> [--yes] [--no-push] [--verify] [--no-sync-main]
 
 package   Run pnpm build (unless --skip-build), then write dist/releases/* using
           WGW_RELEASE_SIGNING_PRIVATE_KEY from the environment (repo-root .env via pnpm).
 
-publish   Resolve the next semver from the latest of apps/wegotworkspace/VERSION and
-          the newest v* tag, create a signed annotated tag on main HEAD, and push the
-          tag. GitHub Actions builds and uploads the release assets. No VERSION commit
-          or sync PR is required — CI reads the version from the tag name.
+publish   Bump apps/wegotworkspace/VERSION (SSOT on main), commit on main, create a signed
+          annotated tag vX.Y.Z on that commit, and push main + tag. GitHub Actions reads
+          the version from the tag when building release assets.
 
 options:
-  --yes         Skip confirmation prompts (publish only).
-  --no-push     Create the tag locally but do not push (publish only).
-  --verify      Run package build before tagging (publish only).
-  --sync-main   Also bump apps/wegotworkspace/VERSION, commit on main, and push main
-                (for admins who want main kept in sync; requires branch bypass).
-  --skip-build  Skip pnpm build (package, or publish --verify).
+  --yes           Skip confirmation prompts (publish only).
+  --no-push       Create the tag locally but do not push (publish only).
+  --verify        Run package build before tagging (publish only).
+  --no-sync-main  Skip the VERSION bump commit and main push (tag-only publish; not recommended).
+  --skip-build    Skip pnpm build (package, or publish --verify).
 EOF
   exit 1
 }
@@ -56,40 +54,25 @@ read_latest_tag_version() {
 }
 
 read_version() {
+  read_version_from_file
+}
+
+assert_version_matches_latest_tag() {
   local from_file from_tag
   from_file="$(read_version_from_file)"
   from_tag="$(read_latest_tag_version)"
-  node -e '
-const file = process.argv[1]?.trim() ?? "";
-const tag = process.argv[2]?.trim() ?? "";
-const semver = /^\d+\.\d+\.\d+$/;
-const parse = (value) => {
-  if (!semver.test(value)) return null;
-  return value.split(".").map((part) => Number.parseInt(part, 10));
-};
-const compare = (left, right) => {
-  for (let i = 0; i < 3; i += 1) {
-    if (left[i] !== right[i]) return left[i] - right[i];
-  }
-  return 0;
-};
-const fileParts = parse(file);
-const tagParts = parse(tag);
-if (fileParts && tagParts) {
-  console.log(compare(fileParts, tagParts) >= 0 ? file : tag);
-  process.exit(0);
-}
-if (fileParts) {
-  console.log(file);
-  process.exit(0);
-}
-if (tagParts) {
-  console.log(tag);
-  process.exit(0);
-}
-console.error("error: no semver found in VERSION or v* tags");
-process.exit(1);
-' "$from_file" "$from_tag"
+  [[ -n "$from_tag" ]] || return 0
+  if [[ "$from_file" != "$from_tag" ]]; then
+    cat >&2 <<EOF
+error: apps/wegotworkspace/VERSION (${from_file}) must match the latest release tag (v${from_tag}).
+
+Update VERSION to ${from_tag} before publishing the next release, e.g.:
+  printf '%s\\n' '${from_tag}' > apps/wegotworkspace/VERSION
+  git add apps/wegotworkspace/VERSION
+  git commit -m "chore(release): v${from_tag}"
+EOF
+    exit 1
+  fi
 }
 
 require_main_branch() {
@@ -245,7 +228,7 @@ cmd_package() {
 }
 
 cmd_publish() {
-  local bump="" yes=0 no_push=0 verify=0 skip_build=0 sync_main=0
+  local bump="" yes=0 no_push=0 verify=0 skip_build=0 sync_main=1
   [[ $# -gt 0 ]] || usage
   bump="$1"
   shift
@@ -254,7 +237,7 @@ cmd_publish() {
       --yes) yes=1 ;;
       --no-push) no_push=1 ;;
       --verify) verify=1 ;;
-      --sync-main) sync_main=1 ;;
+      --no-sync-main) sync_main=0 ;;
       --skip-build) skip_build=1 ;;
       *) usage ;;
     esac
@@ -265,6 +248,7 @@ cmd_publish() {
   require_clean_tree
   require_main_branch
   sync_main_branch
+  assert_version_matches_latest_tag
   resolve_git_tag_signing
 
   local current new tag
@@ -328,8 +312,8 @@ cmd_publish() {
   git -C "$ROOT" push origin "$tag"
   echo "Done. GitHub Actions will build and publish release assets for ${tag}."
   if [[ "$sync_main" -eq 0 ]]; then
-    echo "Note: apps/wegotworkspace/VERSION on main is unchanged; CI uses the tag version."
-    echo "      Pass --sync-main to commit the VERSION bump on main (admin bypass required)."
+    echo "Warning: apps/wegotworkspace/VERSION on main is unchanged (--no-sync-main)."
+    echo "         Prefer the default publish flow so VERSION stays aligned with release tags."
   fi
 }
 
