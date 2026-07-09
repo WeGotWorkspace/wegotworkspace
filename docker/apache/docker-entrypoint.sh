@@ -20,6 +20,7 @@ if [ -f "${API_ROOT}/.env.example" ] && [ ! -f "${API_ROOT}/.env" ]; then
 fi
 if [ -f "${API_ROOT}/artisan" ] && [ -f "${API_ROOT}/.env" ]; then
   php "${API_ROOT}/artisan" key:generate --force --no-interaction >/dev/null 2>&1 || true
+  php "${API_ROOT}/artisan" wgw:dev-install --no-interaction >/dev/null 2>&1 || true
 fi
 
 mkdir -p \

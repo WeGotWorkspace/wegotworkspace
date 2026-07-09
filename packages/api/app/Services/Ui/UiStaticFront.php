@@ -165,13 +165,9 @@ final class UiStaticFront
 
     private function alreadyInstalled(string $webBase): Response
     {
-        $home = InstallerWebBase::url($webBase, '/');
-        $html = '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>WeGotWorkspace</title></head><body>';
-        $html .= '<h1>Already installed</h1>';
-        $html .= '<p><a href="'.htmlspecialchars($home, ENT_QUOTES, 'UTF-8').'">Open WeGotWorkspace</a></p>';
-        $html .= '</body></html>';
+        $login = InstallerWebBase::url($webBase, '/login');
 
-        return response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+        return redirect($login, 302)->setContent('');
     }
 
     private function distMissing(string $module): Response

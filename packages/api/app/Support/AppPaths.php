@@ -33,15 +33,32 @@ final class AppPaths
 
     public function isInstalled(): bool
     {
-        if (! is_file($this->lockFile())) {
+        if (! $this->runtimeInstallReady()) {
             return false;
         }
 
-        if (! $this->install->hasRuntimeDatabaseConfig()) {
+        $this->ensureInstallLock();
+
+        return true;
+    }
+
+    public function runtimeInstallReady(): bool
+    {
+        if (! $this->install->hasConfiguredRuntimeEnv()) {
             return false;
         }
 
         return $this->jwtKeysReady() && $this->databaseReady();
+    }
+
+    public function ensureInstallLock(): void
+    {
+        if (is_file($this->lockFile())) {
+            return;
+        }
+
+        @file_put_contents($this->lockFile(), date('c')."\n", LOCK_EX);
+        @chmod($this->lockFile(), 0600);
     }
 
     public function jwtPrivateKeyPath(): string
@@ -87,7 +104,7 @@ final class AppPaths
 
     public function clearStaleInstallLock(): void
     {
-        if (is_file($this->lockFile()) && ! $this->isInstalled()) {
+        if (is_file($this->lockFile()) && ! $this->runtimeInstallReady()) {
             @unlink($this->lockFile());
         }
     }

@@ -113,6 +113,31 @@ final class WgwInstallConfig
         return $database !== '';
     }
 
+    /**
+     * True when {@see apiEnvPath()} was written by the installer or legacy migrator.
+     * Replaces the former wgw-config.php readability gate in {@see AppPaths::isInstalled()}.
+     */
+    public function hasConfiguredRuntimeEnv(): bool
+    {
+        if ($this->hasRuntimeDatabaseConfig()) {
+            return true;
+        }
+
+        $path = $this->apiEnvPath();
+        if (! is_readable($path)) {
+            return false;
+        }
+
+        if (WgwApiEnvFile::hasRealDatabaseConfig($path)) {
+            return true;
+        }
+
+        // Default-path SQLite installs keep example-identical WGW_DB_* lines in .env.
+        $privateKey = rtrim($this->dataDir(), '/').'/keys/api-jwt-private.pem';
+
+        return is_readable($privateKey) && is_file($privateKey) && filesize($privateKey) >= 32;
+    }
+
     private function resolvePath(string $path): string
     {
         $path = str_replace('\\', '/', trim($path));
