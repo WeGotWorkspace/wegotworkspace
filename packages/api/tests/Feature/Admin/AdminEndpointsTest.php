@@ -12,13 +12,12 @@ use App\Support\WgwSettings;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
 use Tests\Support\WgwDatabaseTestCase;
+use Tests\Support\WgwInstallFixture;
 use Tests\Support\WgwTestDisks;
 
 final class AdminEndpointsTest extends WgwDatabaseTestCase
 {
     private string $dataDir = '';
-
-    private string $previousAppRoot = '';
 
     protected function setUp(): void
     {
@@ -26,13 +25,11 @@ final class AdminEndpointsTest extends WgwDatabaseTestCase
 
         putenv('WGW_DISABLE_LOGIN_THROTTLE=1');
         $_ENV['WGW_DISABLE_LOGIN_THROTTLE'] = '1';
-        $this->previousAppRoot = getenv('WGW_APP_ROOT') ?: '';
 
         $this->dataDir = storage_path('framework/testing/wgw-admin-'.uniqid('', true));
         File::ensureDirectoryExists($this->dataDir.'/updates/backup');
         File::ensureDirectoryExists($this->dataDir.'/install-root');
-        putenv('WGW_APP_ROOT='.$this->dataDir.'/install-root');
-        $_ENV['WGW_APP_ROOT'] = $this->dataDir.'/install-root';
+        WgwInstallFixture::bindInstallRoot($this->dataDir.'/install-root');
         WgwTestDisks::refresh($this->dataDir);
         $this->configureWgwJwtKeys();
 
@@ -44,13 +41,6 @@ final class AdminEndpointsTest extends WgwDatabaseTestCase
     {
         if ($this->dataDir !== '' && File::isDirectory($this->dataDir)) {
             File::deleteDirectory($this->dataDir);
-        }
-        if ($this->previousAppRoot !== '') {
-            putenv('WGW_APP_ROOT='.$this->previousAppRoot);
-            $_ENV['WGW_APP_ROOT'] = $this->previousAppRoot;
-        } else {
-            putenv('WGW_APP_ROOT');
-            unset($_ENV['WGW_APP_ROOT']);
         }
 
         parent::tearDown();

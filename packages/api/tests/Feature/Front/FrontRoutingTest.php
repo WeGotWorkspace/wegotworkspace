@@ -18,8 +18,8 @@ final class FrontRoutingTest extends TestCase
             UiDistFixture::removeTree($this->repoRoot);
             $this->repoRoot = null;
         }
+
         parent::tearDown();
-        WgwInstallFixture::resetInstallEnvAfterApplication();
     }
 
     public function test_install_without_trailing_slash_serves_wizard(): void

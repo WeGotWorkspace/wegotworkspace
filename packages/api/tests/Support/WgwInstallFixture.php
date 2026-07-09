@@ -14,6 +14,29 @@ use Illuminate\Support\Facades\DB;
 
 final class WgwInstallFixture
 {
+    private static bool $databaseEnvDirty = false;
+
+    /**
+     * Point install resolution at a fixture root for the current test request.
+     */
+    public static function bindInstallRoot(string $installRoot, ?string $dataDir = null): void
+    {
+        $installRoot = rtrim(str_replace('\\', '/', $installRoot), '/');
+        putenv('WGW_APP_ROOT='.$installRoot);
+        $_ENV['WGW_APP_ROOT'] = $installRoot;
+        $_SERVER['WGW_APP_ROOT'] = $installRoot;
+
+        $config = ['wgw.install_root' => $installRoot];
+        if ($dataDir !== null) {
+            $config['wgw.data_dir'] = rtrim(str_replace('\\', '/', $dataDir), '/');
+        }
+        if (function_exists('config')) {
+            config($config);
+        }
+
+        self::forgetInstallBindings();
+    }
+
     public static function markInstalled(string $installRoot, string $dataDir, string $username = 'admin'): void
     {
         $installRoot = rtrim(str_replace('\\', '/', $installRoot), '/');
@@ -73,6 +96,7 @@ final class WgwInstallFixture
         $writer->patchEnvFile($envPath, $pairs);
         self::applyPairsToRuntime($pairs);
         config(['wgw.install_root' => $installRoot]);
+        self::$databaseEnvDirty = true;
         WgwRuntimeEnvBridge::apply(app(WgwInstallConfig::class));
     }
 
@@ -140,33 +164,26 @@ final class WgwInstallFixture
             return;
         }
 
-        foreach ([
-            'WGW_APP_ROOT',
-            'WGW_DATA_DIR',
-            'WGW_DB_CONNECTION',
-            'WGW_DB_DATABASE',
-            'WGW_UPDATE_FEED_URL',
-        ] as $key) {
-            putenv($key);
-            unset($_ENV[$key], $_SERVER[$key]);
-        }
-
+        self::clearInstallEnvOverrides();
         config([
             'wgw.install_root' => null,
             'wgw.data_dir' => null,
-            'database.connections.wgw' => array_merge(
-                (array) config('database.connections.wgw', []),
-                ['driver' => 'sqlite', 'database' => ':memory:'],
-            ),
         ]);
         self::forgetInstallBindings();
-        DB::purge('wgw');
+        WgwTestDatabase::configureConnection(WgwTestDatabase::driver());
+        self::resetMigratedStateIfNeeded();
     }
 
     /**
      * Clear install env overrides after the Laravel app has shut down.
      */
     public static function resetInstallEnvAfterApplication(): void
+    {
+        self::clearInstallEnvOverrides();
+        self::resetMigratedStateIfNeeded();
+    }
+
+    private static function clearInstallEnvOverrides(): void
     {
         foreach ([
             'WGW_APP_ROOT',
@@ -179,7 +196,20 @@ final class WgwInstallFixture
             unset($_ENV[$key], $_SERVER[$key]);
         }
 
+        putenv('WGW_DB_DATABASE=:memory:');
+        $_ENV['WGW_DB_DATABASE'] = ':memory:';
+        $_SERVER['WGW_DB_DATABASE'] = ':memory:';
+    }
+
+    private static function resetMigratedStateIfNeeded(): void
+    {
+        if (! self::$databaseEnvDirty) {
+            return;
+        }
+
+        unset(RefreshDatabaseState::$inMemoryConnections['wgw']);
         RefreshDatabaseState::$migrated = false;
+        self::$databaseEnvDirty = false;
     }
 
     private static function isAbsolutePath(string $path): bool

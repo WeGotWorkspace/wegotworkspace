@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Ui;
 
-use App\Support\AppPaths;
-use App\Support\WgwInstallConfig;
 use Tests\Support\UiDistFixture;
 use Tests\Support\WgwInstallFixture;
 use Tests\TestCase;
@@ -20,8 +18,8 @@ final class UiStaticFrontTest extends TestCase
             UiDistFixture::removeTree($this->repoRoot);
             $this->repoRoot = null;
         }
+
         parent::tearDown();
-        WgwInstallFixture::resetInstallEnvAfterApplication();
     }
 
     public function test_uninstalled_shell_path_redirects_to_install(): void
@@ -48,11 +46,7 @@ final class UiStaticFrontTest extends TestCase
         $root = sys_get_temp_dir().'/wgw-ui-kernel-'.uniqid('', true);
         mkdir($root, 0775, true);
         mkdir($root.'/wgw-content', 0775, true);
-        putenv('WGW_APP_ROOT='.$root);
-        $_ENV['WGW_APP_ROOT'] = $root;
-        config(['wgw.install_root' => $root, 'wgw.data_dir' => $root.'/wgw-content']);
-        $this->app->forgetInstance(WgwInstallConfig::class);
-        $this->app->forgetInstance(AppPaths::class);
+        WgwInstallFixture::bindInstallRoot($root, $root.'/wgw-content');
 
         $this->get('/install/')
             ->assertStatus(503)

@@ -75,15 +75,4 @@ abstract class WgwDatabaseTestCase extends TestCase
     {
         config($this->wgwJwtConfig());
     }
-
-    protected function tearDown(): void
-    {
-        parent::tearDown();
-        if (function_exists('app') && app()->bound('config')) {
-            WgwInstallFixture::resetInstallEnv();
-            RefreshDatabaseState::$migrated = false;
-        } else {
-            WgwInstallFixture::resetInstallEnvAfterApplication();
-        }
-    }
 }
