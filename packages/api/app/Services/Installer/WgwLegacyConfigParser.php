@@ -2,39 +2,24 @@
 
 declare(strict_types=1);
 
-namespace App;
+namespace App\Services\Installer;
 
-final class LocalConfigFile
+/**
+ * One-shot parser for legacy {@code wgw-config.php} (installer array or define() sample).
+ */
+final class WgwLegacyConfigParser
 {
-    /** @var array<string, array<string, mixed>> */
-    private static array $cache = [];
-
     /**
-     * Read `wgw-config.php`.
-     *
-     * Supports both styles:
-     * - return array (installer generated)
-     * - WordPress-style define(...) constants (sample)
-     *
      * @return array<string, mixed>
      */
     public static function read(string $path): array
     {
-        $cacheKey = self::cacheKey($path);
-        if (isset(self::$cache[$cacheKey])) {
-            return self::$cache[$cacheKey];
-        }
-
         $raw = require $path;
         if (is_array($raw)) {
-            self::$cache[$cacheKey] = $raw;
-
-            return self::$cache[$cacheKey];
+            return $raw;
         }
 
-        self::$cache[$cacheKey] = self::fromDefinedConstants();
-
-        return self::$cache[$cacheKey];
+        return self::fromDefinedConstants();
     }
 
     /**
@@ -68,7 +53,6 @@ final class LocalConfigFile
                 $pdo['user'] = self::definedNullableString('WGW_DB_USER');
                 $pdo['password'] = self::definedNullableString('WGW_DB_PASSWORD');
             } elseif ($dataDir !== null) {
-                // Default to SQLite only when no explicit DSN is configured.
                 $pdo['sqlite_file'] = rtrim($dataDir, '/').'/db.sqlite';
             }
         }
@@ -111,25 +95,5 @@ final class LocalConfigFile
         }
 
         return $value;
-    }
-
-    public static function clearCacheForPath(string $path): void
-    {
-        unset(self::$cache[self::cacheKey($path)]);
-    }
-
-    public static function clearCache(): void
-    {
-        self::$cache = [];
-    }
-
-    private static function cacheKey(string $path): string
-    {
-        $real = realpath($path);
-        if ($real !== false) {
-            return $real;
-        }
-
-        return $path;
     }
 }

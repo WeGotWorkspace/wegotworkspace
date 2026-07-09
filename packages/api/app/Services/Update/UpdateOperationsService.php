@@ -41,11 +41,10 @@ final class UpdateOperationsService
 
     private function updateFeedUrl(): string
     {
-        $file = $this->install->readInstallFileConfig();
-        $fromFile = isset($file['update_feed_url']) && is_string($file['update_feed_url'])
-            ? trim($file['update_feed_url'])
-            : '';
+        $fromConfig = config('wgw.update_feed_url');
 
-        return $fromFile !== '' ? $fromFile : UpdateFeedDefaults::MANIFEST_URL;
+        return is_string($fromConfig) && trim($fromConfig) !== ''
+            ? trim($fromConfig)
+            : UpdateFeedDefaults::MANIFEST_URL;
     }
 }

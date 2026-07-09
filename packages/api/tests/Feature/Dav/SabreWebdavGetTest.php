@@ -26,14 +26,15 @@ final class SabreWebdavGetTest extends WgwDatabaseTestCase
         file_put_contents($installRoot.'/index.php', "<?php\n");
         $this->dataDir = $installRoot.'/wgw-content';
         mkdir($this->dataDir.'/files/users/alice', 0775, true);
-        putenv('WGW_APP_ROOT='.$installRoot);
-        $_ENV['WGW_APP_ROOT'] = $installRoot;
+        WgwInstallFixture::bindInstallRoot($installRoot, $this->dataDir);
         WgwInstallFixture::markInstalled($installRoot, $this->dataDir, 'alice');
+
+        config(['wgw.install_root' => $installRoot, 'wgw.data_dir' => $this->dataDir]);
+        WgwInstallFixture::forgetInstallBindings();
+        WgwInstallFixture::purgeDatabaseConnection();
         $this->setAppSetting(WgwSettings::BROWSER_PLUGIN, false);
 
-        config(['wgw.data_dir' => $this->dataDir]);
         WgwTestDisks::refresh($this->dataDir);
-        WgwInstallFixture::forgetInstallBindings();
         unset($_COOKIE['sabre_ui_auth']);
     }
 

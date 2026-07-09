@@ -61,7 +61,7 @@ Installer connectivity, user probes, and install readiness use `WgwDatabaseProbe
 
 ## Connection
 
-`WgwDatabaseConfig` reads `wgw-config.php` → `database.connections.wgw` at boot (`WgwServiceProvider`). Prefer models with `UsesWgwConnection`; use `DB::connection('wgw')` only when Eloquent is not practical (migrations, installer cutover).
+`config/database.php` `connections.wgw` is populated from `WGW_DB_*` in `packages/api/.env` at boot (`WgwServiceProvider`). Prefer models with `UsesWgwConnection`; use `DB::connection('wgw')` only when Eloquent is not practical (migrations, installer cutover).
 
 ## Adding a table
 

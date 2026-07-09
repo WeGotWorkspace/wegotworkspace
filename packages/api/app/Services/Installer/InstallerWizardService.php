@@ -6,6 +6,8 @@ namespace App\Services\Installer;
 
 use App\Services\Settings\SettingKeys;
 use App\Support\AppPaths;
+use App\Support\WgwInstallConfig;
+use App\Support\WgwRuntimeEnvBridge;
 use Illuminate\Support\Facades\Cache;
 
 final class InstallerWizardService
@@ -16,10 +18,11 @@ final class InstallerWizardService
         private AppPaths $paths,
         private InstallerEnvChecker $env,
         private InstallerDatabaseInstaller $database,
-        private InstallerConfigWriter $configWriter,
+        private InstallerEnvWriter $envWriter,
         private InstallerJwtKeyGenerator $jwtKeys,
         private ApiRuntimeEnvService $apiEnv,
         private WgwInstallEnv $installEnv,
+        private WgwInstallConfig $installConfig,
     ) {}
 
     /**
@@ -367,9 +370,10 @@ final class InstallerWizardService
         ];
 
         try {
-            $this->configWriter->writeBootstrap($bootstrap);
+            $this->envWriter->writeBootstrap($bootstrap);
+            WgwRuntimeEnvBridge::apply($this->installConfig);
         } catch (\Throwable) {
-            throw new \RuntimeException('Could not write configuration file.');
+            throw new \RuntimeException('Could not write packages/api/.env.');
         }
 
         if (file_put_contents($this->paths->lockFile(), date('c')."\n", LOCK_EX) === false) {

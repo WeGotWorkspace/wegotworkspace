@@ -18,8 +18,6 @@ trait AdminTestFixtures
 
     private string $adminDataDir = '';
 
-    private string $previousAppRoot = '';
-
     private bool $adminFixturesUseAppRoot = false;
 
     protected function setUpAdminFixtures(bool $withAppRoot = false): void
@@ -35,10 +33,8 @@ trait AdminTestFixtures
 
         $this->adminFixturesUseAppRoot = $withAppRoot;
         if ($withAppRoot) {
-            $this->previousAppRoot = getenv('WGW_APP_ROOT') ?: '';
             File::ensureDirectoryExists($this->adminDataDir.'/install-root');
-            putenv('WGW_APP_ROOT='.$this->adminDataDir.'/install-root');
-            $_ENV['WGW_APP_ROOT'] = $this->adminDataDir.'/install-root';
+            WgwInstallFixture::bindInstallRoot($this->adminDataDir.'/install-root');
         }
 
         WgwTestDisks::refresh($this->adminDataDir);
@@ -52,16 +48,6 @@ trait AdminTestFixtures
     {
         if ($this->adminDataDir !== '' && File::isDirectory($this->adminDataDir)) {
             File::deleteDirectory($this->adminDataDir);
-        }
-
-        if ($this->adminFixturesUseAppRoot) {
-            if ($this->previousAppRoot !== '') {
-                putenv('WGW_APP_ROOT='.$this->previousAppRoot);
-                $_ENV['WGW_APP_ROOT'] = $this->previousAppRoot;
-            } else {
-                putenv('WGW_APP_ROOT');
-                unset($_ENV['WGW_APP_ROOT']);
-            }
         }
     }
 

@@ -1,0 +1,97 @@
+# Production install image for CI/release — unpacks the deploy ZIP built on the GHA runner.
+# Same runtime layout as Dockerfile; local `docker compose up --build` uses Dockerfile instead.
+
+FROM debian:bookworm-slim AS unpack
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends unzip \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY dist/releases/wegotworkspace-deploy-*.zip /tmp/deploy.zip
+RUN mkdir -p /release \
+    && unzip -q /tmp/deploy.zip -d /release \
+    && rm /tmp/deploy.zip
+
+FROM php:8.3-apache-bookworm
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        curl \
+        libonig-dev \
+        libzip-dev \
+        libicu-dev \
+        libxml2-dev \
+        libsqlite3-dev \
+        default-libmysqlclient-dev \
+        libc-client-dev \
+        libkrb5-dev \
+    && docker-php-ext-configure imap --with-kerberos --with-imap-ssl \
+    && docker-php-ext-install \
+        pdo \
+        pdo_sqlite \
+        pdo_mysql \
+        mbstring \
+        zip \
+        intl \
+        imap \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN a2enmod \
+        rewrite \
+        headers \
+        env \
+        mime \
+        dir \
+        alias \
+        negotiation \
+        setenvif \
+        deflate \
+        filter \
+        authz_core \
+        authz_host \
+        auth_basic \
+    && sed -i '/^Alias \/icons\//d' /etc/apache2/mods-available/alias.conf \
+    && ! grep -q '^Alias /icons/' /etc/apache2/mods-available/alias.conf
+
+ENV APACHE_DOCUMENT_ROOT=/var/www/html
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
+    && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+
+COPY docker/install/vhost.conf /etc/apache2/conf-available/wgw-install-vhost.conf
+COPY docker/install/http-vhost.conf /etc/apache2/conf-available/wgw-install-http-vhost.conf
+RUN a2enconf wgw-install-vhost wgw-install-http-vhost
+
+COPY docker/install/docker-entrypoint.sh /usr/local/bin/wgw-install-entrypoint
+COPY docker/install/wgw-install-wait-db.sh /usr/local/bin/wgw-install-wait-db.sh
+COPY docker/install/wgw-install-migrate.sh /usr/local/bin/wgw-install-migrate.sh
+COPY docker/install/wgw-install-seed-config.sh /usr/local/bin/wgw-install-seed-config.sh
+RUN chmod +x \
+    /usr/local/bin/wgw-install-entrypoint \
+    /usr/local/bin/wgw-install-wait-db.sh \
+    /usr/local/bin/wgw-install-migrate.sh \
+    /usr/local/bin/wgw-install-seed-config.sh
+
+COPY --from=unpack /release/ /var/www/html/
+RUN chown -R www-data:www-data \
+    /var/www/html/wgw-content \
+    /var/www/html/packages/api/storage \
+    /var/www/html/packages/api/bootstrap/cache \
+    2>/dev/null || true \
+    && chown www-data:www-data /var/www/html /var/www/html/packages/api \
+    && for path in \
+         /var/www/html/wgw-config.php \
+         /var/www/html/wgw-config.sample.php \
+         /var/www/html/.htaccess \
+         /var/www/html/packages/api/.env; do \
+         if [ -e "$path" ]; then chown www-data:www-data "$path"; fi; \
+       done
+
+WORKDIR /var/www/html
+
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=6 \
+    CMD curl -fsS http://127.0.0.1/api/v1/health | grep -q '"status":"ok"'
+
+ENTRYPOINT ["wgw-install-entrypoint"]
+CMD ["apache2-foreground"]

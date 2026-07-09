@@ -111,9 +111,21 @@ return [
         ],
 
         'wgw' => [
-            'driver' => 'sqlite',
+            'driver' => env('WGW_DB_CONNECTION', 'sqlite'),
+            'url' => env('WGW_DB_URL'),
+            'host' => env('WGW_DB_HOST', '127.0.0.1'),
+            'port' => env('WGW_DB_PORT', '3306'),
             'database' => env('WGW_DB_DATABASE', ':memory:'),
+            'username' => env('WGW_DB_USERNAME'),
+            'password' => env('WGW_DB_PASSWORD'),
+            'unix_socket' => env('WGW_DB_SOCKET', ''),
+            'charset' => env('WGW_DB_CHARSET', 'utf8mb4'),
+            'collation' => env('WGW_DB_COLLATION', 'utf8mb4_unicode_ci'),
             'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => wgw_mysql_pdo_options(),
             'foreign_key_constraints' => true,
         ],
 

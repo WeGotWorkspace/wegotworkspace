@@ -8,6 +8,7 @@ use App\Exceptions\ApiHttpException;
 use App\Models\AppUpdateHistory;
 use App\Services\Installer\ApiRuntimeEnvService;
 use App\Services\Installer\InstallerEnvChecker;
+use App\Services\Installer\WgwConfigMigrator;
 use App\Services\Installer\WgwSchemaMigrator;
 use App\Support\AppVersion;
 use App\Support\WgwInstallConfig;
@@ -26,6 +27,7 @@ final class UpdateRunner
         private ReleaseFeedClient $releaseFeed,
         private ApiRuntimeEnvService $apiEnv,
         private WgwSchemaMigrator $schemaMigrator,
+        private WgwConfigMigrator $configMigrator,
     ) {}
 
     /**
@@ -349,6 +351,7 @@ final class UpdateRunner
 
             self::writeStatus('running_migrations', $beforeVersion, $targetVersion);
             $this->schemaMigrator->migrate();
+            $this->configMigrator->migrateIfNeeded();
             self::recordHistory($beforeVersion, $targetVersion, 'success', 'Update applied successfully.');
             $result['ok'] = true;
             $result['message'] = 'Update applied successfully.';

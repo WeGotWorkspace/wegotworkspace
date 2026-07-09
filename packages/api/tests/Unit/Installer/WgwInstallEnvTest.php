@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Installer;
 
-use App\LocalConfigFile;
 use App\Services\Installer\ProductionInstallBootstrap;
 use App\Services\Installer\WgwInstallEnv;
 use App\Support\AppPaths;
@@ -17,8 +16,6 @@ final class WgwInstallEnvTest extends TestCase
 
     protected function setUp(): void
     {
-        parent::setUp();
-
         $this->installRoot = sys_get_temp_dir().'/wgw-install-env-test-'.uniqid('', true);
         mkdir($this->installRoot, 0775, true);
         mkdir($this->installRoot.'/wgw-content', 0775, true);
@@ -26,17 +23,20 @@ final class WgwInstallEnvTest extends TestCase
 
         putenv('WGW_APP_ROOT='.$this->installRoot);
         $_ENV['WGW_APP_ROOT'] = $this->installRoot;
+
+        parent::setUp();
+
+        config(['wgw.install_root' => $this->installRoot]);
+        WgwInstallFixture::ensureApiPackage($this->installRoot);
         WgwInstallFixture::forgetInstallBindings();
-        LocalConfigFile::clearCache();
     }
 
     protected function tearDown(): void
     {
-        $this->clearInstallEnv();
+        config(['wgw.install' => []]);
         putenv('WGW_APP_ROOT');
         unset($_ENV['WGW_APP_ROOT']);
         WgwInstallFixture::forgetInstallBindings();
-        LocalConfigFile::clearCache();
 
         if (is_dir($this->installRoot)) {
             $this->removeTree($this->installRoot);
@@ -47,26 +47,18 @@ final class WgwInstallEnvTest extends TestCase
 
     public function test_wizard_defaults_merge_mysql_and_site_fields(): void
     {
-        putenv('WGW_INSTALL_DB_DRIVER=mysql');
-        $_ENV['WGW_INSTALL_DB_DRIVER'] = 'mysql';
-        putenv('WGW_INSTALL_DB_HOST=db');
-        $_ENV['WGW_INSTALL_DB_HOST'] = 'db';
-        putenv('WGW_INSTALL_DB_PORT=3306');
-        $_ENV['WGW_INSTALL_DB_PORT'] = '3306';
-        putenv('WGW_INSTALL_DB_DATABASE=wgw');
-        $_ENV['WGW_INSTALL_DB_DATABASE'] = 'wgw';
-        putenv('WGW_INSTALL_DB_USER=wgw');
-        $_ENV['WGW_INSTALL_DB_USER'] = 'wgw';
-        putenv('WGW_INSTALL_DB_PASSWORD=secret');
-        $_ENV['WGW_INSTALL_DB_PASSWORD'] = 'secret';
-        putenv('WGW_INSTALL_TIMEZONE=Europe/Amsterdam');
-        $_ENV['WGW_INSTALL_TIMEZONE'] = 'Europe/Amsterdam';
-        putenv('WGW_INSTALL_BASE_URI=/wgw/');
-        $_ENV['WGW_INSTALL_BASE_URI'] = '/wgw/';
-        putenv('WGW_INSTALL_ADMIN_USERNAME=Admin');
-        $_ENV['WGW_INSTALL_ADMIN_USERNAME'] = 'Admin';
-        putenv('WGW_INSTALL_ADMIN_EMAIL=admin@example.test');
-        $_ENV['WGW_INSTALL_ADMIN_EMAIL'] = 'admin@example.test';
+        $this->setInstallConfig([
+            'db_driver' => 'mysql',
+            'db_host' => 'db',
+            'db_port' => '3306',
+            'db_database' => 'wgw',
+            'db_user' => 'wgw',
+            'db_password' => 'secret',
+            'timezone' => 'Europe/Amsterdam',
+            'base_uri' => '/wgw/',
+            'admin_username' => 'Admin',
+            'admin_email' => 'admin@example.test',
+        ]);
 
         $defaults = app(WgwInstallEnv::class)->wizardDefaults('');
 
@@ -82,21 +74,22 @@ final class WgwInstallEnvTest extends TestCase
 
     public function test_headless_plan_requires_complete_env(): void
     {
-        putenv('WGW_INSTALL_HEADLESS=1');
-        $_ENV['WGW_INSTALL_HEADLESS'] = '1';
-        putenv('WGW_INSTALL_DB_DRIVER=sqlite');
-        $_ENV['WGW_INSTALL_DB_DRIVER'] = 'sqlite';
-        putenv('WGW_INSTALL_BASE_URI=/');
-        $_ENV['WGW_INSTALL_BASE_URI'] = '/';
+        $this->setInstallConfig([
+            'headless' => true,
+            'db_driver' => 'sqlite',
+            'base_uri' => '/',
+        ]);
 
         $this->assertNull(app(WgwInstallEnv::class)->headlessPlan(''));
 
-        putenv('WGW_INSTALL_ADMIN_USERNAME=admin');
-        $_ENV['WGW_INSTALL_ADMIN_USERNAME'] = 'admin';
-        putenv('WGW_INSTALL_ADMIN_EMAIL=admin@example.test');
-        $_ENV['WGW_INSTALL_ADMIN_EMAIL'] = 'admin@example.test';
-        putenv('WGW_INSTALL_ADMIN_PASSWORD=longpassword');
-        $_ENV['WGW_INSTALL_ADMIN_PASSWORD'] = 'longpassword';
+        $this->setInstallConfig([
+            'headless' => true,
+            'db_driver' => 'sqlite',
+            'base_uri' => '/',
+            'admin_username' => 'admin',
+            'admin_email' => 'admin@example.test',
+            'admin_password' => 'longpassword',
+        ]);
 
         $plan = app(WgwInstallEnv::class)->headlessPlan('');
         $this->assertIsArray($plan);
@@ -106,18 +99,14 @@ final class WgwInstallEnvTest extends TestCase
 
     public function test_bootstrap_endpoint_prefills_mysql_from_env(): void
     {
-        putenv('WGW_INSTALL_DB_DRIVER=mysql');
-        $_ENV['WGW_INSTALL_DB_DRIVER'] = 'mysql';
-        putenv('WGW_INSTALL_DB_HOST=db');
-        $_ENV['WGW_INSTALL_DB_HOST'] = 'db';
-        putenv('WGW_INSTALL_DB_DATABASE=wgw');
-        $_ENV['WGW_INSTALL_DB_DATABASE'] = 'wgw';
-        putenv('WGW_INSTALL_DB_USER=wgw');
-        $_ENV['WGW_INSTALL_DB_USER'] = 'wgw';
-        putenv('WGW_INSTALL_DB_PASSWORD=secret');
-        $_ENV['WGW_INSTALL_DB_PASSWORD'] = 'secret';
-        putenv('WGW_INSTALL_TIMEZONE=UTC');
-        $_ENV['WGW_INSTALL_TIMEZONE'] = 'UTC';
+        $this->setInstallConfig([
+            'db_driver' => 'mysql',
+            'db_host' => 'db',
+            'db_database' => 'wgw',
+            'db_user' => 'wgw',
+            'db_password' => 'secret',
+            'timezone' => 'UTC',
+        ]);
 
         config(['wgw.data_dir' => $this->installRoot.'/wgw-content']);
 
@@ -133,18 +122,14 @@ final class WgwInstallEnvTest extends TestCase
     {
         putenv('WGW_DISABLE_INSTALL_THROTTLE=1');
         $_ENV['WGW_DISABLE_INSTALL_THROTTLE'] = '1';
-        putenv('WGW_INSTALL_HEADLESS=1');
-        $_ENV['WGW_INSTALL_HEADLESS'] = '1';
-        putenv('WGW_INSTALL_DB_DRIVER=sqlite');
-        $_ENV['WGW_INSTALL_DB_DRIVER'] = 'sqlite';
-        putenv('WGW_INSTALL_BASE_URI=/');
-        $_ENV['WGW_INSTALL_BASE_URI'] = '/';
-        putenv('WGW_INSTALL_ADMIN_USERNAME=admin');
-        $_ENV['WGW_INSTALL_ADMIN_USERNAME'] = 'admin';
-        putenv('WGW_INSTALL_ADMIN_EMAIL=admin@example.test');
-        $_ENV['WGW_INSTALL_ADMIN_EMAIL'] = 'admin@example.test';
-        putenv('WGW_INSTALL_ADMIN_PASSWORD=longpassword');
-        $_ENV['WGW_INSTALL_ADMIN_PASSWORD'] = 'longpassword';
+        $this->setInstallConfig([
+            'headless' => true,
+            'db_driver' => 'sqlite',
+            'base_uri' => '/',
+            'admin_username' => 'admin',
+            'admin_email' => 'admin@example.test',
+            'admin_password' => 'longpassword',
+        ]);
 
         config(['wgw.data_dir' => $this->installRoot.'/wgw-content']);
 
@@ -152,34 +137,20 @@ final class WgwInstallEnvTest extends TestCase
         $this->assertSame('installed', $bootstrap->run(''));
 
         $this->assertFileExists($this->installRoot.'/wgw-content/.installed');
-        $this->assertFileExists($this->installRoot.'/wgw-config.php');
+        $env = (string) file_get_contents($this->installRoot.'/packages/api/.env');
+        $this->assertStringContainsString('WGW_DB_CONNECTION=sqlite', $env);
+        $this->assertStringContainsString('WGW_DB_DATABASE=', $env);
+        $this->assertFileDoesNotExist($this->installRoot.'/wgw-config.php');
         $this->assertTrue(app(AppPaths::class)->isInstalled());
         $this->assertSame('skipped', $bootstrap->run(''));
     }
 
-    private function clearInstallEnv(): void
+    /**
+     * @param  array<string, mixed>  $overrides
+     */
+    private function setInstallConfig(array $overrides): void
     {
-        foreach ([
-            'WGW_INSTALL_HEADLESS',
-            'WGW_INSTALL_DB_DRIVER',
-            'WGW_INSTALL_DB_HOST',
-            'WGW_INSTALL_DB_PORT',
-            'WGW_INSTALL_DB_DATABASE',
-            'WGW_INSTALL_DB_USER',
-            'WGW_INSTALL_DB_PASSWORD',
-            'WGW_INSTALL_DB_SQLITE_PATH',
-            'WGW_INSTALL_BASE_URI',
-            'WGW_INSTALL_BASE_URI_AUTO',
-            'WGW_INSTALL_TIMEZONE',
-            'WGW_INSTALL_ADMIN_USERNAME',
-            'WGW_INSTALL_ADMIN_EMAIL',
-            'WGW_INSTALL_ADMIN_PASSWORD',
-            'WGW_INSTALL_ADMIN_DISPLAY_NAME',
-            'WGW_DISABLE_INSTALL_THROTTLE',
-        ] as $key) {
-            putenv($key);
-            unset($_ENV[$key]);
-        }
+        config(['wgw.install' => array_merge((array) config('wgw.install', []), $overrides)]);
     }
 
     private function removeTree(string $dir): void

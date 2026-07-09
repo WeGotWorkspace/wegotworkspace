@@ -10,7 +10,8 @@ Upload the deploy package contents to your website folder so these files are in 
 - `.htaccess` (or at least `example.htaccess` — see below)
 - `packages/api/` (includes Laravel `vendor/` in production releases)
 - `packages/apps/` (includes built web app bundles, for example `packages/apps/drive/dist/`)
-- `wgw-config.sample.php`
+
+Configure runtime bootstrap in **`packages/api/.env`** (`WGW_DATA_DIR`, `WGW_DB_*`). The web installer writes these keys on success. Upgrades from older installs auto-migrate legacy `wgw-config.php` into `.env` (backup kept).
 
 Your site document root must point to this folder.
 

@@ -54,7 +54,16 @@ See [Updates and backups](install-docker.md#updates-and-backups) for the support
 
 ## Docker channel — Admin Updates disabled
 
-Docker installs are tagged at seed time with `WGW_INSTALL_CHANNEL=docker`. This is not a ZIP/SFTP deployment — the admin web updater replaces files inside the container filesystem and must not be used.
+Docker installs are tagged at seed time with `WGW_INSTALL_CHANNEL=docker` in `api.env` (symlinked to `packages/api/.env`). This is not a ZIP/SFTP deployment — the admin web updater replaces files inside the container filesystem and must not be used.
+
+### Config lifecycle on the `wgw-install-config` volume
+
+| Phase | Keys in `api.env` | Written by |
+| --- | --- | --- |
+| Pre-install | `WGW_INSTALL_*`, `WGW_INSTALL_CHANNEL` | [wgw-install-seed-config.sh](../docker/install/wgw-install-seed-config.sh) + operator compose `.env` |
+| Post-install runtime | `WGW_DATA_DIR`, `WGW_DB_*`, `WGW_UPDATE_FEED_URL` | Web installer / `wgw:install` (`InstallerEnvWriter`) |
+
+Legacy `wgw-config.php` on the volume is removed on first boot after upgrade (migrated into `WGW_*` keys, backup kept).
 
 | Surface | Docker channel behavior |
 | --- | --- |
@@ -95,7 +104,7 @@ Pre-release testing from a clone without publishing to GHCR: use Option B or C (
 
 ## Apple Silicon & ARM
 
-Releases publish a multi-arch OCI manifest (`linux/amd64` + `linux/arm64`) via CI ([`.github/workflows/release.yml`](../.github/workflows/release.yml)).
+Releases publish a multi-arch OCI manifest (`linux/amd64` + `linux/arm64`) via CI ([`.github/workflows/release.yml`](../.github/workflows/release.yml)). CI builds the image from [`Dockerfile.runtime`](../docker/install/Dockerfile.runtime), which unpacks the pre-built deploy ZIP from the runner; local `docker compose up --build` still uses [`Dockerfile`](../docker/install/Dockerfile) (full monorepo build).
 
 | Host | Behavior |
 | --- | --- |

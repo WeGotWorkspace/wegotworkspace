@@ -10,7 +10,7 @@ WeGotWorkspace is a self-hosted office platform (files, mail, notes, contacts, t
 | **Install with Docker** (self-host on a VPS or homelab) | One command: `curl -fsSL https://github.com/WeGotWorkspace/wegotworkspace/releases/latest/download/install \| sh` — details in [install-docker.md](install-docker.md) |
 | **Develop or contribute** (clone the monorepo, HMR, tests) | [dev-layout.md](dev-layout.md) — `pnpm dev`; Docker install stack testing: [install-docker-ops.md](install-docker-ops.md) |
 
-All production installs (ZIP or Docker) use the **same runtime tree**: `index.php`, `bootstrap/`, `packages/api/`, built `packages/apps/*/dist/`, and `wgw-config.sample.php`. The web installer at `/install/` is identical regardless of delivery channel.
+All production installs (ZIP or Docker) use the **same runtime tree**: `index.php`, `bootstrap/`, `packages/api/` (with `.env` / `WGW_*` config), and built `packages/apps/*/dist/`. The web installer at `/install/` is identical regardless of delivery channel.
 
 ## Why three top-level folders?
 
@@ -32,7 +32,7 @@ Day-to-day development runs Vite HMR from `packages/apps` and a host or Docker P
 
 ## Updates
 
-- **ZIP installs:** Replace files in place per [INSTALL.md](../INSTALL.md); `.env`, `wgw-content/`, and user data are preserved. Use **Admin → Updates** in the web UI.
+- **ZIP installs:** Replace files in place per [INSTALL.md](../INSTALL.md); `.env`, `wgw-content/`, and user data are preserved. Use **Admin → Updates** in the web UI. Upgrades migrate legacy install config into `packages/api/.env` automatically (backup kept).
 - **Docker installs:** Run `bash setup.sh check`, then `bash setup.sh upgrade` (latest from manifest) or `bash setup.sh upgrade X.Y.Z` (explicit tag). Non-interactive: `--yes`; preview: `--dry-run`. Or `curl .../install | sh -s -- --upgrade`. A one-shot **migrator** runs `wgw:schema-migrate` before web starts. **Do not** use Admin → Updates on Docker — that panel is read-only on the docker channel. See [install-docker.md](install-docker.md#updates-and-backups) and [install-docker-ops.md](install-docker-ops.md).
 
 ## Need help?

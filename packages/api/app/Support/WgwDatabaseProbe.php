@@ -46,22 +46,10 @@ final class WgwDatabaseProbe
         }
     }
 
-    public function installConfigHasUsers(WgwInstallConfig $install): bool
+    public function installConfigHasUsers(): bool
     {
         try {
-            $config = (new WgwDatabaseConfig($install))->connectionConfig();
-            config([
-                'database.connections.wgw_probe' => array_merge(
-                    [
-                        'prefix' => '',
-                        'foreign_key_constraints' => true,
-                    ],
-                    $config,
-                ),
-            ]);
-            DB::purge('wgw_probe');
-
-            return DB::connection('wgw_probe')->table('users')->exists();
+            return User::query()->exists();
         } catch (\Throwable) {
             return false;
         }
