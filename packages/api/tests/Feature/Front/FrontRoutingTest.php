@@ -41,6 +41,31 @@ final class FrontRoutingTest extends TestCase
             ->assertRedirect('/install/');
     }
 
+    public function test_installed_root_serves_shell_not_install_redirect(): void
+    {
+        $this->repoRoot = UiDistFixture::bootstrapMonorepoLayout();
+        $installRoot = $this->repoRoot.'/apps/wegotworkspace';
+        $data = $installRoot.'/wgw-content';
+        WgwInstallFixture::markInstalled($installRoot, $data);
+        WgwInstallFixture::syncDatabaseConnection();
+
+        $this->get('/')
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/html; charset=utf-8');
+    }
+
+    public function test_installed_install_path_redirects_to_login(): void
+    {
+        $this->repoRoot = UiDistFixture::bootstrapMonorepoLayout();
+        $installRoot = $this->repoRoot.'/apps/wegotworkspace';
+        $data = $installRoot.'/wgw-content';
+        WgwInstallFixture::markInstalled($installRoot, $data);
+        WgwInstallFixture::syncDatabaseConnection();
+
+        $this->get('/install/')
+            ->assertRedirect('/login');
+    }
+
     public function test_uninstalled_webdav_returns_503_from_laravel_route(): void
     {
         $data = sys_get_temp_dir().'/wgw-front-'.uniqid('', true);

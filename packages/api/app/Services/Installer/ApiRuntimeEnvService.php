@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Installer;
 
+use App\Support\WgwApiEnvFile;
+
 /**
  * Ensures packages/api runtime files exist on install and after in-place updates.
  */
@@ -92,15 +94,16 @@ final class ApiRuntimeEnvService
     public function ensureAppKey(string $envPath): bool
     {
         $content = is_readable($envPath) ? (string) file_get_contents($envPath) : '';
-        if ($content !== '' && preg_match('/^APP_KEY=base64:[A-Za-z0-9+\/=]+/m', $content) === 1) {
+        $appKey = WgwApiEnvFile::readValue($content, 'APP_KEY') ?? '';
+        if ($appKey !== '' && preg_match('/^base64:[A-Za-z0-9+\/=]+$/', $appKey) === 1) {
             return false;
         }
 
         $key = 'base64:'.base64_encode(random_bytes(32));
-        if ($content === '' || ! str_contains($content, 'APP_KEY=')) {
+        if ($content === '' || ! WgwApiEnvFile::hasKey($content, 'APP_KEY')) {
             $content = rtrim($content)."\nAPP_KEY={$key}\n";
         } else {
-            $content = (string) preg_replace('/^APP_KEY=.*$/m', 'APP_KEY='.$key, $content);
+            $content = WgwApiEnvFile::setLine($content, 'APP_KEY', $key, quote: false);
         }
 
         return file_put_contents($envPath, $content, LOCK_EX) !== false;
@@ -113,16 +116,14 @@ final class ApiRuntimeEnvService
         }
         $appUrl = rtrim(trim($appUrl), '/');
         $content = (string) file_get_contents($envPath);
-        if (preg_match('/^APP_URL=(.+)$/m', $content, $match) === 1) {
-            $current = trim($match[1], " \t\"'");
-            if ($current !== '' && $current !== 'http://localhost' && ! str_starts_with($current, 'http://127.0.0.1')) {
-                return false;
-            }
+        $current = WgwApiEnvFile::readValue($content, 'APP_URL') ?? '';
+        if ($current !== '' && $current !== 'http://localhost' && ! str_starts_with($current, 'http://127.0.0.1')) {
+            return false;
         }
-        if (! str_contains($content, 'APP_URL=')) {
+        if (! WgwApiEnvFile::hasKey($content, 'APP_URL')) {
             $content = rtrim($content)."\nAPP_URL={$appUrl}\n";
         } else {
-            $content = (string) preg_replace('/^APP_URL=.*$/m', 'APP_URL='.$appUrl, $content);
+            $content = WgwApiEnvFile::setLine($content, 'APP_URL', $appUrl, quote: false);
         }
 
         return file_put_contents($envPath, $content, LOCK_EX) !== false;

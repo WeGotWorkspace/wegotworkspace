@@ -6,6 +6,7 @@ namespace App\Services\Installer;
 
 use App\Support\AppPaths;
 use App\Support\UpdateFeedDefaults;
+use App\Support\WgwApiEnvFile;
 use Illuminate\Support\Facades\Artisan;
 
 final class InstallerEnvWriter
@@ -46,7 +47,7 @@ final class InstallerEnvWriter
             if ($value === null) {
                 continue;
             }
-            $content = $this->setEnvLine($content, $key, $value);
+            $content = WgwApiEnvFile::setLine($content, $key, $value);
         }
 
         if (file_put_contents($envPath, $content, LOCK_EX) === false) {
@@ -146,26 +147,6 @@ final class InstallerEnvWriter
             'port' => $params['port'] ?? '3306',
             'database' => $params['dbname'] ?? '',
         ];
-    }
-
-    private function setEnvLine(string $content, string $key, string $value): string
-    {
-        $escaped = $this->quoteEnvValue($value);
-        $line = $key.'='.$escaped;
-        if (preg_match('/^'.preg_quote($key, '/').'=.*/m', $content) === 1) {
-            return (string) preg_replace('/^'.preg_quote($key, '/').'=.*/m', $line, $content);
-        }
-
-        return rtrim($content)."\n".$line."\n";
-    }
-
-    private function quoteEnvValue(string $value): string
-    {
-        if ($value === '' || preg_match('/[\s#="\']/', $value) === 1) {
-            return '"'.str_replace(['\\', '"'], ['\\\\', '\\"'], $value).'"';
-        }
-
-        return $value;
     }
 
     private function clearConfigIfAvailable(): void

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Unit\Support;
 
 use App\Support\AppPaths;
+use App\Support\WgwApiEnvFile;
+use App\Support\WgwInstallConfig;
 use Tests\Support\WgwInstallFixture;
 use Tests\TestCase;
 
@@ -67,10 +69,26 @@ final class AppPathsDatabaseReadyTest extends TestCase
     {
         WgwInstallFixture::markInstalled($this->installRoot, $this->installRoot.'/wgw-content');
 
+        $install = app(WgwInstallConfig::class);
+        $this->assertFalse(WgwApiEnvFile::hasRealDatabaseConfig($install->apiEnvPath()));
+        $this->assertTrue($install->hasConfiguredRuntimeEnv());
+
         $paths = app(AppPaths::class);
 
         $this->assertTrue($paths->databaseReady());
         $this->assertTrue($paths->isInstalled());
+    }
+
+    public function test_runtime_ready_without_lock_recreates_installed_marker(): void
+    {
+        WgwInstallFixture::markInstalled($this->installRoot, $this->installRoot.'/wgw-content');
+        @unlink($this->installRoot.'/wgw-content/.installed');
+
+        $paths = app(AppPaths::class);
+
+        $this->assertTrue($paths->runtimeInstallReady());
+        $this->assertTrue($paths->isInstalled());
+        $this->assertFileExists($this->installRoot.'/wgw-content/.installed');
     }
 
     private function removeTree(string $dir): void
