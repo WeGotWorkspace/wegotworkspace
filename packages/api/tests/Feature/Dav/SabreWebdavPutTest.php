@@ -7,6 +7,7 @@ namespace Tests\Feature\Dav;
 use Illuminate\Support\Facades\Storage;
 use Tests\Support\WgwDatabaseTestCase;
 use Tests\Support\WgwInstallFixture;
+use Tests\Support\WgwTestDisks;
 
 final class SabreWebdavPutTest extends WgwDatabaseTestCase
 {
@@ -23,11 +24,11 @@ final class SabreWebdavPutTest extends WgwDatabaseTestCase
         file_put_contents($installRoot.'/index.php', "<?php\n");
         $this->dataDir = $installRoot.'/wgw-content';
         mkdir($this->dataDir.'/files/users/alice', 0775, true);
-        putenv('WGW_APP_ROOT='.$installRoot);
-        $_ENV['WGW_APP_ROOT'] = $installRoot;
+        WgwInstallFixture::bindInstallRoot($installRoot, $this->dataDir);
         WgwInstallFixture::markInstalled($installRoot, $this->dataDir, 'alice');
 
         config(['wgw.install_root' => $installRoot, 'wgw.data_dir' => $this->dataDir]);
+        WgwTestDisks::refresh($this->dataDir);
         WgwInstallFixture::forgetInstallBindings();
     }
 

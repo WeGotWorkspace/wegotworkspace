@@ -26,8 +26,7 @@ final class SabreWebdavGetTest extends WgwDatabaseTestCase
         file_put_contents($installRoot.'/index.php', "<?php\n");
         $this->dataDir = $installRoot.'/wgw-content';
         mkdir($this->dataDir.'/files/users/alice', 0775, true);
-        putenv('WGW_APP_ROOT='.$installRoot);
-        $_ENV['WGW_APP_ROOT'] = $installRoot;
+        WgwInstallFixture::bindInstallRoot($installRoot, $this->dataDir);
         WgwInstallFixture::markInstalled($installRoot, $this->dataDir, 'alice');
         $this->setAppSetting(WgwSettings::BROWSER_PLUGIN, false);
 

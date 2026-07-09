@@ -22,8 +22,7 @@ final class SabreBrowserAssetTest extends WgwDatabaseTestCase
         $data = $installRoot.'/wgw-content';
         mkdir($data.'/files/users', 0775, true);
         mkdir($data.'/files/groups', 0775, true);
-        putenv('WGW_APP_ROOT='.$installRoot);
-        $_ENV['WGW_APP_ROOT'] = $installRoot;
+        WgwInstallFixture::bindInstallRoot($installRoot, $data);
         WgwInstallFixture::markInstalled($installRoot, $data, 'alice');
 
         config(['wgw.install_root' => $installRoot, 'wgw.data_dir' => $data]);
