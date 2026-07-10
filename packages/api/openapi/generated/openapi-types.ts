@@ -6255,6 +6255,88 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/files/shares/at-path": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Share grants overview at path
+         * @description Owner context: direct, ancestor, and nested shares plus grantSources (raw), resolved effectiveGrants, memberAccess (per-user expansion), and publicShares for the sharing panel.
+         */
+        get: {
+            parameters: {
+                query: {
+                    path: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Share overview at path */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveShareAtPathDataResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/files/shares/principals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search share principals
+         * @description Principal picker for the share panel — searchable users and grantable groups with display names.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    query?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Matching principals */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveSharePrincipalsResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -9017,7 +9099,7 @@ export interface components {
         DriveShareGrantEntry: {
             access: components["schemas"]["DriveShareAccess"];
         };
-        /** @description Map of username or email to grant entry; null value removes the grant. */
+        /** @description Map of username, groups/{slug}, or email to grant entry; null value removes the grant. On CRUD responses, contains active user and group grants only — pending email invites are omitted (see effectiveGrants on at-path). */
         DriveShareShareWithMap: {
             [key: string]: components["schemas"]["DriveShareGrantEntry"] | null;
         };
@@ -9034,6 +9116,7 @@ export interface components {
             expiresAt?: string | null;
             /** Format: date-time */
             updatedAt?: string | null;
+            /** @description Active user and group grants only (PATCH-editable). Pending email invites are not included — use effectiveGrants on GET /files/shares/at-path for the full principal overview. */
             shareWith?: components["schemas"]["DriveShareShareWithMap"] | null;
             myRights: components["schemas"]["DriveRights"];
         };
@@ -9116,6 +9199,8 @@ export interface components {
         };
         DriveSharedWithMeEntry: {
             share: components["schemas"]["DriveShare"];
+            /** @description Present when access is group-only (groups/{slug} grant). Omitted when the caller has a direct user grant on the same share. */
+            viaGroup?: string;
         };
         DriveSharedWithMeDataResponse: {
             data: components["schemas"]["DriveSharedWithMeEntry"][];
@@ -9123,6 +9208,121 @@ export interface components {
         DriveShareConflictError: components["schemas"]["Error"] & {
             /** @constant */
             code: "share_conflict";
+        };
+        /**
+         * @description Share lifecycle status for owner overview. Expired shares remain visible but do not confer live access.
+         * @enum {string}
+         */
+        DriveShareAtPathEntryStatus: "active" | "expired";
+        /** @enum {string} */
+        DriveShareAtPathRelationship: "direct" | "ancestor" | "descendant";
+        DriveShareAtPathEntry: {
+            share: components["schemas"]["DriveShare"];
+            relationship: components["schemas"]["DriveShareAtPathRelationship"];
+            status: components["schemas"]["DriveShareAtPathEntryStatus"];
+        };
+        DriveShareGrantSource: {
+            /** Format: uuid */
+            shareId: string;
+            sharePath: string;
+            inherited: boolean;
+        };
+        /** @enum {string} */
+        DriveShareEffectiveGrantPrincipalType: "user" | "group" | "email";
+        /** @enum {string} */
+        DriveShareEffectiveGrantStatus: "pending" | "active";
+        /** @description Resolved grant overview at a path — one row per principal with winning access and provenance. */
+        DriveShareEffectiveGrant: {
+            /** @description Username, groups/{slug}, or email address. */
+            principal: string;
+            principalType: components["schemas"]["DriveShareEffectiveGrantPrincipalType"];
+            access: components["schemas"]["DriveShareAccess"];
+            status?: components["schemas"]["DriveShareEffectiveGrantStatus"];
+            /**
+             * Format: uuid
+             * @description Pending email invite grant id.
+             */
+            inviteId?: string;
+            /**
+             * Format: email
+             * @description Original invite email for accepted guest user grants.
+             */
+            invitedEmail?: string;
+            /** @description Group display name when principalType is group. */
+            displayName?: string;
+            /** @description Group member count when principalType is group. */
+            memberCount?: number;
+            source: components["schemas"]["DriveShareGrantSource"];
+            removal?: components["schemas"]["DriveShareGrantRemoval"];
+        };
+        /** @description Owner overview of applicable public shares (direct and ancestor). Guest sessions remain 1:1 bound to a single share token — no prefix-winner resolution. */
+        DriveSharePublicSummary: {
+            /** Format: uuid */
+            shareId: string;
+            sharePath: string;
+            defaultAccess: components["schemas"]["DriveShareAccess"];
+            hasPassword: boolean;
+            inherited: boolean;
+            status: components["schemas"]["DriveShareAtPathEntryStatus"];
+        };
+        DriveShareAtPath: {
+            path: string;
+            directShares: components["schemas"]["DriveShareAtPathEntry"][];
+            coveringShares: components["schemas"]["DriveShareAtPathEntry"][];
+            nestedShares: components["schemas"]["DriveShareAtPathEntry"][];
+            grantSources: components["schemas"]["DriveShareGrantSourceEntry"][];
+            /** @description Resolved grants — one row per principal with winning access. */
+            effectiveGrants: components["schemas"]["DriveShareEffectiveGrant"][];
+            memberAccess: components["schemas"]["DriveShareMemberAccess"][];
+            publicShares: components["schemas"]["DriveSharePublicSummary"][];
+            myRights: components["schemas"]["DriveRights"];
+        };
+        DriveShareAtPathDataResponse: {
+            data: components["schemas"]["DriveShareAtPath"];
+        };
+        DriveShareGrantRemoval: {
+            /** @enum {string} */
+            method: "deleteInvite" | "patchShareWith";
+            /** Format: uuid */
+            shareId: string;
+            /** @description Username or groups/{slug} for patchShareWith removal. */
+            principal?: string;
+        };
+        /** @description Raw grant row before resolver merge — one entry per overlapping grant source. */
+        DriveShareGrantSourceEntry: {
+            /** @description Username, groups/{slug}, or email address. */
+            principal: string;
+            principalType: components["schemas"]["DriveShareEffectiveGrantPrincipalType"];
+            access: components["schemas"]["DriveShareAccess"];
+            status?: components["schemas"]["DriveShareEffectiveGrantStatus"];
+            source: components["schemas"]["DriveShareGrantSource"];
+        };
+        /** @enum {string} */
+        DriveShareMemberAccessEditConstraint: "directGrant" | "groupOnly";
+        /** @description Per-user resolved access for the team panel, with group expansion and editability hints. */
+        DriveShareMemberAccess: {
+            username: string;
+            displayName: string;
+            access: components["schemas"]["DriveShareAccess"];
+            /** @description groups/{slug} when winning access is via a group grant; null when direct user grant wins. */
+            viaGroup: string | null;
+            editable: boolean;
+            editConstraint?: components["schemas"]["DriveShareMemberAccessEditConstraint"];
+            editHint?: string;
+            source: components["schemas"]["DriveShareGrantSource"];
+            removal: components["schemas"]["DriveShareGrantRemoval"];
+        };
+        DriveSharePrincipalEntry: {
+            /** @description Username or groups/{slug}. */
+            principal: string;
+            /** @enum {string} */
+            principalType: "user" | "group";
+            displayName: string;
+            /** @description Present for group principals. */
+            memberCount?: number;
+        };
+        DriveSharePrincipalsResponse: {
+            data: components["schemas"]["DriveSharePrincipalEntry"][];
         };
     };
     responses: {

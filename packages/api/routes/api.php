@@ -121,11 +121,19 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($filesS
         Route::post('files/rooms', [FilesController::class, 'resolveRoom']);
         Route::get('files/shares', [DriveSharesController::class, 'index']);
         Route::post('files/shares', [DriveSharesController::class, 'store']);
-        Route::get('files/shares/{shareId}', [DriveSharesController::class, 'show']);
-        Route::patch('files/shares/{shareId}', [DriveSharesController::class, 'update']);
-        Route::delete('files/shares/{shareId}', [DriveSharesController::class, 'destroy']);
-        Route::post('files/shares/{shareId}/invites', [DriveSharesController::class, 'storeInvite']);
-        Route::delete('files/shares/{shareId}/invites/{inviteId}', [DriveSharesController::class, 'destroyInvite']);
+        Route::get('files/shares/at-path', [DriveSharesController::class, 'atPath']);
+        Route::get('files/shares/principals', [DriveSharesController::class, 'principals']);
+        Route::get('files/shares/{shareId}', [DriveSharesController::class, 'show'])
+            ->where('shareId', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}');
+        Route::patch('files/shares/{shareId}', [DriveSharesController::class, 'update'])
+            ->where('shareId', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}');
+        Route::delete('files/shares/{shareId}', [DriveSharesController::class, 'destroy'])
+            ->where('shareId', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}');
+        Route::post('files/shares/{shareId}/invites', [DriveSharesController::class, 'storeInvite'])
+            ->where('shareId', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}');
+        Route::delete('files/shares/{shareId}/invites/{inviteId}', [DriveSharesController::class, 'destroyInvite'])
+            ->where('shareId', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
+            ->where('inviteId', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}');
         Route::get('files/shared-with-me', [DriveSharesController::class, 'sharedWithMe']);
         Route::post('files/share-sessions/accept', [DriveShareSessionsController::class, 'accept']);
     });

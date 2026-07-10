@@ -70,13 +70,13 @@ final class DocsShareCollabTest extends WgwDatabaseTestCase
             ->assertForbidden();
     }
 
-    public function test_guest_comment_share_follows_same_collab_permissions(): void
+    public function test_public_view_guest_cannot_join_collab_mesh(): void
     {
         $ownerToken = $this->userBearerToken();
         $share = $this->withBearer($ownerToken)->postJson('/api/v1/files/shares', [
             'path' => '/users/bob/docs/plan.md',
             'kind' => 'public',
-            'defaultAccess' => 'comment',
+            'defaultAccess' => 'view',
         ])->assertOk();
 
         $guestToken = (string) $this->postJson('/api/v1/files/share-sessions', [
@@ -85,12 +85,6 @@ final class DocsShareCollabTest extends WgwDatabaseTestCase
 
         $this->withBearer($guestToken)
             ->get('/api/v1/files/collaboration?path='.urlencode('/users/bob/docs/plan.md'))
-            ->assertOk();
-
-        $this->withBearer($guestToken)
-            ->putJson('/api/v1/files/collaboration?path='.urlencode('/users/bob/docs/plan.md'), [
-                'markdown' => 'blocked',
-            ])
             ->assertForbidden();
     }
 }

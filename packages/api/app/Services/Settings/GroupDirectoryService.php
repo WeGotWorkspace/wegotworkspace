@@ -42,6 +42,54 @@ final class GroupDirectoryService
     }
 
     /**
+     * @param  list<string>  $groupUris
+     * @return array<string, list<string>>
+     */
+    public function memberPrincipalUrisByGroupUris(array $groupUris): array
+    {
+        return $this->membership->memberPrincipalUrisByGroupUris($groupUris);
+    }
+
+    /**
+     * @param  list<string>  $groupUris  principals/groups/{slug} or groups/{slug}
+     * @return array<string, string> groupUri => displayName
+     */
+    public function displayNamesByGroupUris(array $groupUris): array
+    {
+        $normalized = [];
+        foreach ($groupUris as $groupUri) {
+            $groupUri = trim($groupUri);
+            if ($groupUri === '') {
+                continue;
+            }
+            if (str_starts_with($groupUri, 'groups/')) {
+                $groupUri = AdminConstants::GROUP_PREFIX.substr($groupUri, strlen('groups/'));
+            }
+            $normalized[$groupUri] = true;
+        }
+
+        if ($normalized === []) {
+            return [];
+        }
+
+        $rows = Principal::query()
+            ->whereIn('uri', array_keys($normalized))
+            ->get(['uri', 'displayname']);
+
+        $out = [];
+        foreach ($rows as $row) {
+            $uri = (string) $row->uri;
+            $title = trim((string) $row->displayname);
+            if ($title === '') {
+                $title = basename(str_replace('\\', '/', $uri));
+            }
+            $out[$uri] = $title;
+        }
+
+        return $out;
+    }
+
+    /**
      * @param  list<string>  $memberUsernames  Principal URIs or bare usernames
      */
     public function replaceMembers(string $groupUri, array $memberUsernames, string $actingAdmin): void

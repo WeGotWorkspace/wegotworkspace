@@ -25,6 +25,7 @@ final class DriveShareGrant extends Model
         'grantee_type',
         'grantee_user',
         'grantee_email',
+        'grantee_group',
         'access',
         'status',
         'invite_token',

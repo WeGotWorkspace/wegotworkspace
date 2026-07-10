@@ -193,8 +193,8 @@ final class OpenApiContract
             '{eventId}' => 'demo-event',
             '{taskListId}' => 'inbox',
             '{taskId}' => 'demo-task',
-            '{shareId}' => 'demo-share',
-            '{inviteId}' => 'demo-invite',
+            '{shareId}' => '550e8400-e29b-41d4-a716-446655440001',
+            '{inviteId}' => '550e8400-e29b-41d4-a716-446655440002',
         ];
 
         $path = $openApiPath;
@@ -220,6 +220,10 @@ final class OpenApiContract
     public static function sampleQueryString(string $openApiPath, string $method): string
     {
         if (str_starts_with($openApiPath, '/files')) {
+            if ($openApiPath === '/files/shares/at-path') {
+                return 'path='.rawurlencode('/groups/team');
+            }
+
             return 'path='.rawurlencode('/users/bob');
         }
         if ($openApiPath === '/files' && $method === 'GET') {

@@ -68,31 +68,28 @@ final class DriveShareAccessMatrixTest extends WgwDatabaseTestCase
         $mayManageStructure ? $create->assertOk() : $create->assertStatus(400);
     }
 
-    #[DataProvider('accessProvider')]
-    public function test_guest_session_access_matrix_subset(string $access, bool $mayRead, bool $mayEditContent, bool $mayManageStructure): void
+    public function test_guest_session_access_matrix_view_only_public_link(): void
     {
-        $publicToken = $this->createPublicShare($access);
+        $publicToken = $this->createPublicShare('view');
         $guestToken = (string) $this->postJson('/api/v1/files/share-sessions', [
             'token' => $publicToken,
         ])->assertOk()->json('access_token');
 
-        $children = $this->withBearer($guestToken)->getJson('/api/v1/files/children?path=/users/bob');
-        $mayRead ? $children->assertOk() : $children->assertStatus(400);
+        $this->withBearer($guestToken)->getJson('/api/v1/files/children?path=/users/bob')
+            ->assertOk();
 
-        $upload = $this->withBearer($guestToken)->post('/api/v1/files/content?path=/users/bob', [
+        $this->withBearer($guestToken)->post('/api/v1/files/content?path=/users/bob', [
             'file' => UploadedFile::fake()->createWithContent('plan.md', 'guest edited'),
             'resumableFilename' => 'plan.md',
             'resumableIdentifier' => 'guest-edit',
             'resumableChunkNumber' => 1,
             'resumableTotalChunks' => 1,
-        ]);
-        $mayEditContent ? $upload->assertOk() : $upload->assertStatus(400);
+        ])->assertStatus(400);
 
-        $create = $this->withBearer($guestToken)->postJson('/api/v1/files/directories?path=/users/bob', [
+        $this->withBearer($guestToken)->postJson('/api/v1/files/directories?path=/users/bob', [
             'name' => 'guest-dir',
             'type' => 'dir',
-        ]);
-        $mayManageStructure ? $create->assertOk() : $create->assertStatus(400);
+        ])->assertStatus(400);
     }
 
     private function createMemberShareForCarol(string $access): void
@@ -113,9 +110,19 @@ final class DriveShareAccessMatrixTest extends WgwDatabaseTestCase
             'path' => '/users/bob',
             'kind' => 'public',
             'defaultAccess' => $access,
-        ])->assertOk();
+        ]);
+        $response->assertOk();
 
         return (string) $response->json('data.publicToken');
+    }
+
+    public function test_public_share_rejects_non_view_default_access(): void
+    {
+        $this->withBearer($this->ownerToken)->postJson('/api/v1/files/shares', [
+            'path' => '/users/bob',
+            'kind' => 'public',
+            'defaultAccess' => 'edit',
+        ])->assertStatus(400);
     }
 
     /**

@@ -50,14 +50,13 @@ final class DriveShareManagementTest extends WgwDatabaseTestCase
 
         $patch = $this->withBearer($token)->patchJson('/api/v1/files/shares/'.$shareId, [
             'updatedAt' => $updatedAt,
-            'defaultAccess' => 'edit',
             'shareWith' => [
                 'alice' => ['access' => 'full'],
                 'carol' => ['access' => 'view'],
             ],
         ]);
         $patch->assertOk()
-            ->assertJsonPath('data.defaultAccess', 'edit')
+            ->assertJsonPath('data.defaultAccess', 'view')
             ->assertJsonPath('data.shareWith.alice.access', 'full')
             ->assertJsonPath('data.shareWith.carol.access', 'view');
 
