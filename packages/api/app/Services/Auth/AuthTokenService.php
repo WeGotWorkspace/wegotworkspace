@@ -25,6 +25,7 @@ final class AuthTokenService
      *   refresh_token: string,
      *   token_type: string,
      *   expires_in: int,
+     *   refresh_expires_in: int,
      *   role: 'guest'|'user'|'admin',
      *   username: string
      * }
@@ -62,6 +63,7 @@ final class AuthTokenService
      *   refresh_token: string,
      *   token_type: string,
      *   expires_in: int,
+     *   refresh_expires_in: int,
      *   role: 'guest'|'user'|'admin',
      *   username: string
      * }
@@ -102,6 +104,7 @@ final class AuthTokenService
      *   refresh_token: string,
      *   token_type: string,
      *   expires_in: int,
+     *   refresh_expires_in: int,
      *   role: 'guest'|'user'|'admin',
      *   username: string
      * }
@@ -144,6 +147,7 @@ final class AuthTokenService
      *   refresh_token: string,
      *   token_type: string,
      *   expires_in: int,
+     *   refresh_expires_in: int,
      *   role: 'guest'|'user'|'admin',
      *   username: string
      * }
@@ -163,6 +167,7 @@ final class AuthTokenService
             'refresh_token' => $refresh,
             'token_type' => 'Bearer',
             'expires_in' => $ttl,
+            'refresh_expires_in' => $this->refreshTokens->refreshTtl(),
             'role' => $role,
             'username' => $username,
         ];

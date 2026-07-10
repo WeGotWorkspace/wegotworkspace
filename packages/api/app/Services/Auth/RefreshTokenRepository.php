@@ -10,6 +10,11 @@ final class RefreshTokenRepository
 {
     public function __construct() {}
 
+    public function refreshTtl(): int
+    {
+        return max(3600, (int) config('wgw.jwt.refresh_ttl'));
+    }
+
     /**
      * @param  'guest'|'user'|'admin'  $role
      */
@@ -18,7 +23,7 @@ final class RefreshTokenRepository
         $this->cleanupExpired();
         $token = bin2hex(random_bytes(32));
         $hash = hash('sha256', $token);
-        $expiresAt = time() + max(3600, (int) config('wgw.jwt.refresh_ttl'));
+        $expiresAt = time() + $this->refreshTtl();
 
         ApiRefreshToken::query()->updateOrInsert(
             ['token_hash' => $hash],

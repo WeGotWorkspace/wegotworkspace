@@ -5887,6 +5887,7 @@ export interface components {
             refresh_token: string;
             token_type: string;
             expires_in: number;
+            refresh_expires_in: number;
             /** @enum {string} */
             role: "guest" | "user" | "admin";
             username: string;

@@ -13,6 +13,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *   refresh_token: string,
  *   token_type: string,
  *   expires_in: int,
+ *   refresh_expires_in: int,
  *   role: string,
  *   username: string
  * }
@@ -29,6 +30,7 @@ final class AuthTokenResource extends JsonResource
             'refresh_token' => $this->resource['refresh_token'],
             'token_type' => $this->resource['token_type'],
             'expires_in' => $this->resource['expires_in'],
+            'refresh_expires_in' => $this->resource['refresh_expires_in'],
             'role' => $this->resource['role'],
             'username' => $this->resource['username'],
         ];
