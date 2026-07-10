@@ -32,9 +32,14 @@ trait WgwRoleFixtures
         $this->seedWgwUser('bob', displayName: 'Bob');
         $this->seedWgwUser('alice', displayName: 'Alice');
         $alice = Principal::forUsername('alice');
+        $bob = Principal::forUsername('bob');
         $this->assertNotNull($alice);
+        $this->assertNotNull($bob);
         $group = $this->seedWgwGroup(AdminRoleResolver::ADMIN_GROUP_URI, 'Administrators');
         $this->addPrincipalToGroup($group, $alice);
+        $teamGroup = $this->seedWgwGroup('principals/groups/team', 'Team');
+        $this->addPrincipalToGroup($teamGroup, $alice);
+        $this->addPrincipalToGroup($teamGroup, $bob);
     }
 
     protected function userBearerToken(): string

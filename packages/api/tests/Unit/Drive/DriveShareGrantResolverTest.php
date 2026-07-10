@@ -69,6 +69,31 @@ final class DriveShareGrantResolverTest extends WgwDatabaseTestCase
         $this->assertNull($this->resolver->resolveMemberGrant('alice', '/users/bob/private/plan.md'));
     }
 
+    public function test_direct_user_grant_beats_group_grant_at_equal_prefix(): void
+    {
+        $share = $this->seedShare('/users/bob/projects/q3', 'view');
+        $this->seedUserGrant($share, 'alice', 'full');
+        $this->seedGroupGrant($share, 'team', 'view');
+
+        $resolved = $this->resolver->resolveMemberGrant('alice', '/users/bob/projects/q3/draft/plan.md', ['team']);
+
+        $this->assertNotNull($resolved);
+        $this->assertSame('full', $resolved['access']);
+        $this->assertSame('user', $resolved['grantKind']);
+    }
+
+    public function test_group_grant_applies_when_no_direct_user_grant(): void
+    {
+        $share = $this->seedShare('/users/bob/projects/q3', 'view');
+        $this->seedGroupGrant($share, 'team', 'view');
+
+        $resolved = $this->resolver->resolveMemberGrant('carol', '/users/bob/projects/q3/draft/plan.md', ['team']);
+
+        $this->assertNotNull($resolved);
+        $this->assertSame('view', $resolved['access']);
+        $this->assertSame('group', $resolved['grantKind']);
+    }
+
     private function seedShare(string $path, string $defaultAccess): DriveShare
     {
         $share = new DriveShare;
@@ -90,6 +115,18 @@ final class DriveShareGrantResolverTest extends WgwDatabaseTestCase
         $grant->share_id = (string) $share->id;
         $grant->grantee_type = 'user';
         $grant->grantee_user = $username;
+        $grant->access = $access;
+        $grant->status = 'active';
+        $grant->save();
+    }
+
+    private function seedGroupGrant(DriveShare $share, string $slug, string $access): void
+    {
+        $grant = new DriveShareGrant;
+        $grant->id = (string) Str::uuid();
+        $grant->share_id = (string) $share->id;
+        $grant->grantee_type = 'group';
+        $grant->grantee_group = $slug;
         $grant->access = $access;
         $grant->status = 'active';
         $grant->save();
