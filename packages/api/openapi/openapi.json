@@ -2897,7 +2897,7 @@
           "Files"
         ],
         "summary": "Share grants overview at path",
-        "description": "Owner context: direct, ancestor, and nested shares plus merged effectiveGrants (incl. pending email) and publicShares for the sharing panel.",
+        "description": "Owner context: direct, ancestor, and nested shares plus grantSources (raw), resolved effectiveGrants, memberAccess (per-user expansion), and publicShares for the sharing panel.",
         "security": [
           {
             "bearerAuth": []
@@ -2920,6 +2920,43 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DriveShareAtPathDataResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/files/shares/principals": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Search share principals",
+        "description": "Principal picker for the share panel — searchable users and grantable groups with display names.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching principals",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriveSharePrincipalsResponse"
                 }
               }
             }

@@ -306,9 +306,25 @@
   },
   "DriveShareEffectiveGrantStatus": {
     "type": "string",
-    "enum": ["pending"]
+    "enum": ["pending", "active"]
   },
-  "DriveShareEffectiveGrant": {
+  "DriveShareGrantRemoval": {
+    "type": "object",
+    "required": ["method", "shareId"],
+    "properties": {
+      "method": {
+        "type": "string",
+        "enum": ["deleteInvite", "patchShareWith"]
+      },
+      "shareId": { "type": "string", "format": "uuid" },
+      "principal": {
+        "type": "string",
+        "description": "Username or groups/{slug} for patchShareWith removal."
+      }
+    },
+    "additionalProperties": false
+  },
+  "DriveShareGrantSourceEntry": {
     "type": "object",
     "required": ["principal", "principalType", "access", "source"],
     "properties": {
@@ -322,7 +338,105 @@
       "source": { "$ref": "#/components/schemas/DriveShareGrantSource" }
     },
     "additionalProperties": false,
-    "description": "Read-only merged grant overview at a path, including pending email invites. Unlike shareWith on CRUD responses, this includes all principal types and provenance."
+    "description": "Raw grant row before resolver merge — one entry per overlapping grant source."
+  },
+  "DriveShareMemberAccessEditConstraint": {
+    "type": "string",
+    "enum": ["directGrant", "groupOnly"]
+  },
+  "DriveShareMemberAccess": {
+    "type": "object",
+    "required": [
+      "username",
+      "displayName",
+      "access",
+      "viaGroup",
+      "editable",
+      "source",
+      "removal"
+    ],
+    "properties": {
+      "username": { "type": "string" },
+      "displayName": { "type": "string" },
+      "access": { "$ref": "#/components/schemas/DriveShareAccess" },
+      "viaGroup": {
+        "type": ["string", "null"],
+        "description": "groups/{slug} when winning access is via a group grant; null when direct user grant wins."
+      },
+      "editable": { "type": "boolean" },
+      "editConstraint": { "$ref": "#/components/schemas/DriveShareMemberAccessEditConstraint" },
+      "editHint": { "type": "string" },
+      "source": { "$ref": "#/components/schemas/DriveShareGrantSource" },
+      "removal": { "$ref": "#/components/schemas/DriveShareGrantRemoval" }
+    },
+    "additionalProperties": false,
+    "description": "Per-user resolved access for the team panel, with group expansion and editability hints."
+  },
+  "DriveSharePrincipalEntry": {
+    "type": "object",
+    "required": ["principal", "principalType", "displayName"],
+    "properties": {
+      "principal": {
+        "type": "string",
+        "description": "Username or groups/{slug}."
+      },
+      "principalType": {
+        "type": "string",
+        "enum": ["user", "group"]
+      },
+      "displayName": { "type": "string" },
+      "memberCount": {
+        "type": "integer",
+        "description": "Present for group principals."
+      }
+    },
+    "additionalProperties": false
+  },
+  "DriveSharePrincipalsResponse": {
+    "type": "object",
+    "required": ["data"],
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": { "$ref": "#/components/schemas/DriveSharePrincipalEntry" }
+      }
+    },
+    "additionalProperties": false
+  },
+  "DriveShareEffectiveGrant": {
+    "type": "object",
+    "required": ["principal", "principalType", "access", "source"],
+    "properties": {
+      "principal": {
+        "type": "string",
+        "description": "Username, groups/{slug}, or email address."
+      },
+      "principalType": { "$ref": "#/components/schemas/DriveShareEffectiveGrantPrincipalType" },
+      "access": { "$ref": "#/components/schemas/DriveShareAccess" },
+      "status": { "$ref": "#/components/schemas/DriveShareEffectiveGrantStatus" },
+      "inviteId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "Pending email invite grant id."
+      },
+      "invitedEmail": {
+        "type": "string",
+        "format": "email",
+        "description": "Original invite email for accepted guest user grants."
+      },
+      "displayName": {
+        "type": "string",
+        "description": "Group display name when principalType is group."
+      },
+      "memberCount": {
+        "type": "integer",
+        "description": "Group member count when principalType is group."
+      },
+      "source": { "$ref": "#/components/schemas/DriveShareGrantSource" },
+      "removal": { "$ref": "#/components/schemas/DriveShareGrantRemoval" }
+    },
+    "additionalProperties": false,
+    "description": "Resolved grant overview at a path — one row per principal with winning access and provenance."
   },
   "DriveSharePublicSummary": {
     "type": "object",
@@ -352,7 +466,9 @@
       "directShares",
       "coveringShares",
       "nestedShares",
+      "grantSources",
       "effectiveGrants",
+      "memberAccess",
       "publicShares",
       "myRights"
     ],
@@ -370,9 +486,18 @@
         "type": "array",
         "items": { "$ref": "#/components/schemas/DriveShareAtPathEntry" }
       },
+      "grantSources": {
+        "type": "array",
+        "items": { "$ref": "#/components/schemas/DriveShareGrantSourceEntry" }
+      },
       "effectiveGrants": {
         "type": "array",
-        "items": { "$ref": "#/components/schemas/DriveShareEffectiveGrant" }
+        "items": { "$ref": "#/components/schemas/DriveShareEffectiveGrant" },
+        "description": "Resolved grants — one row per principal with winning access."
+      },
+      "memberAccess": {
+        "type": "array",
+        "items": { "$ref": "#/components/schemas/DriveShareMemberAccess" }
       },
       "publicShares": {
         "type": "array",
