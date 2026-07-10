@@ -26,6 +26,8 @@ use App\Http\Controllers\Api\V1\Contacts\ContactCardImportController;
 use App\Http\Controllers\Api\V1\Contacts\ContactCardsController;
 use App\Http\Controllers\Api\V1\Contacts\ContactCardVcfController;
 use App\Http\Controllers\Api\V1\Dav\CapabilitiesController as DavCapabilitiesController;
+use App\Http\Controllers\Api\V1\Files\DriveSharesController;
+use App\Http\Controllers\Api\V1\Files\DriveShareSessionsController;
 use App\Http\Controllers\Api\V1\Files\FilesController;
 use App\Http\Controllers\Api\V1\Home\StateController as HomeStateController;
 use App\Http\Controllers\Api\V1\Installer\ActionController as InstallerActionController;
@@ -112,18 +114,20 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($filesS
 
     Route::middleware($filesSession)->group(function (): void {
         Route::get('files/context', [FilesController::class, 'context']);
-        Route::get('files/children', [FilesController::class, 'children']);
         Route::get('files', [FilesController::class, 'index']);
-        Route::post('files/directories', [FilesController::class, 'storeDirectory']);
-        Route::patch('files', [FilesController::class, 'patch']);
-        Route::delete('files', [FilesController::class, 'destroy']);
-        Route::match(['GET', 'HEAD', 'POST'], 'files/content', [FilesController::class, 'content']);
-        Route::get('files/collaboration', [FilesController::class, 'showCollaboration']);
-        Route::put('files/collaboration', [FilesController::class, 'updateCollaboration']);
         Route::post('files/star', [FilesController::class, 'star']);
         Route::delete('files/star', [FilesController::class, 'unstar']);
         Route::get('files/starred', [FilesController::class, 'starred']);
         Route::post('files/rooms', [FilesController::class, 'resolveRoom']);
+        Route::get('files/shares', [DriveSharesController::class, 'index']);
+        Route::post('files/shares', [DriveSharesController::class, 'store']);
+        Route::get('files/shares/{shareId}', [DriveSharesController::class, 'show']);
+        Route::patch('files/shares/{shareId}', [DriveSharesController::class, 'update']);
+        Route::delete('files/shares/{shareId}', [DriveSharesController::class, 'destroy']);
+        Route::post('files/shares/{shareId}/invites', [DriveSharesController::class, 'storeInvite']);
+        Route::delete('files/shares/{shareId}/invites/{inviteId}', [DriveSharesController::class, 'destroyInvite']);
+        Route::get('files/shared-with-me', [DriveSharesController::class, 'sharedWithMe']);
+        Route::post('files/share-sessions/accept', [DriveShareSessionsController::class, 'accept']);
     });
 
     Route::get('search/results', UnifiedSearchController::class);
@@ -248,6 +252,22 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($filesS
         Route::delete('calendars/events/{eventId}', [CalendarEventsController::class, 'destroy'])
             ->where('eventId', '[a-z0-9_#%-]+');
     });
+});
+
+Route::middleware(['wgw.auth'])->group(function () use ($filesSession): void {
+    Route::middleware($filesSession)->group(function (): void {
+        Route::get('files/children', [FilesController::class, 'children']);
+        Route::post('files/directories', [FilesController::class, 'storeDirectory']);
+        Route::patch('files', [FilesController::class, 'patch']);
+        Route::delete('files', [FilesController::class, 'destroy']);
+        Route::match(['GET', 'HEAD', 'POST'], 'files/content', [FilesController::class, 'content']);
+        Route::get('files/collaboration', [FilesController::class, 'showCollaboration']);
+        Route::put('files/collaboration', [FilesController::class, 'updateCollaboration']);
+    });
+});
+
+Route::middleware($filesSession)->group(function (): void {
+    Route::post('files/share-sessions', [DriveShareSessionsController::class, 'store']);
 });
 
 Route::middleware(['wgw.auth', 'wgw.role:admin'])->prefix('admin')->group(function (): void {
