@@ -198,7 +198,9 @@ describe("wgw auth refresh behavior", () => {
       refreshExpiresAt: Date.now() + 60 * 60_000,
     });
     window.localStorage.removeItem(REFRESH_LOCK_KEY);
-    window.dispatchEvent(new StorageEvent("storage", { key: REFRESH_LOCK_KEY }));
+    const storageEvent = new StorageEvent("storage");
+    Object.defineProperty(storageEvent, "key", { value: REFRESH_LOCK_KEY });
+    window.dispatchEvent(storageEvent);
     vi.runAllTimers();
 
     await expect(promise).resolves.toBe(refreshedInOtherTabAccessToken);
