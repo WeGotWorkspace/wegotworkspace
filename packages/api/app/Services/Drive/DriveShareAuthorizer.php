@@ -133,7 +133,7 @@ final class DriveShareAuthorizer
                 ];
             }
 
-            $grant = $this->grantResolver->resolveMemberGrant($username, $path);
+            $grant = $this->grantResolver->resolveMemberGrant($username, $path, $groupSlugs);
             if ($grant !== null) {
                 $isCollabDoc = $this->collabDocFormats->isCollabDocPath($path);
 

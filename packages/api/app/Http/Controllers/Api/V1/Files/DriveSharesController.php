@@ -67,6 +67,19 @@ final class DriveSharesController
         ]);
     }
 
+    public function atPath(Request $request): JsonResponse
+    {
+        $principal = $this->principal($request);
+        $path = $request->query('path');
+        if (! is_string($path) || trim($path) === '') {
+            throw new ApiHttpException(400, 'path is required.', 'bad_request');
+        }
+
+        return response()->json([
+            'data' => $this->shares->atPath($principal['username'], $path),
+        ]);
+    }
+
     public function storeInvite(Request $request, string $shareId): JsonResponse
     {
         $principal = $this->principal($request);
