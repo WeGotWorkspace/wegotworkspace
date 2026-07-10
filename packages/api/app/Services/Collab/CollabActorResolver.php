@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Collab;
 
+use App\Http\Middleware\AuthenticateWgwApi;
 use App\Services\Meet\MeetRequestAuth;
 use Illuminate\Http\Request;
 
@@ -12,10 +13,19 @@ final class CollabActorResolver
     public function __construct(private MeetRequestAuth $auth) {}
 
     /**
-     * @return non-empty-string
+     * @return array{username: string, role: string}
      */
-    public function requireUsername(Request $request): string
+    public function requirePrincipal(Request $request): array
     {
+        /** @var array{username: string, role: string}|null $principal */
+        $principal = $request->attributes->get(AuthenticateWgwApi::PRINCIPAL_ATTRIBUTE);
+        if (is_array($principal) && ($principal['username'] ?? '') !== '') {
+            return [
+                'username' => (string) $principal['username'],
+                'role' => (string) ($principal['role'] ?? 'guest'),
+            ];
+        }
+
         $realm = (string) config('wgw.auth_realm', 'SabreDAV');
         $username = $this->auth->tryAuthenticatedUsername($request, $realm);
         if ($username === null || $username === '') {
@@ -25,7 +35,18 @@ final class CollabActorResolver
             ]);
         }
 
-        return $username;
+        return [
+            'username' => $username,
+            'role' => 'user',
+        ];
+    }
+
+    /**
+     * @return non-empty-string
+     */
+    public function requireUsername(Request $request): string
+    {
+        return $this->requirePrincipal($request)['username'];
     }
 
     /**
