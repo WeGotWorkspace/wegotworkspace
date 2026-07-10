@@ -41,6 +41,8 @@ You can override paths or inline PEM with env/config constants:
 - `WGW_API_JWT_PRIVATE_KEY` or `WGW_API_JWT_PRIVATE_KEY_PATH`
 - `WGW_API_JWT_PUBLIC_KEY` or `WGW_API_JWT_PUBLIC_KEY_PATH`
 - `WGW_API_JWT_ISSUER`, `WGW_API_JWT_AUDIENCE`, `WGW_API_JWT_KID`
+- `WGW_API_JWT_ACCESS_TTL` (access token TTL in seconds, default `3600`)
+- `WGW_API_JWT_REFRESH_TTL` (refresh token TTL in seconds, default `1209600`)
 - Optional rollover:
   - `WGW_API_JWT_PREVIOUS_KID`
   - `WGW_API_JWT_PREVIOUS_PUBLIC_KEY` or `WGW_API_JWT_PREVIOUS_PUBLIC_KEY_PATH`
@@ -66,6 +68,7 @@ Expected success fields:
 - `refresh_token`
 - `token_type` (`Bearer`)
 - `expires_in`
+- `refresh_expires_in`
 - `role`
 - `username`
 
