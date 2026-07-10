@@ -11,6 +11,7 @@ import {
 } from "@/lib/offline/drive/drive-directory-offline-store";
 import { DRIVE_DOMAIN, driveEntriesTable } from "@/lib/offline/drive/drive-schema";
 import type { DriveAppBootstrap } from "@/drive-core/src/drive-types";
+import { fullDriveMyRights } from "@/lib/api/mock/drive-bootstrap";
 
 vi.mock("@/lib/offline/core/browser-online", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/offline/core/browser-online")>();
@@ -59,6 +60,7 @@ function entry(path: string, name: string): WgwDriveDirectoryEntry {
     size: 100,
     time: 1,
     permissions: 644,
+    myRights: fullDriveMyRights,
   };
 }
 
