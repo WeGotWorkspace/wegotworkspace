@@ -28,28 +28,29 @@ export function WorkspaceLiveAppShell({
 }: WorkspaceLiveAppShellProps) {
   const message = typeof error === "string" ? error : error instanceof Error ? error.message : "";
   const normalized = message.toLowerCase();
-  const isAuthError =
+  const isDefinitiveAuthError =
     normalized.includes("(401)") ||
-    normalized.includes("unauthorized") ||
-    normalized.includes("missing or invalid bearer token") ||
-    normalized.includes("missing auth session");
+    normalized.includes("(403)") ||
+    normalized.includes("invalid refresh token") ||
+    normalized.includes("missing auth session") ||
+    normalized.includes("missing or invalid bearer token");
 
   useEffect(() => {
     if (phase !== "error" || typeof window === "undefined") return;
-    if (!isAuthError) return;
+    if (!isDefinitiveAuthError) return;
     // Storybook and local Vite dev: stay on the page and show the error panel instead of a blank
     // iframe / broken `/login` navigation. Production keeps the redirect to the real login route.
     if (import.meta.env.DEV) return;
     if (isWgwAuthRoutePathname(window.location.pathname)) return;
-    clearWgwSession();
+    clearWgwSession("401_online");
     const returnPath = sanitizeWgwReturnPath(
       `${window.location.pathname}${window.location.search}${window.location.hash}`,
     );
     window.location.assign(buildWgwLoginHref(returnPath));
-  }, [isAuthError, phase]);
+  }, [isDefinitiveAuthError, phase]);
 
   if (phase === "error") {
-    if (isAuthError && !import.meta.env.DEV) {
+    if (isDefinitiveAuthError && !import.meta.env.DEV) {
       return null;
     }
     return <LiveBootstrapErrorPanel title={errorTitle} error={message || null} onRetry={retry} />;
