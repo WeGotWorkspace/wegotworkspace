@@ -1,6 +1,16 @@
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
 import type { DriveAppBootstrap, DriveUIData } from "@/drive-core/src/drive-types";
+import type { WgwDriveDirectoryEntry } from "@/lib/api/wgw/types";
+
+export const fullDriveMyRights: WgwDriveDirectoryEntry["myRights"] = {
+  mayView: true,
+  mayComment: true,
+  mayReview: true,
+  mayEditContent: true,
+  mayManageStructure: true,
+  mayShare: true,
+};
 
 const now = Math.floor(Date.now() / 1000);
 
@@ -22,6 +32,7 @@ const DEFAULT_DATA: DriveUIData = {
         size: 0,
         time: now - 3600,
         permissions: 0,
+        myRights: fullDriveMyRights,
       },
       {
         type: "file",
@@ -30,6 +41,7 @@ const DEFAULT_DATA: DriveUIData = {
         size: 1024,
         time: now - 180,
         permissions: 0,
+        myRights: fullDriveMyRights,
       },
     ],
   },

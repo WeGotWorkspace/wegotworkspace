@@ -1,0 +1,37 @@
+{
+  "DriveDirectoryEntry": {
+    "type": "object",
+    "properties": {
+      "type": {
+        "$ref": "#/components/schemas/DriveEntryType"
+      },
+      "path": {
+        "type": "string"
+      },
+      "name": {
+        "type": "string"
+      },
+      "size": {
+        "type": "integer"
+      },
+      "time": {
+        "type": "integer"
+      },
+      "permissions": {
+        "type": "integer"
+      },
+      "myRights": {
+        "$ref": "#/components/schemas/DriveRights"
+      }
+    },
+    "required": [
+      "type",
+      "path",
+      "name",
+      "size",
+      "time",
+      "permissions",
+      "myRights"
+    ]
+  }
+}

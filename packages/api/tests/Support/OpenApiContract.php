@@ -193,6 +193,8 @@ final class OpenApiContract
             '{eventId}' => 'demo-event',
             '{taskListId}' => 'inbox',
             '{taskId}' => 'demo-task',
+            '{shareId}' => 'demo-share',
+            '{inviteId}' => 'demo-invite',
         ];
 
         $path = $openApiPath;

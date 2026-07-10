@@ -4,6 +4,7 @@ import { driveFileFromEntry } from "@/drive-core/src/drive-file-utils";
 import type { DriveAPIOperations, DriveUIData } from "@/drive-core/src/drive-types";
 import { useDriveShell } from "@/drive-core/src/use-drive-shell";
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
+import { fullDriveMyRights } from "@/lib/api/mock/drive-bootstrap";
 
 vi.mock("@/hooks/use-app-toast", () => ({
   useAppToast: () => ({
@@ -25,6 +26,7 @@ function directoryEntry(name: string) {
     size: 100,
     time: 1,
     permissions: 644,
+    myRights: fullDriveMyRights,
   };
 }
 

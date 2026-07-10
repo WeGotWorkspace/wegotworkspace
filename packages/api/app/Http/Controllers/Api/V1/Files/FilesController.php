@@ -27,24 +27,28 @@ final class FilesController
 
     public function context(Request $request): JsonResponse
     {
-        return $this->jsonData(fn () => $this->drive->userContext($this->username($request)));
+        $principal = $this->principal($request);
+
+        return $this->jsonData(fn () => $this->drive->userContext($principal['username']));
     }
 
     public function children(Request $request): JsonResponse
     {
         $path = $this->requirePath($request);
+        $principal = $this->principal($request);
 
-        return $this->jsonData(fn () => $this->drive->listDirectory($this->username($request), $path));
+        return $this->jsonData(fn () => $this->drive->listDirectory($principal, $path));
     }
 
     public function index(Request $request): JsonResponse
     {
+        $principal = $this->principal($request);
         if ($request->query('search') === null) {
             throw new ApiHttpException(400, 'Missing search query parameter.', 'bad_request');
         }
 
         return $this->jsonData(fn () => $this->drive->search(
-            $this->username($request),
+            $principal['username'],
             (string) $request->query('search', ''),
             max(1, min(100, (int) $request->query('limit', 50))),
         ));
@@ -54,6 +58,7 @@ final class FilesController
     {
         $parent = $this->requirePath($request);
         $name = (string) $request->input('name', '');
+        $principal = $this->principal($request);
         if ($name === '') {
             throw new ApiHttpException(400, 'Missing name.', 'bad_request');
         }
@@ -64,7 +69,7 @@ final class FilesController
         }
 
         return $this->jsonData(fn () => $this->drive->createItem(
-            $this->username($request),
+            $principal,
             $name,
             $type,
             $parent,
@@ -74,6 +79,7 @@ final class FilesController
     public function patch(Request $request): JsonResponse
     {
         $path = $this->requirePath($request);
+        $principal = $this->principal($request);
         $name = (string) $request->input('name', '');
         if ($name === '') {
             throw new ApiHttpException(400, 'Missing name.', 'bad_request');
@@ -92,7 +98,7 @@ final class FilesController
         }
 
         return $this->jsonData(fn () => $this->drive->renameItem(
-            $this->username($request),
+            $principal,
             $destination,
             $from,
             $name,
@@ -101,11 +107,12 @@ final class FilesController
 
     public function destroy(Request $request): JsonResponse
     {
+        $principal = $this->principal($request);
         if ($request->query('path') !== null) {
             $path = $this->requirePath($request);
 
             return $this->jsonData(fn () => $this->drive->deleteItems(
-                $this->username($request),
+                $principal,
                 [['path' => $path]],
             ));
         }
@@ -114,19 +121,20 @@ final class FilesController
         $bulk->setContainer(app())->setRedirector(app('redirect'));
         $bulk->validateResolved();
 
-        return $this->destroyBulk($bulk);
+        return $this->destroyBulk($bulk, $principal);
     }
 
-    public function destroyBulk(FilesBulkDeleteRequest $request): JsonResponse
+    public function destroyBulk(FilesBulkDeleteRequest $request, ?array $principal = null): JsonResponse
     {
         $paths = $request->validated('paths');
+        $principal ??= $this->principal($request);
         $items = array_map(
             static fn (string $path): array => ['path' => $path],
             is_array($paths) ? $paths : [],
         );
 
         return $this->jsonData(fn () => $this->drive->deleteItems(
-            $this->username($request),
+            $principal,
             $items,
         ));
     }
@@ -149,7 +157,7 @@ final class FilesController
             $this->drive->assertFilesEnabled();
 
             return $this->drive->downloadResponse(
-                $this->username($request),
+                $this->principal($request),
                 $this->requirePath($request),
             );
         } catch (\InvalidArgumentException $e) {
@@ -181,7 +189,7 @@ final class FilesController
             $parent = $request->query('path');
 
             $result = $this->drive->handleUpload(
-                $this->username($request),
+                $this->principal($request),
                 $file,
                 (string) $request->input('resumableFilename', ''),
                 (string) $request->input('resumableIdentifier', ''),
@@ -258,7 +266,7 @@ final class FilesController
 
     public function starred(Request $request): JsonResponse
     {
-        $username = $this->username($request);
+        $username = $this->principal($request)['username'];
         $groupSlugs = $this->groups->allowedGroupSlugs($username);
 
         return $this->jsonData(fn () => [
@@ -302,9 +310,17 @@ final class FilesController
 
     private function username(Request $request): string
     {
+        return $this->principal($request)['username'];
+    }
+
+    /**
+     * @return array{username: string, role: string}
+     */
+    private function principal(Request $request): array
+    {
         /** @var array{username: string, role: string} $principal */
         $principal = $request->attributes->get(AuthenticateWgwApi::PRINCIPAL_ATTRIBUTE);
 
-        return $principal['username'];
+        return $principal;
     }
 }

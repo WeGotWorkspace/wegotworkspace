@@ -2450,7 +2450,7 @@
             "description": "Renamed"
           }
         },
-        "x-wgw-access": "user"
+        "x-wgw-access": "guest"
       },
       "delete": {
         "tags": [
@@ -2467,7 +2467,7 @@
             "description": "Deleted"
           }
         },
-        "x-wgw-access": "user"
+        "x-wgw-access": "guest"
       }
     },
     "/files/children": {
@@ -2496,7 +2496,7 @@
             "description": "Listing"
           }
         },
-        "x-wgw-access": "user"
+        "x-wgw-access": "guest"
       }
     },
     "/files/collaboration": {
@@ -2536,7 +2536,7 @@
             "description": "Document"
           }
         },
-        "x-wgw-access": "user"
+        "x-wgw-access": "guest"
       },
       "put": {
         "tags": [
@@ -2563,7 +2563,7 @@
             "description": "Saved"
           }
         },
-        "x-wgw-access": "user"
+        "x-wgw-access": "guest"
       }
     },
     "/files/content": {
@@ -2592,7 +2592,7 @@
             "description": "Stream"
           }
         },
-        "x-wgw-access": "user"
+        "x-wgw-access": "guest"
       },
       "post": {
         "tags": [
@@ -2618,7 +2618,7 @@
             "description": "Accepted"
           }
         },
-        "x-wgw-access": "user"
+        "x-wgw-access": "guest"
       }
     },
     "/files/context": {
@@ -2693,6 +2693,419 @@
         "responses": {
           "200": {
             "description": "Room"
+          }
+        },
+        "x-wgw-access": "guest"
+      }
+    },
+    "/files/share-sessions": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Exchange public share token for guest session JWT",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DriveShareSessionCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session token issued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriveShareSessionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "guest"
+      }
+    },
+    "/files/share-sessions/accept": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Accept invited guest share",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DriveShareAcceptRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Invite accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriveShareAcceptDataResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/files/shared-with-me": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "List paths shared with current user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Shared paths",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriveSharedWithMeDataResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/files/shares": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "List owned shares",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Shares",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriveShareListDataResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Create share",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DriveShareCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Share created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriveShareDataResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/files/shares/{shareId}": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Show share",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Share",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriveShareDataResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "patch": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Update share",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DriveShareUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriveShareDataResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Share conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriveShareConflictError"
+                }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "delete": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Delete share",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriveShareDeletedResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/files/shares/{shareId}/invites": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Create guest invite for a share",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DriveShareInviteCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Invite created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriveShareInviteDataResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/files/shares/{shareId}/invites/{inviteId}": {
+      "delete": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Revoke guest invite for a share",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "inviteId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invite revoked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriveShareDeletedResponse"
+                }
+              }
+            }
           }
         },
         "x-wgw-access": "user"

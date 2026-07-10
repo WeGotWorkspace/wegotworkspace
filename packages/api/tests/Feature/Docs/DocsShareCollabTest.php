@@ -1,0 +1,96 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Feature\Docs;
+
+use PHPUnit\Framework\Attributes\Group;
+use Tests\Support\DocsTestFixtures;
+use Tests\Support\WgwDatabaseTestCase;
+
+#[Group('MySQLParity')]
+final class DocsShareCollabTest extends WgwDatabaseTestCase
+{
+    use DocsTestFixtures;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->setUpDocsFixtures();
+        $this->seedDocFile('bob', 'plan.md', "# Plan\n\nInitial");
+    }
+
+    protected function tearDown(): void
+    {
+        $this->tearDownDocsFixtures();
+        parent::tearDown();
+    }
+
+    public function test_comment_grant_can_read_collab_but_cannot_put(): void
+    {
+        $ownerToken = $this->userBearerToken();
+        $this->withBearer($ownerToken)->postJson('/api/v1/files/shares', [
+            'path' => '/users/bob/docs/plan.md',
+            'kind' => 'member',
+            'defaultAccess' => 'comment',
+            'shareWith' => ['alice' => ['access' => 'comment']],
+        ])->assertOk();
+
+        $aliceToken = $this->adminBearerToken();
+        $this->withBearer($aliceToken)
+            ->get('/api/v1/files/collaboration?path='.urlencode('/users/bob/docs/plan.md'))
+            ->assertOk();
+
+        $this->withBearer($aliceToken)
+            ->putJson('/api/v1/files/collaboration?path='.urlencode('/users/bob/docs/plan.md'), [
+                'markdown' => 'blocked',
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_review_grant_can_read_collab_but_cannot_put(): void
+    {
+        $ownerToken = $this->userBearerToken();
+        $this->withBearer($ownerToken)->postJson('/api/v1/files/shares', [
+            'path' => '/users/bob/docs/plan.md',
+            'kind' => 'member',
+            'defaultAccess' => 'review',
+            'shareWith' => ['alice' => ['access' => 'review']],
+        ])->assertOk();
+
+        $aliceToken = $this->adminBearerToken();
+        $this->withBearer($aliceToken)
+            ->get('/api/v1/files/collaboration?path='.urlencode('/users/bob/docs/plan.md'))
+            ->assertOk();
+
+        $this->withBearer($aliceToken)
+            ->putJson('/api/v1/files/collaboration?path='.urlencode('/users/bob/docs/plan.md'), [
+                'markdown' => 'blocked',
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_guest_comment_share_follows_same_collab_permissions(): void
+    {
+        $ownerToken = $this->userBearerToken();
+        $share = $this->withBearer($ownerToken)->postJson('/api/v1/files/shares', [
+            'path' => '/users/bob/docs/plan.md',
+            'kind' => 'public',
+            'defaultAccess' => 'comment',
+        ])->assertOk();
+
+        $guestToken = (string) $this->postJson('/api/v1/files/share-sessions', [
+            'token' => (string) $share->json('data.publicToken'),
+        ])->assertOk()->json('access_token');
+
+        $this->withBearer($guestToken)
+            ->get('/api/v1/files/collaboration?path='.urlencode('/users/bob/docs/plan.md'))
+            ->assertOk();
+
+        $this->withBearer($guestToken)
+            ->putJson('/api/v1/files/collaboration?path='.urlencode('/users/bob/docs/plan.md'), [
+                'markdown' => 'blocked',
+            ])
+            ->assertForbidden();
+    }
+}

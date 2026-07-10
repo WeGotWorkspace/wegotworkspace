@@ -20,6 +20,7 @@ final class DriveService
         private WgwStorage $storage,
         private StoragePaths $paths,
         private DriveGroupResolver $groups,
+        private DriveShareAuthorizer $authorizer,
         private DriveSessionStore $session,
         private DriveStarService $stars,
         private AdminRoleResolver $adminRoles,
@@ -51,19 +52,22 @@ final class DriveService
     }
 
     /**
-     * @return array{location: string, files: list<array{type: string, path: string, name: string, size: int, time: int, permissions: int}>}
+     * @param  array{username: string, role: string}  $principal
+     * @return array{location: string, files: list<array<string, mixed>>}
      */
-    public function listDirectory(string $username, string $dir): array
+    public function listDirectory(array $principal, string $dir): array
     {
         $this->assertFilesEnabled();
-        $groupSlugs = $this->groups->allowedGroupSlugs($username);
         $dir = $this->paths->normalizeVirtualPath($dir);
-        $this->assertAllowed($dir, $username, $groupSlugs, false);
+        $listingContext = $this->authorizer->listingRightsContext($principal, $dir);
+        if (! $listingContext->rightsFor($dir)['mayView']) {
+            throw new \InvalidArgumentException('Access denied for this path.');
+        }
         $this->session->setCwd($dir);
 
         return [
             'location' => $this->withTrailingSlash($dir),
-            'files' => $this->listEntries($dir, $username, $groupSlugs, false, null),
+            'files' => $this->listEntries($dir, $principal, false, null, $listingContext),
         ];
     }
 
@@ -73,7 +77,10 @@ final class DriveService
     public function search(string $username, string $query, int $limit): array
     {
         $this->assertFilesEnabled();
-        $groupSlugs = $this->groups->allowedGroupSlugs($username);
+        $principal = [
+            'username' => $username,
+            'role' => $this->adminRoles->isAdmin($username) ? 'admin' : 'user',
+        ];
         $query = trim($query);
         if ($query === '' || mb_strlen($query) < 2) {
             return ['location' => '/', 'files' => []];
@@ -82,7 +89,7 @@ final class DriveService
         return [
             'location' => '/',
             'files' => array_slice(
-                $this->listEntries('/', $username, $groupSlugs, true, $query),
+                $this->listEntries('/', $principal, true, $query),
                 0,
                 max(1, min(100, $limit))
             ),
@@ -106,22 +113,23 @@ final class DriveService
     }
 
     public function createItem(
-        string $username,
+        array $principal,
         string $name,
         string $type,
         ?string $cwd,
     ): string {
         $this->assertFilesEnabled();
+        $username = $principal['username'];
         $groupSlugs = $this->groups->allowedGroupSlugs($username);
         $name = $this->validateItemName($name);
         if ($type !== 'dir' && $type !== 'file') {
             throw new \InvalidArgumentException('Invalid item type. Use "dir" or "file".');
         }
 
-        $this->assertExplicitParentAllowed($cwd, $username, $groupSlugs);
-        $parent = $this->session->resolveCwd($cwd, $username, $groupSlugs);
+        $parent = $this->resolveParentPath($cwd, $principal, $username, $groupSlugs);
+        $this->assertExplicitParentAllowed($parent, $principal);
         $newPath = $this->paths->normalizeVirtualPath($parent.'/'.$name);
-        $this->assertAllowed($newPath, $username, $groupSlugs, true);
+        $this->authorizer->assertMayManageStructure($newPath, $principal);
 
         $disk = $this->disk();
         $key = $this->paths->virtualToStorageKey($newPath);
@@ -142,13 +150,12 @@ final class DriveService
     }
 
     public function renameItem(
-        string $username,
+        array $principal,
         string $destination,
         string $from,
         string $toName,
     ): string {
         $this->assertFilesEnabled();
-        $groupSlugs = $this->groups->allowedGroupSlugs($username);
         $destination = $this->paths->normalizeVirtualPath($destination);
         $toName = $this->validateItemName($toName);
         $fromPath = str_contains($from, '/')
@@ -156,8 +163,7 @@ final class DriveService
             : $this->paths->normalizeVirtualPath($destination.'/'.$this->validateItemName($from));
         $toPath = $this->paths->normalizeVirtualPath($destination.'/'.$toName);
 
-        $this->assertAllowed($fromPath, $username, $groupSlugs, true);
-        $this->assertAllowed($toPath, $username, $groupSlugs, true);
+        $this->authorizer->assertMoveWithinScope($fromPath, $toPath, $principal);
 
         $disk = $this->disk();
         $fromKey = $this->paths->virtualToStorageKey($fromPath);
@@ -189,10 +195,9 @@ final class DriveService
     /**
      * @param  list<array{path?: string, type?: string}>  $items
      */
-    public function deleteItems(string $username, array $items): string
+    public function deleteItems(array $principal, array $items): string
     {
         $this->assertFilesEnabled();
-        $groupSlugs = $this->groups->allowedGroupSlugs($username);
         $disk = $this->disk();
 
         foreach ($items as $item) {
@@ -200,7 +205,7 @@ final class DriveService
                 continue;
             }
             $path = $this->paths->normalizeVirtualPath((string) ($item['path'] ?? '/'));
-            $this->assertAllowed($path, $username, $groupSlugs, true);
+            $this->authorizer->assertMayManageStructure($path, $principal);
             $key = $this->paths->virtualToStorageKey($path);
             if ($disk->directoryExists($key)) {
                 $disk->deleteDirectory($key);
@@ -230,18 +235,19 @@ final class DriveService
         $this->assertFilesEnabled();
         $groupSlugs = $this->groups->allowedGroupSlugs($username);
         $path = $this->paths->normalizeVirtualPath($path);
-        $this->assertAllowed($path, $username, $groupSlugs, false);
+        if (! $this->paths->isPathAllowed($path, $username, $groupSlugs, false)) {
+            throw new \InvalidArgumentException('Access denied for this path.');
+        }
         $this->stars->setStarred($username, $path, $starred);
 
         return 'Updated';
     }
 
-    public function downloadResponse(string $username, string $path): StreamedResponse
+    public function downloadResponse(array $principal, string $path): StreamedResponse
     {
         $this->assertFilesEnabled();
-        $groupSlugs = $this->groups->allowedGroupSlugs($username);
         $virtual = $this->paths->normalizeVirtualPath($path);
-        $this->assertAllowed($virtual, $username, $groupSlugs, false);
+        $this->authorizer->assertMayRead($virtual, $principal);
 
         $disk = $this->disk();
         $key = $this->paths->virtualToStorageKey($virtual);
@@ -270,7 +276,7 @@ final class DriveService
     }
 
     public function handleUpload(
-        string $username,
+        array $principal,
         UploadedFile $file,
         string $filename,
         string $identifier,
@@ -279,19 +285,22 @@ final class DriveService
         ?string $cwd,
     ): string {
         $this->assertFilesEnabled();
+        $username = $principal['username'];
         $groupSlugs = $this->groups->allowedGroupSlugs($username);
         $filename = $this->validateItemName($filename);
         $identifier = preg_replace('/[^0-9A-Za-z_]/', '_', $identifier) ?? '';
         $chunkNumber = max(1, $chunkNumber);
         $totalChunks = max(1, $totalChunks);
 
-        $this->assertExplicitParentAllowed($cwd, $username, $groupSlugs);
-        $parent = $this->session->resolveCwd($cwd, $username, $groupSlugs);
+        $parent = $this->resolveParentPath($cwd, $principal, $username, $groupSlugs);
         $targetVirtual = $this->paths->normalizeVirtualPath($parent.'/'.$filename);
-        $this->assertAllowed($targetVirtual, $username, $groupSlugs, true);
-
         $disk = $this->disk();
         $targetKey = $this->paths->virtualToStorageKey($targetVirtual);
+        if ($disk->fileExists($targetKey)) {
+            $this->authorizer->assertMayEditContent($targetVirtual, $principal);
+        } else {
+            $this->authorizer->assertMayManageStructure($targetVirtual, $principal);
+        }
 
         if ($totalChunks <= 1) {
             $disk->put($targetKey, $file->get());
@@ -322,15 +331,15 @@ final class DriveService
     }
 
     /**
-     * @param  list<string>  $groupSlugs
-     * @return list<array{type: string, path: string, name: string, size: int, time: int, permissions: int}>
+     * @param  array{username: string, role: string}  $principal
+     * @return list<array<string, mixed>>
      */
     private function listEntries(
         string $virtualDir,
-        string $username,
-        array $groupSlugs,
+        array $principal,
         bool $recursive,
         ?string $nameQuery,
+        ?DriveShareListingRightsContext $listingContext = null,
     ): array {
         $disk = $this->disk();
         $query = $nameQuery !== null ? mb_strtolower($nameQuery) : null;
@@ -338,14 +347,16 @@ final class DriveService
         if ($virtualDir === '/' && ! $recursive) {
             $out = [];
             foreach (['/users', '/groups'] as $root) {
-                if (! $this->paths->isPathAllowed($root, $username, $groupSlugs, false)) {
+                try {
+                    $this->authorizer->assertMayRead($root, $principal);
+                } catch (\InvalidArgumentException) {
                     continue;
                 }
                 $key = ltrim($root, '/');
                 if (! $disk->directoryExists($key)) {
                     continue;
                 }
-                $out[] = $this->serializeEntry($root, true, 0, (int) ($disk->lastModified($key) ?? time()));
+                $out[] = $this->serializeEntry($root, true, 0, (int) ($disk->lastModified($key) ?? time()), $principal);
             }
 
             return $this->sortEntries($out);
@@ -357,24 +368,25 @@ final class DriveService
         }
 
         if ($recursive) {
-            return $this->searchRecursive($disk, $username, $groupSlugs, $query);
+            return $this->searchRecursive($disk, $principal, $query);
         }
 
         $out = [];
+        $listingContext ??= $this->listingRightsContext($principal, $virtualDir);
         $dirPrefix = $prefix === '' ? '' : rtrim($prefix, '/').'/';
         foreach ($disk->directories($prefix) as $dirKey) {
             $virt = $this->paths->normalizeVirtualPath('/'.$dirKey);
-            if (! $this->paths->isPathAllowed($virt, $username, $groupSlugs, false)) {
+            if (! $this->mayIncludeInListing($virt, $principal, $listingContext)) {
                 continue;
             }
             if ($this->isHiddenNotesPath($virt)) {
                 continue;
             }
-            $out[] = $this->serializeEntry($virt, true, 0, (int) ($disk->lastModified($dirKey) ?? time()));
+            $out[] = $this->serializeEntry($virt, true, 0, (int) ($disk->lastModified($dirKey) ?? time()), $principal, $listingContext);
         }
         foreach ($disk->files($prefix) as $fileKey) {
             $virt = $this->paths->normalizeVirtualPath('/'.$fileKey);
-            if (! $this->paths->isPathAllowed($virt, $username, $groupSlugs, false)) {
+            if (! $this->mayIncludeInListing($virt, $principal, $listingContext)) {
                 continue;
             }
             if ($this->isHiddenNotesPath($virt)) {
@@ -384,7 +396,9 @@ final class DriveService
                 $virt,
                 false,
                 (int) ($disk->size($fileKey) ?? 0),
-                (int) ($disk->lastModified($fileKey) ?? time())
+                (int) ($disk->lastModified($fileKey) ?? time()),
+                $principal,
+                $listingContext,
             );
         }
 
@@ -392,19 +406,20 @@ final class DriveService
     }
 
     /**
-     * @param  list<string>  $groupSlugs
-     * @return list<array{type: string, path: string, name: string, size: int, time: int, permissions: int}>
+     * @param  array{username: string, role: string}  $principal
+     * @return list<array<string, mixed>>
      */
     private function searchRecursive(
         Filesystem $disk,
-        string $username,
-        array $groupSlugs,
+        array $principal,
         ?string $query,
     ): array {
         $out = [];
         foreach ($disk->allFiles() as $fileKey) {
             $virt = $this->paths->normalizeVirtualPath('/'.$fileKey);
-            if (! $this->paths->isPathAllowed($virt, $username, $groupSlugs, false)) {
+            try {
+                $this->authorizer->assertMayRead($virt, $principal);
+            } catch (\InvalidArgumentException) {
                 continue;
             }
             if ($this->isHiddenNotesPath($virt)) {
@@ -419,7 +434,8 @@ final class DriveService
                 $virt,
                 $isDir,
                 (int) ($disk->size($fileKey) ?? 0),
-                (int) ($disk->lastModified($fileKey) ?? time())
+                (int) ($disk->lastModified($fileKey) ?? time()),
+                $principal,
             );
             if (count($out) >= 400) {
                 break;
@@ -428,7 +444,9 @@ final class DriveService
 
         foreach ($disk->allDirectories() as $dirKey) {
             $virt = $this->paths->normalizeVirtualPath('/'.$dirKey);
-            if (! $this->paths->isPathAllowed($virt, $username, $groupSlugs, false)) {
+            try {
+                $this->authorizer->assertMayRead($virt, $principal);
+            } catch (\InvalidArgumentException) {
                 continue;
             }
             if ($this->isHiddenNotesPath($virt)) {
@@ -438,7 +456,7 @@ final class DriveService
             if ($query !== null && ! str_contains(mb_strtolower($name), $query)) {
                 continue;
             }
-            $out[] = $this->serializeEntry($virt, true, 0, (int) ($disk->lastModified($dirKey) ?? time()));
+            $out[] = $this->serializeEntry($virt, true, 0, (int) ($disk->lastModified($dirKey) ?? time()), $principal);
             if (count($out) >= 400) {
                 break;
             }
@@ -486,11 +504,21 @@ final class DriveService
     }
 
     /**
-     * @return array{type: string, path: string, name: string, size: int, time: int, permissions: int}
+     * @param  array{username: string, role: string}  $principal
+     * @return array<string, mixed>
      */
-    private function serializeEntry(string $virtualPath, bool $isDir, int $size, int $time): array
-    {
+    private function serializeEntry(
+        string $virtualPath,
+        bool $isDir,
+        int $size,
+        int $time,
+        array $principal,
+        ?DriveShareListingRightsContext $listingContext = null,
+    ): array {
         $path = $this->paths->normalizeVirtualPath($virtualPath);
+        $rights = $listingContext !== null
+            ? $listingContext->rightsFor($path)
+            : $this->authorizer->effectiveRights($path, $principal);
 
         return [
             'type' => $isDir ? 'dir' : 'file',
@@ -499,30 +527,80 @@ final class DriveService
             'size' => max(0, $size),
             'time' => max(0, $time),
             'permissions' => 0,
+            'myRights' => $rights,
         ];
     }
 
     /**
-     * @param  list<string>  $groupSlugs
+     * @param  array{username: string, role: string}  $principal
      */
-    private function assertExplicitParentAllowed(?string $cwd, string $username, array $groupSlugs): void
+    private function mayIncludeInListing(
+        string $virtualPath,
+        array $principal,
+        ?DriveShareListingRightsContext $listingContext,
+    ): bool {
+        if ($listingContext !== null) {
+            return $listingContext->rightsFor($virtualPath)['mayView'];
+        }
+
+        try {
+            $this->authorizer->assertMayRead($virtualPath, $principal);
+        } catch (\InvalidArgumentException) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @param  array{username: string, role: string}  $principal
+     */
+    private function listingRightsContext(array $principal, string $virtualDir): ?DriveShareListingRightsContext
+    {
+        if ($virtualDir === '/') {
+            return null;
+        }
+
+        return $this->authorizer->listingRightsContext($principal, $virtualDir);
+    }
+
+    /**
+     * @param  array{username: string, role: string}  $principal
+     */
+    private function assertExplicitParentAllowed(?string $cwd, array $principal): void
     {
         if ($cwd === null || trim($cwd) === '') {
             return;
         }
 
         $requested = $this->paths->normalizeVirtualPath($cwd);
-        $this->assertAllowed($requested, $username, $groupSlugs, true);
+        $this->authorizer->assertMayManageStructure($requested, $principal);
+    }
+
+    private function requireGuestParentPath(?string $cwd): string
+    {
+        if ($cwd === null || trim($cwd) === '') {
+            throw new \InvalidArgumentException('Missing path query parameter.');
+        }
+
+        return $this->paths->normalizeVirtualPath($cwd);
     }
 
     /**
+     * @param  array{username: string, role: string}  $principal
      * @param  list<string>  $groupSlugs
      */
-    private function assertAllowed(string $virtualPath, string $username, array $groupSlugs, bool $forWrite): void
+    private function resolveParentPath(?string $cwd, array $principal, string $username, array $groupSlugs): string
     {
-        if (! $this->paths->isPathAllowed($virtualPath, $username, $groupSlugs, $forWrite)) {
-            throw new \InvalidArgumentException('Access denied for this path.');
+        if ($cwd !== null && trim($cwd) !== '') {
+            return $this->paths->normalizeVirtualPath($cwd);
         }
+
+        if ($principal['role'] === 'guest') {
+            throw new \InvalidArgumentException('Missing path query parameter.');
+        }
+
+        return $this->session->resolveCwd($cwd, $username, $groupSlugs);
     }
 
     private function validateItemName(string $name): string
