@@ -136,7 +136,7 @@ describe("wgw auth refresh behavior", () => {
       refreshExpiresAt: Date.now() + 30 * 60_000,
     });
 
-    let resolveRefresh: ((value: Response) => void) | null = null;
+    let resolveRefresh!: (value: Response) => void;
     const refreshResponse = new Promise<Response>((resolve) => {
       resolveRefresh = resolve;
     });
@@ -151,7 +151,7 @@ describe("wgw auth refresh behavior", () => {
     const two = wgwEnsureFreshAccessToken();
     expect(wgwRefreshInFlight()).not.toBeNull();
 
-    resolveRefresh?.(
+    resolveRefresh(
       new Response(
         JSON.stringify({
           access_token: makeJwt(Math.floor(Date.now() / 1_000) + 3600),
@@ -279,7 +279,7 @@ describe("wgw auth refresh behavior", () => {
       refreshExpiresAt: Date.now() + 30 * 60_000,
     });
 
-    let resolveRefresh: ((value: Response) => void) | null = null;
+    let resolveRefresh!: (value: Response) => void;
     const refreshResponse = new Promise<Response>((resolve) => {
       resolveRefresh = resolve;
     });
@@ -297,7 +297,7 @@ describe("wgw auth refresh behavior", () => {
     const gate = wgwAwaitSessionRefreshForReconnect();
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
-    resolveRefresh?.(
+    resolveRefresh(
       new Response(
         JSON.stringify({
           access_token: makeJwt(Math.floor(Date.now() / 1_000) + 3600),
