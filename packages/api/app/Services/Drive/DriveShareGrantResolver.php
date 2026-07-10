@@ -19,7 +19,10 @@ final class DriveShareGrantResolver
      *   access: string,
      *   kind: string,
      *   ownerUsername: string,
-     *   grantKind: string
+     *   grantKind: string,
+     *   grantId: string,
+     *   granteeGroup: string|null,
+     *   granteeEmail: string|null
      * }>  $candidates
      * @return array{
      *   shareId: string,
@@ -27,7 +30,10 @@ final class DriveShareGrantResolver
      *   access: string,
      *   kind: string,
      *   ownerUsername: string,
-     *   grantKind: string
+     *   grantKind: string,
+     *   grantId: string,
+     *   granteeGroup: string|null,
+     *   granteeEmail: string|null
      * }|null
      */
     public function resolveWinningGrant(array $candidates): ?array
@@ -69,6 +75,43 @@ final class DriveShareGrantResolver
     }
 
     /**
+     * @param  Collection<int, DriveShareGrant>  $grants
+     * @return list<array{
+     *   shareId: string,
+     *   rootPath: string,
+     *   access: string,
+     *   kind: string,
+     *   ownerUsername: string,
+     *   grantKind: string,
+     *   grantId: string,
+     *   granteeGroup: string|null,
+     *   granteeEmail: string|null
+     * }>
+     */
+    public function candidatesFromScopedGrants(Collection $grants, string $requestedPath, Carbon $now): array
+    {
+        $candidates = [];
+        foreach ($grants as $grant) {
+            $grantKind = match ($grant->grantee_type) {
+                'user' => 'user',
+                'group' => 'group',
+                'email' => 'email',
+                default => null,
+            };
+            if ($grantKind === null) {
+                continue;
+            }
+
+            $candidate = $this->candidateFromGrant($grant, $requestedPath, $now, $grantKind);
+            if ($candidate !== null) {
+                $candidates[] = $candidate;
+            }
+        }
+
+        return $candidates;
+    }
+
+    /**
      * @param  list<string>|null  $groupSlugs
      * @return array{
      *   shareId: string,
@@ -76,7 +119,10 @@ final class DriveShareGrantResolver
      *   access: string,
      *   kind: string,
      *   ownerUsername: string,
-     *   grantKind: string
+     *   grantKind: string,
+     *   grantId: string,
+     *   granteeGroup: string|null,
+     *   granteeEmail: string|null
      * }|null
      */
     public function resolveMemberGrant(string $username, string $virtualPath, ?array $groupSlugs = null): ?array
@@ -129,10 +175,13 @@ final class DriveShareGrantResolver
      *   access: string,
      *   kind: string,
      *   ownerUsername: string,
-     *   grantKind: string
+     *   grantKind: string,
+     *   grantId: string,
+     *   granteeGroup: string|null,
+     *   granteeEmail: string|null
      * }|null
      */
-    private function candidateFromGrant(
+    public function candidateFromGrant(
         DriveShareGrant $grant,
         string $requestedPath,
         Carbon $now,
@@ -157,6 +206,13 @@ final class DriveShareGrantResolver
             'kind' => (string) $share->kind,
             'ownerUsername' => (string) $share->owner_username,
             'grantKind' => $grantKind,
+            'grantId' => (string) $grant->id,
+            'granteeGroup' => $grant->grantee_group !== null && $grant->grantee_group !== ''
+                ? (string) $grant->grantee_group
+                : null,
+            'granteeEmail' => $grant->grantee_email !== null && $grant->grantee_email !== ''
+                ? (string) $grant->grantee_email
+                : null,
         ];
     }
 }
