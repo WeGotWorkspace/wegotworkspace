@@ -1,5 +1,10 @@
 import { useCallback } from "react";
 import { useOnReconnect } from "@/hooks/use-connectivity";
+import {
+  wgwAwaitSessionRefreshForReconnect,
+  wgwEnsureFreshAccessToken,
+  wgwHasAuthenticatedSession,
+} from "@/lib/api/wgw/http";
 import { isFetchNetworkError } from "@/lib/offline/browser-online";
 import { isReconnectGenerationCurrent } from "./docs-collab-join-lifecycle";
 import {
@@ -53,8 +58,20 @@ export function useDocsCollabReconnect({
   const { trySeedFromFile, mergeServerState } = join;
 
   const resolveAuthTokenForReconnect = useCallback(async (): Promise<string | undefined> => {
-    if (refs.authTokenRef.current) return refs.authTokenRef.current;
+    refs.authTokenRef.current = undefined;
     try {
+      if (wgwHasAuthenticatedSession()) {
+        await wgwAwaitSessionRefreshForReconnect();
+        try {
+          const freshToken = await wgwEnsureFreshAccessToken();
+          if (freshToken?.trim()) {
+            refs.authTokenRef.current = freshToken;
+            return freshToken;
+          }
+        } catch {
+          // Fall back to wire auth when WGW session refresh is unavailable.
+        }
+      }
       const token = await refs.wireRef.current.fetchAuthToken({
         authToken: urls.authToken,
         authTokenUrl: urls.authTokenUrl,

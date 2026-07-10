@@ -1,7 +1,7 @@
 import { Pencil } from "lucide-react";
 import type { NotesWorkspaceProps } from "@/notes-core/src/notes-workspace-props";
 import "react-swipeable-list/dist/styles.css";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/button/src/button";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
@@ -128,26 +128,57 @@ export function NotesWorkspace({
   const offlineUsername = resolveNotesOfflineUsername(session.user.username);
   const pendingNoteIds = useNotesPendingSync(offlineUsername, bootstrapRevision);
   const failedSyncCount = useNotesFailedSync(offlineUsername, bootstrapRevision);
+  const [noteCollabUrls, setNoteCollabUrls] = useState<NoteCollabConfig["urls"] | undefined>(
+    undefined,
+  );
 
-  // Body lives in the Docs Yjs collab document keyed by the note's virtual path;
-  // only enabled against the live API (mock/Storybook uses the solo editor).
-  const notesCollabWire = useMemo(() => createWgwNotesCollabWire(), []);
-  const noteBodyCollab = useMemo<NoteCollabConfig | undefined>(() => {
-    if (!wgwLiveApiEnabled() || !active) return undefined;
+  useEffect(() => {
+    if (!wgwLiveApiEnabled() || !active) {
+      setNoteCollabUrls(undefined);
+      return;
+    }
     const username = session.user.username;
-    if (!username) return undefined;
+    if (!username) {
+      setNoteCollabUrls(undefined);
+      return;
+    }
     const path = noteCollabPath({
       scope: { kind: "personal", username },
       notebook: active.notebook,
       noteId: active.id,
       archived: !!archived[active.id],
     });
+    let cancelled = false;
+    void buildNoteCollabUrls(path)
+      .then((urls) => {
+        if (!cancelled) {
+          setNoteCollabUrls(urls);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setNoteCollabUrls(undefined);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [active, archived, session.user.username]);
+
+  // Body lives in the Docs Yjs collab document keyed by the note's virtual path;
+  // only enabled against the live API (mock/Storybook uses the solo editor).
+  const notesCollabWire = useMemo(() => createWgwNotesCollabWire(), []);
+  const noteBodyCollab = useMemo<NoteCollabConfig | undefined>(() => {
+    if (!wgwLiveApiEnabled() || !active || !noteCollabUrls) return undefined;
+    const username = session.user.username;
+    if (!username) return undefined;
     return {
       userName: session.user.displayName || username,
-      urls: buildNoteCollabUrls(path),
+      urls: noteCollabUrls,
       wire: notesCollabWire,
     };
-  }, [active, archived, notesCollabWire, session.user.displayName, session.user.username]);
+  }, [active, noteCollabUrls, notesCollabWire, session.user.displayName, session.user.username]);
 
   const handleRetrySync = useCallback(() => {
     if (!offlineUsername) return;

@@ -6,6 +6,7 @@ namespace Tests\Feature\Auth;
 
 use App\Models\Principal;
 use App\Services\Auth\AdminRoleResolver;
+use Illuminate\Support\Facades\DB;
 use Tests\Support\WgwDatabaseTestCase;
 
 final class AuthEndpointsTest extends WgwDatabaseTestCase
@@ -40,10 +41,12 @@ final class AuthEndpointsTest extends WgwDatabaseTestCase
             'refresh_token',
             'token_type',
             'expires_in',
+            'refresh_expires_in',
             'role',
             'username',
         ]);
         $this->assertSame('user', $tokenResponse->json('role'));
+        $this->assertSame((int) config('wgw.jwt.refresh_ttl'), (int) $tokenResponse->json('refresh_expires_in'));
         $access = (string) $tokenResponse->json('access_token');
         $refresh = (string) $tokenResponse->json('refresh_token');
 
@@ -58,11 +61,32 @@ final class AuthEndpointsTest extends WgwDatabaseTestCase
             'refresh_token' => $refresh,
         ]);
         $refreshed->assertOk();
+        $refreshed->assertJsonStructure([
+            'access_token',
+            'refresh_token',
+            'token_type',
+            'expires_in',
+            'refresh_expires_in',
+            'role',
+            'username',
+        ]);
+        $this->assertSame((int) config('wgw.jwt.refresh_ttl'), (int) $refreshed->json('refresh_expires_in'));
         $newAccess = (string) $refreshed->json('access_token');
         $this->assertNotSame('', $newAccess);
+        $newRefresh = (string) $refreshed->json('refresh_token');
+
+        $refreshRow = DB::connection('wgw')
+            ->table('api_refresh_tokens')
+            ->where('token_hash', hash('sha256', $newRefresh))
+            ->first();
+        $this->assertNotNull($refreshRow);
+        $expectedRefreshExpiry = time() + (int) config('wgw.jwt.refresh_ttl');
+        $actualRefreshExpiry = (int) ($refreshRow->expires_at ?? 0);
+        $this->assertGreaterThanOrEqual($expectedRefreshExpiry - 5, $actualRefreshExpiry);
+        $this->assertLessThanOrEqual($expectedRefreshExpiry + 5, $actualRefreshExpiry);
 
         $revoke = $this->withBearer($newAccess)->postJson('/api/v1/auth/revoke', [
-            'refresh_token' => (string) $refreshed->json('refresh_token'),
+            'refresh_token' => $newRefresh,
         ]);
         $revoke->assertOk();
         $revoke->assertJson(['ok' => true]);

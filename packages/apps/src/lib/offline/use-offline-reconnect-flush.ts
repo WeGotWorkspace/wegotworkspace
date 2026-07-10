@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { useOnReconnect } from "@/hooks/use-connectivity";
+import { wgwAwaitSessionRefreshForReconnect } from "@/lib/api/wgw/http";
 
 type UseOfflineReconnectFlushArgs = {
   enabled: boolean;
@@ -24,6 +25,7 @@ export function useOfflineReconnectFlush({
       void (async () => {
         setSyncing(true);
         try {
+          await wgwAwaitSessionRefreshForReconnect();
           await flush();
           if (afterFlush) await afterFlush();
         } finally {
