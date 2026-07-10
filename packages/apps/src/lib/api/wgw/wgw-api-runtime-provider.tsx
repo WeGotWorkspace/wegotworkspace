@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
 import { wgwEnsureSession } from "@/lib/api/wgw/http";
 import { normalizeWgwApiBaseUrl, pushWgwApiRuntime } from "@/lib/api/wgw/wgw-api-runtime";
+import { startWgwSessionKeeper } from "@/lib/api/wgw/session-keeper";
 
 type WgwApiRuntimeProviderProps = {
   /** REST API root (with or without trailing `/api/v1`). */
@@ -37,6 +38,11 @@ export function WgwApiRuntimeProvider({ apiBaseUrl, children }: WgwApiRuntimePro
       cancelled = true;
     };
   }, [normalizedBaseUrl]);
+
+  useEffect(() => {
+    if (!sessionReady) return;
+    return startWgwSessionKeeper();
+  }, [sessionReady]);
 
   if (!sessionReady) {
     return (

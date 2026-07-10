@@ -1,6 +1,9 @@
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import { activeWgwApiRuntime } from "@/lib/api/wgw/wgw-api-runtime";
+import { withAuthRefreshLock } from "@/lib/api/wgw/auth-refresh-lock";
+import { decodeJwtExp } from "@/lib/api/wgw/jwt-exp";
+import { isFetchNetworkError, readBrowserOnline } from "@/lib/offline/core/browser-online";
 
 /** When true, mail/notes routes load from WeGotWorkspace instead of mock adapters. */
 export function wgwLiveApiEnabled(): boolean {
@@ -35,30 +38,76 @@ type TokenResponse = {
   access_token: string;
   refresh_token: string;
   expires_in?: number;
+  refresh_expires_in?: number;
 };
 
 let accessToken: string | null = null;
 let refreshToken: string | null = null;
+let accessExpiresAt: number | null = null;
+let refreshExpiresAt: number | null = null;
 let storageHydrated = false;
+let refreshPromise: Promise<boolean> | null = null;
+let refreshFailureCount = 0;
+let refreshFailureWindowStartedAt: number | null = null;
+let refreshRejectedByAuth = false;
 
 const ACCESS_TOKEN_KEY = "wgw.api.access_token";
 const REFRESH_TOKEN_KEY = "wgw.api.refresh_token";
+const ACCESS_EXPIRES_AT_KEY = "wgw.api.access_expires_at";
+const REFRESH_EXPIRES_AT_KEY = "wgw.api.refresh_expires_at";
 const LOGGED_OUT_KEY = "wgw.api.logged_out";
+const SESSION_DEBUG_RING_KEY = "wgw.api.session_debug";
+const SESSION_DEBUG_RING_MAX = 20;
+const REFRESH_RETRY_CAP = 3;
+const REFRESH_RETRY_WINDOW_MS = 15 * 60 * 1_000;
+const RETRY_CAP_MARGIN_SEC = 0;
+
+export type WgwSessionClearReason =
+  | "user_initiated"
+  | "401_online"
+  | "refresh_expired"
+  | "retry_cap_exceeded";
+
+class AuthHttpError extends Error {
+  constructor(
+    readonly status: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = "AuthHttpError";
+  }
+}
 
 function hasWindowStorage(): boolean {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 }
 
-function hydrateTokensFromStorage(): void {
-  if (storageHydrated) return;
-  storageHydrated = true;
+function readTokensFromStorage(): void {
   if (!hasWindowStorage()) return;
   try {
     accessToken = window.localStorage.getItem(ACCESS_TOKEN_KEY);
     refreshToken = window.localStorage.getItem(REFRESH_TOKEN_KEY);
+    const accessExpRaw = window.localStorage.getItem(ACCESS_EXPIRES_AT_KEY);
+    const refreshExpRaw = window.localStorage.getItem(REFRESH_EXPIRES_AT_KEY);
+    accessExpiresAt = parseTimestamp(accessExpRaw);
+    refreshExpiresAt = parseTimestamp(refreshExpRaw);
+    if (accessToken && accessExpiresAt === null) {
+      accessExpiresAt = readAccessExpiryFromJwt(accessToken);
+    }
   } catch {
     // Ignore storage failures and keep in-memory fallback.
   }
+}
+
+function hydrateTokensFromStorage(): void {
+  if (storageHydrated) return;
+  storageHydrated = true;
+  readTokensFromStorage();
+}
+
+function reloadTokensFromStorage(): void {
+  storageHydrated = true;
+  readTokensFromStorage();
 }
 
 function persistTokens(): void {
@@ -68,6 +117,14 @@ function persistTokens(): void {
     else window.localStorage.removeItem(ACCESS_TOKEN_KEY);
     if (refreshToken) window.localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
     else window.localStorage.removeItem(REFRESH_TOKEN_KEY);
+    if (accessExpiresAt !== null)
+      window.localStorage.setItem(ACCESS_EXPIRES_AT_KEY, String(accessExpiresAt));
+    else window.localStorage.removeItem(ACCESS_EXPIRES_AT_KEY);
+    if (refreshExpiresAt !== null) {
+      window.localStorage.setItem(REFRESH_EXPIRES_AT_KEY, String(refreshExpiresAt));
+    } else {
+      window.localStorage.removeItem(REFRESH_EXPIRES_AT_KEY);
+    }
   } catch {
     // Ignore storage failures and keep in-memory fallback.
   }
@@ -95,10 +152,96 @@ function setLoggedOutMarker(value: boolean): void {
   }
 }
 
-export function clearWgwSession(): void {
+function parseTimestamp(raw: string | null): number | null {
+  if (!raw) return null;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function nowMs(): number {
+  return Date.now();
+}
+
+function readAccessExpiryFromJwt(token: string): number | null {
+  const exp = decodeJwtExp(token);
+  return exp ? exp * 1_000 : null;
+}
+
+function resolveAccessExpiresAt(tokens: TokenResponse): number | null {
+  const fromJwt = readAccessExpiryFromJwt(tokens.access_token);
+  if (fromJwt !== null) return fromJwt;
+  if (typeof tokens.expires_in === "number" && Number.isFinite(tokens.expires_in)) {
+    return nowMs() + Math.max(0, tokens.expires_in) * 1_000;
+  }
+  return null;
+}
+
+function resolveRefreshExpiresAt(tokens: TokenResponse): number | null {
+  if (
+    typeof tokens.refresh_expires_in !== "number" ||
+    !Number.isFinite(tokens.refresh_expires_in)
+  ) {
+    return null;
+  }
+  return nowMs() + Math.max(0, tokens.refresh_expires_in) * 1_000;
+}
+
+function isExpiredAt(timestamp: number | null, marginSec: number): boolean {
+  if (timestamp === null) return false;
+  return nowMs() + marginSec * 1_000 >= timestamp;
+}
+
+function resetRefreshFailures(): void {
+  refreshFailureCount = 0;
+  refreshFailureWindowStartedAt = null;
+}
+
+function noteRefreshFailure(): void {
+  if (!readBrowserOnline()) return;
+  const now = nowMs();
+  if (
+    refreshFailureWindowStartedAt === null ||
+    now - refreshFailureWindowStartedAt > REFRESH_RETRY_WINDOW_MS
+  ) {
+    refreshFailureWindowStartedAt = now;
+    refreshFailureCount = 1;
+    return;
+  }
+  refreshFailureCount += 1;
+}
+
+function appendSessionDebugEvent(reason: WgwSessionClearReason): void {
+  const payload = {
+    event: "wgw.session.cleared",
+    reason,
+    online: readBrowserOnline(),
+    hadRefreshExpiry: refreshExpiresAt !== null,
+    timestamp: new Date().toISOString(),
+  };
+  if (import.meta.env.DEV) {
+    console.debug(payload.event, payload);
+  }
+  if (!hasWindowStorage()) return;
+  try {
+    const raw = window.localStorage.getItem(SESSION_DEBUG_RING_KEY);
+    const parsed = raw ? (JSON.parse(raw) as unknown[]) : [];
+    const ring = Array.isArray(parsed) ? parsed.slice(-(SESSION_DEBUG_RING_MAX - 1)) : [];
+    ring.push(payload);
+    window.localStorage.setItem(SESSION_DEBUG_RING_KEY, JSON.stringify(ring));
+  } catch {
+    // Ignore localStorage debug write failures.
+  }
+}
+
+export function clearWgwSession(reason: WgwSessionClearReason): void {
+  appendSessionDebugEvent(reason);
   accessToken = null;
   refreshToken = null;
+  accessExpiresAt = null;
+  refreshExpiresAt = null;
   storageHydrated = true;
+  resetRefreshFailures();
+  refreshRejectedByAuth = false;
   persistTokens();
 }
 
@@ -121,7 +264,7 @@ async function readTokenResponse(res: Response): Promise<TokenResponse> {
   if (!res.ok) {
     const err =
       j && typeof j === "object" && "error" in j ? String((j as { error: unknown }).error) : text;
-    throw new Error(err || `HTTP ${res.status}`);
+    throw new AuthHttpError(res.status, err || `HTTP ${res.status}`);
   }
   const o = j as Record<string, unknown>;
   const at = o.access_token;
@@ -129,14 +272,25 @@ async function readTokenResponse(res: Response): Promise<TokenResponse> {
   if (typeof at !== "string" || typeof rt !== "string") {
     throw new Error("Auth response missing access_token or refresh_token");
   }
-  return { access_token: at, refresh_token: rt, expires_in: Number(o.expires_in) || undefined };
+  const expiresIn = Number(o.expires_in);
+  const refreshExpiresIn = Number(o.refresh_expires_in);
+  return {
+    access_token: at,
+    refresh_token: rt,
+    expires_in: Number.isFinite(expiresIn) ? expiresIn : undefined,
+    refresh_expires_in: Number.isFinite(refreshExpiresIn) ? refreshExpiresIn : undefined,
+  };
 }
 
 function applyTokens(tokens: TokenResponse): void {
   accessToken = tokens.access_token;
   refreshToken = tokens.refresh_token;
+  accessExpiresAt = resolveAccessExpiresAt(tokens);
+  refreshExpiresAt = resolveRefreshExpiresAt(tokens);
   storageHydrated = true;
   persistTokens();
+  resetRefreshFailures();
+  refreshRejectedByAuth = false;
   setLoggedOutMarker(false);
 }
 
@@ -150,6 +304,23 @@ export function wgwHasAuthenticatedSession(): boolean {
 export function wgwCurrentAccessToken(): string | null {
   hydrateTokensFromStorage();
   return accessToken;
+}
+
+export function isAccessTokenExpired(marginSec = 180): boolean {
+  hydrateTokensFromStorage();
+  if (!accessToken) return true;
+  if (accessExpiresAt === null) {
+    accessExpiresAt = readAccessExpiryFromJwt(accessToken);
+    persistTokens();
+  }
+  return isExpiredAt(accessExpiresAt, marginSec);
+}
+
+export function isRefreshTokenExpired(): boolean {
+  hydrateTokensFromStorage();
+  if (!refreshToken) return true;
+  if (refreshExpiresAt === null) return false;
+  return isExpiredAt(refreshExpiresAt, 0);
 }
 
 /** True when the UI may skip the login form (stored session or dev auto-login). */
@@ -194,19 +365,26 @@ export async function wgwLogout(): Promise<void> {
   } catch {
     // Best effort: local token cleanup always runs.
   } finally {
-    clearWgwSession();
+    clearWgwSession("user_initiated");
   }
 }
 
 /** Obtain tokens using `VITE_WGW_DEV_USERNAME` / `VITE_WGW_DEV_PASSWORD` (local `.env.local` only). */
 export async function wgwEnsureSession(): Promise<void> {
   hydrateTokensFromStorage();
-  if (accessToken) return;
+  if (accessToken && !isAccessTokenExpired()) return;
 
   if (refreshToken) {
+    if (readBrowserOnline() && isRefreshTokenExpired()) {
+      clearWgwSession("refresh_expired");
+      throw new Error("Missing auth session. Sign in to continue.");
+    }
     const refreshed = await wgwTryRefresh();
     if (refreshed && accessToken) return;
+    if (!readBrowserOnline() && accessToken) return;
   }
+
+  if (accessToken && !readBrowserOnline()) return;
 
   if (readLoggedOutMarker()) {
     throw new Error("Missing auth session. Sign in to continue.");
@@ -222,14 +400,95 @@ export async function wgwEnsureSession(): Promise<void> {
 
 async function wgwTryRefresh(): Promise<boolean> {
   if (!refreshToken) return false;
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = withAuthRefreshLock(async () => {
+    hydrateTokensFromStorage();
+    if (!refreshToken) return false;
+    if (!readBrowserOnline()) return false;
+
+    if (isRefreshTokenExpired()) {
+      clearWgwSession("refresh_expired");
+      return false;
+    }
+
+    try {
+      const res = await postJson("/auth/refresh", { refresh_token: refreshToken });
+      const tokens = await readTokenResponse(res);
+      applyTokens(tokens);
+      return true;
+    } catch (error) {
+      if (error instanceof AuthHttpError && (error.status === 401 || error.status === 403)) {
+        refreshRejectedByAuth = true;
+        clearWgwSession("401_online");
+        return false;
+      }
+
+      if (isFetchNetworkError(error)) {
+        noteRefreshFailure();
+        maybeClearOnRetryCap();
+        return false;
+      }
+
+      noteRefreshFailure();
+      maybeClearOnRetryCap();
+      return false;
+    }
+  }).then((didRefresh) => {
+    if (didRefresh) return true;
+    // Another tab owned the lock and may have updated tokens while we waited.
+    reloadTokensFromStorage();
+    return Boolean(accessToken && !isAccessTokenExpired());
+  });
+
   try {
-    const res = await postJson("/auth/refresh", { refresh_token: refreshToken });
-    const tokens = await readTokenResponse(res);
-    applyTokens(tokens);
-    return true;
+    return await refreshPromise;
+  } finally {
+    refreshPromise = null;
+  }
+}
+
+function maybeClearOnRetryCap(): void {
+  if (!readBrowserOnline()) return;
+  if (refreshFailureCount < REFRESH_RETRY_CAP) return;
+  if (refreshFailureWindowStartedAt === null) return;
+  if (nowMs() - refreshFailureWindowStartedAt > REFRESH_RETRY_WINDOW_MS) return;
+  if (!isAccessTokenExpired(RETRY_CAP_MARGIN_SEC)) return;
+  if (!(isRefreshTokenExpired() || refreshRejectedByAuth)) return;
+  clearWgwSession("retry_cap_exceeded");
+}
+
+export function wgwRefreshInFlight(): Promise<void> | null {
+  return refreshPromise ? refreshPromise.then(() => undefined) : null;
+}
+
+export async function wgwEnsureFreshAccessToken(): Promise<string | null> {
+  await wgwEnsureSession();
+  if (accessToken && !isAccessTokenExpired()) return accessToken;
+
+  if (refreshToken) {
+    if (readBrowserOnline()) {
+      const refreshed = await wgwTryRefresh();
+      if (refreshed && accessToken) return accessToken;
+    } else if (accessToken) {
+      return accessToken;
+    }
+  }
+
+  return accessToken;
+}
+
+export async function wgwAwaitSessionRefreshForReconnect(): Promise<void> {
+  const inFlight = wgwRefreshInFlight();
+  if (inFlight) {
+    await inFlight;
+    return;
+  }
+  if (!readBrowserOnline()) return;
+  try {
+    await wgwEnsureFreshAccessToken();
   } catch {
-    clearWgwSession();
-    return false;
+    // Reconnect flows should proceed and let callers surface retry UI.
   }
 }
 
@@ -252,7 +511,10 @@ function tunnelMutatingHttpMethod(init: RequestInit): RequestInit {
 }
 
 export async function wgwFetch(path: string, init: RequestInit = {}): Promise<Response> {
-  await wgwEnsureSession();
+  await wgwEnsureFreshAccessToken();
+  if (!accessToken) {
+    throw new Error("Missing auth session. Sign in to continue.");
+  }
   const requestInit = tunnelMutatingHttpMethod(init);
   const base = wgwApiBaseUrl();
   const p = path.startsWith("/") ? path : `/${path}`;
@@ -385,4 +647,15 @@ export async function wgwEnsurePluginSession(sessionApiPath: string): Promise<vo
   if (!res.ok) {
     throw new Error(`POST ${path} failed (${res.status})`);
   }
+}
+
+export function resetWgwSessionStateForTests(): void {
+  accessToken = null;
+  refreshToken = null;
+  accessExpiresAt = null;
+  refreshExpiresAt = null;
+  storageHydrated = false;
+  refreshPromise = null;
+  resetRefreshFailures();
+  refreshRejectedByAuth = false;
 }
