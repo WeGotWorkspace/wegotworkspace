@@ -1,4 +1,4 @@
-import { wgwApiBaseUrl, wgwCurrentAccessToken } from "@/lib/api/wgw/http";
+import { wgwApiBaseUrl, wgwEnsureFreshAccessToken } from "@/lib/api/wgw/http";
 import { encodeFileRoomId } from "@/lib/rtc/room-id";
 import type { DocsCollabUrls } from "@/text-editor-core/docs-collab";
 
@@ -35,15 +35,16 @@ export function noteCollabPath({ scope, notebook, noteId, archived }: NoteCollab
 }
 
 /** Build the Docs-collab transport/document endpoints for a note virtual path. */
-export function buildNoteCollabUrls(path: string): DocsCollabUrls {
+export async function buildNoteCollabUrls(path: string): Promise<DocsCollabUrls> {
   const baseUrl = wgwApiBaseUrl();
   const roomId = encodeFileRoomId(path);
   const pathQuery = encodeURIComponent(path);
+  const authToken = (await wgwEnsureFreshAccessToken()) ?? undefined;
   return {
     signalUrl: `${baseUrl}/rooms/${encodeURIComponent(roomId)}/events`,
     collabApiBaseUrl: `${baseUrl}/rooms`,
     collabRtcUrl: `${baseUrl}/rooms/${encodeURIComponent(roomId)}/configuration`,
-    authToken: wgwCurrentAccessToken() ?? undefined,
+    authToken,
     documentUrl: `${baseUrl}/files/collaboration?path=${pathQuery}`,
     yjsUrl: `${baseUrl}/files/collaboration?path=${pathQuery}&format=yjs`,
     documentSaveMethod: "PUT",

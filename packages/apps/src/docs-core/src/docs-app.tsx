@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { WorkspaceLiveAppShell } from "@/lib/live/workspace-live-app-shell";
@@ -8,7 +8,7 @@ import {
   openDocsFileInNewWindow,
   parseDocsRouteSearch,
 } from "@/docs-core/src/docs-route-search";
-import { wgwApiBaseUrl, wgwCurrentAccessToken } from "@/lib/api/wgw/http";
+import { wgwApiBaseUrl, wgwEnsureFreshAccessToken } from "@/lib/api/wgw/http";
 import { encodeFileRoomId } from "@/lib/rtc/room-id";
 import type { DocsAppProps } from "@/docs-core/src/docs-app-props";
 import { isDocsCollabEditablePath } from "@/docs-core/src/docs-collab-text-files";
@@ -87,6 +87,31 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
   );
 
   const showCollab = isDocsCollabEditablePath(filePath);
+  const [collabAuthToken, setCollabAuthToken] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!showCollab || !filePath) {
+      setCollabAuthToken(undefined);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const token = await wgwEnsureFreshAccessToken();
+        if (!cancelled) {
+          setCollabAuthToken(token ?? undefined);
+        }
+      } catch {
+        if (!cancelled) {
+          setCollabAuthToken(undefined);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [filePath, showCollab]);
+
   const collabUrls = useMemo(() => {
     if (!showCollab || !filePath) return undefined;
     const baseUrl = wgwApiBaseUrl();
@@ -97,13 +122,13 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
       signalUrl: `${baseUrl}/rooms/${encodeURIComponent(roomId)}/events`,
       collabApiBaseUrl: `${baseUrl}/rooms`,
       collabRtcUrl: `${baseUrl}/rooms/${encodeURIComponent(roomId)}/configuration`,
-      authToken: wgwCurrentAccessToken() ?? undefined,
+      authToken: collabAuthToken,
       documentUrl: `${baseUrl}/files/collaboration?path=${pathQuery}`,
       yjsUrl: `${baseUrl}/files/collaboration?path=${pathQuery}&format=yjs`,
       documentSaveMethod: "PUT" as const,
       room,
     };
-  }, [filePath, showCollab]);
+  }, [collabAuthToken, filePath, showCollab]);
   const pendingCollabSync = useDocsCollabPendingSync(showCollab ? collabUrls?.room : null);
   const collabWire = useMemo(() => createWgwDocsCollabWire(), []);
 

@@ -1,7 +1,7 @@
 import { IndexeddbPersistence } from "y-indexeddb";
 import * as Y from "yjs";
 import { isDocsCollabEditablePath } from "@/docs-core/src/docs-collab-text-files";
-import { wgwApiBaseUrl, wgwCurrentAccessToken } from "@/lib/api/wgw/http";
+import { wgwApiBaseUrl, wgwEnsureFreshAccessToken } from "@/lib/api/wgw/http";
 import { getConnectivitySnapshot } from "@/lib/offline/core/browser-online";
 import { docsCollabRoomKey } from "@/text-editor-core/docs-collab/docs-collab-persistence";
 import { applyContentSeedToYDoc } from "@/text-editor-core/docs-collab/docs-collab-editor-surface";
@@ -60,7 +60,7 @@ export async function seedEmptyDocsCollabOffline(apiPath: string): Promise<void>
  */
 export async function hydrateDocsCollabForOffline({
   apiPath,
-  authToken = wgwCurrentAccessToken() ?? undefined,
+  authToken,
 }: DocsPinHydrateInput): Promise<void> {
   const room = docsCollabRoomKey(apiPath);
   if (!isDocsCollabEditablePath(room)) {
@@ -76,15 +76,17 @@ export async function hydrateDocsCollabForOffline({
     await persistence.whenSynced;
 
     if (getConnectivitySnapshot()) {
+      const resolvedAuthToken =
+        authToken !== undefined ? authToken : ((await wgwEnsureFreshAccessToken()) ?? undefined);
       let markdown = "";
       let hadSnapshot = false;
       try {
-        markdown = await loadMarkdown(urls.documentUrl, authToken);
+        markdown = await loadMarkdown(urls.documentUrl, resolvedAuthToken);
       } catch {
         // Continue with any local IDB state.
       }
       try {
-        hadSnapshot = await loadYjsSnapshot(urls.yjsUrl, ydoc, authToken, SERVER_ORIGIN);
+        hadSnapshot = await loadYjsSnapshot(urls.yjsUrl, ydoc, resolvedAuthToken, SERVER_ORIGIN);
       } catch {
         // Continue with markdown seed fallback.
       }
