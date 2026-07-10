@@ -2,6 +2,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { DriveFile } from "@/drive-core/src/drive-models";
 import type { DriveAPIOperations, DriveUIData } from "@/drive-core/src/drive-types";
+import { fullDriveMyRights } from "@/lib/api/mock/drive-bootstrap";
 import { readBrowserOnline } from "@/lib/offline/core/browser-online";
 import {
   captureOfflineDocsTrashSnapshot,
@@ -380,6 +381,7 @@ describe("useDocsHomeActions", () => {
         size: 1,
         time: 0,
         permissions: 0,
+        myRights: fullDriveMyRights,
       },
     ]);
     const data = {} as DriveUIData;

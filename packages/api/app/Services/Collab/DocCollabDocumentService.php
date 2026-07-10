@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Collab;
 
-use App\Services\Drive\DriveGroupResolver;
+use App\Services\Drive\DriveShareAuthorizer;
 use App\Services\Notes\NoteMarkdownCodec;
 use App\Services\Search\BestEffortSearchIndexSync;
 use App\Services\Search\SearchIndexerService;
@@ -32,7 +32,7 @@ final class DocCollabDocumentService
         private CollabRoomPolicy $rooms,
         private WgwStorage $storage,
         private StoragePaths $paths,
-        private DriveGroupResolver $groups,
+        private DriveShareAuthorizer $authorizer,
         private NoteMarkdownCodec $noteCodec,
         private SearchIndexerService $search,
         private BestEffortSearchIndexSync $searchSync,
@@ -167,10 +167,17 @@ final class DocCollabDocumentService
     private function resolveReadablePath(Request $request, mixed $room): string
     {
         $this->assertFilesEnabled();
-        $username = $this->actors->requireUsername($request);
-        $groupSlugs = $this->groups->allowedGroupSlugs($username);
+        $principal = $this->actors->requirePrincipal($request);
         $virtual = $this->paths->normalizeVirtualPath($this->rooms->cleanDocumentPath($room));
-        $this->assertAllowed($virtual, $username, $groupSlugs, false);
+        try {
+            $this->authorizer->assertMayRead($virtual, $principal);
+            $rights = $this->authorizer->effectiveRights($virtual, $principal);
+        } catch (\InvalidArgumentException) {
+            $this->fail('forbidden', 403);
+        }
+        if (! $rights['mayComment'] && ! $rights['mayReview'] && ! $rights['mayEditContent']) {
+            $this->fail('forbidden', 403);
+        }
 
         return $virtual;
     }
@@ -178,10 +185,16 @@ final class DocCollabDocumentService
     private function resolveWritablePath(Request $request, mixed $room): string
     {
         $this->assertFilesEnabled();
-        $username = $this->actors->requireUsername($request);
-        $groupSlugs = $this->groups->allowedGroupSlugs($username);
+        $principal = $this->actors->requirePrincipal($request);
         $virtual = $this->paths->normalizeVirtualPath($this->rooms->cleanDocumentPath($room));
-        $this->assertAllowed($virtual, $username, $groupSlugs, true);
+        try {
+            $rights = $this->authorizer->effectiveRights($virtual, $principal);
+        } catch (\InvalidArgumentException) {
+            $this->fail('forbidden', 403);
+        }
+        if (! $rights['mayEditContent']) {
+            $this->fail('forbidden', 403);
+        }
 
         return $virtual;
     }
@@ -204,16 +217,6 @@ final class DocCollabDocumentService
         }
 
         return $bytes;
-    }
-
-    /**
-     * @param  list<string>  $groupSlugs
-     */
-    private function assertAllowed(string $virtualPath, string $username, array $groupSlugs, bool $forWrite): void
-    {
-        if (! $this->paths->isPathAllowed($virtualPath, $username, $groupSlugs, $forWrite)) {
-            $this->fail('forbidden', 403);
-        }
     }
 
     private function assertFilesEnabled(): void

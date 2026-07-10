@@ -5874,6 +5874,387 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/files/share-sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Exchange public share token for guest session JWT */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["DriveShareSessionCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description Session token issued */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveShareSessionResponse"];
+                    };
+                };
+                /** @description Invalid request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Too many requests */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/files/share-sessions/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept invited guest share */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["DriveShareAcceptRequest"];
+                };
+            };
+            responses: {
+                /** @description Invite accepted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveShareAcceptDataResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/files/shared-with-me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List paths shared with current user */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Shared paths */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveSharedWithMeDataResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/files/shares": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List owned shares */
+        get: {
+            parameters: {
+                query?: {
+                    path?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Shares */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveShareListDataResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Create share */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["DriveShareCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description Share created */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveShareDataResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/files/shares/{shareId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Show share */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    shareId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Share */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveShareDataResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /** Delete share */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    shareId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveShareDeletedResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Update share */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    shareId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["DriveShareUpdateRequest"];
+                };
+            };
+            responses: {
+                /** @description Updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveShareDataResponse"];
+                    };
+                };
+                /** @description Share conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveShareConflictError"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/files/shares/{shareId}/invites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create guest invite for a share */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    shareId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["DriveShareInviteCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description Invite created */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveShareInviteDataResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/files/shares/{shareId}/invites/{inviteId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke guest invite for a share */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    shareId: string;
+                    inviteId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Invite revoked */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveShareDeletedResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -6545,6 +6926,7 @@ export interface components {
             size: number;
             time: number;
             permissions: number;
+            myRights: components["schemas"]["DriveRights"];
         };
         DriveDirectoryEntryList: components["schemas"]["DriveDirectoryEntry"][];
         DriveDirectoryData: {
@@ -8616,6 +8998,130 @@ export interface components {
         };
         SearchDocumentsListResponse: {
             list: components["schemas"]["SearchDocumentSyncDto"][];
+        };
+        /**
+         * @description Share access level for a grant or default access.
+         * @enum {string}
+         */
+        DriveShareAccess: "view" | "comment" | "review" | "edit" | "full";
+        /** @description Effective drive rights for the current principal on a path or share. */
+        DriveRights: {
+            mayView: boolean;
+            mayComment: boolean;
+            mayReview: boolean;
+            mayEditContent: boolean;
+            mayManageStructure: boolean;
+            mayShare: boolean;
+        };
+        DriveShareGrantEntry: {
+            access: components["schemas"]["DriveShareAccess"];
+        };
+        /** @description Map of username or email to grant entry; null value removes the grant. */
+        DriveShareShareWithMap: {
+            [key: string]: components["schemas"]["DriveShareGrantEntry"] | null;
+        };
+        DriveShare: {
+            /** Format: uuid */
+            id: string;
+            path: string;
+            /** @enum {string} */
+            kind: "public" | "member" | "guest";
+            defaultAccess: components["schemas"]["DriveShareAccess"];
+            publicToken?: string | null;
+            hasPassword: boolean;
+            /** Format: date-time */
+            expiresAt?: string | null;
+            /** Format: date-time */
+            updatedAt?: string | null;
+            shareWith?: components["schemas"]["DriveShareShareWithMap"] | null;
+            myRights: components["schemas"]["DriveRights"];
+        };
+        DriveShareDataResponse: {
+            data: components["schemas"]["DriveShare"];
+        };
+        DriveShareListDataResponse: {
+            data: components["schemas"]["DriveShare"][];
+        };
+        DriveShareCreateRequest: {
+            path: string;
+            /** @enum {string} */
+            kind: "public" | "member" | "guest";
+            defaultAccess: components["schemas"]["DriveShareAccess"];
+            /** Format: date-time */
+            expiresAt?: string | null;
+            password?: string | null;
+            shareWith?: components["schemas"]["DriveShareShareWithMap"] | null;
+        };
+        DriveShareUpdateRequest: {
+            /** Format: date-time */
+            updatedAt: string;
+            defaultAccess?: components["schemas"]["DriveShareAccess"];
+            /** Format: date-time */
+            expiresAt?: string | null;
+            password?: string | null;
+            shareWith?: components["schemas"]["DriveShareShareWithMap"] | null;
+        };
+        DriveShareDeletedResponse: {
+            /** @constant */
+            data: "Deleted";
+        };
+        DriveShareInvite: {
+            /** Format: uuid */
+            id: string;
+            /** Format: email */
+            email: string;
+            access: components["schemas"]["DriveShareAccess"];
+            inviteToken: string;
+        };
+        DriveShareInviteDataResponse: {
+            data: components["schemas"]["DriveShareInvite"];
+        };
+        DriveShareInviteCreateRequest: {
+            /** Format: email */
+            email: string;
+            access: components["schemas"]["DriveShareAccess"];
+        };
+        DriveShareSessionCreateRequest: {
+            token: string;
+            password?: string | null;
+        };
+        DriveShareSessionShareSummary: {
+            /** Format: uuid */
+            id: string;
+            path: string;
+            defaultAccess: components["schemas"]["DriveShareAccess"];
+        };
+        DriveShareSessionResponse: {
+            access_token: string;
+            token_type: string;
+            expires_in: number;
+            /** @enum {string} */
+            role: "guest";
+            /** @description Opaque share session subject (share:{sessionKey}). */
+            username: string;
+            share: components["schemas"]["DriveShareSessionShareSummary"];
+        };
+        DriveShareAcceptRequest: {
+            inviteToken: string;
+        };
+        DriveShareAcceptResult: {
+            /** Format: uuid */
+            shareId: string;
+            /** @constant */
+            accepted: true;
+        };
+        DriveShareAcceptDataResponse: {
+            data: components["schemas"]["DriveShareAcceptResult"];
+        };
+        DriveSharedWithMeEntry: {
+            share: components["schemas"]["DriveShare"];
+        };
+        DriveSharedWithMeDataResponse: {
+            data: components["schemas"]["DriveSharedWithMeEntry"][];
+        };
+        DriveShareConflictError: components["schemas"]["Error"] & {
+            /** @constant */
+            code: "share_conflict";
         };
     };
     responses: {
