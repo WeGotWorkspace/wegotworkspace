@@ -2001,6 +2001,9 @@
                     },
                     "permissions": {
                         "type": "integer"
+                    },
+                    "myRights": {
+                        "$ref": "#/components/schemas/DriveRights"
                     }
                 },
                 "required": [
@@ -2009,7 +2012,8 @@
                     "name",
                     "size",
                     "time",
-                    "permissions"
+                    "permissions",
+                    "myRights"
                 ]
             },
             "DriveDirectoryEntryList": {
@@ -7689,6 +7693,489 @@
                     }
                 },
                 "additionalProperties": false
+            },
+            "DriveShareAccess": {
+                "type": "string",
+                "enum": [
+                    "view",
+                    "comment",
+                    "review",
+                    "edit",
+                    "full"
+                ],
+                "description": "Share access level for a grant or default access."
+            },
+            "DriveRights": {
+                "type": "object",
+                "required": [
+                    "mayView",
+                    "mayComment",
+                    "mayReview",
+                    "mayEditContent",
+                    "mayManageStructure",
+                    "mayShare"
+                ],
+                "properties": {
+                    "mayView": {
+                        "type": "boolean"
+                    },
+                    "mayComment": {
+                        "type": "boolean"
+                    },
+                    "mayReview": {
+                        "type": "boolean"
+                    },
+                    "mayEditContent": {
+                        "type": "boolean"
+                    },
+                    "mayManageStructure": {
+                        "type": "boolean"
+                    },
+                    "mayShare": {
+                        "type": "boolean"
+                    }
+                },
+                "additionalProperties": false,
+                "description": "Effective drive rights for the current principal on a path or share."
+            },
+            "DriveShareGrantEntry": {
+                "type": "object",
+                "required": [
+                    "access"
+                ],
+                "properties": {
+                    "access": {
+                        "$ref": "#/components/schemas/DriveShareAccess"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DriveShareShareWithMap": {
+                "type": "object",
+                "additionalProperties": {
+                    "oneOf": [
+                        {
+                            "$ref": "#/components/schemas/DriveShareGrantEntry"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "description": "Map of username or email to grant entry; null value removes the grant."
+            },
+            "DriveShare": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "path",
+                    "kind",
+                    "defaultAccess",
+                    "hasPassword",
+                    "myRights"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "path": {
+                        "type": "string"
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "public",
+                            "member",
+                            "guest"
+                        ]
+                    },
+                    "defaultAccess": {
+                        "$ref": "#/components/schemas/DriveShareAccess"
+                    },
+                    "publicToken": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "hasPassword": {
+                        "type": "boolean"
+                    },
+                    "expiresAt": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "updatedAt": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "shareWith": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/DriveShareShareWithMap"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "myRights": {
+                        "$ref": "#/components/schemas/DriveRights"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DriveShareDataResponse": {
+                "type": "object",
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/DriveShare"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DriveShareListDataResponse": {
+                "type": "object",
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/DriveShare"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DriveShareCreateRequest": {
+                "type": "object",
+                "required": [
+                    "path",
+                    "kind",
+                    "defaultAccess"
+                ],
+                "properties": {
+                    "path": {
+                        "type": "string"
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "public",
+                            "member",
+                            "guest"
+                        ]
+                    },
+                    "defaultAccess": {
+                        "$ref": "#/components/schemas/DriveShareAccess"
+                    },
+                    "expiresAt": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "password": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "shareWith": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/DriveShareShareWithMap"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DriveShareUpdateRequest": {
+                "type": "object",
+                "required": [
+                    "updatedAt"
+                ],
+                "properties": {
+                    "updatedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "defaultAccess": {
+                        "$ref": "#/components/schemas/DriveShareAccess"
+                    },
+                    "expiresAt": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "password": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "shareWith": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/DriveShareShareWithMap"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DriveShareDeletedResponse": {
+                "type": "object",
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "string",
+                        "const": "Deleted"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DriveShareInvite": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "email",
+                    "access",
+                    "inviteToken"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "access": {
+                        "$ref": "#/components/schemas/DriveShareAccess"
+                    },
+                    "inviteToken": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DriveShareInviteDataResponse": {
+                "type": "object",
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/DriveShareInvite"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DriveShareInviteCreateRequest": {
+                "type": "object",
+                "required": [
+                    "email",
+                    "access"
+                ],
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "access": {
+                        "$ref": "#/components/schemas/DriveShareAccess"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DriveShareSessionCreateRequest": {
+                "type": "object",
+                "required": [
+                    "token"
+                ],
+                "properties": {
+                    "token": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DriveShareSessionShareSummary": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "path",
+                    "defaultAccess"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "path": {
+                        "type": "string"
+                    },
+                    "defaultAccess": {
+                        "$ref": "#/components/schemas/DriveShareAccess"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DriveShareSessionResponse": {
+                "type": "object",
+                "required": [
+                    "access_token",
+                    "token_type",
+                    "expires_in",
+                    "role",
+                    "username",
+                    "share"
+                ],
+                "properties": {
+                    "access_token": {
+                        "type": "string"
+                    },
+                    "token_type": {
+                        "type": "string"
+                    },
+                    "expires_in": {
+                        "type": "integer"
+                    },
+                    "role": {
+                        "type": "string",
+                        "enum": [
+                            "guest"
+                        ]
+                    },
+                    "username": {
+                        "type": "string",
+                        "description": "Opaque share session subject (share:{sessionKey})."
+                    },
+                    "share": {
+                        "$ref": "#/components/schemas/DriveShareSessionShareSummary"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DriveShareAcceptRequest": {
+                "type": "object",
+                "required": [
+                    "inviteToken"
+                ],
+                "properties": {
+                    "inviteToken": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DriveShareAcceptResult": {
+                "type": "object",
+                "required": [
+                    "shareId",
+                    "accepted"
+                ],
+                "properties": {
+                    "shareId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "accepted": {
+                        "type": "boolean",
+                        "const": true
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DriveShareAcceptDataResponse": {
+                "type": "object",
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/DriveShareAcceptResult"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DriveSharedWithMeEntry": {
+                "type": "object",
+                "required": [
+                    "share"
+                ],
+                "properties": {
+                    "share": {
+                        "$ref": "#/components/schemas/DriveShare"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DriveSharedWithMeDataResponse": {
+                "type": "object",
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/DriveSharedWithMeEntry"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DriveShareConflictError": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/Error"
+                    },
+                    {
+                        "type": "object",
+                        "required": [
+                            "code"
+                        ],
+                        "properties": {
+                            "code": {
+                                "type": "string",
+                                "const": "share_conflict"
+                            }
+                        }
+                    }
+                ]
             }
         },
         "responses": {
@@ -10203,7 +10690,7 @@
                         "description": "Renamed"
                     }
                 },
-                "x-wgw-access": "user"
+                "x-wgw-access": "guest"
             },
             "delete": {
                 "tags": [
@@ -10220,7 +10707,7 @@
                         "description": "Deleted"
                     }
                 },
-                "x-wgw-access": "user"
+                "x-wgw-access": "guest"
             }
         },
         "/files/children": {
@@ -10249,7 +10736,7 @@
                         "description": "Listing"
                     }
                 },
-                "x-wgw-access": "user"
+                "x-wgw-access": "guest"
             }
         },
         "/files/collaboration": {
@@ -10289,7 +10776,7 @@
                         "description": "Document"
                     }
                 },
-                "x-wgw-access": "user"
+                "x-wgw-access": "guest"
             },
             "put": {
                 "tags": [
@@ -10316,7 +10803,7 @@
                         "description": "Saved"
                     }
                 },
-                "x-wgw-access": "user"
+                "x-wgw-access": "guest"
             }
         },
         "/files/content": {
@@ -10345,7 +10832,7 @@
                         "description": "Stream"
                     }
                 },
-                "x-wgw-access": "user"
+                "x-wgw-access": "guest"
             },
             "post": {
                 "tags": [
@@ -10371,7 +10858,7 @@
                         "description": "Accepted"
                     }
                 },
-                "x-wgw-access": "user"
+                "x-wgw-access": "guest"
             }
         },
         "/files/context": {
@@ -10448,7 +10935,7 @@
                         "description": "Room"
                     }
                 },
-                "x-wgw-access": "user"
+                "x-wgw-access": "guest"
             }
         },
         "/files/star": {
@@ -13202,6 +13689,419 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/JmapNotFound"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/share-sessions": {
+            "post": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Exchange public share token for guest session JWT",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DriveShareSessionCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Session token issued",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DriveShareSessionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "guest"
+            }
+        },
+        "/files/share-sessions/accept": {
+            "post": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Accept invited guest share",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DriveShareAcceptRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Invite accepted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DriveShareAcceptDataResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/shared-with-me": {
+            "get": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "List paths shared with current user",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Shared paths",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DriveSharedWithMeDataResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/shares": {
+            "get": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "List owned shares",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Shares",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DriveShareListDataResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "post": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Create share",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DriveShareCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Share created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DriveShareDataResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/shares/{shareId}": {
+            "get": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Show share",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "shareId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Share",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DriveShareDataResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "patch": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Update share",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "shareId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DriveShareUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DriveShareDataResponse"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Share conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DriveShareConflictError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "delete": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Delete share",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "shareId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DriveShareDeletedResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/shares/{shareId}/invites": {
+            "post": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Create guest invite for a share",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "shareId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DriveShareInviteCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Invite created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DriveShareInviteDataResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/shares/{shareId}/invites/{inviteId}": {
+            "delete": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Revoke guest invite for a share",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "shareId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "inviteId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Invite revoked",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DriveShareDeletedResponse"
+                                }
+                            }
+                        }
                     }
                 },
                 "x-wgw-access": "user"
