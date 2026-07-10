@@ -6,13 +6,17 @@ namespace App\Http\Controllers\Api\V1\Files;
 
 use App\Exceptions\ApiHttpException;
 use App\Http\Middleware\AuthenticateWgwApi;
+use App\Services\Drive\DriveSharePrincipalDirectoryService;
 use App\Services\Drive\DriveShareService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 final class DriveSharesController
 {
-    public function __construct(private DriveShareService $shares) {}
+    public function __construct(
+        private DriveShareService $shares,
+        private DriveSharePrincipalDirectoryService $principalDirectory,
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -77,6 +81,19 @@ final class DriveSharesController
 
         return response()->json([
             'data' => $this->shares->atPath($principal['username'], $path),
+        ]);
+    }
+
+    public function principals(Request $request): JsonResponse
+    {
+        $this->principal($request);
+        $query = $request->query('query');
+        if (! is_string($query)) {
+            $query = '';
+        }
+
+        return response()->json([
+            'data' => $this->principalDirectory->search($query),
         ]);
     }
 
