@@ -61,6 +61,35 @@ From root [README.md](../../../README.md):
 
 Fix failing checks before expecting merge.
 
+## Merging PRs
+
+**Default: merge commit (`--merge`).** Preserve branch commits on `main` — feature work is split into small, auditable Conventional Commits; squashing collapses that history.
+
+```bash
+gh pr merge <number> --merge
+```
+
+Add `--delete-branch` only when the user asks to delete the remote branch after merge.
+
+### When to use squash or rebase
+
+Use **`--squash`** or **`--rebase`** only when the user explicitly requests it, or when the branch is intentionally a single commit (e.g. a one-line hotfix with no meaningful intermediate history).
+
+**Do not** default to `--squash` because GitHub allows it or because a prior merge used squash. **Do not** infer squash from recent PR history — agents have mixed strategies in the past.
+
+### Before merging
+
+1. Confirm CI is green on the PR head (`gh pr checks <number>`).
+2. Confirm the PR is mergeable (`gh pr view <number> --json mergeable,mergeStateStatus`).
+3. Use the merge method above unless the user overrides.
+
+### Recognizing merge style on `main`
+
+| Style | `main` commit message | Parents |
+|-------|----------------------|---------|
+| Merge commit (default) | `Merge pull request #N from …` | 2 |
+| Squash | `title (#N)` | 1 |
+
 ## Agent rules
 
 - **Do not** add Cursor attribution to PR titles or bodies (`Made with Cursor`, `Made-with: Cursor`, `Co-authored-by: Cursor`, etc.). CI and project hooks reject it.
@@ -69,6 +98,7 @@ Fix failing checks before expecting merge.
 - **Do not** skip hooks (`--no-verify`) unless the user explicitly requests it.
 - **Do not** amend commits unless user requests it and amend rules are satisfied (unpushed, your commit, etc.).
 - Use `gh` for all GitHub tasks (PR, checks, issues).
+- **Merge with `--merge` by default** — see [Merging PRs](#merging-prs). Never use `--squash` unless the user asks.
 
 ## After PR
 

@@ -12,6 +12,7 @@ description: Git workflow for this repository — branching, commits, pull reque
 | Creating or naming a branch | [branches.md](branches.md) |
 | Staging / committing | This file (below) |
 | Opening or updating a PR | [pull-requests.md](pull-requests.md) |
+| Merging a PR | [pull-requests.md](pull-requests.md) — **`gh pr merge --merge` by default** |
 | PR summary wording | [document](../document/SKILL.md) |
 | Test plan for PR | [testing](../testing/SKILL.md) |
 | Parallel agent branches | [developer/multitask.md](../developer/multitask.md) |
@@ -49,4 +50,5 @@ Do not use vague one-word subjects (`fix`, `update`, `wip`) without a clear desc
 
 - **Signed commits** required on `main` (GPG or SSH).
 - **Branch protection:** PR required; CI checks must pass — see [pull-requests.md](pull-requests.md).
+- **PR merge:** merge commit (`gh pr merge --merge`) unless the user explicitly asks for squash/rebase — preserves auditable commit history on `main`.
 - Husky runs Prettier/ESLint/Pint on commit; Commitlint enforces Conventional Commits. CI rejects Cursor attribution in commit messages and PR descriptions; `.cursor/hooks` blocks `gh pr create` / `gh pr edit` with attribution in `--body`.
