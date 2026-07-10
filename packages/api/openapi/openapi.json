@@ -2891,6 +2891,43 @@
         "x-wgw-access": "user"
       }
     },
+    "/files/shares/at-path": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Share grants overview at path",
+        "description": "Owner context: direct, ancestor, and nested shares plus merged effectiveGrants (incl. pending email) and publicShares for the sharing panel.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Share overview at path",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriveShareAtPathDataResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
     "/files/shares/{shareId}": {
       "get": {
         "tags": [

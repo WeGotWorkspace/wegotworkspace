@@ -41,7 +41,7 @@
         { "type": "null" }
       ]
     },
-    "description": "Map of username or email to grant entry; null value removes the grant."
+    "description": "Map of username, groups/{slug}, or email to grant entry; null value removes the grant. On CRUD responses, contains active user and group grants only — pending email invites are omitted (see effectiveGrants on at-path)."
   },
   "DriveShare": {
     "type": "object",
@@ -69,7 +69,8 @@
         "oneOf": [
           { "$ref": "#/components/schemas/DriveShareShareWithMap" },
           { "type": "null" }
-        ]
+        ],
+        "description": "Active user and group grants only (PATCH-editable). Pending email invites are not included — use effectiveGrants on GET /files/shares/at-path for the full principal overview."
       },
       "myRights": { "$ref": "#/components/schemas/DriveRights" }
     },
@@ -239,7 +240,11 @@
     "type": "object",
     "required": ["share"],
     "properties": {
-      "share": { "$ref": "#/components/schemas/DriveShare" }
+      "share": { "$ref": "#/components/schemas/DriveShare" },
+      "viaGroup": {
+        "type": "string",
+        "description": "Present when access is group-only (groups/{slug} grant). Omitted when the caller has a direct user grant on the same share."
+      }
     },
     "additionalProperties": false
   },
@@ -265,5 +270,124 @@
         }
       }
     ]
+  },
+  "DriveShareAtPathEntryStatus": {
+    "type": "string",
+    "enum": ["active", "expired"],
+    "description": "Share lifecycle status for owner overview. Expired shares remain visible but do not confer live access."
+  },
+  "DriveShareAtPathRelationship": {
+    "type": "string",
+    "enum": ["direct", "ancestor", "descendant"]
+  },
+  "DriveShareAtPathEntry": {
+    "type": "object",
+    "required": ["share", "relationship", "status"],
+    "properties": {
+      "share": { "$ref": "#/components/schemas/DriveShare" },
+      "relationship": { "$ref": "#/components/schemas/DriveShareAtPathRelationship" },
+      "status": { "$ref": "#/components/schemas/DriveShareAtPathEntryStatus" }
+    },
+    "additionalProperties": false
+  },
+  "DriveShareGrantSource": {
+    "type": "object",
+    "required": ["shareId", "sharePath", "inherited"],
+    "properties": {
+      "shareId": { "type": "string", "format": "uuid" },
+      "sharePath": { "type": "string" },
+      "inherited": { "type": "boolean" }
+    },
+    "additionalProperties": false
+  },
+  "DriveShareEffectiveGrantPrincipalType": {
+    "type": "string",
+    "enum": ["user", "group", "email"]
+  },
+  "DriveShareEffectiveGrantStatus": {
+    "type": "string",
+    "enum": ["pending"]
+  },
+  "DriveShareEffectiveGrant": {
+    "type": "object",
+    "required": ["principal", "principalType", "access", "source"],
+    "properties": {
+      "principal": {
+        "type": "string",
+        "description": "Username, groups/{slug}, or email address."
+      },
+      "principalType": { "$ref": "#/components/schemas/DriveShareEffectiveGrantPrincipalType" },
+      "access": { "$ref": "#/components/schemas/DriveShareAccess" },
+      "status": { "$ref": "#/components/schemas/DriveShareEffectiveGrantStatus" },
+      "source": { "$ref": "#/components/schemas/DriveShareGrantSource" }
+    },
+    "additionalProperties": false,
+    "description": "Read-only merged grant overview at a path, including pending email invites. Unlike shareWith on CRUD responses, this includes all principal types and provenance."
+  },
+  "DriveSharePublicSummary": {
+    "type": "object",
+    "required": [
+      "shareId",
+      "sharePath",
+      "defaultAccess",
+      "hasPassword",
+      "inherited",
+      "status"
+    ],
+    "properties": {
+      "shareId": { "type": "string", "format": "uuid" },
+      "sharePath": { "type": "string" },
+      "defaultAccess": { "$ref": "#/components/schemas/DriveShareAccess" },
+      "hasPassword": { "type": "boolean" },
+      "inherited": { "type": "boolean" },
+      "status": { "$ref": "#/components/schemas/DriveShareAtPathEntryStatus" }
+    },
+    "additionalProperties": false,
+    "description": "Owner overview of applicable public shares (direct and ancestor). Guest sessions remain 1:1 bound to a single share token — no prefix-winner resolution."
+  },
+  "DriveShareAtPath": {
+    "type": "object",
+    "required": [
+      "path",
+      "directShares",
+      "coveringShares",
+      "nestedShares",
+      "effectiveGrants",
+      "publicShares",
+      "myRights"
+    ],
+    "properties": {
+      "path": { "type": "string" },
+      "directShares": {
+        "type": "array",
+        "items": { "$ref": "#/components/schemas/DriveShareAtPathEntry" }
+      },
+      "coveringShares": {
+        "type": "array",
+        "items": { "$ref": "#/components/schemas/DriveShareAtPathEntry" }
+      },
+      "nestedShares": {
+        "type": "array",
+        "items": { "$ref": "#/components/schemas/DriveShareAtPathEntry" }
+      },
+      "effectiveGrants": {
+        "type": "array",
+        "items": { "$ref": "#/components/schemas/DriveShareEffectiveGrant" }
+      },
+      "publicShares": {
+        "type": "array",
+        "items": { "$ref": "#/components/schemas/DriveSharePublicSummary" }
+      },
+      "myRights": { "$ref": "#/components/schemas/DriveRights" }
+    },
+    "additionalProperties": false
+  },
+  "DriveShareAtPathDataResponse": {
+    "type": "object",
+    "required": ["data"],
+    "properties": {
+      "data": { "$ref": "#/components/schemas/DriveShareAtPath" }
+    },
+    "additionalProperties": false
   }
 }

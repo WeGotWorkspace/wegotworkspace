@@ -6255,6 +6255,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/files/shares/at-path": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Share grants overview at path
+         * @description Owner context: direct, ancestor, and nested shares plus merged effectiveGrants (incl. pending email) and publicShares for the sharing panel.
+         */
+        get: {
+            parameters: {
+                query: {
+                    path: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Share overview at path */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveShareAtPathDataResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -9017,7 +9058,7 @@ export interface components {
         DriveShareGrantEntry: {
             access: components["schemas"]["DriveShareAccess"];
         };
-        /** @description Map of username or email to grant entry; null value removes the grant. */
+        /** @description Map of username, groups/{slug}, or email to grant entry; null value removes the grant. On CRUD responses, contains active user and group grants only — pending email invites are omitted (see effectiveGrants on at-path). */
         DriveShareShareWithMap: {
             [key: string]: components["schemas"]["DriveShareGrantEntry"] | null;
         };
@@ -9034,6 +9075,7 @@ export interface components {
             expiresAt?: string | null;
             /** Format: date-time */
             updatedAt?: string | null;
+            /** @description Active user and group grants only (PATCH-editable). Pending email invites are not included — use effectiveGrants on GET /files/shares/at-path for the full principal overview. */
             shareWith?: components["schemas"]["DriveShareShareWithMap"] | null;
             myRights: components["schemas"]["DriveRights"];
         };
@@ -9116,6 +9158,8 @@ export interface components {
         };
         DriveSharedWithMeEntry: {
             share: components["schemas"]["DriveShare"];
+            /** @description Present when access is group-only (groups/{slug} grant). Omitted when the caller has a direct user grant on the same share. */
+            viaGroup?: string;
         };
         DriveSharedWithMeDataResponse: {
             data: components["schemas"]["DriveSharedWithMeEntry"][];
@@ -9123,6 +9167,59 @@ export interface components {
         DriveShareConflictError: components["schemas"]["Error"] & {
             /** @constant */
             code: "share_conflict";
+        };
+        /**
+         * @description Share lifecycle status for owner overview. Expired shares remain visible but do not confer live access.
+         * @enum {string}
+         */
+        DriveShareAtPathEntryStatus: "active" | "expired";
+        /** @enum {string} */
+        DriveShareAtPathRelationship: "direct" | "ancestor" | "descendant";
+        DriveShareAtPathEntry: {
+            share: components["schemas"]["DriveShare"];
+            relationship: components["schemas"]["DriveShareAtPathRelationship"];
+            status: components["schemas"]["DriveShareAtPathEntryStatus"];
+        };
+        DriveShareGrantSource: {
+            /** Format: uuid */
+            shareId: string;
+            sharePath: string;
+            inherited: boolean;
+        };
+        /** @enum {string} */
+        DriveShareEffectiveGrantPrincipalType: "user" | "group" | "email";
+        /** @enum {string} */
+        DriveShareEffectiveGrantStatus: "pending";
+        /** @description Read-only merged grant overview at a path, including pending email invites. Unlike shareWith on CRUD responses, this includes all principal types and provenance. */
+        DriveShareEffectiveGrant: {
+            /** @description Username, groups/{slug}, or email address. */
+            principal: string;
+            principalType: components["schemas"]["DriveShareEffectiveGrantPrincipalType"];
+            access: components["schemas"]["DriveShareAccess"];
+            status?: components["schemas"]["DriveShareEffectiveGrantStatus"];
+            source: components["schemas"]["DriveShareGrantSource"];
+        };
+        /** @description Owner overview of applicable public shares (direct and ancestor). Guest sessions remain 1:1 bound to a single share token — no prefix-winner resolution. */
+        DriveSharePublicSummary: {
+            /** Format: uuid */
+            shareId: string;
+            sharePath: string;
+            defaultAccess: components["schemas"]["DriveShareAccess"];
+            hasPassword: boolean;
+            inherited: boolean;
+            status: components["schemas"]["DriveShareAtPathEntryStatus"];
+        };
+        DriveShareAtPath: {
+            path: string;
+            directShares: components["schemas"]["DriveShareAtPathEntry"][];
+            coveringShares: components["schemas"]["DriveShareAtPathEntry"][];
+            nestedShares: components["schemas"]["DriveShareAtPathEntry"][];
+            effectiveGrants: components["schemas"]["DriveShareEffectiveGrant"][];
+            publicShares: components["schemas"]["DriveSharePublicSummary"][];
+            myRights: components["schemas"]["DriveRights"];
+        };
+        DriveShareAtPathDataResponse: {
+            data: components["schemas"]["DriveShareAtPath"];
         };
     };
     responses: {
