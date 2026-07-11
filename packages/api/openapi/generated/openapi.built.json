@@ -8227,7 +8227,8 @@
                 "required": [
                     "shareId",
                     "sharePath",
-                    "inherited"
+                    "inherited",
+                    "status"
                 ],
                 "properties": {
                     "shareId": {
@@ -8238,7 +8239,12 @@
                         "type": "string"
                     },
                     "inherited": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "description": "true when sharePath !== requested path (ancestor or descendant)."
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/DriveShareAtPathEntryStatus",
+                        "description": "Share lifecycle status (active or expired). Distinct from top-level invite/grant status on grant rows."
                     }
                 },
                 "additionalProperties": false
@@ -8340,7 +8346,7 @@
                     }
                 },
                 "additionalProperties": false,
-                "description": "Owner overview of applicable public shares (direct and ancestor). Guest sessions remain 1:1 bound to a single share token — no prefix-winner resolution."
+                "description": "Owner overview of applicable public shares in the audit subtree (direct, ancestor, and descendant). Guest sessions remain 1:1 bound to a single share token — no prefix-winner resolution."
             },
             "DriveShareAtPath": {
                 "type": "object",
@@ -8381,7 +8387,8 @@
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/DriveShareGrantSourceEntry"
-                        }
+                        },
+                        "description": "Subtree audit rows — all non-revoked grant sources on direct, ancestor, and descendant shares (including expired shares)."
                     },
                     "effectiveGrants": {
                         "type": "array",
@@ -8400,7 +8407,8 @@
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/DriveSharePublicSummary"
-                        }
+                        },
+                        "description": "Public shares in the audit subtree (direct, ancestor, and descendant), including expired links."
                     },
                     "myRights": {
                         "$ref": "#/components/schemas/DriveRights"
@@ -8472,7 +8480,7 @@
                     }
                 },
                 "additionalProperties": false,
-                "description": "Raw grant row before resolver merge — one entry per overlapping grant source."
+                "description": "Raw grant row before resolver merge — one entry per overlapping grant source in the audit subtree (direct, ancestor, and descendant shares)."
             },
             "DriveShareMemberAccessEditConstraint": {
                 "type": "string",
@@ -8568,6 +8576,127 @@
                         "items": {
                             "$ref": "#/components/schemas/DriveSharePrincipalEntry"
                         }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DriveShareRevokeAllPublicResult": {
+                "type": "object",
+                "required": [
+                    "revokedCount",
+                    "shareIds"
+                ],
+                "properties": {
+                    "revokedCount": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "shareIds": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DriveShareRevokeAllPublicDataResponse": {
+                "type": "object",
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/DriveShareRevokeAllPublicResult"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DriveShareByPrincipalRelationship": {
+                "type": "string",
+                "enum": [
+                    "direct",
+                    "ancestor",
+                    "descendant"
+                ]
+            },
+            "DriveShareByPrincipalEntry": {
+                "type": "object",
+                "required": [
+                    "access",
+                    "principalType",
+                    "source",
+                    "relationship",
+                    "status"
+                ],
+                "properties": {
+                    "access": {
+                        "$ref": "#/components/schemas/DriveShareAccess"
+                    },
+                    "principalType": {
+                        "$ref": "#/components/schemas/DriveShareEffectiveGrantPrincipalType",
+                        "description": "Grant row type (user, group, or email) — same semantics as effectiveGrants grantSources, not the queried principal."
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/DriveShareEffectiveGrantStatus",
+                        "description": "Invite/grant status (pending or active). Share lifecycle is on source.status."
+                    },
+                    "invitedEmail": {
+                        "type": "string",
+                        "format": "email",
+                        "description": "Original invite email for accepted guest user grants."
+                    },
+                    "viaGroup": {
+                        "type": "string",
+                        "description": "Present when a user principal matched via a group grant (groups/{slug})."
+                    },
+                    "source": {
+                        "$ref": "#/components/schemas/DriveShareGrantSource"
+                    },
+                    "relationship": {
+                        "$ref": "#/components/schemas/DriveShareByPrincipalRelationship"
+                    },
+                    "removal": {
+                        "$ref": "#/components/schemas/DriveShareGrantRemoval"
+                    }
+                },
+                "additionalProperties": false,
+                "description": "One grant row for the queried principal — audit list without resolver merge."
+            },
+            "DriveShareByPrincipal": {
+                "type": "object",
+                "required": [
+                    "principal",
+                    "queriedPrincipalType",
+                    "entries"
+                ],
+                "properties": {
+                    "principal": {
+                        "type": "string",
+                        "description": "Queried username, groups/{slug}, or email address (normalized from the principal query parameter)."
+                    },
+                    "queriedPrincipalType": {
+                        "$ref": "#/components/schemas/DriveShareEffectiveGrantPrincipalType",
+                        "description": "Type inferred from the principal query parameter (user, group, or email)."
+                    },
+                    "entries": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/DriveShareByPrincipalEntry"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DriveShareByPrincipalDataResponse": {
+                "type": "object",
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/DriveShareByPrincipal"
                     }
                 },
                 "additionalProperties": false
@@ -14568,6 +14697,88 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/DriveSharePrincipalsResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/shares/public/revoke-all": {
+            "post": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Revoke all public shares under path",
+                "description": "Owner-scoped bulk revoke of all non-revoked public shares at or under the query path. Member and guest shares are not affected.",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Revoked public shares",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DriveShareRevokeAllPublicDataResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/shares/by-principal": {
+            "get": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "List grants for a principal",
+                "description": "Owner-scoped audit of all grant rows for a queried principal (user, group, or email) across owned shares. Optional scope limits to a subtree.",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "principal",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "scope",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Grant rows for principal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DriveShareByPrincipalDataResponse"
                                 }
                             }
                         }

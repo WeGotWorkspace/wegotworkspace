@@ -2965,6 +2965,88 @@
         "x-wgw-access": "user"
       }
     },
+    "/files/shares/public/revoke-all": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Revoke all public shares under path",
+        "description": "Owner-scoped bulk revoke of all non-revoked public shares at or under the query path. Member and guest shares are not affected.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Revoked public shares",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriveShareRevokeAllPublicDataResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/files/shares/by-principal": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "List grants for a principal",
+        "description": "Owner-scoped audit of all grant rows for a queried principal (user, group, or email) across owned shares. Optional scope limits to a subtree.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "principal",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Grant rows for principal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriveShareByPrincipalDataResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
     "/files/shares/{shareId}": {
       "get": {
         "tags": [

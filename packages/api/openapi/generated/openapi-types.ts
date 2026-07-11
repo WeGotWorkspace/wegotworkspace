@@ -6337,6 +6337,89 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/files/shares/public/revoke-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Revoke all public shares under path
+         * @description Owner-scoped bulk revoke of all non-revoked public shares at or under the query path. Member and guest shares are not affected.
+         */
+        post: {
+            parameters: {
+                query: {
+                    path: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Revoked public shares */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveShareRevokeAllPublicDataResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/files/shares/by-principal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List grants for a principal
+         * @description Owner-scoped audit of all grant rows for a queried principal (user, group, or email) across owned shares. Optional scope limits to a subtree.
+         */
+        get: {
+            parameters: {
+                query: {
+                    principal: string;
+                    scope?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Grant rows for principal */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveShareByPrincipalDataResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -9225,7 +9308,10 @@ export interface components {
             /** Format: uuid */
             shareId: string;
             sharePath: string;
+            /** @description true when sharePath !== requested path (ancestor or descendant). */
             inherited: boolean;
+            /** @description Share lifecycle status (active or expired). Distinct from top-level invite/grant status on grant rows. */
+            status: components["schemas"]["DriveShareAtPathEntryStatus"];
         };
         /** @enum {string} */
         DriveShareEffectiveGrantPrincipalType: "user" | "group" | "email";
@@ -9255,7 +9341,7 @@ export interface components {
             source: components["schemas"]["DriveShareGrantSource"];
             removal?: components["schemas"]["DriveShareGrantRemoval"];
         };
-        /** @description Owner overview of applicable public shares (direct and ancestor). Guest sessions remain 1:1 bound to a single share token — no prefix-winner resolution. */
+        /** @description Owner overview of applicable public shares in the audit subtree (direct, ancestor, and descendant). Guest sessions remain 1:1 bound to a single share token — no prefix-winner resolution. */
         DriveSharePublicSummary: {
             /** Format: uuid */
             shareId: string;
@@ -9270,10 +9356,12 @@ export interface components {
             directShares: components["schemas"]["DriveShareAtPathEntry"][];
             coveringShares: components["schemas"]["DriveShareAtPathEntry"][];
             nestedShares: components["schemas"]["DriveShareAtPathEntry"][];
+            /** @description Subtree audit rows — all non-revoked grant sources on direct, ancestor, and descendant shares (including expired shares). */
             grantSources: components["schemas"]["DriveShareGrantSourceEntry"][];
             /** @description Resolved grants — one row per principal with winning access. */
             effectiveGrants: components["schemas"]["DriveShareEffectiveGrant"][];
             memberAccess: components["schemas"]["DriveShareMemberAccess"][];
+            /** @description Public shares in the audit subtree (direct, ancestor, and descendant), including expired links. */
             publicShares: components["schemas"]["DriveSharePublicSummary"][];
             myRights: components["schemas"]["DriveRights"];
         };
@@ -9288,7 +9376,7 @@ export interface components {
             /** @description Username or groups/{slug} for patchShareWith removal. */
             principal?: string;
         };
-        /** @description Raw grant row before resolver merge — one entry per overlapping grant source. */
+        /** @description Raw grant row before resolver merge — one entry per overlapping grant source in the audit subtree (direct, ancestor, and descendant shares). */
         DriveShareGrantSourceEntry: {
             /** @description Username, groups/{slug}, or email address. */
             principal: string;
@@ -9323,6 +9411,43 @@ export interface components {
         };
         DriveSharePrincipalsResponse: {
             data: components["schemas"]["DriveSharePrincipalEntry"][];
+        };
+        DriveShareRevokeAllPublicResult: {
+            revokedCount: number;
+            shareIds: string[];
+        };
+        DriveShareRevokeAllPublicDataResponse: {
+            data: components["schemas"]["DriveShareRevokeAllPublicResult"];
+        };
+        /** @enum {string} */
+        DriveShareByPrincipalRelationship: "direct" | "ancestor" | "descendant";
+        /** @description One grant row for the queried principal — audit list without resolver merge. */
+        DriveShareByPrincipalEntry: {
+            access: components["schemas"]["DriveShareAccess"];
+            /** @description Grant row type (user, group, or email) — same semantics as effectiveGrants grantSources, not the queried principal. */
+            principalType: components["schemas"]["DriveShareEffectiveGrantPrincipalType"];
+            /** @description Invite/grant status (pending or active). Share lifecycle is on source.status. */
+            status: components["schemas"]["DriveShareEffectiveGrantStatus"];
+            /**
+             * Format: email
+             * @description Original invite email for accepted guest user grants.
+             */
+            invitedEmail?: string;
+            /** @description Present when a user principal matched via a group grant (groups/{slug}). */
+            viaGroup?: string;
+            source: components["schemas"]["DriveShareGrantSource"];
+            relationship: components["schemas"]["DriveShareByPrincipalRelationship"];
+            removal?: components["schemas"]["DriveShareGrantRemoval"];
+        };
+        DriveShareByPrincipal: {
+            /** @description Queried username, groups/{slug}, or email address (normalized from the principal query parameter). */
+            principal: string;
+            /** @description Type inferred from the principal query parameter (user, group, or email). */
+            queriedPrincipalType: components["schemas"]["DriveShareEffectiveGrantPrincipalType"];
+            entries: components["schemas"]["DriveShareByPrincipalEntry"][];
+        };
+        DriveShareByPrincipalDataResponse: {
+            data: components["schemas"]["DriveShareByPrincipal"];
         };
     };
     responses: {
