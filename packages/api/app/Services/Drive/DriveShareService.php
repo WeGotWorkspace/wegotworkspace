@@ -285,18 +285,27 @@ final class DriveShareService
             }
         }
 
+        $auditShareIds = array_map(
+            static fn (array $entry): string => (string) $entry['share']['id'],
+            array_merge($directShares, $coveringShares, $nestedShares),
+        );
         $effectiveShareIds = array_merge($activeDirectShareIds, $activeCoveringShareIds);
-        $scopedGrants = $effectiveShareIds === []
-            ? ['sharesById' => collect(), 'grants' => collect()]
-            : $this->loadScopedGrants($effectiveShareIds);
 
-        $groupBatch = $this->batchGroupMetadataForShareIds($scopedGrants['grants']);
-        $grantSources = $this->buildGrantSources($scopedGrants['sharesById'], $scopedGrants['grants'], $path);
-        $effectiveGrants = $this->buildEffectiveGrants($scopedGrants['sharesById'], $scopedGrants['grants'], $path, $groupBatch);
-        $memberAccess = $this->buildMemberAccess($scopedGrants['grants'], $path, $groupBatch);
+        $auditScopedGrants = $auditShareIds === []
+            ? ['sharesById' => collect(), 'grants' => collect()]
+            : $this->loadScopedGrants($auditShareIds);
+
+        $effectiveGrantsCollection = $auditScopedGrants['grants']->filter(
+            static fn (DriveShareGrant $grant): bool => in_array((string) $grant->share_id, $effectiveShareIds, true),
+        );
+
+        $groupBatch = $this->batchGroupMetadataForShareIds($effectiveGrantsCollection);
+        $grantSources = $this->buildGrantSources($auditScopedGrants['sharesById'], $auditScopedGrants['grants'], $path);
+        $effectiveGrants = $this->buildEffectiveGrants($auditScopedGrants['sharesById'], $effectiveGrantsCollection, $path, $groupBatch);
+        $memberAccess = $this->buildMemberAccess($effectiveGrantsCollection, $path, $groupBatch);
 
         $publicShares = [];
-        foreach (array_merge($directShares, $coveringShares) as $entry) {
+        foreach (array_merge($directShares, $coveringShares, $nestedShares) as $entry) {
             /** @var array<string, mixed> $shareData */
             $shareData = $entry['share'];
             if (($shareData['kind'] ?? '') !== 'public') {
@@ -308,7 +317,7 @@ final class DriveShareService
                 'sharePath' => $sharePath,
                 'defaultAccess' => (string) $shareData['defaultAccess'],
                 'hasPassword' => (bool) $shareData['hasPassword'],
-                'inherited' => $entry['relationship'] === 'ancestor',
+                'inherited' => $sharePath !== $path,
                 'status' => $entry['status'],
             ];
         }
@@ -1004,12 +1013,11 @@ final class DriveShareService
                 continue;
             }
 
-            $sharePath = $this->scope->normalize((string) $share->path);
             $entry = $this->effectiveGrantEntryFromWinner(
                 $principalKey,
                 $winner,
                 $winningGrant,
-                $sharePath,
+                $share,
                 $requestedPath,
             );
 
@@ -1124,17 +1132,24 @@ final class DriveShareService
                 : null;
             $editable = $winner['grantKind'] === 'user';
 
+            $winningShare = null;
+            foreach ($grants as $grant) {
+                if ((string) $grant->share_id === $winner['shareId'] && $grant->share !== null) {
+                    $winningShare = $grant->share;
+                    break;
+                }
+            }
+            if ($winningShare === null) {
+                continue;
+            }
+
             $entry = [
                 'username' => $username,
                 'displayName' => $displayNamesByUsername[$username] ?? $username,
                 'access' => $winner['access'],
                 'viaGroup' => $viaGroup,
                 'editable' => $editable,
-                'source' => [
-                    'shareId' => $winner['shareId'],
-                    'sharePath' => $sharePath,
-                    'inherited' => $inherited,
-                ],
+                'source' => $this->grantSourceForShare($winningShare, $requestedPath),
                 'removal' => $this->removalHintForWinner($winner, $username),
             ];
 
@@ -1201,12 +1216,7 @@ final class DriveShareService
         }
 
         $sharePath = $this->scope->normalize((string) $share->path);
-        $inherited = $sharePath !== $requestedPath;
-        $source = [
-            'shareId' => (string) $share->id,
-            'sharePath' => $sharePath,
-            'inherited' => $inherited,
-        ];
+        $source = $this->grantSourceForShare($share, $requestedPath);
 
         if ($grant->grantee_type === 'user' && $grant->status === 'active' && $grant->grantee_user !== null) {
             return [
@@ -1247,10 +1257,10 @@ final class DriveShareService
         string $principalKey,
         array $winner,
         DriveShareGrant $grant,
-        string $sharePath,
+        DriveShare $share,
         string $requestedPath,
     ): array {
-        $inherited = $sharePath !== $requestedPath;
+        $source = $this->grantSourceForShare($share, $requestedPath);
         $principalType = match ($grant->grantee_type) {
             'user' => 'user',
             'group' => 'group',
@@ -1262,11 +1272,7 @@ final class DriveShareService
             'principal' => $principalKey,
             'principalType' => $principalType,
             'access' => $winner['access'],
-            'source' => [
-                'shareId' => $winner['shareId'],
-                'sharePath' => $sharePath,
-                'inherited' => $inherited,
-            ],
+            'source' => $source,
         ];
 
         if ($grant->grantee_type === 'email' && $grant->status === 'pending') {
@@ -1320,5 +1326,20 @@ final class DriveShareService
     private function filesDisk(): Filesystem
     {
         return $this->storage->files();
+    }
+
+    /**
+     * @return array{shareId: string, sharePath: string, inherited: bool, status: string}
+     */
+    private function grantSourceForShare(DriveShare $share, string $requestedPath): array
+    {
+        $sharePath = $this->scope->normalize((string) $share->path);
+
+        return [
+            'shareId' => (string) $share->id,
+            'sharePath' => $sharePath,
+            'inherited' => $sharePath !== $requestedPath,
+            'status' => $this->shareLifecycleStatus($share),
+        ];
     }
 }

@@ -448,4 +448,111 @@ final class DriveShareAtPathTest extends WgwDatabaseTestCase
         $this->assertSame('carol', $carolRow['removal']['principal']);
         $this->assertSame((string) $create->json('data.id'), $carolRow['removal']['shareId']);
     }
+
+    public function test_nested_grant_appears_in_grant_sources_not_effective_grants(): void
+    {
+        $this->withBearer($this->ownerToken)->postJson('/api/v1/files/shares', [
+            'path' => '/users/bob/projects/q3/draft.md',
+            'kind' => 'member',
+            'defaultAccess' => 'view',
+            'shareWith' => ['carol' => ['access' => 'edit']],
+        ])->assertOk();
+
+        $response = $this->withBearer($this->ownerToken)->getJson(
+            '/api/v1/files/shares/at-path?path='.urlencode('/users/bob/projects/q3')
+        );
+        $response->assertOk();
+
+        $carolSources = array_values(array_filter(
+            (array) $response->json('data.grantSources'),
+            static fn (array $row): bool => ($row['principal'] ?? '') === 'carol',
+        ));
+        $this->assertCount(1, $carolSources);
+        $this->assertTrue($carolSources[0]['source']['inherited']);
+        $this->assertSame('active', $carolSources[0]['source']['status']);
+
+        $carolEffective = array_values(array_filter(
+            (array) $response->json('data.effectiveGrants'),
+            static fn (array $row): bool => ($row['principal'] ?? '') === 'carol',
+        ));
+        $this->assertCount(0, $carolEffective);
+    }
+
+    public function test_expired_direct_and_covering_shares_in_grant_sources_with_source_status(): void
+    {
+        $this->withBearer($this->ownerToken)->postJson('/api/v1/files/shares', [
+            'path' => '/users/bob/projects/q3',
+            'kind' => 'member',
+            'defaultAccess' => 'view',
+            'expiresAt' => Carbon::now()->subHour()->toISOString(),
+            'shareWith' => ['alice' => ['access' => 'view']],
+        ])->assertOk();
+
+        $this->withBearer($this->ownerToken)->postJson('/api/v1/files/shares', [
+            'path' => '/users/bob/projects',
+            'kind' => 'member',
+            'defaultAccess' => 'view',
+            'expiresAt' => Carbon::now()->subHour()->toISOString(),
+            'shareWith' => ['carol' => ['access' => 'edit']],
+        ])->assertOk();
+
+        $response = $this->withBearer($this->ownerToken)->getJson(
+            '/api/v1/files/shares/at-path?path='.urlencode('/users/bob/projects/q3')
+        );
+        $response->assertOk();
+
+        $aliceSource = collect((array) $response->json('data.grantSources'))
+            ->firstWhere('principal', 'alice');
+        $this->assertNotNull($aliceSource);
+        $this->assertSame('expired', $aliceSource['source']['status']);
+        $this->assertArrayNotHasKey('status', $aliceSource);
+
+        $carolSource = collect((array) $response->json('data.grantSources'))
+            ->firstWhere('principal', 'carol');
+        $this->assertNotNull($carolSource);
+        $this->assertSame('expired', $carolSource['source']['status']);
+        $this->assertTrue($carolSource['source']['inherited']);
+    }
+
+    public function test_expired_nested_public_share_in_public_shares(): void
+    {
+        $this->withBearer($this->ownerToken)->postJson('/api/v1/files/shares', [
+            'path' => '/users/bob/projects/q3/draft.md',
+            'kind' => 'public',
+            'defaultAccess' => 'view',
+            'expiresAt' => Carbon::now()->subHour()->toISOString(),
+        ])->assertOk();
+
+        $response = $this->withBearer($this->ownerToken)->getJson(
+            '/api/v1/files/shares/at-path?path='.urlencode('/users/bob/projects/q3')
+        );
+        $response->assertOk();
+
+        $publicShares = (array) $response->json('data.publicShares');
+        $this->assertCount(1, $publicShares);
+        $this->assertSame('expired', $publicShares[0]['status']);
+        $this->assertTrue($publicShares[0]['inherited']);
+        $this->assertSame('/users/bob/projects/q3/draft.md', $publicShares[0]['sharePath']);
+    }
+
+    public function test_pending_email_grant_source_status_active(): void
+    {
+        $this->withBearer($this->ownerToken)->postJson('/api/v1/files/shares', [
+            'path' => '/users/bob/projects/q3/draft.md',
+            'kind' => 'member',
+            'defaultAccess' => 'view',
+            'shareWith' => ['pending@example.com' => ['access' => 'view']],
+        ])->assertOk();
+
+        $response = $this->withBearer($this->ownerToken)->getJson(
+            '/api/v1/files/shares/at-path?path='.urlencode('/users/bob/projects/q3/draft.md')
+        );
+        $response->assertOk();
+
+        $emailRow = collect((array) $response->json('data.grantSources'))
+            ->firstWhere('principal', 'pending@example.com');
+        $this->assertNotNull($emailRow);
+        $this->assertSame('pending', $emailRow['status']);
+        $this->assertSame('active', $emailRow['source']['status']);
+    }
 }
