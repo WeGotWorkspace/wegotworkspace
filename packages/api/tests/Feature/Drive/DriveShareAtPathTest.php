@@ -93,10 +93,9 @@ final class DriveShareAtPathTest extends WgwDatabaseTestCase
         $this->assertCount(2, $directShareIds);
 
         $coveringIds = array_column((array) $response->json('data.coveringShares'), 'share');
-        $this->assertSame(
-            (string) $ancestor->json('data.id'),
-            (string) ($coveringIds[0]['id'] ?? '')
-        );
+        $coveringShareIds = array_column($coveringIds, 'id');
+        $this->assertContains((string) $ancestor->json('data.id'), $coveringShareIds);
+        $this->assertCount(2, $coveringShareIds);
 
         $nestedIds = array_column((array) $response->json('data.nestedShares'), 'share');
         $this->assertSame(
