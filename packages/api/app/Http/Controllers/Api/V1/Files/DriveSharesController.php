@@ -84,6 +84,35 @@ final class DriveSharesController
         ]);
     }
 
+    public function revokeAllPublic(Request $request): JsonResponse
+    {
+        $principal = $this->principal($request);
+        $path = $request->query('path');
+        if (! is_string($path) || trim($path) === '') {
+            throw new ApiHttpException(400, 'path is required.', 'bad_request');
+        }
+
+        return response()->json([
+            'data' => $this->shares->revokeAllPublicUnderPath($principal['username'], $path),
+        ]);
+    }
+
+    public function byPrincipal(Request $request): JsonResponse
+    {
+        $principal = $this->principal($request);
+        $queryPrincipal = $request->query('principal');
+        if (! is_string($queryPrincipal) || trim($queryPrincipal) === '') {
+            throw new ApiHttpException(400, 'principal is required.', 'bad_request');
+        }
+
+        $scope = $request->query('scope');
+        $scopePath = is_string($scope) && trim($scope) !== '' ? $scope : null;
+
+        return response()->json([
+            'data' => $this->shares->byPrincipal($principal['username'], $queryPrincipal, $scopePath),
+        ]);
+    }
+
     public function principals(Request $request): JsonResponse
     {
         $this->principal($request);

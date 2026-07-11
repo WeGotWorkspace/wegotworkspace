@@ -223,6 +223,12 @@ final class OpenApiContract
             if ($openApiPath === '/files/shares/at-path') {
                 return 'path='.rawurlencode('/groups/team');
             }
+            if ($openApiPath === '/files/shares/public/revoke-all') {
+                return 'path='.rawurlencode('/users/bob');
+            }
+            if ($openApiPath === '/files/shares/by-principal') {
+                return 'principal=alice';
+            }
 
             return 'path='.rawurlencode('/users/bob');
         }

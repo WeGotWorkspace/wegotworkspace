@@ -168,15 +168,124 @@ final class DriveShareService
     {
         DB::connection('wgw')->transaction(function () use ($username, $shareId): void {
             $share = $this->ownerShareOrFail($username, $shareId, lockForUpdate: true);
-            $now = Carbon::now();
-            $share->revoked_at = $now;
-            $share->save();
-
-            DriveShareSession::query()
-                ->where('share_id', $share->id)
-                ->whereNull('revoked_at')
-                ->update(['revoked_at' => $now]);
+            $this->revokeShareRecord($share);
         });
+    }
+
+    /**
+     * @return array{revokedCount: int, shareIds: list<string>}
+     */
+    public function revokeAllPublicUnderPath(string $username, string $virtualPath): array
+    {
+        $owner = strtolower(trim($username));
+        $path = $this->scope->normalize($virtualPath);
+        $this->assertSharePathOwnedBy($owner, $path);
+
+        return DB::connection('wgw')->transaction(function () use ($owner, $path): array {
+            /** @var Collection<int, DriveShare> $shares */
+            $shares = DriveShare::query()
+                ->where('owner_username', $owner)
+                ->where('kind', 'public')
+                ->whereNull('revoked_at')
+                ->lockForUpdate()
+                ->get();
+
+            $revokedIds = [];
+            foreach ($shares as $share) {
+                $sharePath = $this->scope->normalize((string) $share->path);
+                if ($sharePath !== $path && ! $this->scope->isWithin($path, $sharePath)) {
+                    continue;
+                }
+
+                $this->revokeShareRecord($share);
+                $revokedIds[] = (string) $share->id;
+            }
+
+            return [
+                'revokedCount' => count($revokedIds),
+                'shareIds' => $revokedIds,
+            ];
+        });
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function byPrincipal(string $ownerUsername, string $principal, ?string $scope = null): array
+    {
+        $owner = strtolower(trim($ownerUsername));
+        $principal = trim($principal);
+        if ($principal === '') {
+            throw new ApiHttpException(400, 'principal is required.', 'bad_request');
+        }
+
+        $scopePath = null;
+        if ($scope !== null && trim($scope) !== '') {
+            $scopePath = $this->scope->normalize($scope);
+            $this->assertSharePathOwnedBy($owner, $scopePath);
+        }
+
+        $principalType = $this->principalTypeForQuery($principal);
+
+        /** @var Collection<int, DriveShare> $shares */
+        $shares = DriveShare::query()
+            ->where('owner_username', $owner)
+            ->whereNull('revoked_at')
+            ->get();
+
+        if ($scopePath !== null) {
+            $shares = $shares->filter(function (DriveShare $share) use ($scopePath): bool {
+                $sharePath = $this->scope->normalize((string) $share->path);
+
+                return $sharePath === $scopePath || $this->scope->isWithin($scopePath, $sharePath);
+            });
+        }
+
+        $shareIds = $shares->pluck('id')->map(static fn ($id): string => (string) $id)->values()->all();
+        if ($shareIds === []) {
+            return [
+                'principal' => $this->normalizedPrincipalForResponse($principal, $principalType),
+                'queriedPrincipalType' => $principalType,
+                'entries' => [],
+            ];
+        }
+
+        $scopedGrants = $this->loadScopedGrants($shareIds);
+        $queriedUserGroupSlugs = $principalType === 'user'
+            ? $this->groupSlugsForUsername(strtolower($principal))
+            : [];
+
+        $entries = [];
+        foreach ($scopedGrants['grants'] as $grant) {
+            if (! $this->grantMatchesPrincipalQuery($grant, $principal, $principalType, $queriedUserGroupSlugs)) {
+                continue;
+            }
+
+            $entry = $this->byPrincipalEntryFromGrant(
+                $grant,
+                $scopedGrants['sharesById'],
+                $scopePath,
+                $principalType,
+            );
+            if ($entry !== null) {
+                $entries[] = $entry;
+            }
+        }
+
+        usort($entries, static function (array $a, array $b): int {
+            $pathCompare = strcmp((string) $a['source']['sharePath'], (string) $b['source']['sharePath']);
+            if ($pathCompare !== 0) {
+                return $pathCompare;
+            }
+
+            return strcmp((string) ($a['access'] ?? ''), (string) ($b['access'] ?? ''));
+        });
+
+        return [
+            'principal' => $this->normalizedPrincipalForResponse($principal, $principalType),
+            'queriedPrincipalType' => $principalType,
+            'entries' => $entries,
+        ];
     }
 
     /**
@@ -285,18 +394,27 @@ final class DriveShareService
             }
         }
 
+        $auditShareIds = array_map(
+            static fn (array $entry): string => (string) $entry['share']['id'],
+            array_merge($directShares, $coveringShares, $nestedShares),
+        );
         $effectiveShareIds = array_merge($activeDirectShareIds, $activeCoveringShareIds);
-        $scopedGrants = $effectiveShareIds === []
-            ? ['sharesById' => collect(), 'grants' => collect()]
-            : $this->loadScopedGrants($effectiveShareIds);
 
-        $groupBatch = $this->batchGroupMetadataForShareIds($scopedGrants['grants']);
-        $grantSources = $this->buildGrantSources($scopedGrants['sharesById'], $scopedGrants['grants'], $path);
-        $effectiveGrants = $this->buildEffectiveGrants($scopedGrants['sharesById'], $scopedGrants['grants'], $path, $groupBatch);
-        $memberAccess = $this->buildMemberAccess($scopedGrants['grants'], $path, $groupBatch);
+        $auditScopedGrants = $auditShareIds === []
+            ? ['sharesById' => collect(), 'grants' => collect()]
+            : $this->loadScopedGrants($auditShareIds);
+
+        $effectiveGrantsCollection = $auditScopedGrants['grants']->filter(
+            static fn (DriveShareGrant $grant): bool => in_array((string) $grant->share_id, $effectiveShareIds, true),
+        );
+
+        $groupBatch = $this->batchGroupMetadataForShareIds($effectiveGrantsCollection);
+        $grantSources = $this->buildGrantSources($auditScopedGrants['sharesById'], $auditScopedGrants['grants'], $path);
+        $effectiveGrants = $this->buildEffectiveGrants($auditScopedGrants['sharesById'], $effectiveGrantsCollection, $path, $groupBatch);
+        $memberAccess = $this->buildMemberAccess($effectiveGrantsCollection, $path, $groupBatch);
 
         $publicShares = [];
-        foreach (array_merge($directShares, $coveringShares) as $entry) {
+        foreach (array_merge($directShares, $coveringShares, $nestedShares) as $entry) {
             /** @var array<string, mixed> $shareData */
             $shareData = $entry['share'];
             if (($shareData['kind'] ?? '') !== 'public') {
@@ -308,7 +426,7 @@ final class DriveShareService
                 'sharePath' => $sharePath,
                 'defaultAccess' => (string) $shareData['defaultAccess'],
                 'hasPassword' => (bool) $shareData['hasPassword'],
-                'inherited' => $entry['relationship'] === 'ancestor',
+                'inherited' => $sharePath !== $path,
                 'status' => $entry['status'],
             ];
         }
@@ -1004,12 +1122,11 @@ final class DriveShareService
                 continue;
             }
 
-            $sharePath = $this->scope->normalize((string) $share->path);
             $entry = $this->effectiveGrantEntryFromWinner(
                 $principalKey,
                 $winner,
                 $winningGrant,
-                $sharePath,
+                $share,
                 $requestedPath,
             );
 
@@ -1124,17 +1241,24 @@ final class DriveShareService
                 : null;
             $editable = $winner['grantKind'] === 'user';
 
+            $winningShare = null;
+            foreach ($grants as $grant) {
+                if ((string) $grant->share_id === $winner['shareId'] && $grant->share !== null) {
+                    $winningShare = $grant->share;
+                    break;
+                }
+            }
+            if ($winningShare === null) {
+                continue;
+            }
+
             $entry = [
                 'username' => $username,
                 'displayName' => $displayNamesByUsername[$username] ?? $username,
                 'access' => $winner['access'],
                 'viaGroup' => $viaGroup,
                 'editable' => $editable,
-                'source' => [
-                    'shareId' => $winner['shareId'],
-                    'sharePath' => $sharePath,
-                    'inherited' => $inherited,
-                ],
+                'source' => $this->grantSourceForShare($winningShare, $requestedPath),
                 'removal' => $this->removalHintForWinner($winner, $username),
             ];
 
@@ -1201,12 +1325,7 @@ final class DriveShareService
         }
 
         $sharePath = $this->scope->normalize((string) $share->path);
-        $inherited = $sharePath !== $requestedPath;
-        $source = [
-            'shareId' => (string) $share->id,
-            'sharePath' => $sharePath,
-            'inherited' => $inherited,
-        ];
+        $source = $this->grantSourceForShare($share, $requestedPath);
 
         if ($grant->grantee_type === 'user' && $grant->status === 'active' && $grant->grantee_user !== null) {
             return [
@@ -1247,10 +1366,10 @@ final class DriveShareService
         string $principalKey,
         array $winner,
         DriveShareGrant $grant,
-        string $sharePath,
+        DriveShare $share,
         string $requestedPath,
     ): array {
-        $inherited = $sharePath !== $requestedPath;
+        $source = $this->grantSourceForShare($share, $requestedPath);
         $principalType = match ($grant->grantee_type) {
             'user' => 'user',
             'group' => 'group',
@@ -1262,11 +1381,7 @@ final class DriveShareService
             'principal' => $principalKey,
             'principalType' => $principalType,
             'access' => $winner['access'],
-            'source' => [
-                'shareId' => $winner['shareId'],
-                'sharePath' => $sharePath,
-                'inherited' => $inherited,
-            ],
+            'source' => $source,
         ];
 
         if ($grant->grantee_type === 'email' && $grant->status === 'pending') {
@@ -1320,5 +1435,203 @@ final class DriveShareService
     private function filesDisk(): Filesystem
     {
         return $this->storage->files();
+    }
+
+    private function revokeShareRecord(DriveShare $share): void
+    {
+        $now = Carbon::now();
+        $share->revoked_at = $now;
+        $share->save();
+
+        DriveShareSession::query()
+            ->where('share_id', $share->id)
+            ->whereNull('revoked_at')
+            ->update(['revoked_at' => $now]);
+    }
+
+    /**
+     * @return array{shareId: string, sharePath: string, inherited: bool, status: string}
+     */
+    private function grantSourceForShare(DriveShare $share, string $requestedPath): array
+    {
+        $sharePath = $this->scope->normalize((string) $share->path);
+
+        return [
+            'shareId' => (string) $share->id,
+            'sharePath' => $sharePath,
+            'inherited' => $sharePath !== $requestedPath,
+            'status' => $this->shareLifecycleStatus($share),
+        ];
+    }
+
+    private function principalTypeForQuery(string $principal): string
+    {
+        if (preg_match('#^groups/([a-z0-9_-]+)$#', $principal) === 1) {
+            return 'group';
+        }
+        if (filter_var($principal, FILTER_VALIDATE_EMAIL) !== false) {
+            return 'email';
+        }
+
+        return 'user';
+    }
+
+    private function normalizedPrincipalForResponse(string $principal, string $principalType): string
+    {
+        if ($principalType === 'email') {
+            return strtolower($principal);
+        }
+        if ($principalType === 'user') {
+            return strtolower($principal);
+        }
+
+        return $principal;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function groupSlugsForUsername(string $username): array
+    {
+        $slugs = [];
+        foreach ($this->groupDirectory->groupsForUser($username) as $group) {
+            $uri = (string) ($group['id'] ?? '');
+            if (str_starts_with($uri, 'principals/groups/')) {
+                $slugs[] = substr($uri, strlen('principals/groups/'));
+            }
+        }
+
+        return $slugs;
+    }
+
+    /**
+     * @param  list<string>  $queriedUserGroupSlugs
+     */
+    private function grantMatchesPrincipalQuery(
+        DriveShareGrant $grant,
+        string $principal,
+        string $principalType,
+        array $queriedUserGroupSlugs,
+    ): bool {
+        if ($principalType === 'user') {
+            if ($grant->grantee_type === 'user'
+                && $grant->status === 'active'
+                && $grant->grantee_user !== null
+                && strcasecmp((string) $grant->grantee_user, $principal) === 0) {
+                return true;
+            }
+
+            return $grant->grantee_type === 'group'
+                && $grant->status === 'active'
+                && $grant->grantee_group !== null
+                && in_array((string) $grant->grantee_group, $queriedUserGroupSlugs, true);
+        }
+
+        if ($principalType === 'group') {
+            $slug = $this->parseGroupPrincipalKey($principal);
+            if ($slug === null) {
+                return false;
+            }
+
+            return $grant->grantee_type === 'group'
+                && $grant->status === 'active'
+                && strcasecmp((string) $grant->grantee_group, $slug) === 0;
+        }
+
+        $email = strtolower($principal);
+        if ($grant->grantee_type === 'email'
+            && $grant->status === 'pending'
+            && $grant->grantee_email !== null
+            && strcasecmp((string) $grant->grantee_email, $email) === 0) {
+            return true;
+        }
+
+        return $grant->grantee_type === 'user'
+            && $grant->status === 'active'
+            && $grant->grantee_email !== null
+            && strcasecmp((string) $grant->grantee_email, $email) === 0;
+    }
+
+    /**
+     * @param  Collection<string|int, DriveShare>  $sharesById
+     * @return array<string, mixed>|null
+     */
+    private function byPrincipalEntryFromGrant(
+        DriveShareGrant $grant,
+        Collection $sharesById,
+        ?string $scopePath,
+        string $queriedPrincipalType,
+    ): ?array {
+        $share = $sharesById->get($grant->share_id);
+        if ($share === null) {
+            return null;
+        }
+
+        $sharePath = $this->scope->normalize((string) $share->path);
+        $referencePath = $scopePath ?? $sharePath;
+        $source = $this->grantSourceForShare($share, $referencePath);
+
+        $entryPrincipalType = match ($grant->grantee_type) {
+            'user' => 'user',
+            'group' => 'group',
+            'email' => 'email',
+            default => 'user',
+        };
+
+        $entry = [
+            'access' => (string) $grant->access,
+            'principalType' => $entryPrincipalType,
+            'source' => $source,
+            'relationship' => $this->shareRelationshipToScope($sharePath, $scopePath),
+        ];
+
+        if ($grant->grantee_type === 'email' && $grant->status === 'pending') {
+            $entry['status'] = 'pending';
+            $entry['removal'] = [
+                'method' => 'deleteInvite',
+                'shareId' => (string) $share->id,
+            ];
+        } else {
+            $entry['status'] = 'active';
+            if ($grant->grantee_type === 'user' && $grant->grantee_user !== null) {
+                if ($grant->grantee_email !== null && $grant->grantee_email !== '') {
+                    $entry['invitedEmail'] = (string) $grant->grantee_email;
+                }
+                $entry['removal'] = [
+                    'method' => 'patchShareWith',
+                    'shareId' => (string) $share->id,
+                    'principal' => (string) $grant->grantee_user,
+                ];
+            } elseif ($grant->grantee_type === 'group' && $grant->grantee_group !== null) {
+                $entry['removal'] = [
+                    'method' => 'patchShareWith',
+                    'shareId' => (string) $share->id,
+                    'principal' => 'groups/'.$grant->grantee_group,
+                ];
+            }
+        }
+
+        if ($queriedPrincipalType === 'user'
+            && $grant->grantee_type === 'group'
+            && $grant->grantee_group !== null) {
+            $entry['viaGroup'] = 'groups/'.$grant->grantee_group;
+        }
+
+        return $entry;
+    }
+
+    private function shareRelationshipToScope(string $sharePath, ?string $scopePath): string
+    {
+        if ($scopePath === null || $sharePath === $scopePath) {
+            return 'direct';
+        }
+        if ($this->scope->isWithin($sharePath, $scopePath)) {
+            return 'ancestor';
+        }
+        if ($this->scope->isWithin($scopePath, $sharePath)) {
+            return 'descendant';
+        }
+
+        return 'direct';
     }
 }
