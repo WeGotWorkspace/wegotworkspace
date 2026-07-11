@@ -124,6 +124,7 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($filesS
         Route::get('files/shares/at-path', [DriveSharesController::class, 'atPath']);
         Route::get('files/shares/principals', [DriveSharesController::class, 'principals']);
         Route::post('files/shares/public/revoke-all', [DriveSharesController::class, 'revokeAllPublic']);
+        Route::get('files/shares/by-principal', [DriveSharesController::class, 'byPrincipal']);
         Route::get('files/shares/{shareId}', [DriveSharesController::class, 'show'])
             ->where('shareId', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}');
         Route::patch('files/shares/{shareId}', [DriveSharesController::class, 'update'])
