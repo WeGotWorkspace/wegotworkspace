@@ -84,6 +84,19 @@ final class DriveSharesController
         ]);
     }
 
+    public function revokeAllPublic(Request $request): JsonResponse
+    {
+        $principal = $this->principal($request);
+        $path = $request->query('path');
+        if (! is_string($path) || trim($path) === '') {
+            throw new ApiHttpException(400, 'path is required.', 'bad_request');
+        }
+
+        return response()->json([
+            'data' => $this->shares->revokeAllPublicUnderPath($principal['username'], $path),
+        ]);
+    }
+
     public function principals(Request $request): JsonResponse
     {
         $this->principal($request);

@@ -168,14 +168,43 @@ final class DriveShareService
     {
         DB::connection('wgw')->transaction(function () use ($username, $shareId): void {
             $share = $this->ownerShareOrFail($username, $shareId, lockForUpdate: true);
-            $now = Carbon::now();
-            $share->revoked_at = $now;
-            $share->save();
+            $this->revokeShareRecord($share);
+        });
+    }
 
-            DriveShareSession::query()
-                ->where('share_id', $share->id)
+    /**
+     * @return array{revokedCount: int, shareIds: list<string>}
+     */
+    public function revokeAllPublicUnderPath(string $username, string $virtualPath): array
+    {
+        $owner = strtolower(trim($username));
+        $path = $this->scope->normalize($virtualPath);
+        $this->assertSharePathOwnedBy($owner, $path);
+
+        return DB::connection('wgw')->transaction(function () use ($owner, $path): array {
+            /** @var Collection<int, DriveShare> $shares */
+            $shares = DriveShare::query()
+                ->where('owner_username', $owner)
+                ->where('kind', 'public')
                 ->whereNull('revoked_at')
-                ->update(['revoked_at' => $now]);
+                ->lockForUpdate()
+                ->get();
+
+            $revokedIds = [];
+            foreach ($shares as $share) {
+                $sharePath = $this->scope->normalize((string) $share->path);
+                if ($sharePath !== $path && ! $this->scope->isWithin($path, $sharePath)) {
+                    continue;
+                }
+
+                $this->revokeShareRecord($share);
+                $revokedIds[] = (string) $share->id;
+            }
+
+            return [
+                'revokedCount' => count($revokedIds),
+                'shareIds' => $revokedIds,
+            ];
         });
     }
 
@@ -1326,6 +1355,18 @@ final class DriveShareService
     private function filesDisk(): Filesystem
     {
         return $this->storage->files();
+    }
+
+    private function revokeShareRecord(DriveShare $share): void
+    {
+        $now = Carbon::now();
+        $share->revoked_at = $now;
+        $share->save();
+
+        DriveShareSession::query()
+            ->where('share_id', $share->id)
+            ->whereNull('revoked_at')
+            ->update(['revoked_at' => $now]);
     }
 
     /**
