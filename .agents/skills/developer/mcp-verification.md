@@ -32,6 +32,8 @@ Shared server entry:
 }
 ```
 
+**Claude Code caveat:** Claude Code ignores the `cwd` field in `.mcp.json` ([anthropics/claude-code-action#17565](https://github.com/anthropics/claude-code-action/issues/17565)). The server self-locates the repo root from its own install path (`import.meta.url` → `tools/mcp-server/dist/`) and runs `git rev-parse` with that explicit `cwd`, so verification works regardless of the process working directory.
+
 ### First-time onboarding
 
 After pulling a branch that adds the MCP server, Cursor and Claude Code typically prompt for **explicit approval** to run the project MCP server (`wgw-verify`). Accept once per IDE/project — this is expected security behavior, not a misconfiguration.
@@ -71,7 +73,7 @@ Each `run_*` tool returns JSON:
 
 Spawn uses `stdio: ['ignore', 'pipe', 'pipe']` — output is captured and returned to the agent, not written to the MCP server terminal.
 
-Repo root is resolved via `git rev-parse --show-toplevel` (works from worktrees).
+Repo root is derived from the server module location (`tools/mcp-server/dist/` → three levels up), then confirmed via `git rev-parse --show-toplevel` with that path as `cwd` (works from worktrees and when the IDE ignores `cwd`).
 
 ## When to use MCP vs bash
 

@@ -27,15 +27,25 @@ const server = new McpServer({
 
 function registerRunTool(
   name: string,
+  title: string,
   description: string,
   args: string[],
   label: string,
   timeoutMs: number,
 ): void {
-  server.tool(
+  server.registerTool(
     name,
-    description,
-    runToolSchema.shape,
+    {
+      title,
+      description,
+      inputSchema: runToolSchema.shape,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
     async ({ tailLines }) => {
       const result = await runPnpmCommand({
         args,
@@ -58,6 +68,7 @@ function registerRunTool(
 
 registerRunTool(
   "run_apps_done_gate",
+  "Run apps done gate",
   "Run pnpm test:apps-done-gate (typecheck + Vitest + Storybook smoke + coverage). Timeout: 15 minutes.",
   ["test:apps-done-gate"],
   "APPS DONE GATE",
@@ -66,6 +77,7 @@ registerRunTool(
 
 registerRunTool(
   "run_api_done_gate",
+  "Run API done gate",
   "Run pnpm test:api-done-gate (API feature test suites). Timeout: 15 minutes.",
   ["test:api-done-gate"],
   "API DONE GATE",
@@ -74,6 +86,7 @@ registerRunTool(
 
 registerRunTool(
   "run_ci_quality",
+  "Run CI quality",
   "Run pnpm run ci:quality (full API + apps quality stack). Timeout: 30 minutes.",
   ["run", "ci:quality"],
   "CI QUALITY",
@@ -82,6 +95,7 @@ registerRunTool(
 
 registerRunTool(
   "run_lint",
+  "Run lint",
   "Run pnpm lint. Timeout: 5 minutes.",
   ["lint"],
   "LINT",
@@ -90,6 +104,7 @@ registerRunTool(
 
 registerRunTool(
   "run_typecheck",
+  "Run typecheck",
   "Run pnpm typecheck. Timeout: 5 minutes.",
   ["typecheck"],
   "TYPECHECK",
@@ -98,16 +113,26 @@ registerRunTool(
 
 registerRunTool(
   "run_format_check",
+  "Run format check",
   "Run pnpm format:check. Timeout: 5 minutes.",
   ["format:check"],
   "FORMAT CHECK",
   5 * MINUTE_MS,
 );
 
-server.tool(
+server.registerTool(
   "get_verification_context",
-  "Read POLICY.md, smells.md, and done-checklist.md for review/handoff context.",
-  {},
+  {
+    title: "Get verification context",
+    description:
+      "Read POLICY.md, smells.md, and done-checklist.md for review/handoff context.",
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+  },
   async () => {
     const context = await getVerificationContext();
 
