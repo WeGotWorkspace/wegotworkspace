@@ -2,6 +2,20 @@
 
 Use when splitting work across parallel agents (Cursor `/multitask`, Build in Parallel, or separate Claude Code sessions).
 
+## Specs and tasks.md
+
+Feature work on `feat/` branches should have `.agents/specs/<N>-<slug>/` with `plan.md` chunks and matching rows in `tasks.md`.
+
+| plan.md | tasks.md |
+|---------|----------|
+| Chunk `id` field (e.g. `api-drive-share`) | Same `id` in the tasks table |
+| `done-when`, `verify-with` | `verify command` column |
+| `skill`, `inputs` | `skill`, `key paths`, `owner / agent` |
+
+**`tasks.md` is engineering work tracking — not the GitHub issue `- [ ]` checklist.** Issue AC stays on GitHub; verify with [verify-issue](../verify-issue/SKILL.md).
+
+Hand off each parallel agent with: branch/worktree name, chunk `id`, the matching `tasks.md` row, and paths from `plan.md`.
+
 ## When to parallelize
 
 **Safe in parallel:**
