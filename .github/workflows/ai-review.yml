@@ -1,0 +1,76 @@
+name: AI PR Review
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+    paths-ignore:
+      - "packages/api/openapi/generated/**"
+      - "**/dist/**"
+      - "**/storybook-static/**"
+      - "**/.turbo/**"
+
+concurrency:
+  group: ai-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  ai-review:
+    if: >-
+      vars.AI_REVIEW_ENABLED == 'true' &&
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Advisory PR review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Perform an **advisory** code review of this pull request. This review does not block merge.
+
+            ## Review standards (read these files from the checked-out repo)
+
+            1. `.agents/POLICY.md` — policy rows and enforcement expectations for new work
+            2. `.agents/skills/clean-code/smells.md` — scan touched files for structural smells
+            3. `.agents/skills/code-review/SKILL.md` — review order, blockers vs nits
+
+            Follow the code-review skill order: smells scan → policy check → note blockers vs nits.
+
+            ## Diff scope
+
+            Use `gh pr diff` and `gh pr view` for PR context. **Ignore generated artefacts** even if present in the diff:
+            - `packages/api/openapi/generated/**`
+            - `**/dist/**`
+            - `**/storybook-static/**`
+            - `**/.turbo/**`
+
+            Focus review on hand-written source changes only.
+
+            ## Output rules (strict)
+
+            - Post **one** summary comment on the PR using `gh pr comment` only.
+            - Do **not** modify, commit, or push any files.
+            - Do **not** submit a blocking PR review or request changes.
+            - Do **not** use inline review comments.
+            - Prefix the comment with: `## Advisory AI review`
+
+            Structure the comment: summary, blockers (if any), nits, and policy/smells notes. Keep it concise and actionable.
+          claude_args: |
+            --max-turns 15
+            --allowedTools "Read,Glob,Grep,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*)"
