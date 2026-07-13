@@ -5,12 +5,13 @@ description: Verify GitHub issue acceptance criteria before handoff or PR — fe
 
 # Verify GitHub issue acceptance criteria
 
-Issue-linked work needs **two** gates:
+Issue-linked work needs **three** gates:
 
-1. **Issue AC** — this skill: each acceptance criterion verified with evidence.
-2. **Repo quality** — [developer/done-checklist.md](../developer/done-checklist.md) + [code-review](../code-review/SKILL.md): tests, done gates, policy, smells.
+1. **Spec sync** — body-hash drift check (below); issue remains authoritative, `spec.md` is derived reference.
+2. **Issue AC** — this skill: each acceptance criterion verified with evidence.
+3. **Repo quality** — [developer/done-checklist.md](../developer/done-checklist.md) + [code-review](../code-review/SKILL.md): tests, done gates, policy, smells.
 
-Do not skip (2) after (1). Do not declare an issue done based on green CI alone if AC were never mapped.
+Do not skip (2) or (3) after (1). Do not declare an issue done based on green CI alone if AC were never mapped.
 
 ## When to use
 
@@ -26,6 +27,32 @@ Do not skip (2) after (1). Do not declare an issue done based on green CI alone 
 - Issue number or URL (e.g. `#80`, `https://github.com/ORG/REPO/issues/80`)
 - Local branch or diff containing the implementation
 - `gh` authenticated for the repo ([git-workflow](../git-workflow/SKILL.md) — use `gh` for GitHub tasks)
+
+## Spec drift check (body-hash)
+
+Before AC verification on `feat/` work (or when `.agents/specs/<N>-*/spec.md` exists):
+
+**Do not use `issue.updatedAt`** — labels, assignees, comments, and bots change it without scope changes.
+
+```bash
+# Current body hash (full output; compare first 8 hex chars)
+gh issue view <N> --json body --jq .body | shasum -a 256
+
+# Stored hash from spec header
+grep '^Source:' .agents/specs/<N>-<slug>/spec.md
+```
+
+**Interpretation:**
+
+| Condition | Result |
+|-----------|--------|
+| No `spec.md` on `feat/` branch | `DRIFT: spec missing` — create spec from issue before handoff |
+| First 8 chars of current hash ≠ hash in `Source:` line | `DRIFT: re-sync spec from issue` — read issue body, update spec/plan/tasks, new body-hash |
+| Hashes match | `SYNC OK` |
+
+On `DRIFT`: stop and re-sync from issue (issue first, then spec/plan/tasks). Callable MCP drift tool is a follow-up — these commands are the source of truth in PR 2.
+
+Details: [specs/README.md](../../specs/README.md).
 
 ## Workflow (one pass)
 
@@ -80,7 +107,7 @@ For every criterion, pick one primary method and record the planned check:
 
 Load domain depth when mapping: [testing](../testing/SKILL.md), [api](../api/SKILL.md), [apps-ui](../apps-ui/SKILL.md), [storybook](../storybook/SKILL.md).
 
-**Planning:** If work was planned with [plan-feature](../plan-feature/SKILL.md), align chunk `done-when` / `Verify with` rows to these criterion IDs.
+**Planning:** If work was planned with [plan-feature](../plan-feature/SKILL.md), align chunk `done-when` / `Verify with` rows to these criterion IDs. Map AC to the **issue**, not to `spec.md` — spec is technical scope reference only.
 
 ### 4. Run checks and collect evidence
 
@@ -140,8 +167,10 @@ Do not close the issue or claim "fixes #N" unless the user asked and verdict is 
 
 | Phase | Skill |
 |-------|-------|
-| Plan chunks from issue AC | [plan-feature](../plan-feature/SKILL.md) — copy AC into chunk `done-when` |
+| Issue → spec → plan → tasks | [plan-feature](../plan-feature/SKILL.md) + [specs/README.md](../../specs/README.md) |
+| Plan chunks from issue AC | Copy AC into chunk `done-when`; engineering rows in `tasks.md` |
 | Implement | Domain skills (`api`, `apps-ui`, …) |
+| Spec sync gate | **verify-issue** — body-hash drift (this doc) |
 | Issue AC gate | **verify-issue** (this doc) |
 | Technical gate | [code-review](../code-review/SKILL.md) → [done-checklist](../developer/done-checklist.md) |
 | Multitask merge | [multitask-verifier](../developer/multitask-verifier.md) for cross-chunk; then verify-issue for the parent issue |

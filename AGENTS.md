@@ -10,6 +10,18 @@
 
 Load **[developer](.agents/skills/developer/)** for dev layout, skill routing, multitask handoffs, and links to package-specific depth. **Policy vs CI:** [.agents/POLICY.md](.agents/POLICY.md). **Done verification:** [developer/done-checklist.md](.agents/skills/developer/done-checklist.md); issue AC: [verify-issue](.agents/skills/verify-issue/).
 
+## Spec-first (feat/ branches)
+
+**Issue = what/why** (GitHub). **Specs = how** (repo): `.agents/specs/<N>-<slug>/` with `spec.md` → `plan.md` → `tasks.md`.
+
+| Branch | Spec required? |
+|--------|----------------|
+| `feat/` | **Yes** — derive `spec.md` from issue (`Source: #N (body-hash: …)`); without issue: `Source: ad-hoc` |
+| `fix/`, `chore/`, `docs/`, `refactor/`, `test/` | Optional |
+| Single-file fix | No |
+
+See [.agents/specs/README.md](.agents/specs/README.md). Plan with [plan-feature](.agents/skills/plan-feature/); verify drift + AC with [verify-issue](.agents/skills/verify-issue/).
+
 ## Skills index
 
 Agent skills live in [`.agents/skills/`](.agents/skills/) (tool-agnostic [Agent Skills](https://agentskills.io/) format). **Naming:** unprefixed directory names only — no `wgw-` skill prefixes.
