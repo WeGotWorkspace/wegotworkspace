@@ -6,9 +6,11 @@
 
 **Git:** Do not `git commit` or open PRs unless the user explicitly asks. Commits touching `packages/apps/**` require `pnpm test:apps-done-gate` before push (Husky pre-push enforces). [`.agents/skills/git-workflow/`](.agents/skills/git-workflow/).
 
+**Verification:** Before handoff, call `run_apps_done_gate` / `run_api_done_gate` via the **wgw-verify** MCP server when available ([developer/mcp-verification.md](.agents/skills/developer/mcp-verification.md)). Use bash (`pnpm test:*-done-gate`) only as fallback.
+
 ## Start here
 
-Load **[developer](.agents/skills/developer/)** for dev layout, skill routing, multitask handoffs, and links to package-specific depth. **Policy vs CI:** [.agents/POLICY.md](.agents/POLICY.md). **Done verification:** [developer/done-checklist.md](.agents/skills/developer/done-checklist.md); issue AC: [verify-issue](.agents/skills/verify-issue/).
+Load **[developer](.agents/skills/developer/)** for dev layout, skill routing, multitask handoffs, and links to package-specific depth. **Policy vs CI:** [.agents/POLICY.md](.agents/POLICY.md). **Done verification:** [developer/done-checklist.md](.agents/skills/developer/done-checklist.md); MCP tools: [developer/mcp-verification.md](.agents/skills/developer/mcp-verification.md); issue AC: [verify-issue](.agents/skills/verify-issue/).
 
 ## Skills index
 

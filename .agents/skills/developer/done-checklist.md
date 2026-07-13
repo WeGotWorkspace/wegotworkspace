@@ -2,6 +2,8 @@
 
 Run before declaring work complete or opening a PR (when the user asks). Policy context: [.agents/POLICY.md](../../POLICY.md).
 
+**Primary verify method:** call MCP tools via **wgw-verify** when available ([mcp-verification.md](mcp-verification.md)) — `run_apps_done_gate`, `run_api_done_gate`, `run_ci_quality`. Bash commands below are equivalent fallbacks.
+
 ## When work tracks a GitHub issue
 
 If the task references an issue (`#N`, issue URL, or "fixes #N"):
@@ -20,6 +22,8 @@ Issue AC verification and done-checklist are both required; neither replaces the
 
 ## API (`packages/api`)
 
+MCP: `run_api_done_gate` · Bash fallback:
+
 ```bash
 cd packages/api && composer test -- --filter <Domain>   # domain you changed
 pnpm test:api-done-gate                                 # from repo root, before merge-ready API work
@@ -33,6 +37,8 @@ pnpm test:api-done-gate                                 # from repo root, before
 Optional local: `pnpm test:api-e2e:docker`, `pnpm test:meet-api` (meet signaling).
 
 ## UI (`packages/apps`)
+
+MCP: `run_apps_done_gate` · Bash fallback:
 
 ```bash
 pnpm test:apps-done-gate                 # typecheck + Vitest + Storybook smoke + coverage
@@ -69,7 +75,7 @@ pnpm test:apps-done-gate                 # apps UI exports, panes, hooks, storie
 
 ## Before PR (when user requests push/PR)
 
-Full CI-quality stack (API + apps lint/typegen + done gates):
+MCP: `run_ci_quality` · Bash fallback:
 
 ```bash
 pnpm run ci:quality
