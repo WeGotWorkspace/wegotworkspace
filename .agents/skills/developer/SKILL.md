@@ -13,7 +13,8 @@ Context-loading skill for AI agents and developers working in the WeGotWorkspace
 
 | Task | Skill | Key docs |
 |------|-------|----------|
-| Starting work / skill routing | `developer` | [multitask.md](multitask.md), [done-checklist.md](done-checklist.md), [POLICY.md](../../POLICY.md) |
+| Starting work / skill routing | `developer` | [multitask.md](multitask.md), [done-checklist.md](done-checklist.md), [mcp-verification.md](mcp-verification.md), [POLICY.md](../../POLICY.md) |
+| Handoff / verify before PR | `developer` | [mcp-verification.md](mcp-verification.md), [done-checklist.md](done-checklist.md) |
 | Dev env / Docker / ports | [dev-environment](../dev-environment/SKILL.md) | `docs/dev-layout.md` |
 | API / Laravel / REST / WebDAV | [api](../api/SKILL.md) | [layers.md](../api/layers.md), [testing.md](../api/testing.md) |
 | Plugins / wgw-plugins | [plugins](../plugins/SKILL.md) | [storage-flysystem.md](../api/storage-flysystem.md) |
