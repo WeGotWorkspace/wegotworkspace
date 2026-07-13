@@ -5,6 +5,26 @@ description: Feature planning workflow for the WeGotWorkspace monorepo — resea
 
 # Feature planning
 
+## Spec-first workflow
+
+For feature work, planning produces **committed files** under `.agents/specs/<N>-<slug>/`:
+
+```text
+Issue → spec.md → plan.md → tasks.md
+```
+
+| Step | File | Action |
+|------|------|--------|
+| 1 | `spec.md` | `gh issue view <N>` → technical translation (not AC duplicate); header `Source: #<N> (body-hash: xxxxxxxx)` |
+| 2 | `plan.md` | Chunk split using template below |
+| 3 | `tasks.md` | Engineering rows per chunk (id, owner, paths, verify) — **not** issue `- [ ]` checklist |
+
+**Folder name:** `<issue-number>-<slug>` (e.g. `.agents/specs/134-drive-share/`). Without issue: `.agents/specs/000-ad-hoc-slug/` with `Source: ad-hoc`.
+
+**When required:** `feat/` branches — see [specs/README.md](../../specs/README.md). `fix/` / `chore/` / `docs/` — optional.
+
+Skeletons: [specs/_template/](../../specs/_template/). On scope change: update issue first, then re-sync all three files + body-hash.
+
 ## When to plan
 
 Plan before building when:
@@ -20,7 +40,9 @@ Skip formal planning for single-file fixes with obvious scope.
 
 Before writing the plan:
 
-- [ ] GitHub issue (if any): fetch with `gh issue view` and copy acceptance criteria into chunk `done-when` — verify later with [verify-issue](../verify-issue/SKILL.md)
+- [ ] GitHub issue (if any): fetch with `gh issue view`; generate `spec.md` **from** issue body (do not write spec and issue in parallel)
+- [ ] Body-hash for spec header: `gh issue view <N> --json body --jq .body | shasum -a 256` (first 8 hex chars)
+- [ ] Copy acceptance criteria into chunk `done-when` — verify later with [verify-issue](../verify-issue/SKILL.md)
 - [ ] Relevant domain skill (`api`, `apps-ui`, `workspace`)
 - [ ] OpenAPI contract if API involved: `packages/api/openapi/openapi.json`
 - [ ] Done gate if API involved: `packages/api/docs/api-done-gate.md`
@@ -28,6 +50,8 @@ Before writing the plan:
 - [ ] `developer/multitask.md` if parallel execution expected
 
 ## Plan template
+
+Write to `.agents/specs/<N>-<slug>/plan.md` (or inline for trivial non-`feat/` work):
 
 ```markdown
 # [Feature title]
