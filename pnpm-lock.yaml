@@ -373,7 +373,7 @@ importers:
   tools/mcp-server:
     dependencies:
       '@modelcontextprotocol/sdk':
-        specifier: ^1.12.1
+        specifier: ^1.29.0
         version: 1.29.0(zod@3.25.76)
       zod:
         specifier: ^3.24.2
