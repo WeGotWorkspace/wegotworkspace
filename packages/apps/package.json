@@ -145,6 +145,7 @@
     "workbox-window": "^7.4.1"
   },
   "overrides": {
-    "esbuild": "0.28.1"
+    "esbuild": "0.28.1",
+    "linkify-it": "5.0.2"
   }
 }
